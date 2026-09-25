@@ -15,6 +15,7 @@ const errors: Record<string, string> = {
   unverified: "Email belum diverifikasi. Buka email verifikasi yang dikirim saat pendaftaran.",
   signout: "Belum berhasil keluar. Silakan kembali ke akun dan coba lagi.",
   recovery: "Tautan pemulihan tidak valid atau sudah kedaluwarsa.",
+  callback: "Tautan verifikasi tidak valid, sudah dipakai, atau sudah kedaluwarsa.",
 };
 
 export default async function LoginPage({
