@@ -22,7 +22,6 @@
 
 # typescript
 *.tsbuildinfo
-next-env.d.ts
 
 # misc
 .DS_Store
