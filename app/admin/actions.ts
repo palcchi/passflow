@@ -179,7 +179,8 @@ export async function createAttendee(formData: FormData) {
 export async function importAttendees(formData: FormData) {
   const eventId = text(formData, "eventId", 60);
   const { supabase } = await managedContext(eventId);
-  const rows = text(formData, "rows", 20000).split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+  const rows = text(formData, "rows", 20000).split(/\r?
+/).map((line) => line.trim()).filter(Boolean);
   if (!rows.length) return;
 
   const { data: tickets } = await supabase.from("ticket_types").select("id, code").eq("event_id", eventId);
@@ -372,7 +373,11 @@ export async function uploadEventAsset(formData: FormData) {
   });
 
   const column = assetType === "logo" ? "logo_url" : assetType === "hero" ? "hero_image_url" : "poster_url";
-  const updatePayload: { logo_url?: string; hero_image_url?: string; poster_url?: string; updated_at: string } = { updated_at: new Date().toISOString() };\n  updatePayload[column] = publicUrl;\n  const { data } = await supabase\n    .from("events")\n    .update(updatePayload)
+  const updatePayload: { logo_url?: string; hero_image_url?: string; poster_url?: string; updated_at: string } = { updated_at: new Date().toISOString() };
+  updatePayload[column] = publicUrl;
+  const { data } = await supabase
+    .from("events")
+    .update(updatePayload)
     .eq("id", eventId)
     .select("slug")
     .single();
