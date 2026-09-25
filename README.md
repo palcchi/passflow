@@ -1061,8 +1061,9 @@ scanner camera prototype, appearance editor, Supabase client scaffold,
 dan initial database migration sudah ada.
 Tailwind v4/PostCSS, shadcn Button, semantic design tokens, Magic UI Blur Fade
 dan Number Ticker sudah diintegrasikan. Reduced-motion dan SSR fallback tersedia.
-Build lokal belum dapat dijalankan karena akses npm dari environment terbatas.
-Workflow GitHub Actions ditambahkan untuk lint, typecheck, dan production build.
+Build lokal terhalang akses npm; install, lint, typecheck, dan production build
+sudah lolos GitHub Actions pada commit a20646a.
+Workflow GitHub Actions juga memeriksa route responsive memakai Chromium.
 
 Next priority:
 1. verify foundation build/CI and responsive rendering,
@@ -1095,7 +1096,7 @@ Mobile/iPad support wajib.
 - Landing memakai Blur Fade dan Button. Dashboard memakai Number Ticker, label data demo, dan tombol New event nonaktif sampai Phase 3.
 - Scanner tetap memakai UI operasional yang ada. Claim, scanner validation, appearance save, dan dashboard data masih prototype.
 - Phase 0 tetap IN PROGRESS sampai build dan pemeriksaan responsive selesai. Setup konfigurasi tidak sama dengan bukti build sukses.
-- Validasi lokal: pemeriksaan diff dan struktur konfigurasi. Install/build lokal terhalang akses jaringan npm. Workflow `Verify PassFlow` menjalankan install, lint, typecheck, build di GitHub Actions.
+- Validasi: diff lokal bersih. Install, lint, typecheck, dan production build lolos GitHub Actions pada commit `a20646a`. Pemeriksaan responsive Chromium ditambahkan untuk 320, 375, 430, 820, dan 1440px, termasuk screenshot artifact. Perangkat iPhone/iPad dan kamera nyata tetap perlu uji manual.
 - Belum ada lockfile terverifikasi. Setelah install berhasil di environment dengan npm, commit `package-lock.json` dan ubah CI menjadi `npm ci`.
 - Berikutnya: selesaikan verifikasi Phase 0, provision Supabase, lalu migration/RLS dan auth. Jangan aktifkan claim/scanner production sebelum validasi server siap.
 

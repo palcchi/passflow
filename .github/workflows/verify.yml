@@ -21,3 +21,19 @@ jobs:
       - run: npm run lint
       - run: npm run typecheck
       - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - name: Verify responsive routes
+        run: |
+          npm run start > /tmp/passflow-server.log 2>&1 &
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:3000 > /dev/null; then break; fi
+            sleep 1
+          done
+          node scripts/verify-ui.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: foundation-verification
+          path: |
+            verification/
+            package-lock.json
