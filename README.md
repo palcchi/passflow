@@ -152,7 +152,7 @@ Keduanya merupakan **satu credential yang sama dalam dua media**, bukan dua iden
 
 - [ ] Supabase project belum diprovision
 - [ ] Database migration belum dijalankan ke production Supabase
-- [ ] Google authentication: kode sudah tersedia; konfigurasi provider dan uji akun nyata belum selesai
+- [ ] Email + password authentication: kode sudah tersedia; Supabase email verification dan uji akun nyata belum diaktifkan
 - [ ] Dashboard masih menggunakan demo data
 - [ ] Event page masih menggunakan demo data
 - [ ] Claim belum menulis ke database
@@ -618,7 +618,7 @@ Status: **COMPLETE** (build + Chromium responsive baseline verified)
 
 ## Phase 2, Authentication & Roles
 
-Status: **IMPLEMENTED, EXTERNAL SETUP PENDING**. Panduan: [Google Auth setup](docs/GOOGLE_AUTH_SETUP.md).
+Status: **IMPLEMENTED, SUPABASE EMAIL SETUP PENDING**. Panduan: [Email + Password Auth setup](docs/EMAIL_PASSWORD_AUTH_SETUP.md).
 
 Roles:
 
@@ -630,19 +630,22 @@ VISITOR
 
 Tasks:
 
-- [x] Google sign in / automatic account registration (kode)
-- [x] Sign out perangkat saat ini (kode)
+- [x] Register dengan nama, email, password, dan confirm password
+- [x] Email verification flow melalui token-hash confirmation route
+- [x] Login dengan email + password
+- [x] Forgot password + reset password flow
+- [x] Sign out perangkat saat ini
 - [x] Organizer protected routes
 - [x] Staff station membership guard
 - [x] Visitor account page
 - [ ] Visitor event pass terhubung database
-- [x] Session cookie + proxy refresh (kode)
+- [x] Session cookie + proxy refresh
 - [x] Unauthorized state
 - [x] Route protection
-- [ ] Konfigurasi Google provider pada Supabase
-- [ ] Uji OAuth end-to-end dengan akun Google nyata
+- [ ] Konfigurasi Email provider + templates pada Supabase
+- [ ] Uji register, verifikasi email, login, dan reset password end-to-end dengan akun nyata
 
-**Definition of Done:** user hanya dapat mengakses fungsi sesuai role.
+**Definition of Done:** user hanya dapat mengakses fungsi sesuai role dan akun baru harus memverifikasi email sebelum login.
 
 ---
 
@@ -1073,13 +1076,13 @@ Workflow GitHub Actions juga memeriksa route responsive memakai Chromium.
 Next priority:
 1. provision Supabase,
 2. run migration + RLS,
-3. activate and verify Google OAuth using docs/GOOGLE_AUTH_SETUP.md,
-4. replace mock data,
-5. implement real QR claim,
-6. implement scanner validation,
-7. storage upload,
-8. analytics,
-9. real-device camera + Safari verification,
+3. configure email/password auth + verification templates using docs/EMAIL_PASSWORD_AUTH_SETUP.md,
+4. test register, email verification, login, forgot password, dan reset password,
+5. replace mock data,
+6. implement real QR claim,
+7. implement scanner validation,
+8. storage upload,
+9. analytics + real-device Safari verification,
 10. Vercel production deployment.
 
 Design:
@@ -1109,14 +1112,17 @@ Mobile/iPad support wajib.
 
 ## Authentication continuation, 25 September 2026
 
-- Login/register disatukan pada `/login`; `/register` meneruskan ke flow yang sama.
+- Google OAuth dibatalkan untuk MVP. PassFlow sekarang memakai email + password melalui Supabase Auth.
+- `/register` memiliki nama lengkap, email, password, dan confirm password. Akun baru tetap visitor.
+- Email confirmation memakai `/auth/confirm` dengan token hash. Login berikutnya memakai email + password.
+- `/forgot-password` dan `/reset-password` sudah tersedia untuk recovery.
 - `/account` menampilkan user terverifikasi. Role organizer/staff hanya berasal dari `organization_members`, bukan metadata user.
-- `lib/supabase/server.ts` sekarang client SSR berbasis cookie dengan public key dan RLS, bukan service-role client.
-- `proxy.ts` refresh session; halaman privat memakai `getUser()`, validasi membership, dan response no-store. Callback hanya mengizinkan tujuan internal yang dikenal.
+- `lib/supabase/server.ts` menggunakan client SSR berbasis cookie dengan public key dan RLS, bukan service-role client.
+- `proxy.ts` refresh session; halaman privat memakai `getUser()`, validasi membership, dan response no-store. Redirect auth hanya mengizinkan tujuan internal yang dikenal.
 - Migration `0002_auth_read_policies.sql` menambahkan read policies. Membership tidak dapat ditulis pengguna melalui browser. Writes operasional lainnya masih tertutup.
 - Halaman claim/scanner yang dilindungi tidak lagi menampilkan sukses simulasi. Backend transaksi QR belum diimplementasikan.
-- Konfigurasi Supabase/Google belum tersedia di environment ini. Google login sungguhan belum diuji atau diaktifkan. Ikuti [panduan setup](docs/GOOGLE_AUTH_SETUP.md), termasuk pembuatan owner pertama via SQL tepercaya.
-- CI diperbarui untuk anonymous route protection, callback failures, redirect validation, dan pengujian PostgreSQL RLS antar organisasi. Checklist implementasi bukan klaim bahwa OAuth production sudah aktif.
+- Supabase project + email templates masih perlu diaktifkan sebelum auth nyata dapat diuji. Ikuti [panduan setup](docs/EMAIL_PASSWORD_AUTH_SETUP.md), termasuk pembuatan owner pertama via SQL tepercaya.
+- CI mencakup route protection, redirect validation, input validation, responsive auth pages, dan PostgreSQL RLS antar organisasi.
 
 ---
 
