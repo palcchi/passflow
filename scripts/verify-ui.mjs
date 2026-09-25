@@ -5,6 +5,7 @@ import { chromium } from "playwright";
 const browser = await chromium.launch();
 await mkdir("verification", { recursive: true });
 const routes = ["/", "/admin", "/e/discoveries-2026", "/e/night-shift-sessions", "/e/discoveries-2026/claim", "/admin/events/evt_discoveries_2026/appearance", "/scan/main-entrance"];
+const failures = [];
 try {
   for (const width of [320, 375, 430, 820, 1440]) {
     const page = await browser.newPage({ viewport: { width, height: 1000 }, reducedMotion: "reduce" });
@@ -16,14 +17,15 @@ try {
       await page.locator("main").waitFor();
       const overflow = await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1);
       if (overflow) console.log(await page.evaluate(() => [...document.querySelectorAll("main *")].filter((el) => el.getBoundingClientRect().right > innerWidth + 1).map((el) => ({ tag: el.tagName, className: String(el.className), right: el.getBoundingClientRect().right })).slice(0, 15)));
-      if (route === "/admin") assert.equal(await page.locator(".stat-card strong").nth(1).innerText(), "688");
+      if (route === "/admin") assert.equal(await page.locator(".stat-card strong [aria-hidden]").nth(1).innerText(), "688");
       await page.screenshot({ path: `verification/${width}-${route.replaceAll("/", "_") || "home"}.png`, fullPage: true });
-      assert.equal(overflow, false, `${width}px ${route} horizontal overflow`);
-      console.log(`PASS ${width}px ${route}`);
+      if (overflow) failures.push(`${width}px ${route} horizontal overflow`);
+      console.log(`${overflow ? "FAIL" : "PASS"} ${width}px ${route}`);
     }
     assert.deepEqual(errors, [], `${width}px browser errors`);
     await page.close();
   }
+  assert.deepEqual(failures, []);
 } finally {
   await browser.close();
 }
