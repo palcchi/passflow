@@ -1,7 +1,8 @@
 import { getSupabaseConfig } from "@/lib/supabase/config";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+export const defaultEventTheme={primary:"#7448ff",secondary:"#eee8ff",background:"#f5f5f2",foreground:"#151515",surface:"#ffffff"};
 export type EventTheme={primary:string;secondary:string;background:string;foreground:string;surface:string};
-export type PassFlowEvent={id:string;name:string;slug:string;eyebrow:string;description:string;venue:string;dateLabel:string;attendeeCount:number;checkedInCount:number;theme:EventTheme};
+export type PassFlowEvent={id:string;name:string;slug:string;eyebrow:string;description:string;venue:string;dateLabel:string;attendeeCount:number;checkedInCount:number;theme:EventTheme;status?:string;capacity?:number;startsAt?:string|null;endsAt?:string|null;heroImageUrl?:string|null;logoUrl?:string|null;posterUrl?:string|null};
 export const demoEvents:PassFlowEvent[]=[
 {id:"evt_adorne_exhibition",name:"Adorne Nails Exhibition",slug:"adorne-nails-exhibition",eyebrow:"Beauty Exhibition",description:"A multi-zone beauty experience with workshops, exhibitions, product showcases, and QR-based access.",venue:"Adorne Studio",dateLabel:"12 October 2026",attendeeCount:428,checkedInCount:286,theme:{primary:"#7b1734",secondary:"#f0b8c6",background:"#fff8f9",foreground:"#211216",surface:"#ffffff"}},
 {id:"evt_adorne_workshop",name:"Adorne Nails Workshop",slug:"adorne-nails-workshop",eyebrow:"Beauty Workshop",description:"A hands-on nail workshop with creator rooms, product showcases, and live visitor tracking.",venue:"Adorne Studio",dateLabel:"24 October 2026",attendeeCount:260,checkedInCount:112,theme:{primary:"#5b5df0",secondary:"#b8b9ff",background:"#0f1014",foreground:"#f7f7fa",surface:"#191a20"}},
