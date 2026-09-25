@@ -289,6 +289,44 @@ export type Database = {
           },
         ]
       }
+      benefits: {
+        Row: {
+          code: string
+          created_at: string
+          description: string | null
+          event_id: string
+          id: string
+          is_active: boolean
+          name: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          description?: string | null
+          event_id: string
+          id?: string
+          is_active?: boolean
+          name: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          description?: string | null
+          event_id?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "benefits_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       event_assets: {
         Row: {
           asset_type: string
@@ -326,6 +364,7 @@ export type Database = {
       }
       events: {
         Row: {
+          capacity: number | null
           created_at: string
           description: string | null
           ends_at: string | null
@@ -343,6 +382,7 @@ export type Database = {
           venue: string | null
         }
         Insert: {
+          capacity?: number | null
           created_at?: string
           description?: string | null
           ends_at?: string | null
@@ -360,6 +400,7 @@ export type Database = {
           venue?: string | null
         }
         Update: {
+          capacity?: number | null
           created_at?: string
           description?: string | null
           ends_at?: string | null
@@ -442,6 +483,7 @@ export type Database = {
           claimed_at: string | null
           code: string
           created_at: string
+          display_code: string | null
           event_id: string
           id: string
           replaced_by: string | null
@@ -453,6 +495,7 @@ export type Database = {
           claimed_at?: string | null
           code: string
           created_at?: string
+          display_code?: string | null
           event_id: string
           id?: string
           replaced_by?: string | null
@@ -464,6 +507,7 @@ export type Database = {
           claimed_at?: string | null
           code?: string
           created_at?: string
+          display_code?: string | null
           event_id?: string
           id?: string
           replaced_by?: string | null
@@ -650,7 +694,31 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      claim_qr: {
+        Args: { p_code: string; p_event_slug: string }
+        Returns: Json
+      }
+      is_event_manager: { Args: { p_event_id: string }; Returns: boolean }
+      is_event_member: { Args: { p_event_id: string }; Returns: boolean }
+      is_org_manager: { Args: { p_organization_id: string }; Returns: boolean }
+      is_org_member: { Args: { p_organization_id: string }; Returns: boolean }
+      register_for_event: {
+        Args: {
+          p_event_slug: string
+          p_name: string
+          p_phone?: string
+          p_ticket_code?: string
+        }
+        Returns: Json
+      }
+      replace_qr: {
+        Args: { p_code: string; p_event_slug: string }
+        Returns: Json
+      }
+      validate_scan: {
+        Args: { p_code: string; p_station_id: string }
+        Returns: Json
+      }
     }
     Enums: {
       event_status: "draft" | "published" | "archived"
