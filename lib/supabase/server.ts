@@ -1,13 +1,14 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { getSupabaseConfig } from "./config";
+import type { Database } from "./database.types";
 
 // Request-scoped public key + user session; RLS always applies.
 export async function createServerSupabaseClient() {
   const config = getSupabaseConfig();
   if (!config) throw new Error("Supabase is not configured");
   const cookieStore = await cookies();
-  return createServerClient(config.url, config.key, {
+  return createServerClient<Database>(config.url, config.key, {
     cookies: {
       getAll: () => cookieStore.getAll(),
       setAll(cookiesToSet) {
