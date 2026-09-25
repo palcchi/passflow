@@ -581,7 +581,7 @@ Magic UI dipakai sebagai **micro-interaction dan visual enhancement**, bukan seb
 
 ## Phase 0, Foundation
 
-Status: **IN PROGRESS**
+Status: **COMPLETE** (build + Chromium responsive baseline verified)
 
 - [x] Buat repository
 - [x] Setup Next.js + TypeScript
@@ -1062,19 +1062,19 @@ dan initial database migration sudah ada.
 Tailwind v4/PostCSS, shadcn Button, semantic design tokens, Magic UI Blur Fade
 dan Number Ticker sudah diintegrasikan. Reduced-motion dan SSR fallback tersedia.
 Build lokal terhalang akses npm; install, lint, typecheck, dan production build
-sudah lolos GitHub Actions pada commit a20646a.
+sudah lolos GitHub Actions. 35 route/viewport checks juga lolos pada 873b2eb.
 Workflow GitHub Actions juga memeriksa route responsive memakai Chromium.
 
 Next priority:
-1. verify foundation build/CI and responsive rendering,
-2. provision Supabase,
-3. run migration + RLS,
-4. auth,
-5. replace mock data,
-6. implement real QR claim,
-7. implement scanner validation,
-8. storage upload,
-9. analytics,
+1. provision Supabase,
+2. run migration + RLS,
+3. auth,
+4. replace mock data,
+5. implement real QR claim,
+6. implement scanner validation,
+7. storage upload,
+8. analytics,
+9. real-device camera + Safari verification,
 10. Vercel production deployment.
 
 Design:
@@ -1095,10 +1095,10 @@ Mobile/iPad support wajib.
 - Button diambil dari source resmi shadcn dan disesuaikan untuk target sentuh minimum 44px. Blur Fade dan Number Ticker diadaptasi dari Magic UI; lisensi tersimpan di `THIRD_PARTY_NOTICES.md`.
 - Landing memakai Blur Fade dan Button. Dashboard memakai Number Ticker, label data demo, dan tombol New event nonaktif sampai Phase 3.
 - Scanner tetap memakai UI operasional yang ada. Claim, scanner validation, appearance save, dan dashboard data masih prototype.
-- Phase 0 tetap IN PROGRESS sampai build dan pemeriksaan responsive selesai. Setup konfigurasi tidak sama dengan bukti build sukses.
-- Validasi: diff lokal bersih. Install, lint, typecheck, dan production build lolos GitHub Actions pada commit `a20646a`. Pemeriksaan responsive Chromium ditambahkan untuk 320, 375, 430, 820, dan 1440px, termasuk screenshot artifact. Perangkat iPhone/iPad dan kamera nyata tetap perlu uji manual.
-- Belum ada lockfile terverifikasi. Setelah install berhasil di environment dengan npm, commit `package-lock.json` dan ubah CI menjadi `npm ci`.
-- Berikutnya: selesaikan verifikasi Phase 0, provision Supabase, lalu migration/RLS dan auth. Jangan aktifkan claim/scanner production sebelum validasi server siap.
+- Phase 0 selesai: production build dan baseline responsive Chromium terverifikasi. Full UI polish masih Phase 11.
+- Validasi: `npm ci`, lint, typecheck, production build, dan 35 kombinasi route/viewport lolos pada commit `873b2eb` ([CI run](https://github.com/palcchi/passflow/actions/runs/36130913217)). Screenshot landing, dashboard, kedua tema event, claim, dan editor sudah diperiksa. Tidak terdeteksi horizontal overflow maupun page error pada 320, 375, 430, 820, dan 1440px. Perangkat iPhone/iPad dan kamera nyata tetap perlu uji manual.
+- `package-lock.json` berasal dari install CI yang berhasil, sudah disimpan di repo, dan CI menggunakan `npm ci`. Gunakan `npm ci` untuk setup yang konsisten.
+- Berikutnya: provision Supabase, lalu migration/RLS dan auth. Jangan aktifkan claim/scanner production sebelum validasi server siap.
 
 ---
 

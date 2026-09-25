@@ -1435,6 +1435,12 @@ button {
     padding-right: 20px;
   }
 
+  .topbar { gap: 12px; }
+
+  .topbar .brand-lockup { flex-shrink: 0; }
+
+  .topbar .button { font-size: 12px; padding: 11px 10px; white-space: nowrap; }
+
   .topbar .text-link {
     display: none;
   }
