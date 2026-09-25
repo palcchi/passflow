@@ -34,21 +34,26 @@ export async function signInWithPassword(formData: FormData) {
   }
   if (!getSupabaseConfig()) loginError("unavailable", next);
 
+  let result: "success" | "unverified" | "failed" = "failed";
+
   try {
     const supabase = await createServerSupabaseClient();
     const { error } = await supabase.auth.signInWithPassword({ email, password });
 
     if (!error) {
-      revalidatePath("/", "layout");
-      go(next);
+      result = "success";
+    } else if ((error as { code?: string }).code === "email_not_confirmed") {
+      result = "unverified";
     }
-
-    const code = (error as { code?: string }).code;
-    if (code === "email_not_confirmed") loginError("unverified", next);
   } catch {
-    // Keep provider and database details out of the URL/UI.
+    result = "failed";
   }
 
+  if (result === "success") {
+    revalidatePath("/", "layout");
+    go(next);
+  }
+  if (result === "unverified") loginError("unverified", next);
   loginError("credentials", next);
 }
 
@@ -66,6 +71,8 @@ export async function signUpWithPassword(formData: FormData) {
   if (password !== confirmPassword) registerError("mismatch", next);
   if (!origin || !getSupabaseConfig()) registerError("unavailable", next);
 
+  let result: "session" | "confirmation" | "failed" = "failed";
+
   try {
     const supabase = await createServerSupabaseClient();
     const { data, error } = await supabase.auth.signUp({
@@ -77,16 +84,17 @@ export async function signUpWithPassword(formData: FormData) {
       },
     });
 
-    if (!error) {
-      // Hosted Supabase projects normally require email confirmation.
-      if (data.session) {
-        revalidatePath("/", "layout");
-        go(next);
-      }
-      go(`/register?notice=check-email&next=${encodeURIComponent(next)}`);
-    }
+    if (!error) result = data.session ? "session" : "confirmation";
   } catch {
-    // Keep auth internals private.
+    result = "failed";
+  }
+
+  if (result === "session") {
+    revalidatePath("/", "layout");
+    go(next);
+  }
+  if (result === "confirmation") {
+    go(`/register?notice=check-email&next=${encodeURIComponent(next)}`);
   }
 
   // Deliberately generic so the UI does not become an account-enumeration oracle.
@@ -120,25 +128,33 @@ export async function updatePassword(formData: FormData) {
   if (password !== confirmPassword) go("/reset-password?error=mismatch");
   if (!getSupabaseConfig()) go("/reset-password?error=unavailable");
 
+  let result: "success" | "no-session" | "failed" = "failed";
+
   try {
     const supabase = await createServerSupabaseClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) go("/login?error=recovery");
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
 
-    const { error } = await supabase.auth.updateUser({ password });
-    if (!error) {
-      revalidatePath("/", "layout");
-      go("/account?notice=password-updated");
+    if (userError || !user) {
+      result = "no-session";
+    } else {
+      const { error } = await supabase.auth.updateUser({ password });
+      result = error ? "failed" : "success";
     }
   } catch {
-    // Fall through to a generic failure.
+    result = "failed";
   }
 
+  if (result === "no-session") go("/login?error=recovery");
+  if (result === "success") {
+    revalidatePath("/", "layout");
+    go("/account?notice=password-updated");
+  }
   go("/reset-password?error=update");
 }
 
 export async function signOut() {
   let failed = false;
+
   if (getSupabaseConfig()) {
     try {
       const supabase = await createServerSupabaseClient();
