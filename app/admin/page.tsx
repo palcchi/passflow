@@ -1,3 +1,5 @@
+import { NumberTicker } from "@/components/magicui/number-ticker";
+import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -51,12 +53,12 @@ export default function AdminDashboardPage() {
           <div>
             <span className="section-kicker">Workspace overview</span>
             <h1>Good afternoon, team.</h1>
-            <p>Monitor semua event dari satu tempat.</p>
+            <p>Monitor semua event dari satu tempat. Data di bawah adalah data demo.</p>
           </div>
-          <button className="button button-dark" type="button">
+          <Button variant="secondary" type="button" disabled title="Event management tersedia pada Phase 3">
             <CirclePlus size={17} />
             New event
-          </button>
+          </Button>
         </header>
 
         <div className="stat-grid">
@@ -66,7 +68,7 @@ export default function AdminDashboardPage() {
                 <Icon size={19} />
               </div>
               <span>{label}</span>
-              <strong>{value}</strong>
+              <strong><NumberTicker value={Number(value)} /></strong>
             </article>
           ))}
         </div>
@@ -167,3 +169,4 @@ export default function AdminDashboardPage() {
     </main>
   );
 }
+

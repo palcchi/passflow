@@ -1,6 +1,11 @@
+@import "tailwindcss";
+@import "./tokens.css";
+
+/* Legacy prototype styles are layered so utilities can override them. */
+@layer components {
 :root {
   --ink: #151515;
-  --muted: #696969;
+  --muted-text: #696969;
   --line: #e7e7e5;
   --paper: #f5f5f2;
   --surface: #ffffff;
@@ -1554,4 +1559,7 @@ button {
   .theme-preview {
     min-height: 500px;
   }
+}
+
+
 }

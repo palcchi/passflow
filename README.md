@@ -592,9 +592,9 @@ Status: **IN PROGRESS**
 - [x] Buat scanner prototype
 - [x] Buat claim prototype
 - [x] Buat database schema awal
-- [ ] Install dan konfigurasi Tailwind + shadcn
-- [ ] Integrasikan Magic UI foundation
-- [ ] Buat design tokens PassFlow
+- [x] Konfigurasi Tailwind CSS v4 + shadcn (Button, cn, registry)
+- [x] Integrasikan Magic UI foundation (Blur Fade + Number Ticker)
+- [x] Buat design tokens PassFlow
 
 **Definition of Done:** app build tanpa error, semua prototype route dapat dibuka, responsive basic selesai.
 
@@ -1059,9 +1059,13 @@ Current status:
 Frontend prototype, admin dashboard, dynamic event page, claim prototype,
 scanner camera prototype, appearance editor, Supabase client scaffold,
 dan initial database migration sudah ada.
+Tailwind v4/PostCSS, shadcn Button, semantic design tokens, Magic UI Blur Fade
+dan Number Ticker sudah diintegrasikan. Reduced-motion dan SSR fallback tersedia.
+Build lokal belum dapat dijalankan karena akses npm dari environment terbatas.
+Workflow GitHub Actions ditambahkan untuk lint, typecheck, dan production build.
 
 Next priority:
-1. setup Tailwind/shadcn/Magic UI foundation,
+1. verify foundation build/CI and responsive rendering,
 2. provision Supabase,
 3. run migration + RLS,
 4. auth,
@@ -1080,6 +1084,20 @@ Per-event public UI harus mengikuti custom event theme.
 Scanner harus minimal, cepat, high contrast, dan tidak penuh efek.
 Mobile/iPad support wajib.
 ```
+
+---
+
+## Foundation continuation, 25 September 2026
+
+- Tailwind v4 menggunakan `postcss.config.mjs`; shadcn menggunakan `components.json`.
+- Token berada di `app/tokens.css`. CSS prototype berada dalam `@layer components` agar utility Tailwind tetap dapat mengoverride style.
+- Button diambil dari source resmi shadcn dan disesuaikan untuk target sentuh minimum 44px. Blur Fade dan Number Ticker diadaptasi dari Magic UI; lisensi tersimpan di `THIRD_PARTY_NOTICES.md`.
+- Landing memakai Blur Fade dan Button. Dashboard memakai Number Ticker, label data demo, dan tombol New event nonaktif sampai Phase 3.
+- Scanner tetap memakai UI operasional yang ada. Claim, scanner validation, appearance save, dan dashboard data masih prototype.
+- Phase 0 tetap IN PROGRESS sampai build dan pemeriksaan responsive selesai. Setup konfigurasi tidak sama dengan bukti build sukses.
+- Validasi lokal: pemeriksaan diff dan struktur konfigurasi. Install/build lokal terhalang akses jaringan npm. Workflow `Verify PassFlow` menjalankan install, lint, typecheck, build di GitHub Actions.
+- Belum ada lockfile terverifikasi. Setelah install berhasil di environment dengan npm, commit `package-lock.json` dan ubah CI menjadi `npm ci`.
+- Berikutnya: selesaikan verifikasi Phase 0, provision Supabase, lalu migration/RLS dan auth. Jangan aktifkan claim/scanner production sebelum validasi server siap.
 
 ---
 
@@ -1102,3 +1120,4 @@ Mata Kuliah: **Manajemen Proyek Teknologi Informasi**
 - Vercel: https://vercel.com/docs
 - Magic UI: https://magicui.design/docs
 - shadcn/ui: https://ui.shadcn.com
+

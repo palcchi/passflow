@@ -1,3 +1,5 @@
+import { Button } from "@/components/ui/button";
+import { BlurFade } from "@/components/magicui/blur-fade";
 import Link from "next/link";
 import {
   ArrowUpRight,
@@ -46,7 +48,7 @@ export default function HomePage() {
       </nav>
 
       <section className="hero-section">
-        <div className="hero-copy">
+        <BlurFade className="hero-copy">
           <div className="eyebrow-pill">
             <BadgeCheck size={15} />
             Multi-event access platform
@@ -62,15 +64,15 @@ export default function HomePage() {
             web app.
           </p>
           <div className="hero-actions">
-            <Link href="/admin" className="button button-primary">
+            <Button asChild size="lg"><Link href="/admin">
               Start from dashboard
               <ArrowUpRight size={17} />
-            </Link>
-            <Link href="/scan/main-entrance" className="button button-ghost">
+            </Link></Button>
+            <Button asChild size="lg" variant="outline"><Link href="/scan/main-entrance">
               Try scanner
-            </Link>
+            </Link></Button>
           </div>
-        </div>
+        </BlurFade>
 
         <div className="hero-visual">
           <div className="visual-orbit visual-orbit-one" />
@@ -139,3 +141,4 @@ export default function HomePage() {
     </main>
   );
 }
+
