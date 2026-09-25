@@ -152,7 +152,7 @@ Keduanya merupakan **satu credential yang sama dalam dua media**, bukan dua iden
 
 - [ ] Supabase project belum diprovision
 - [ ] Database migration belum dijalankan ke production Supabase
-- [ ] Authentication belum aktif
+- [ ] Google authentication: kode sudah tersedia; konfigurasi provider dan uji akun nyata belum selesai
 - [ ] Dashboard masih menggunakan demo data
 - [ ] Event page masih menggunakan demo data
 - [ ] Claim belum menulis ke database
@@ -618,6 +618,8 @@ Status: **COMPLETE** (build + Chromium responsive baseline verified)
 
 ## Phase 2, Authentication & Roles
 
+Status: **IMPLEMENTED, EXTERNAL SETUP PENDING**. Panduan: [Google Auth setup](docs/GOOGLE_AUTH_SETUP.md).
+
 Roles:
 
 ```text
@@ -628,14 +630,17 @@ VISITOR
 
 Tasks:
 
-- [ ] Sign in
-- [ ] Sign out
-- [ ] Organizer protected routes
-- [ ] Staff permissions
-- [ ] Visitor account/pass
-- [ ] Session persistence
-- [ ] Unauthorized state
-- [ ] Route protection
+- [x] Google sign in / automatic account registration (kode)
+- [x] Sign out perangkat saat ini (kode)
+- [x] Organizer protected routes
+- [x] Staff station membership guard
+- [x] Visitor account page
+- [ ] Visitor event pass terhubung database
+- [x] Session cookie + proxy refresh (kode)
+- [x] Unauthorized state
+- [x] Route protection
+- [ ] Konfigurasi Google provider pada Supabase
+- [ ] Uji OAuth end-to-end dengan akun Google nyata
 
 **Definition of Done:** user hanya dapat mengakses fungsi sesuai role.
 
@@ -1068,7 +1073,7 @@ Workflow GitHub Actions juga memeriksa route responsive memakai Chromium.
 Next priority:
 1. provision Supabase,
 2. run migration + RLS,
-3. auth,
+3. activate and verify Google OAuth using docs/GOOGLE_AUTH_SETUP.md,
 4. replace mock data,
 5. implement real QR claim,
 6. implement scanner validation,
@@ -1099,6 +1104,19 @@ Mobile/iPad support wajib.
 - Validasi: `npm ci`, lint, typecheck, production build, dan 35 kombinasi route/viewport lolos pada commit `873b2eb` ([CI run](https://github.com/palcchi/passflow/actions/runs/36130913217)). Screenshot landing, dashboard, kedua tema event, claim, dan editor sudah diperiksa. Tidak terdeteksi horizontal overflow maupun page error pada 320, 375, 430, 820, dan 1440px. Perangkat iPhone/iPad dan kamera nyata tetap perlu uji manual.
 - `package-lock.json` berasal dari install CI yang berhasil, sudah disimpan di repo, dan CI menggunakan `npm ci`. Gunakan `npm ci` untuk setup yang konsisten.
 - Berikutnya: provision Supabase, lalu migration/RLS dan auth. Jangan aktifkan claim/scanner production sebelum validasi server siap.
+
+---
+
+## Authentication continuation, 25 September 2026
+
+- Login/register disatukan pada `/login`; `/register` meneruskan ke flow yang sama.
+- `/account` menampilkan user terverifikasi. Role organizer/staff hanya berasal dari `organization_members`, bukan metadata user.
+- `lib/supabase/server.ts` sekarang client SSR berbasis cookie dengan public key dan RLS, bukan service-role client.
+- `proxy.ts` refresh session; halaman privat memakai `getUser()`, validasi membership, dan response no-store. Callback hanya mengizinkan tujuan internal yang dikenal.
+- Migration `0002_auth_read_policies.sql` menambahkan read policies. Membership tidak dapat ditulis pengguna melalui browser. Writes operasional lainnya masih tertutup.
+- Halaman claim/scanner yang dilindungi tidak lagi menampilkan sukses simulasi. Backend transaksi QR belum diimplementasikan.
+- Konfigurasi Supabase/Google belum tersedia di environment ini. Google login sungguhan belum diuji atau diaktifkan. Ikuti [panduan setup](docs/GOOGLE_AUTH_SETUP.md), termasuk pembuatan owner pertama via SQL tepercaya.
+- CI diperbarui untuk anonymous route protection, callback failures, redirect validation, dan pengujian PostgreSQL RLS antar organisasi. Checklist implementasi bukan klaim bahwa OAuth production sudah aktif.
 
 ---
 

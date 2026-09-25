@@ -1,3 +1,4 @@
+import { requireOrganizer } from "@/lib/auth/session";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
@@ -12,6 +13,7 @@ export default async function EventAppearancePage({
   params,
 }: AppearancePageProps) {
   const { eventId } = await params;
+  await requireOrganizer(`/admin/events/${eventId}/appearance`);
   const event = getEventById(eventId);
 
   if (!event) notFound();
@@ -38,3 +40,4 @@ export default async function EventAppearancePage({
     </main>
   );
 }
+

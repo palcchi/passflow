@@ -40,8 +40,8 @@ export default function HomePage() {
           <Link href="/e/discoveries-2026" className="text-link">
             Event demo
           </Link>
-          <Link href="/admin" className="button button-dark">
-            Open dashboard
+          <Link href="/login" className="button button-dark">
+            Masuk / Daftar
             <ArrowUpRight size={16} />
           </Link>
         </div>

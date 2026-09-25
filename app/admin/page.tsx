@@ -1,3 +1,4 @@
+import { requireOrganizer } from "@/lib/auth/session";
 import { NumberTicker } from "@/components/magicui/number-ticker";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -19,7 +20,8 @@ const statCards = [
   { label: "QR active", value: "371", icon: QrCode },
 ];
 
-export default function AdminDashboardPage() {
+export default async function AdminDashboardPage() {
+  await requireOrganizer();
   return (
     <main className="dashboard-shell">
       <aside className="sidebar">
@@ -28,6 +30,7 @@ export default function AdminDashboardPage() {
           <span>PassFlow</span>
         </Link>
         <div className="sidebar-section">
+          <Link href="/account" className="sidebar-link">Akun saya</Link>
           <span className="sidebar-label">Workspace</span>
           <Link href="/admin" className="sidebar-link active">
             Overview
