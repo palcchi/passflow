@@ -179,8 +179,7 @@ export async function createAttendee(formData: FormData) {
 export async function importAttendees(formData: FormData) {
   const eventId = text(formData, "eventId", 60);
   const { supabase } = await managedContext(eventId);
-  const rows = text(formData, "rows", 20000).split(/\r?
-/).map((line) => line.trim()).filter(Boolean);
+  const rows = text(formData, "rows", 20000).split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
   if (!rows.length) return;
 
   const { data: tickets } = await supabase.from("ticket_types").select("id, code").eq("event_id", eventId);
