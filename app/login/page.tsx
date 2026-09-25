@@ -1,115 +1,42 @@
 import Link from "next/link";
-import { ArrowLeft, LockKeyhole, Mail } from "lucide-react";
+import { ArrowLeft, KeyRound, Mail, ScanLine } from "lucide-react";
 import { AuthSubmit } from "@/components/auth-submit";
-import { signInWithPassword } from "@/app/auth/actions";
+import { signInWithEmail } from "@/app/auth/actions";
 import { safeNext } from "@/lib/auth/redirect";
-import { getSupabaseConfig } from "@/lib/supabase/config";
+import { getAppOrigin, getSupabaseConfig } from "@/lib/supabase/config";
 
-export const metadata = { title: "Masuk" };
+export const metadata = { title: "Masuk atau daftar" };
 export const dynamic = "force-dynamic";
-
 const errors: Record<string, string> = {
-  unavailable: "Login belum tersedia. Konfigurasi Supabase belum terhubung.",
-  invalid: "Masukkan email dan password yang valid.",
-  credentials: "Email atau password tidak cocok.",
-  unverified: "Email belum diverifikasi. Buka email verifikasi yang dikirim saat pendaftaran.",
+  unavailable: "Login belum tersedia. Silakan coba lagi nanti.",
+  provider: "Belum bisa memproses permintaan. Silakan coba lagi.",
+  invalid: "Email atau password salah. Pastikan password minimal 8 karakter.",
+  expired: "Sesi sudah kedaluwarsa. Silakan masuk lagi.",
+  callback: "Proses masuk dibatalkan atau tautannya sudah kedaluwarsa. Silakan coba lagi.",
   signout: "Belum berhasil keluar. Silakan kembali ke akun dan coba lagi.",
-  recovery: "Tautan pemulihan tidak valid atau sudah kedaluwarsa.",
-  callback: "Tautan verifikasi tidak valid, sudah dipakai, atau sudah kedaluwarsa.",
+  reset: "Password baru sudah disimpan.",
 };
-
-export default async function LoginPage({
-  searchParams,
-}: {
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
-}) {
+export default async function LoginPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const params = await searchParams;
   const next = safeNext(params.next);
-  const ready = !!getSupabaseConfig();
+  const ready = !!getSupabaseConfig() && !!getAppOrigin();
   const message = typeof params.error === "string" ? errors[params.error] : null;
-
-  return (
-    <main className="min-h-screen bg-background px-5 py-8 sm:py-14">
-      <div className="mx-auto max-w-md">
-        <Link href="/" className="inline-flex min-h-11 items-center gap-2 text-sm text-muted-foreground">
-          <ArrowLeft size={16} /> Kembali ke PassFlow
-        </Link>
-
-        <section className="mt-10 rounded-lg border border-border bg-card p-6 sm:p-9">
-          <span className="brand-mark mb-8">P</span>
-          <p className="text-xs font-semibold uppercase tracking-widest text-primary">Welcome back</p>
-          <h1 className="mt-3 text-4xl font-semibold tracking-tight">Masuk ke PassFlow.</h1>
-          <p className="mt-4 text-sm leading-6 text-muted-foreground">
-            Gunakan email dan password yang sudah kamu daftarkan.
-          </p>
-
-          {message && (
-            <p role="alert" className="mt-6 rounded-md border border-destructive/30 p-3 text-sm text-destructive">
-              {message}
-            </p>
-          )}
-          {params.notice === "signed-out" && (
-            <p role="status" className="mt-6 text-sm text-success">Kamu sudah keluar dari perangkat ini.</p>
-          )}
-          {!ready && (
-            <p role="status" className="mt-6 rounded-md bg-muted p-3 text-sm text-muted-foreground">
-              Login sedang disiapkan. Halaman event publik tetap bisa dijelajahi.
-            </p>
-          )}
-
-          <form action={signInWithPassword} className="mt-7 space-y-4">
-            <input type="hidden" name="next" value={next} />
-
-            <label className="block text-sm font-medium">
-              Email
-              <div className="mt-2 flex min-h-12 items-center gap-3 rounded-md border border-input bg-background px-3 focus-within:ring-2 focus-within:ring-ring">
-                <Mail size={17} className="text-muted-foreground" aria-hidden="true" />
-                <input
-                  className="min-w-0 flex-1 bg-transparent outline-none"
-                  type="email"
-                  name="email"
-                  autoComplete="email"
-                  inputMode="email"
-                  required
-                  maxLength={254}
-                  placeholder="nama@email.com"
-                />
-              </div>
-            </label>
-
-            <label className="block text-sm font-medium">
-              Password
-              <div className="mt-2 flex min-h-12 items-center gap-3 rounded-md border border-input bg-background px-3 focus-within:ring-2 focus-within:ring-ring">
-                <LockKeyhole size={17} className="text-muted-foreground" aria-hidden="true" />
-                <input
-                  className="min-w-0 flex-1 bg-transparent outline-none"
-                  type="password"
-                  name="password"
-                  autoComplete="current-password"
-                  required
-                  maxLength={128}
-                  placeholder="Password"
-                />
-              </div>
-            </label>
-
-            <div className="flex justify-end">
-              <Link href="/forgot-password" className="text-sm font-medium text-primary hover:underline">
-                Lupa password?
-              </Link>
-            </div>
-
-            <AuthSubmit disabled={!ready}>Masuk</AuthSubmit>
-          </form>
-
-          <p className="mt-6 text-center text-sm text-muted-foreground">
-            Belum punya akun?{" "}
-            <Link href={`/register?next=${encodeURIComponent(next)}`} className="font-semibold text-foreground hover:underline">
-              Buat akun
-            </Link>
-          </p>
-        </section>
-      </div>
-    </main>
-  );
+  return <main className="min-h-screen bg-background px-5 py-8 sm:py-14">
+    <div className="mx-auto max-w-md">
+      <Link href="/" className="inline-flex min-h-11 items-center gap-2 text-sm text-muted-foreground"><ArrowLeft size={16} /> Kembali ke PassFlow</Link>
+      <section className="mt-10 rounded-lg border border-border bg-card p-6 sm:p-9">
+        <span className="brand-mark mb-8">P</span>
+        <p className="text-xs font-semibold uppercase tracking-widest text-primary">Satu akun. Semua momen.</p>
+        <h1 className="mt-3 text-4xl font-semibold tracking-tight">Selamat datang<br />di PassFlow.</h1>
+        <p className="mt-4 text-sm leading-6 text-muted-foreground">Masuk dengan email yang sudah terdaftar untuk melanjutkan perjalanan event kamu.</p>
+        {message && <p role="alert" className="mt-6 rounded-md border border-destructive/30 p-3 text-sm text-destructive">{message}</p>}
+        {params.notice === "signed-out" && <p role="status" className="mt-6 text-sm text-success">Kamu sudah keluar dari perangkat ini.</p>}
+        {params.notice === "reset-sent" && <p role="status" className="mt-6 rounded-md bg-muted p-3 text-sm">Jika email terdaftar, tautan reset password sudah dikirim.</p>}
+        {!ready && <p role="status" className="mt-6 rounded-md bg-muted p-3 text-sm text-muted-foreground">Login sedang disiapkan. Halaman event tetap bisa kamu jelajahi.</p>}
+        <form action={signInWithEmail} className="mt-7 space-y-3"><input type="hidden" name="next" value={next}/><label className="flex items-center gap-2 rounded-md border border-border px-3"><Mail size={16} className="text-muted-foreground"/><span className="sr-only">Email</span><input required name="email" type="email" autoComplete="email" placeholder="email@contoh.com" className="min-h-11 w-full bg-transparent text-sm outline-none"/></label><label className="flex items-center gap-2 rounded-md border border-border px-3"><KeyRound size={16} className="text-muted-foreground"/><span className="sr-only">Password</span><input required name="password" type="password" minLength={8} autoComplete="current-password" placeholder="Password minimal 8 karakter" className="min-h-11 w-full bg-transparent text-sm outline-none"/></label><AuthSubmit disabled={!ready}>Masuk dengan email</AuthSubmit></form>
+        <p className="mt-4 text-center text-xs leading-5 text-muted-foreground"><Link href="/register" className="font-semibold text-primary">Buat akun</Link><span> · </span><Link href="/reset-password" className="underline">Lupa password?</Link></p>
+      </section>
+      <p className="mt-6 flex items-start gap-3 text-xs leading-5 text-muted-foreground"><ScanLine size={18} className="shrink-0" /> Akun PassFlow dan pendaftaran event berbeda. Hak akses event mengikuti pass yang terdaftar untukmu.</p>
+    </div>
+  </main>;
 }

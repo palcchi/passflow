@@ -3,7 +3,7 @@ import { safeNext } from "@/lib/auth/redirect";
 import { getSupabaseConfig } from "@/lib/supabase/config";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 function go(path: string) {
-  // Relative Location: never trust host/forwarded-host headers for OAuth redirects.
+  // Relative Location: never trust host/forwarded-host headers for email authentication redirects.
   return new NextResponse(null, { status: 303, headers: { Location: path, "Cache-Control": "private, no-store" } });
 }
 export async function GET(request: NextRequest) {

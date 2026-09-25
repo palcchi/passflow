@@ -1,18 +1,20 @@
-import { requireOrganizerMembership } from "@/lib/auth/session";
+import { requireOrganizer } from "@/lib/auth/session";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { EventThemeEditor } from "@/components/event-theme-editor";
-import { getEventById } from "@/lib/events";
+import { getPublishedEventById } from "@/lib/events";
 
 type AppearancePageProps = {
   params: Promise<{ eventId: string }>;
 };
 
-export default async function EventAppearancePage({ params }: AppearancePageProps) {
+export default async function EventAppearancePage({
+  params,
+}: AppearancePageProps) {
   const { eventId } = await params;
-  await requireOrganizerMembership(`/admin/events/${eventId}/appearance`);
-  const event = await getEventById(eventId);
+  await requireOrganizer(`/admin/events/${eventId}/appearance`);
+  const event = await getPublishedEventById(eventId);
 
   if (!event) notFound();
 
@@ -20,14 +22,22 @@ export default async function EventAppearancePage({ params }: AppearancePageProp
     <main className="editor-page">
       <header className="editor-header">
         <div>
-          <Link href={`/admin/events/${event.id}`} className="back-link"><ArrowLeft size={16} /> Back to event</Link>
+          <Link href="/admin" className="back-link">
+            <ArrowLeft size={16} />
+            Back to dashboard
+          </Link>
           <span className="section-kicker">Event appearance</span>
           <h1>Customize {event.name}</h1>
-          <p>Theme dan asset disimpan ke Supabase dan langsung dipakai halaman publik event.</p>
+          <p>
+            Tema ini akan dipakai pada halaman publik event dan dapat berbeda untuk setiap event.
+          </p>
         </div>
-        <Link href={`/e/${event.slug}`} className="button button-dark">View public page</Link>
+        <Link href={`/e/${event.slug}`} className="button button-dark">
+          View public page
+        </Link>
       </header>
       <EventThemeEditor event={event} />
     </main>
   );
 }
+

@@ -4,7 +4,7 @@
 
 PassFlow adalah platform **multi-event berbasis web** untuk mengelola event, attendee, Claim-Based QR Wristband, Digital Event Pass, access control, activity tracking, merchandise claim, dan monitoring melalui QR Scanner Station.
 
-Project ini dibuat untuk mata kuliah **Manajemen Proyek Teknologi Informasi, Kelompok 7**.
+PassFlow adalah platform event untuk organizer yang mengelola akses, peserta, dan aktivitas secara terpusat.
 
 ---
 
@@ -25,8 +25,8 @@ PassFlow bukan website untuk satu event saja. Satu deployment dapat memiliki ban
 Contoh:
 
 ```text
-passflow.vercel.app/e/discoveries-2026
-passflow.vercel.app/e/night-shift-sessions
+passflow.vercel.app/e/adorne-nails-exhibition
+passflow.vercel.app/e/adorne-nails-workshop
 passflow.vercel.app/e/festival-of-ideas
 ```
 
@@ -148,15 +148,15 @@ Keduanya merupakan **satu credential yang sama dalam dua media**, bukan dua iden
 - [x] Environment variable template
 - [x] Git ignore untuk secrets
 
-### Masih mock / belum production-ready
+### Tahap implementasi
 
-- [ ] Supabase project belum diprovision
-- [ ] Database migration belum dijalankan ke production Supabase
-- [ ] Email + password authentication: kode sudah tersedia; Supabase email verification dan uji akun nyata belum diaktifkan
+- [x] Supabase project sudah terhubung
+- [x] Database migration dan RLS sudah dijalankan ke Supabase
+- [x] Email/password authentication, verifikasi email, reset password, dan logout
 - [ ] Dashboard masih menggunakan demo data
 - [ ] Event page masih menggunakan demo data
-- [ ] Claim belum menulis ke database
-- [ ] Scanner belum melakukan server validation
+- [x] Registrasi event dan claim QR menulis ke database melalui RPC
+- [x] Scanner melakukan validasi server dan mencatat hasil
 - [ ] Event theme belum tersimpan ke database
 - [ ] Image upload belum tersimpan ke Storage
 - [ ] Access rules belum benar-benar dieksekusi
@@ -184,7 +184,7 @@ Halaman publik event.
 Contoh:
 
 ```text
-/e/discoveries-2026
+/e/adorne-nails-exhibition
 ```
 
 ```text
@@ -209,7 +209,7 @@ Dashboard utama organizer.
 
 Custom event theme.
 
-Target berikutnya:
+Ruang pengembangan berikutnya:
 
 ```text
 /admin/events
@@ -618,7 +618,7 @@ Status: **COMPLETE** (build + Chromium responsive baseline verified)
 
 ## Phase 2, Authentication & Roles
 
-Status: **IMPLEMENTED, SUPABASE EMAIL SETUP PENDING**. Panduan: [Email + Password Auth setup](docs/EMAIL_PASSWORD_AUTH_SETUP.md).
+Status: **IMPLEMENTED, EXTERNAL SETUP PENDING**. Panduan: [email Auth setup](docs/EMAIL_AUTH_SETUP.md).
 
 Roles:
 
@@ -630,22 +630,19 @@ VISITOR
 
 Tasks:
 
-- [x] Register dengan nama, email, password, dan confirm password
-- [x] Email verification flow melalui token-hash confirmation route
-- [x] Login dengan email + password
-- [x] Forgot password + reset password flow
-- [x] Sign out perangkat saat ini
+- [x] email sign in / automatic account registration (kode)
+- [x] Sign out perangkat saat ini (kode)
 - [x] Organizer protected routes
 - [x] Staff station membership guard
 - [x] Visitor account page
 - [ ] Visitor event pass terhubung database
-- [x] Session cookie + proxy refresh
+- [x] Session cookie + proxy refresh (kode)
 - [x] Unauthorized state
 - [x] Route protection
-- [ ] Konfigurasi Email provider + templates pada Supabase
-- [ ] Uji register, verifikasi email, login, dan reset password end-to-end dengan akun nyata
+- [ ] Konfigurasi email provider pada Supabase
+- [ ] Uji email authentication end-to-end dengan akun email nyata
 
-**Definition of Done:** user hanya dapat mengakses fungsi sesuai role dan akun baru harus memverifikasi email sebelum login.
+**Definition of Done:** user hanya dapat mengakses fungsi sesuai role.
 
 ---
 
@@ -1076,13 +1073,13 @@ Workflow GitHub Actions juga memeriksa route responsive memakai Chromium.
 Next priority:
 1. provision Supabase,
 2. run migration + RLS,
-3. configure email/password auth + verification templates using docs/EMAIL_PASSWORD_AUTH_SETUP.md,
-4. test register, email verification, login, forgot password, dan reset password,
-5. replace mock data,
-6. implement real QR claim,
-7. implement scanner validation,
-8. storage upload,
-9. analytics + real-device Safari verification,
+3. activate and verify email email authentication using docs/EMAIL_AUTH_SETUP.md,
+4. replace mock data,
+5. implement real QR claim,
+6. implement scanner validation,
+7. storage upload,
+8. analytics,
+9. real-device camera + Safari verification,
 10. Vercel production deployment.
 
 Design:
@@ -1112,33 +1109,18 @@ Mobile/iPad support wajib.
 
 ## Authentication continuation, 25 September 2026
 
-- Google OAuth dibatalkan untuk MVP. PassFlow sekarang memakai email + password melalui Supabase Auth.
-- `/register` memiliki nama lengkap, email, password, dan confirm password. Akun baru tetap visitor.
-- Email confirmation memakai `/auth/confirm` dengan token hash. Login berikutnya memakai email + password.
-- `/forgot-password` dan `/reset-password` sudah tersedia untuk recovery.
+- Login/register disatukan pada `/login`; `/register` meneruskan ke flow yang sama.
 - `/account` menampilkan user terverifikasi. Role organizer/staff hanya berasal dari `organization_members`, bukan metadata user.
-- `lib/supabase/server.ts` menggunakan client SSR berbasis cookie dengan public key dan RLS, bukan service-role client.
-- `proxy.ts` refresh session; halaman privat memakai `getUser()`, validasi membership, dan response no-store. Redirect auth hanya mengizinkan tujuan internal yang dikenal.
+- `lib/supabase/server.ts` sekarang client SSR berbasis cookie dengan public key dan RLS, bukan service-role client.
+- `proxy.ts` refresh session; halaman privat memakai `getUser()`, validasi membership, dan response no-store. Callback hanya mengizinkan tujuan internal yang dikenal.
 - Migration `0002_auth_read_policies.sql` menambahkan read policies. Membership tidak dapat ditulis pengguna melalui browser. Writes operasional lainnya masih tertutup.
 - Halaman claim/scanner yang dilindungi tidak lagi menampilkan sukses simulasi. Backend transaksi QR belum diimplementasikan.
-- Supabase project + email templates masih perlu diaktifkan sebelum auth nyata dapat diuji. Ikuti [panduan setup](docs/EMAIL_PASSWORD_AUTH_SETUP.md), termasuk pembuatan owner pertama via SQL tepercaya.
-- CI mencakup route protection, redirect validation, input validation, responsive auth pages, dan PostgreSQL RLS antar organisasi.
+- Konfigurasi Supabase/email belum tersedia di environment ini. email login sungguhan belum diuji atau diaktifkan. Ikuti [panduan setup](docs/EMAIL_AUTH_SETUP.md), termasuk pembuatan owner pertama via SQL tepercaya.
+- CI diperbarui untuk anonymous route protection, callback failures, redirect validation, dan pengujian PostgreSQL RLS antar organisasi. Checklist implementasi bukan klaim bahwa email authentication production sudah aktif.
 
 ---
 
-## 18. Team
-
-**Kelompok 7**  
-Mata Kuliah: **Manajemen Proyek Teknologi Informasi**
-
-- Vallian Tito Aprilio, 240103051
-- Fadilllah Ardi Maisandy, 240103046
-- Winda Lestari Gea, 240103059
-- Reggy Pratama Sinulingga, 240103061
-
----
-
-## 19. Documentation References
+## Documentation References
 
 - Next.js: https://nextjs.org/docs
 - Supabase: https://supabase.com/docs

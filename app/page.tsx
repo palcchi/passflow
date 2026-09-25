@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { BlurFade } from "@/components/magicui/blur-fade";
+import { MagicCard } from "@/components/magicui/magic-card";
 import Link from "next/link";
 import {
   ArrowUpRight,
@@ -37,7 +38,7 @@ export default function HomePage() {
           <span>PassFlow</span>
         </Link>
         <div className="topbar-actions">
-          <Link href="/e/discoveries-2026" className="text-link">
+          <Link href="/e/adorne-nails-exhibition" className="text-link">
             Event demo
           </Link>
           <Link href="/login" className="button button-dark">
@@ -64,7 +65,7 @@ export default function HomePage() {
             web app.
           </p>
           <div className="hero-actions">
-            <Button asChild size="lg"><Link href="/admin">
+            <Button asChild size="lg"><Link href="/login">
               Start from dashboard
               <ArrowUpRight size={17} />
             </Link></Button>
@@ -78,7 +79,7 @@ export default function HomePage() {
           <div className="visual-orbit visual-orbit-one" />
           <div className="visual-orbit visual-orbit-two" />
           <div className="pass-card pass-card-back">
-            <span>DISCOVERIES 2026</span>
+            <span>ADORNE NAILS EXHIBITION</span>
             <strong>VIP</strong>
           </div>
           <div className="pass-card pass-card-front">
@@ -93,7 +94,7 @@ export default function HomePage() {
             </div>
             <div className="pass-owner">
               <span>CLAIMED TO</span>
-              <strong>VALLIAN TITO</strong>
+              <strong>VALLIAN</strong>
               <small>WR-0192 · VIP ACCESS</small>
             </div>
           </div>
@@ -102,13 +103,13 @@ export default function HomePage() {
 
       <section className="feature-grid">
         {features.map(({ icon: Icon, title, copy }) => (
-          <article className="feature-card" key={title}>
+          <MagicCard className="feature-card" key={title}>
             <div className="feature-icon">
               <Icon size={20} />
             </div>
             <h2>{title}</h2>
             <p>{copy}</p>
-          </article>
+          </MagicCard>
         ))}
       </section>
 
@@ -133,9 +134,9 @@ export default function HomePage() {
       </section>
 
       <footer className="site-footer">
-        <span>PassFlow · Kelompok 7</span>
+        <span>PassFlow · PassFlow workspace</span>
         <span className="footer-note">
-          <CalendarDays size={14} /> Manajemen Proyek Teknologi Informasi
+          <CalendarDays size={14} /> Event access platform
         </span>
       </footer>
     </main>
