@@ -372,9 +372,7 @@ export async function uploadEventAsset(formData: FormData) {
   });
 
   const column = assetType === "logo" ? "logo_url" : assetType === "hero" ? "hero_image_url" : "poster_url";
-  const { data } = await supabase
-    .from("events")
-    .update({ [column]: publicUrl, updated_at: new Date().toISOString() })
+  const updatePayload: { logo_url?: string; hero_image_url?: string; poster_url?: string; updated_at: string } = { updated_at: new Date().toISOString() };\n  updatePayload[column] = publicUrl;\n  const { data } = await supabase\n    .from("events")\n    .update(updatePayload)
     .eq("id", eventId)
     .select("slug")
     .single();
