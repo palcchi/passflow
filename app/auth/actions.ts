@@ -80,7 +80,7 @@ export async function signUpWithPassword(formData: FormData) {
       password,
       options: {
         data: { full_name: fullNameValue.trim() },
-        emailRedirectTo: `${origin}/auth/callback?next=${encodeURIComponent(next)}`,
+        emailRedirectTo: origin,
       },
     });
 
@@ -111,7 +111,7 @@ export async function requestPasswordReset(formData: FormData) {
   try {
     const supabase = await createServerSupabaseClient();
     await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${origin}/auth/callback?next=${encodeURIComponent("/reset-password")}`,
+      redirectTo: origin,
     });
   } catch {
     // Always return the same user-facing state to avoid leaking account existence.
