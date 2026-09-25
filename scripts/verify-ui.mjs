@@ -13,11 +13,12 @@ try {
     for (const route of routes) {
       const response = await page.goto(`http://127.0.0.1:3000${route}`);
       assert.equal(response.status(), 200, `${width}px ${route} status`);
-      await page.locator("h1").waitFor();
+      await page.locator("main").waitFor();
       const overflow = await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1);
-      assert.equal(overflow, false, `${width}px ${route} horizontal overflow`);
+      if (overflow) console.log(await page.evaluate(() => [...document.querySelectorAll("main *")].filter((el) => el.getBoundingClientRect().right > innerWidth + 1).map((el) => ({ tag: el.tagName, className: String(el.className), right: el.getBoundingClientRect().right })).slice(0, 15)));
       if (route === "/admin") assert.equal(await page.locator(".stat-card strong").nth(1).innerText(), "688");
       await page.screenshot({ path: `verification/${width}-${route.replaceAll("/", "_") || "home"}.png`, fullPage: true });
+      assert.equal(overflow, false, `${width}px ${route} horizontal overflow`);
       console.log(`PASS ${width}px ${route}`);
     }
     assert.deepEqual(errors, [], `${width}px browser errors`);
