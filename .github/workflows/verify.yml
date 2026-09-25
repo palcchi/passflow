@@ -1,0 +1,68 @@
+name: Verify PassFlow
+
+on:
+  push:
+    branches: [main, "codex/**"]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci --no-audit --no-fund
+      - run: npm run lint
+      - run: node --experimental-strip-types --test scripts/auth-unit.test.mjs
+      - run: npm run typecheck
+      - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - name: Verify responsive routes
+        run: |
+          npm run start > /tmp/passflow-server.log 2>&1 &
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:3000 > /dev/null; then break; fi
+            sleep 1
+          done
+          node scripts/verify-ui.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: foundation-verification
+          path: |
+            verification/
+            package-lock.json
+
+  auth-rls:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: ci-only-password
+          POSTGRES_DB: passflow_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGHOST: localhost
+      PGUSER: postgres
+      PGPASSWORD: ci-only-password
+      PGDATABASE: passflow_test
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          psql -v ON_ERROR_STOP=1 -f supabase/tests/bootstrap.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/0001_initial_schema.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/0002_auth_read_policies.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/tests/auth-rls.sql

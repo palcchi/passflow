@@ -21,7 +21,7 @@ export function ClaimPass({ eventName }: ClaimPassProps) {
 
       <div className="claim-identity">
         <span>ATTENDEE</span>
-        <h2>Vallian Tito Aprilio</h2>
+        <h2>Vallian</h2>
         <p>VIP Pass · ATT-0248</p>
       </div>
 
@@ -60,3 +60,4 @@ export function ClaimPass({ eventName }: ClaimPassProps) {
     </div>
   );
 }
+

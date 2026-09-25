@@ -1,0 +1,75 @@
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--foreground);
+  --color-popover: var(--card);
+  --color-popover-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent-soft);
+  --color-accent-foreground: var(--foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--border);
+  --color-ring: var(--ring);
+  --color-success: var(--success);
+  --radius-sm: calc(var(--radius) * 0.75);
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) * 1.5);
+  --font-sans: "Geist", "Geist Fallback", Arial, sans-serif;
+  --font-mono: "Geist Mono", "Geist Mono Fallback", monospace;
+}
+
+@layer base {
+  :root {
+    --background: #f5f5f2;
+    --foreground: #151515;
+    --card: #ffffff;
+    --primary: #7448ff;
+    --primary-foreground: #ffffff;
+    --secondary: #151515;
+    --secondary-foreground: #ffffff;
+    --muted: #ecece8;
+    --muted-foreground: #696969;
+    --accent-soft: #eee8ff;
+    --border: #e7e7e5;
+    --ring: #7448ff;
+    --destructive: #b42318;
+    --success: #187343;
+    --radius: 0.8125rem;
+  }
+
+  /* Future shared components inherit the event identity, including focus rings. */
+  .event-public-shell {
+    --background: var(--event-bg);
+    --foreground: var(--event-fg);
+    --card: var(--event-surface);
+    --primary: var(--event-primary);
+    --ring: var(--event-primary);
+    --secondary: var(--event-secondary);
+    --accent-soft: color-mix(in srgb, var(--event-primary) 15%, var(--event-bg));
+  }
+
+  h1, h2, h3, h4, h5, h6 { font-weight: 700; }
+
+  :focus-visible {
+    outline: 3px solid var(--ring);
+    outline-offset: 4px;
+  }
+
+  button:disabled { cursor: not-allowed; }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}

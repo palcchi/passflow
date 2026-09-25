@@ -1,3 +1,6 @@
+import { requireOrganizer } from "@/lib/auth/session";
+import { NumberTicker } from "@/components/magicui/number-ticker";
+import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -8,7 +11,7 @@ import {
   TicketCheck,
   UsersRound,
 } from "lucide-react";
-import { demoEvents } from "@/lib/events";
+import { getPublishedEvents } from "@/lib/events";
 
 const statCards = [
   { label: "Total events", value: "2", icon: CalendarRange },
@@ -17,7 +20,9 @@ const statCards = [
   { label: "QR active", value: "371", icon: QrCode },
 ];
 
-export default function AdminDashboardPage() {
+export default async function AdminDashboardPage() {
+  await requireOrganizer();
+  const events = await getPublishedEvents();
   return (
     <main className="dashboard-shell">
       <aside className="sidebar">
@@ -26,6 +31,7 @@ export default function AdminDashboardPage() {
           <span>PassFlow</span>
         </Link>
         <div className="sidebar-section">
+          <Link href="/account" className="sidebar-link">Akun saya</Link>
           <span className="sidebar-label">Workspace</span>
           <Link href="/admin" className="sidebar-link active">
             Overview
@@ -40,7 +46,7 @@ export default function AdminDashboardPage() {
         <div className="sidebar-footer">
           <span className="avatar">K7</span>
           <div>
-            <strong>Kelompok 7</strong>
+            <strong>PassFlow workspace</strong>
             <small>Project workspace</small>
           </div>
         </div>
@@ -50,13 +56,13 @@ export default function AdminDashboardPage() {
         <header className="dashboard-header">
           <div>
             <span className="section-kicker">Workspace overview</span>
-            <h1>Good afternoon, team.</h1>
-            <p>Monitor semua event dari satu tempat.</p>
+            <h1>Good afternoon, organizer.</h1>
+            <p>Monitor semua event dari satu tempat. Data event dan check-in terbaru dari workspace.</p>
           </div>
-          <button className="button button-dark" type="button">
+          <Button variant="secondary" type="button" disabled title="Event management tersedia pada Phase 3">
             <CirclePlus size={17} />
             New event
-          </button>
+          </Button>
         </header>
 
         <div className="stat-grid">
@@ -66,7 +72,7 @@ export default function AdminDashboardPage() {
                 <Icon size={19} />
               </div>
               <span>{label}</span>
-              <strong>{value}</strong>
+              <strong><NumberTicker value={Number(value)} /></strong>
             </article>
           ))}
         </div>
@@ -77,11 +83,11 @@ export default function AdminDashboardPage() {
               <span className="section-kicker">Events</span>
               <h2>Active workspace</h2>
             </div>
-            <span className="soft-badge">{demoEvents.length} events</span>
+            <span className="soft-badge">{events.length} events</span>
           </div>
 
           <div className="event-list">
-            {demoEvents.map((event) => {
+            {events.map((event) => {
               const percentage = Math.round(
                 (event.checkedInCount / event.attendeeCount) * 100
               );
@@ -167,3 +173,4 @@ export default function AdminDashboardPage() {
     </main>
   );
 }
+

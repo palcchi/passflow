@@ -8,7 +8,7 @@ import {
   QrCode,
   ShieldCheck,
 } from "lucide-react";
-import { getEventBySlug } from "@/lib/events";
+import { getPublishedEvent } from "@/lib/events";
 
 type EventPageProps = {
   params: Promise<{ slug: string }>;
@@ -16,7 +16,7 @@ type EventPageProps = {
 
 export default async function PublicEventPage({ params }: EventPageProps) {
   const { slug } = await params;
-  const event = getEventBySlug(slug);
+  const event = await getPublishedEvent(slug);
 
   if (!event) notFound();
 
@@ -97,3 +97,4 @@ export default async function PublicEventPage({ params }: EventPageProps) {
     </main>
   );
 }
+

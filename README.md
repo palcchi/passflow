@@ -4,7 +4,7 @@
 
 PassFlow adalah platform **multi-event berbasis web** untuk mengelola event, attendee, Claim-Based QR Wristband, Digital Event Pass, access control, activity tracking, merchandise claim, dan monitoring melalui QR Scanner Station.
 
-Project ini dibuat untuk mata kuliah **Manajemen Proyek Teknologi Informasi, Kelompok 7**.
+PassFlow adalah platform event untuk organizer yang mengelola akses, peserta, dan aktivitas secara terpusat.
 
 ---
 
@@ -25,8 +25,8 @@ PassFlow bukan website untuk satu event saja. Satu deployment dapat memiliki ban
 Contoh:
 
 ```text
-passflow.vercel.app/e/discoveries-2026
-passflow.vercel.app/e/night-shift-sessions
+passflow.vercel.app/e/adorne-nails-exhibition
+passflow.vercel.app/e/adorne-nails-workshop
 passflow.vercel.app/e/festival-of-ideas
 ```
 
@@ -148,15 +148,15 @@ Keduanya merupakan **satu credential yang sama dalam dua media**, bukan dua iden
 - [x] Environment variable template
 - [x] Git ignore untuk secrets
 
-### Masih mock / belum production-ready
+### Tahap implementasi
 
-- [ ] Supabase project belum diprovision
-- [ ] Database migration belum dijalankan ke production Supabase
-- [ ] Authentication belum aktif
+- [x] Supabase project sudah terhubung
+- [x] Database migration dan RLS sudah dijalankan ke Supabase
+- [x] Email/password authentication, verifikasi email, reset password, dan logout
 - [ ] Dashboard masih menggunakan demo data
 - [ ] Event page masih menggunakan demo data
-- [ ] Claim belum menulis ke database
-- [ ] Scanner belum melakukan server validation
+- [x] Registrasi event dan claim QR menulis ke database melalui RPC
+- [x] Scanner melakukan validasi server dan mencatat hasil
 - [ ] Event theme belum tersimpan ke database
 - [ ] Image upload belum tersimpan ke Storage
 - [ ] Access rules belum benar-benar dieksekusi
@@ -184,7 +184,7 @@ Halaman publik event.
 Contoh:
 
 ```text
-/e/discoveries-2026
+/e/adorne-nails-exhibition
 ```
 
 ```text
@@ -209,7 +209,7 @@ Dashboard utama organizer.
 
 Custom event theme.
 
-Target berikutnya:
+Ruang pengembangan berikutnya:
 
 ```text
 /admin/events
@@ -581,7 +581,7 @@ Magic UI dipakai sebagai **micro-interaction dan visual enhancement**, bukan seb
 
 ## Phase 0, Foundation
 
-Status: **IN PROGRESS**
+Status: **COMPLETE** (build + Chromium responsive baseline verified)
 
 - [x] Buat repository
 - [x] Setup Next.js + TypeScript
@@ -592,9 +592,9 @@ Status: **IN PROGRESS**
 - [x] Buat scanner prototype
 - [x] Buat claim prototype
 - [x] Buat database schema awal
-- [ ] Install dan konfigurasi Tailwind + shadcn
-- [ ] Integrasikan Magic UI foundation
-- [ ] Buat design tokens PassFlow
+- [x] Konfigurasi Tailwind CSS v4 + shadcn (Button, cn, registry)
+- [x] Integrasikan Magic UI foundation (Blur Fade + Number Ticker)
+- [x] Buat design tokens PassFlow
 
 **Definition of Done:** app build tanpa error, semua prototype route dapat dibuka, responsive basic selesai.
 
@@ -618,6 +618,8 @@ Status: **IN PROGRESS**
 
 ## Phase 2, Authentication & Roles
 
+Status: **IMPLEMENTED, EXTERNAL SETUP PENDING**. Panduan: [email Auth setup](docs/EMAIL_AUTH_SETUP.md).
+
 Roles:
 
 ```text
@@ -628,14 +630,17 @@ VISITOR
 
 Tasks:
 
-- [ ] Sign in
-- [ ] Sign out
-- [ ] Organizer protected routes
-- [ ] Staff permissions
-- [ ] Visitor account/pass
-- [ ] Session persistence
-- [ ] Unauthorized state
-- [ ] Route protection
+- [x] email sign in / automatic account registration (kode)
+- [x] Sign out perangkat saat ini (kode)
+- [x] Organizer protected routes
+- [x] Staff station membership guard
+- [x] Visitor account page
+- [ ] Visitor event pass terhubung database
+- [x] Session cookie + proxy refresh (kode)
+- [x] Unauthorized state
+- [x] Route protection
+- [ ] Konfigurasi email provider pada Supabase
+- [ ] Uji email authentication end-to-end dengan akun email nyata
 
 **Definition of Done:** user hanya dapat mengakses fungsi sesuai role.
 
@@ -1059,17 +1064,22 @@ Current status:
 Frontend prototype, admin dashboard, dynamic event page, claim prototype,
 scanner camera prototype, appearance editor, Supabase client scaffold,
 dan initial database migration sudah ada.
+Tailwind v4/PostCSS, shadcn Button, semantic design tokens, Magic UI Blur Fade
+dan Number Ticker sudah diintegrasikan. Reduced-motion dan SSR fallback tersedia.
+Build lokal terhalang akses npm; install, lint, typecheck, dan production build
+sudah lolos GitHub Actions. 35 route/viewport checks juga lolos pada 873b2eb.
+Workflow GitHub Actions juga memeriksa route responsive memakai Chromium.
 
 Next priority:
-1. setup Tailwind/shadcn/Magic UI foundation,
-2. provision Supabase,
-3. run migration + RLS,
-4. auth,
-5. replace mock data,
-6. implement real QR claim,
-7. implement scanner validation,
-8. storage upload,
-9. analytics,
+1. provision Supabase,
+2. run migration + RLS,
+3. activate and verify email email authentication using docs/EMAIL_AUTH_SETUP.md,
+4. replace mock data,
+5. implement real QR claim,
+6. implement scanner validation,
+7. storage upload,
+8. analytics,
+9. real-device camera + Safari verification,
 10. Vercel production deployment.
 
 Design:
@@ -1083,22 +1093,38 @@ Mobile/iPad support wajib.
 
 ---
 
-## 18. Team
+## Foundation continuation, 25 September 2026
 
-**Kelompok 7**  
-Mata Kuliah: **Manajemen Proyek Teknologi Informasi**
-
-- Vallian Tito Aprilio, 240103051
-- Fadilllah Ardi Maisandy, 240103046
-- Winda Lestari Gea, 240103059
-- Reggy Pratama Sinulingga, 240103061
+- Tailwind v4 menggunakan `postcss.config.mjs`; shadcn menggunakan `components.json`.
+- Token berada di `app/tokens.css`. CSS prototype berada dalam `@layer components` agar utility Tailwind tetap dapat mengoverride style.
+- Button diambil dari source resmi shadcn dan disesuaikan untuk target sentuh minimum 44px. Blur Fade dan Number Ticker diadaptasi dari Magic UI; lisensi tersimpan di `THIRD_PARTY_NOTICES.md`.
+- Landing memakai Blur Fade dan Button. Dashboard memakai Number Ticker, label data demo, dan tombol New event nonaktif sampai Phase 3.
+- Scanner tetap memakai UI operasional yang ada. Claim, scanner validation, appearance save, dan dashboard data masih prototype.
+- Phase 0 selesai: production build dan baseline responsive Chromium terverifikasi. Full UI polish masih Phase 11.
+- Validasi: `npm ci`, lint, typecheck, production build, dan 35 kombinasi route/viewport lolos pada commit `873b2eb` ([CI run](https://github.com/palcchi/passflow/actions/runs/36130913217)). Screenshot landing, dashboard, kedua tema event, claim, dan editor sudah diperiksa. Tidak terdeteksi horizontal overflow maupun page error pada 320, 375, 430, 820, dan 1440px. Perangkat iPhone/iPad dan kamera nyata tetap perlu uji manual.
+- `package-lock.json` berasal dari install CI yang berhasil, sudah disimpan di repo, dan CI menggunakan `npm ci`. Gunakan `npm ci` untuk setup yang konsisten.
+- Berikutnya: provision Supabase, lalu migration/RLS dan auth. Jangan aktifkan claim/scanner production sebelum validasi server siap.
 
 ---
 
-## 19. Documentation References
+## Authentication continuation, 25 September 2026
+
+- Login/register disatukan pada `/login`; `/register` meneruskan ke flow yang sama.
+- `/account` menampilkan user terverifikasi. Role organizer/staff hanya berasal dari `organization_members`, bukan metadata user.
+- `lib/supabase/server.ts` sekarang client SSR berbasis cookie dengan public key dan RLS, bukan service-role client.
+- `proxy.ts` refresh session; halaman privat memakai `getUser()`, validasi membership, dan response no-store. Callback hanya mengizinkan tujuan internal yang dikenal.
+- Migration `0002_auth_read_policies.sql` menambahkan read policies. Membership tidak dapat ditulis pengguna melalui browser. Writes operasional lainnya masih tertutup.
+- Halaman claim/scanner yang dilindungi tidak lagi menampilkan sukses simulasi. Backend transaksi QR belum diimplementasikan.
+- Konfigurasi Supabase/email belum tersedia di environment ini. email login sungguhan belum diuji atau diaktifkan. Ikuti [panduan setup](docs/EMAIL_AUTH_SETUP.md), termasuk pembuatan owner pertama via SQL tepercaya.
+- CI diperbarui untuk anonymous route protection, callback failures, redirect validation, dan pengujian PostgreSQL RLS antar organisasi. Checklist implementasi bukan klaim bahwa email authentication production sudah aktif.
+
+---
+
+## Documentation References
 
 - Next.js: https://nextjs.org/docs
 - Supabase: https://supabase.com/docs
 - Vercel: https://vercel.com/docs
 - Magic UI: https://magicui.design/docs
 - shadcn/ui: https://ui.shadcn.com
+

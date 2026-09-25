@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import { requireStation } from "@/lib/auth/session";
 import { QrScanner } from "@/components/qr-scanner";
 
 type ScannerPageProps = {
@@ -8,6 +9,8 @@ type ScannerPageProps = {
 
 export default async function ScannerPage({ params }: ScannerPageProps) {
   const { stationId } = await params;
+
+  const { station } = await requireStation(stationId);
 
   return (
     <main className="scanner-page">
@@ -22,3 +25,4 @@ export default async function ScannerPage({ params }: ScannerPageProps) {
     </main>
   );
 }
+
