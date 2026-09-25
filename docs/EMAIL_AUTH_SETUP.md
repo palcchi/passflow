@@ -9,15 +9,15 @@ Set di Vercel dan `.env.local`:
 ```dotenv
 NEXT_PUBLIC_SUPABASE_URL=https://PROJECT_REF.supabase.co
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=YOUR_PUBLISHABLE_KEY
-NEXT_PUBLIC_APP_URL=https://YOUR_PASSFLOW_DOMAIN
+NEXT_PUBLIC_APP_URL=https://passflow.my.id
 ```
 
 Untuk lokal, gunakan `NEXT_PUBLIC_APP_URL=http://localhost:3000`. Pastikan Site URL Supabase memakai domain production dan Redirect URLs mengizinkan:
 
 ```text
-https://YOUR_PASSFLOW_DOMAIN/auth/callback
-https://YOUR_PASSFLOW_DOMAIN/auth/callback?next=*
-https://YOUR_PASSFLOW_DOMAIN/auth/reset
+https://passflow.my.id/auth/callback
+https://passflow.my.id/auth/callback?next=*
+https://passflow.my.id/auth/reset
 http://localhost:3000/auth/callback
 http://localhost:3000/auth/callback?next=*
 http://localhost:3000/auth/reset
