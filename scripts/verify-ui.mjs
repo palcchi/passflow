@@ -19,6 +19,7 @@ try {
       if (overflow) console.log(await page.evaluate(() => [...document.querySelectorAll("main *")].filter((el) => el.getBoundingClientRect().right > innerWidth + 1).map((el) => ({ tag: el.tagName, className: String(el.className), right: el.getBoundingClientRect().right })).slice(0, 15)));
       if (route === "/admin" || route === "/account" || route.includes("/claim") || route.includes("/appearance") || route.startsWith("/scan/")) {
         assert.equal(new URL(page.url()).pathname, "/login", `Anonymous access must redirect: ${route}`);
+        assert.equal(new URL(page.url()).searchParams.get("next"), route);
         assert.equal(await page.getByRole("button", { name: "Lanjutkan dengan Google" }).isDisabled(), true);
       }
       await page.screenshot({ path: `verification/${width}-${route.replaceAll("/", "_") || "home"}.png`, fullPage: true });

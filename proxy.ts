@@ -3,7 +3,12 @@ import { NextResponse, type NextRequest } from "next/server";
 import { getSupabaseConfig } from "@/lib/supabase/config";
 
 export async function proxy(request: NextRequest) {
-  let response = NextResponse.next({ request });
+  function nextResponse() {
+    const headers = new Headers(request.headers);
+    headers.set("x-passflow-path", request.nextUrl.pathname);
+    return NextResponse.next({ request: { headers } });
+  }
+  let response = nextResponse();
   const config = getSupabaseConfig();
   if (config) {
     const supabase = createServerClient(config.url, config.key, {
@@ -11,7 +16,7 @@ export async function proxy(request: NextRequest) {
         getAll: () => request.cookies.getAll(),
         setAll(cookiesToSet) {
           cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
-          response = NextResponse.next({ request });
+          response = nextResponse();
           cookiesToSet.forEach(({ name, value, options }) => response.cookies.set(name, value, options));
         },
       },
