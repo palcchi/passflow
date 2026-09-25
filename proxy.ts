@@ -8,8 +8,10 @@ export async function proxy(request: NextRequest) {
     headers.set("x-passflow-path", request.nextUrl.pathname);
     return NextResponse.next({ request: { headers } });
   }
+
   let response = nextResponse();
   const config = getSupabaseConfig();
+
   if (config) {
     const supabase = createServerClient(config.url, config.key, {
       cookies: {
@@ -21,14 +23,30 @@ export async function proxy(request: NextRequest) {
         },
       },
     });
-    try { await supabase.auth.getUser(); } catch {
+
+    try {
+      await supabase.auth.getUser();
+    } catch {
       // Server page/action guards validate again and deny access on auth failure.
     }
   }
+
   response.headers.set("Cache-Control", "private, no-store, max-age=0");
   response.headers.set("Pragma", "no-cache");
   return response;
 }
+
 export const config = {
-  matcher: ["/admin/:path*", "/account", "/login", "/register", "/auth/:path*", "/scan/:path*", "/e/:slug/claim", "/unauthorized"],
+  matcher: [
+    "/admin/:path*",
+    "/account",
+    "/login",
+    "/register",
+    "/forgot-password",
+    "/reset-password",
+    "/auth/:path*",
+    "/scan/:path*",
+    "/e/:slug/claim",
+    "/unauthorized",
+  ],
 };
