@@ -745,6 +745,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      delete_event_person_record: {
+        Args: { p_event_id: string; p_id: string; p_kind: string }
+        Returns: undefined
+      }
       accept_event_invitation: { Args: { p_token: string }; Returns: Json }
       claim_qr: {
         Args: { p_code: string; p_event_slug: string }

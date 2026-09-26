@@ -36,10 +36,10 @@ export function KineticText({
                 distance === 0
                   ? 800
                   : distance === 1
-                    ? 650
+                    ? 720
                     : distance === 2
-                      ? 520
-                      : 410;
+                      ? 650
+                      : 580;
               return (
                 <span
                   key={`${letter}-${index}`}

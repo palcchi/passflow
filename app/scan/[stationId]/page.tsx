@@ -1,5 +1,3 @@
-import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
 import { requireStation } from "@/lib/auth/session";
 import { QrScanner } from "@/components/qr-scanner";
 
@@ -10,18 +8,10 @@ type ScannerPageProps = {
 export default async function ScannerPage({ params }: ScannerPageProps) {
   const { stationId } = await params;
 
-  const { station } = await requireStation(stationId);
+  const { station, supabase } = await requireStation(stationId);
+  const { data: event } = await supabase.from("events").select("name,venue").eq("id", station.event_id).maybeSingle();
 
   return (
-    <main className="scanner-page">
-      <nav className="scanner-nav">
-        <Link href="/admin" className="back-link light-back">
-          <ArrowLeft size={16} />
-          Dashboard
-        </Link>
-        <span className="scanner-brand">PASSFLOW SCANNER</span>
-      </nav>
-      <QrScanner stationId={station.id} stationName={station.name} />
-    </main>
+    <QrScanner stationId={station.id} stationName={station.name} eventName={event?.name ?? station.name} venue={event?.venue ?? ""} />
   );
 }
