@@ -21,6 +21,16 @@ export default async function ProfilePage({ searchParams }: { searchParams: Prom
   const organizer = memberships.some(item => canManage(item.role));
   const status = query.status;
   const figma = query.figma;
+  const figmaErrors: Record<string, string> = {
+    "not-configured": "Konfigurasi Figma di server belum lengkap. Periksa variabel lingkungan Vercel.",
+    "invalid-state": "Sesi koneksi berubah. Buka PassFlow dan Figma di browser yang sama, lalu coba lagi.",
+    "missing-code": "Figma belum mengirim kode akses. Coba ulangi koneksi.",
+    cancelled: "Permintaan akses Figma dibatalkan. Kamu bisa menghubungkannya kapan saja.",
+    "token-error": "Kode akses Figma ditolak atau kedaluwarsa. Ulangi koneksi dan selesaikan izin segera.",
+    "profile-error": "PassFlow belum bisa membaca akun Figma. Periksa izin aplikasi di Figma.",
+    "database-error": "Izin Figma diterima, tetapi koneksi belum tersimpan. Coba hubungkan kembali.",
+    error: "Koneksi Figma belum berhasil. Coba lagi.",
+  };
   return <div className="min-h-screen bg-[#fafafa] text-neutral-950">
     <header className="sticky top-0 z-30 border-b border-neutral-200 bg-white/95 backdrop-blur">
       <div className="mx-auto flex min-h-16 max-w-3xl items-center justify-between gap-4 px-5">
@@ -35,7 +45,7 @@ export default async function ProfilePage({ searchParams }: { searchParams: Prom
       {status === "saved" && <p role="status" className="rounded-xl border border-green-200 bg-green-50 p-4 text-sm text-green-800">Username berhasil disimpan.</p>}
       {figma === "connected" && <p role="status" className="rounded-xl border border-green-200 bg-green-50 p-4 text-sm text-green-800">Akun Figma berhasil dihubungkan.</p>}
       {figma === "disconnected" && <p role="status" className="rounded-xl border border-neutral-200 bg-white p-4 text-sm">Koneksi Figma diputus.</p>}
-      {figma && !["connected", "disconnected"].includes(String(figma)) && <p role="alert" className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">{figma === "not-configured" ? "Konfigurasi Figma di server belum lengkap. Periksa variabel lingkungan Vercel." : "Koneksi Figma belum berhasil. Periksa pengaturan OAuth dan coba lagi."}</p>}
+      {typeof figma === "string" && figmaErrors[figma] && <p role="alert" className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">{figmaErrors[figma]}</p>}
       <section className="rounded-2xl border border-neutral-200 bg-white p-6 sm:p-8">
         <div className="flex items-center gap-3"><span className="grid size-11 place-items-center rounded-xl bg-neutral-100"><UserRound size={20}/></span><div><h2 className="font-semibold">Identitas</h2><p className="text-sm text-neutral-500">{name}</p></div></div>
         <form action={saveUsername} className="mt-7 space-y-4">
@@ -49,7 +59,7 @@ export default async function ProfilePage({ searchParams }: { searchParams: Prom
       <section className="rounded-2xl border border-neutral-200 bg-white p-6 sm:p-8">
         <div className="flex items-center gap-3"><span className="grid size-11 place-items-center rounded-xl bg-neutral-100"><Figma size={20}/></span><div><h2 className="font-semibold">Koneksi Figma</h2><p className="text-sm text-neutral-500">{connection ? connection.handle ?? connection.email ?? "Akun terhubung" : "Belum terhubung"}</p></div></div>
         {connectionError && <p role="alert" className="mt-4 text-sm text-red-700">Status Figma belum dapat dimuat. Coba muat ulang halaman.</p>}
-        <p className="mt-5 text-sm leading-6 text-neutral-500">Hubungkan akun Figma untuk membaca file dan menyinkronkan desain event. Desain tetap dapat diedit di Figma.</p>
+        <p className="mt-5 text-sm leading-6 text-neutral-500">Hubungkan akun Figma untuk membaca identitas akun, metadata, dan isi file desain event. PassFlow tidak meminta izin mengubah file atau komentar. Desain tetap dapat diedit di Figma.</p>
         <div className="mt-6 flex flex-wrap items-center gap-3">
           {connection ? <><a href="/api/figma/connect" className="inline-flex min-h-11 items-center rounded-xl border border-neutral-300 px-5 text-sm font-medium">Hubungkan ulang</a><form action="/api/figma/disconnect" method="post"><button type="submit" className="min-h-11 rounded-xl px-4 text-sm text-red-700">Putuskan koneksi</button></form></>
             : <a href="/api/figma/connect" aria-disabled={!figmaConfigured()} className="inline-flex min-h-11 items-center rounded-xl bg-neutral-950 px-5 text-sm font-semibold text-white">Hubungkan Figma <ExternalLink size={15} className="ml-2"/></a>}

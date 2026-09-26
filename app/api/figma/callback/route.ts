@@ -14,7 +14,7 @@ export async function GET(request: Request) {
       hasStateCookie: Boolean(cookieStore.get("passflow_figma_state")?.value),
       hasSupabaseCookie: cookieStore.getAll().some(cookie => cookie.name.startsWith("sb-")),
     });
-    return NextResponse.redirect(new URL("/login?error=expired&next=%2Fprofile", request.url));
+    return NextResponse.redirect(new URL("/login?error=figma-session&next=%2Fprofile", request.url));
   }
   const { supabase, user } = context;
   const requestedNext = cookieStore.get("passflow_figma_next")?.value;
@@ -63,6 +63,6 @@ export async function GET(request: Request) {
     return go("connected");
   } catch (error) {
     console.error("Figma OAuth callback failed", { stage, code: error && typeof error === "object" && "code" in error ? String(error.code) : undefined });
-    return go("error");
+    return go(`${stage}-error`);
   }
 }

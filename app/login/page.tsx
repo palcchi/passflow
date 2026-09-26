@@ -16,6 +16,7 @@ const errors: Record<string, string> = {
   invalid: "Email atau password tidak cocok.",
   unverified: "Email belum diverifikasi. Kirim ulang tautan verifikasi di bawah.",
   expired: "Sesi sudah berakhir. Silakan masuk lagi.",
+  "figma-session": "Sesi PassFlow tidak terbaca setelah kembali dari Figma. Masuk lagi di browser yang sama, lalu ulangi koneksi dari Profil.",
   callback: "Tautan konfirmasi tidak valid atau sudah kedaluwarsa.",
   signout: "Belum berhasil keluar. Silakan coba lagi.",
   reset: "Password baru sudah disimpan.",
