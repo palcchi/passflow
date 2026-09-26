@@ -5191,6 +5191,16 @@ body {
   text-wrap: balance;
 }
 
+.kinetic-word {
+  display: inline-flex;
+  white-space: nowrap;
+}
+
+.kinetic-space {
+  display: inline-block;
+  width: .26em;
+}
+
 .kinetic-letter {
   display: inline-block;
   color: inherit;
