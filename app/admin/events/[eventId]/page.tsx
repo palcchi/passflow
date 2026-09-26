@@ -6,6 +6,7 @@ import {
   ArrowLeft,
   BarChart3,
   ExternalLink,
+  Figma,
   Palette,
   QrCode,
   Ticket,
@@ -119,6 +120,7 @@ export default async function EventManagePage({ params, searchParams }: Props) {
             <p className="mt-2 text-sm text-muted-foreground">{event.dateLabel} · {event.venue}</p>
           </div>
           <div className="flex flex-wrap gap-2">
+            <Link className="button button-ghost" href={`/admin/events/${event.id}/design`}><Figma size={16} /> PassFlow Design</Link>
             <Link className="button button-ghost" href={`/admin/events/${event.id}/appearance`}><Palette size={16} /> Appearance</Link>
             <Link className="button button-dark" href={`/e/${event.slug}`}><ExternalLink size={16} /> Public page</Link>
           </div>
