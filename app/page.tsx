@@ -1,6 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { BlurFade } from "@/components/magicui/blur-fade";
-import { MagicCard } from "@/components/magicui/magic-card";
+import { ThemeToggle } from "@/components/theme-toggle";
 import Link from "next/link";
 import {
   ArrowUpRight,
@@ -38,6 +37,7 @@ export default function HomePage() {
           <span>PassFlow</span>
         </Link>
         <div className="topbar-actions">
+          <ThemeToggle />
           <Link href="/e/adorne-nails-exhibition" className="text-link">
             Event demo
           </Link>
@@ -52,7 +52,7 @@ export default function HomePage() {
       </nav>
 
       <section className="hero-section">
-        <BlurFade className="hero-copy">
+        <div className="hero-copy">
           <div className="eyebrow-pill">
             <BadgeCheck size={15} />
             Multi-event access platform
@@ -76,43 +76,42 @@ export default function HomePage() {
               Try scanner
             </Link></Button>
           </div>
-        </BlurFade>
+        </div>
 
-        <div className="hero-visual">
-          <div className="visual-orbit visual-orbit-one" />
-          <div className="visual-orbit visual-orbit-two" />
-          <div className="pass-card pass-card-back">
-            <span>ADORNE NAILS EXHIBITION</span>
-            <strong>VIP</strong>
+        <div className="hero-minimal-status" aria-label="PassFlow flow preview">
+          <span className="section-kicker">Live event flow</span>
+          <div className="hero-flow-row">
+            <strong>01</strong>
+            <span>Create event</span>
+            <small>Ready</small>
           </div>
-          <div className="pass-card pass-card-front">
-            <div className="pass-card-head">
-              <span className="mini-label">EVENT PASS</span>
-              <span className="status-dot">ACTIVE</span>
-            </div>
-            <div className="fake-qr" aria-hidden="true">
-              {Array.from({ length: 49 }).map((_, index) => (
-                <span key={index} className={index % 3 === 0 || index % 7 === 0 ? "filled" : ""} />
-              ))}
-            </div>
-            <div className="pass-owner">
-              <span>CLAIMED TO</span>
-              <strong>VALLIAN</strong>
-              <small>WR-0192 · VIP ACCESS</small>
-            </div>
+          <div className="hero-flow-row">
+            <strong>02</strong>
+            <span>Generate & claim QR</span>
+            <small>Active</small>
+          </div>
+          <div className="hero-flow-row">
+            <strong>03</strong>
+            <span>Scan access</span>
+            <small>Instant</small>
+          </div>
+          <div className="hero-flow-row">
+            <strong>04</strong>
+            <span>Track activity</span>
+            <small>Synced</small>
           </div>
         </div>
       </section>
 
       <section className="feature-grid">
         {features.map(({ icon: Icon, title, copy }) => (
-          <MagicCard className="feature-card" key={title}>
+          <article className="feature-card" key={title}>
             <div className="feature-icon">
               <Icon size={20} />
             </div>
             <h2>{title}</h2>
             <p>{copy}</p>
-          </MagicCard>
+          </article>
         ))}
       </section>
 
