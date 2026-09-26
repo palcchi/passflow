@@ -43,7 +43,10 @@ export function PeopleRecordEditor({ eventId, kind, record, tickets = [] }: {
           </> : <>
             <label>Deskripsi<textarea name="description" defaultValue={record.description ?? ""} maxLength={500}/></label>
             <label>Kapasitas (kosong = tanpa batas)<FormattedNumberInput name="capacity" defaultValue={record.capacity ?? undefined} min={0}/></label>
-            <label>Harga<FormattedNumberInput name="price" defaultValue={record.price ?? 0} min={0}/></label>
+            <label>Harga<input name="price" inputMode="decimal" defaultValue={(record.price ?? 0).toLocaleString("id-ID", { maximumFractionDigits: 2 })} required onBlur={event => {
+              const value = event.target.value.trim();
+              if (/^(?:\d+|\d{1,3}(?:\.\d{3})+)(?:,\d{1,2})?$/.test(value)) event.target.value = Number(value.replace(/\./g, "").replace(",", ".")).toLocaleString("id-ID", { maximumFractionDigits: 2 });
+            }}/></label>
           </>}
         </>}
         {message && <p role="alert" className="camera-feedback">{message}</p>}
