@@ -5,7 +5,6 @@ import { cn } from "@/lib/utils";
 export function ShimmerButton({
   asChild = false,
   className,
-  children,
   ...props
 }: React.ComponentProps<"button"> & {
   asChild?: boolean;
@@ -15,9 +14,6 @@ export function ShimmerButton({
     <Comp
       className={cn("magic-shimmer-button", className)}
       {...props}
-    >
-      <span aria-hidden className="magic-shimmer-ring" />
-      <span className="magic-shimmer-content">{children}</span>
-    </Comp>
+    />
   );
 }
