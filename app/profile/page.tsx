@@ -1,72 +1,201 @@
 import Link from "next/link";
-import { ArrowLeft, ExternalLink, Figma, UserRound } from "lucide-react";
+import { ExternalLink, Figma, ShieldCheck, Sparkles } from "lucide-react";
 import { requireUser, getMemberships } from "@/lib/auth/session";
 import { canManage } from "@/lib/auth/redirect";
 import { figmaConfigured } from "@/lib/figma";
-import { signOut } from "@/app/auth/actions";
-import { saveUsername } from "./actions";
+import { UserNavbar } from "@/components/user-navbar";
+import { ProfileEditor } from "@/components/profile-editor";
+import { BlurFade } from "@/components/magicui/blur-fade";
 
 export const metadata = { title: "Profil | PassFlow" };
 export const dynamic = "force-dynamic";
 
-export default async function ProfilePage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
+export default async function ProfilePage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
   const { supabase, user } = await requireUser("/profile");
-  const [{ data: connection, error: connectionError }, { memberships }, query] = await Promise.all([
-    supabase.from("figma_connections").select("handle,email,expires_at").eq("user_id", user.id).maybeSingle(),
-    getMemberships(),
-    searchParams,
-  ]);
-  const username = typeof user.user_metadata.username === "string" ? user.user_metadata.username : "";
-  const name = username || (typeof user.user_metadata.full_name === "string" ? user.user_metadata.full_name : "") || user.email?.split("@")[0] || "Pengunjung";
-  const organizer = memberships.some(item => canManage(item.role));
-  const status = query.status;
-  const figma = query.figma;
-  const figmaErrors: Record<string, string> = {
-    "not-configured": "Konfigurasi Figma di server belum lengkap. Periksa variabel lingkungan Vercel.",
-    "invalid-state": "Sesi koneksi berubah. Buka PassFlow dan Figma di browser yang sama, lalu coba lagi.",
-    "missing-code": "Figma belum mengirim kode akses. Coba ulangi koneksi.",
-    cancelled: "Permintaan akses Figma dibatalkan. Kamu bisa menghubungkannya kapan saja.",
-    "token-error": "Kode akses Figma ditolak atau kedaluwarsa. Ulangi koneksi dan selesaikan izin segera.",
-    "profile-error": "PassFlow belum bisa membaca akun Figma. Periksa izin aplikasi di Figma.",
-    "database-error": "Izin Figma diterima, tetapi koneksi belum tersimpan. Coba hubungkan kembali.",
-    error: "Koneksi Figma belum berhasil. Coba lagi.",
+  const [{ data: connection, error: connectionError }, { memberships }, query] =
+    await Promise.all([
+      supabase
+        .from("figma_connections")
+        .select("handle,email,expires_at")
+        .eq("user_id", user.id)
+        .maybeSingle(),
+      getMemberships(),
+      searchParams,
+    ]);
+
+  const username =
+    typeof user.user_metadata.username === "string"
+      ? user.user_metadata.username
+      : user.email?.split("@")[0] || "";
+  const fullName =
+    typeof user.user_metadata.full_name === "string" && user.user_metadata.full_name.trim()
+      ? user.user_metadata.full_name.trim()
+      : username || "Pengunjung";
+  const avatarUrl =
+    typeof user.user_metadata.avatar_url === "string"
+      ? user.user_metadata.avatar_url
+      : typeof user.user_metadata.picture === "string"
+        ? user.user_metadata.picture
+        : null;
+  const organizer = memberships.some((item) => canManage(item.role));
+  const status = typeof query.status === "string" ? query.status : "";
+  const figma = typeof query.figma === "string" ? query.figma : "";
+
+  const statusMessages: Record<string, { tone: "success" | "error" | "neutral"; text: string }> = {
+    saved: { tone: "success", text: "Profil berhasil diperbarui." },
+    "avatar-saved": { tone: "success", text: "Foto profil berhasil diperbarui." },
+    "avatar-removed": { tone: "neutral", text: "Foto profil dihapus." },
+    "invalid-username": {
+      tone: "error",
+      text: "Username harus 3–24 karakter dan hanya berisi huruf, angka, atau garis bawah.",
+    },
+    "invalid-name": { tone: "error", text: "Nama tampilan harus 2–60 karakter." },
+    "avatar-missing": { tone: "error", text: "Pilih foto sebelum menyimpan." },
+    "avatar-format": { tone: "error", text: "Foto harus berformat JPG, PNG, atau WEBP." },
+    "avatar-size": { tone: "error", text: "Ukuran foto maksimal 2 MB." },
+    "avatar-error": { tone: "error", text: "Foto profil belum berhasil disimpan." },
+    error: { tone: "error", text: "Profil belum berhasil disimpan." },
   };
-  return <div className="min-h-screen bg-[#fafafa] text-neutral-950">
-    <header className="sticky top-0 z-30 border-b border-neutral-200 bg-white/95 backdrop-blur">
-      <div className="mx-auto flex min-h-16 max-w-3xl items-center justify-between gap-4 px-5">
-        <Link href="/account" className="inline-flex items-center gap-2 text-sm font-medium"><ArrowLeft size={17}/> Dashboard</Link>
-        <span className="text-sm font-semibold">PassFlow.</span>
-        {organizer ? <Link href="/admin" className="text-sm text-neutral-600">Organizer</Link> : <span className="w-16"/>}
-      </div>
-    </header>
-    <main className="mx-auto max-w-3xl space-y-6 px-5 py-10 sm:py-14">
-      <div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-neutral-500">Akun</p><h1 className="mt-2 text-3xl font-semibold tracking-tight">Profil kamu</h1><p className="mt-2 text-sm text-neutral-500">Atur nama yang tampil dan sambungkan akun desain.</p></div>
-      {(status === "invalid" || status === "error") && <p role="alert" className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">{status === "invalid" ? "Username harus 3–24 karakter, hanya huruf, angka, atau garis bawah." : "Profil belum tersimpan. Silakan coba lagi."}</p>}
-      {status === "saved" && <p role="status" className="rounded-xl border border-green-200 bg-green-50 p-4 text-sm text-green-800">Username berhasil disimpan.</p>}
-      {figma === "connected" && <p role="status" className="rounded-xl border border-green-200 bg-green-50 p-4 text-sm text-green-800">Akun Figma berhasil dihubungkan.</p>}
-      {figma === "disconnected" && <p role="status" className="rounded-xl border border-neutral-200 bg-white p-4 text-sm">Koneksi Figma diputus.</p>}
-      {typeof figma === "string" && figmaErrors[figma] && <p role="alert" className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">{figmaErrors[figma]}</p>}
-      <section className="rounded-2xl border border-neutral-200 bg-white p-6 sm:p-8">
-        <div className="flex items-center gap-3"><span className="grid size-11 place-items-center rounded-xl bg-neutral-100"><UserRound size={20}/></span><div><h2 className="font-semibold">Identitas</h2><p className="text-sm text-neutral-500">{name}</p></div></div>
-        <form action={saveUsername} className="mt-7 space-y-4">
-          <label htmlFor="profile-username" className="block text-sm font-medium">Username</label>
-          <input id="profile-username" name="username" required minLength={3} maxLength={24} pattern="[a-zA-Z0-9_]{3,24}" autoComplete="username" defaultValue={username} placeholder="Username kamu" className="min-h-12 w-full rounded-xl border border-neutral-300 px-4 text-sm outline-none focus:border-neutral-950"/>
-          <p className="text-xs text-neutral-500">3–24 karakter, huruf, angka, atau garis bawah. Username adalah nama tampilan, belum unik.</p>
-          <p className="text-sm text-neutral-500">Email: <span className="font-medium text-neutral-950">{user.email}</span></p>
-          <button className="min-h-11 rounded-xl bg-neutral-950 px-5 text-sm font-semibold text-white transition hover:bg-neutral-800" type="submit">Simpan username</button>
-        </form>
-      </section>
-      <section className="rounded-2xl border border-neutral-200 bg-white p-6 sm:p-8">
-        <div className="flex items-center gap-3"><span className="grid size-11 place-items-center rounded-xl bg-neutral-100"><Figma size={20}/></span><div><h2 className="font-semibold">Koneksi Figma</h2><p className="text-sm text-neutral-500">{connection ? connection.handle ?? connection.email ?? "Akun terhubung" : "Belum terhubung"}</p></div></div>
-        {connectionError && <p role="alert" className="mt-4 text-sm text-red-700">Status Figma belum dapat dimuat. Coba muat ulang halaman.</p>}
-        <p className="mt-5 text-sm leading-6 text-neutral-500">Hubungkan akun Figma untuk membaca identitas akun, metadata, dan isi file desain event. PassFlow tidak meminta izin mengubah file atau komentar. Desain tetap dapat diedit di Figma.</p>
-        <div className="mt-6 flex flex-wrap items-center gap-3">
-          {connection ? <><a href="/api/figma/connect" className="inline-flex min-h-11 items-center rounded-xl border border-neutral-300 px-5 text-sm font-medium">Hubungkan ulang</a><form action="/api/figma/disconnect" method="post"><button type="submit" className="min-h-11 rounded-xl px-4 text-sm text-red-700">Putuskan koneksi</button></form></>
-            : <a href="/api/figma/connect" aria-disabled={!figmaConfigured()} className="inline-flex min-h-11 items-center rounded-xl bg-neutral-950 px-5 text-sm font-semibold text-white">Hubungkan Figma <ExternalLink size={15} className="ml-2"/></a>}
-        </div>
-        {organizer && <Link href="/admin" className="mt-5 inline-block text-sm font-medium underline underline-offset-4">Kelola desain event</Link>}
-      </section>
-      <form action={signOut}><button type="submit" className="min-h-11 text-sm text-neutral-500 underline underline-offset-4">Keluar dari akun</button></form>
-    </main>
-  </div>;
+
+  const figmaErrors: Record<string, string> = {
+    "not-configured": "Konfigurasi Figma di server belum lengkap.",
+    "invalid-state": "Sesi koneksi Figma berubah. Coba hubungkan ulang.",
+    "missing-code": "Figma belum mengirim kode akses.",
+    cancelled: "Permintaan akses Figma dibatalkan.",
+    "token-error": "Kode akses Figma ditolak atau kedaluwarsa.",
+    "profile-error": "PassFlow belum bisa membaca akun Figma.",
+    "database-error": "Koneksi diterima, tetapi belum tersimpan.",
+    error: "Koneksi Figma belum berhasil.",
+  };
+
+  const profileStatus = statusMessages[status];
+
+  return (
+    <div className="app-surface min-h-screen text-neutral-950">
+      <div className="ambient-orb ambient-orb-one" />
+      <div className="ambient-orb ambient-orb-three" />
+      <UserNavbar
+        name={fullName}
+        email={user.email}
+        avatarUrl={avatarUrl}
+        organizer={organizer}
+      />
+
+      <main className="relative z-10 mx-auto max-w-6xl px-5 pb-20 pt-8 sm:px-8 sm:pt-12">
+        <BlurFade>
+          <header className="profile-page-heading">
+            <span className="dashboard-welcome-kicker">
+              <Sparkles size={13} /> Account settings
+            </span>
+            <h1>Profil kamu.</h1>
+            <p>Atur identitas, foto profil, dan koneksi desain dari satu tempat.</p>
+          </header>
+        </BlurFade>
+
+        {profileStatus && (
+          <div
+            role={profileStatus.tone === "error" ? "alert" : "status"}
+            className={`profile-status-message is-${profileStatus.tone}`}
+          >
+            {profileStatus.text}
+          </div>
+        )}
+        {figma === "connected" && (
+          <div role="status" className="profile-status-message is-success">
+            Akun Figma berhasil dihubungkan.
+          </div>
+        )}
+        {figma === "disconnected" && (
+          <div role="status" className="profile-status-message is-neutral">
+            Koneksi Figma diputus.
+          </div>
+        )}
+        {figma && figmaErrors[figma] && (
+          <div role="alert" className="profile-status-message is-error">
+            {figmaErrors[figma]}
+          </div>
+        )}
+
+        <BlurFade delay={0.04}>
+          <ProfileEditor
+            fullName={fullName}
+            username={username}
+            email={user.email ?? ""}
+            avatarUrl={avatarUrl}
+            organizer={organizer}
+          />
+        </BlurFade>
+
+        <BlurFade delay={0.08}>
+          <section className="profile-integration-card liquid-panel">
+            <div className="profile-integration-main">
+              <span className="profile-integration-icon">
+                <Figma size={20} />
+              </span>
+              <div>
+                <span className="section-kicker">Integration</span>
+                <h2>Figma account</h2>
+                <p>
+                  {connection
+                    ? connection.handle ?? connection.email ?? "Akun terhubung"
+                    : "Belum terhubung"}
+                </p>
+              </div>
+            </div>
+
+            <div className="profile-integration-body">
+              <p>
+                PassFlow membaca identitas akun, metadata, preview, dan struktur file yang kamu
+                izinkan. File desain tetap milik akun Figma organizer.
+              </p>
+              <div className="profile-integration-security">
+                <ShieldCheck size={15} />
+                Token Figma disimpan terenkripsi di server.
+              </div>
+              {connectionError && (
+                <p role="alert" className="text-sm text-red-700">
+                  Status Figma belum dapat dimuat. Coba muat ulang halaman.
+                </p>
+              )}
+            </div>
+
+            <div className="profile-integration-actions">
+              {connection ? (
+                <>
+                  <a
+                    href="/api/figma/connect"
+                    className="button button-ghost"
+                  >
+                    Hubungkan ulang
+                  </a>
+                  <form action="/api/figma/disconnect" method="post">
+                    <button type="submit" className="button button-ghost text-red-700">
+                      Putuskan koneksi
+                    </button>
+                  </form>
+                </>
+              ) : (
+                <a
+                  href="/api/figma/connect"
+                  aria-disabled={!figmaConfigured()}
+                  className="button button-dark"
+                >
+                  Hubungkan Figma <ExternalLink size={15} />
+                </a>
+              )}
+              {organizer && (
+                <Link href="/admin" className="button button-ghost">
+                  Kelola event
+                </Link>
+              )}
+            </div>
+          </section>
+        </BlurFade>
+      </main>
+    </div>
+  );
 }
