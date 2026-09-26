@@ -12,6 +12,19 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const themeScript = `
+(function () {
+  try {
+    var theme = localStorage.getItem("passflow-theme");
+    if (theme === "light" || theme === "dark") {
+      document.documentElement.dataset.theme = theme;
+    } else {
+      document.documentElement.removeAttribute("data-theme");
+    }
+  } catch (_) {}
+})();
+`;
+
 export const metadata: Metadata = {
   title: {
     default: "PassFlow",
@@ -27,11 +40,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="id" className={`${geistSans.variable} ${geistMono.variable}`}>
-      <body>
-        {children}
-      </body>
+    <html
+      lang="id"
+      className={`${geistSans.variable} ${geistMono.variable}`}
+      suppressHydrationWarning
+    >
+      <head>
+        <script id="passflow-theme-init" dangerouslySetInnerHTML={{ __html: themeScript }} />
+      </head>
+      <body>{children}</body>
     </html>
   );
 }
-

@@ -7,9 +7,5 @@ export function AnimatedShinyText({
   children: React.ReactNode;
   className?: string;
 }) {
-  return (
-    <span className={cn("magic-shiny-text", className)}>
-      {children}
-    </span>
-  );
+  return <span className={cn("text-weight-motion", className)}>{children}</span>;
 }
