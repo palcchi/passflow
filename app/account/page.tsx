@@ -1,18 +1,28 @@
 import Link from "next/link";
-import { ArrowUpRight, CalendarDays, MapPin, Plus } from "lucide-react";
+import { ArrowUpRight, CalendarDays, MapPin, Plus, Sparkles } from "lucide-react";
 import { requireUser, getMemberships } from "@/lib/auth/session";
 import { canManage } from "@/lib/auth/redirect";
 import { getPublishedEvents } from "@/lib/events";
 import { UserNavbar } from "@/components/user-navbar";
+import { BlurFade } from "@/components/magicui/blur-fade";
+import { MagicCard } from "@/components/magicui/magic-card";
 
 export const metadata = { title: "Dashboard | PassFlow" };
+export const dynamic = "force-dynamic";
 
 export default async function AccountPage() {
   const { user, supabase } = await requireUser();
-  const username = typeof user.user_metadata.username === "string" ? user.user_metadata.username.trim() : "";
-  const name = username || (typeof user.user_metadata.full_name === "string" && user.user_metadata.full_name.trim()
-    ? user.user_metadata.full_name.trim()
-    : (user.email?.split("@")[0] || "Pengunjung"));
+  const username =
+    typeof user.user_metadata.username === "string" ? user.user_metadata.username.trim() : "";
+  const fullName =
+    typeof user.user_metadata.full_name === "string" ? user.user_metadata.full_name.trim() : "";
+  const avatarUrl =
+    typeof user.user_metadata.avatar_url === "string"
+      ? user.user_metadata.avatar_url
+      : typeof user.user_metadata.picture === "string"
+        ? user.user_metadata.picture
+        : null;
+  const name = fullName || username || user.email?.split("@")[0] || "Pengunjung";
 
   const [{ memberships, unavailable }, registrationsResult, publishedEvents] = await Promise.all([
     getMemberships(),
@@ -25,72 +35,118 @@ export default async function AccountPage() {
   const myEvents = publishedEvents.filter((event) => registeredIds.has(event.id));
 
   return (
-    <div className="min-h-screen bg-[#fafafa] text-neutral-950">
-      <UserNavbar name={name} email={user.email} organizer={organizer} />
+    <div className="app-surface min-h-screen text-neutral-950">
+      <div className="ambient-orb ambient-orb-one" />
+      <div className="ambient-orb ambient-orb-two" />
+      <UserNavbar
+        name={name}
+        email={user.email}
+        avatarUrl={avatarUrl}
+        organizer={organizer}
+      />
 
-      <main className="mx-auto max-w-7xl px-5 py-8 sm:px-8 sm:py-12">
-        <header className="flex items-start justify-between gap-6">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-neutral-400">Dashboard</p>
-            <h1 className="mt-3 text-3xl font-semibold tracking-[-0.045em] sm:text-5xl">Halo, {name}.</h1>
-            <p className="mt-3 max-w-xl text-sm leading-6 text-neutral-500">Event yang terhubung ke akunmu tampil di sini.</p>
-          </div>
-          <Link
-            href="/events"
-            className="inline-flex size-12 shrink-0 items-center justify-center rounded-full bg-neutral-950 text-white shadow-sm transition hover:bg-neutral-800"
-            aria-label="Tambah event"
-            title="Tambah event"
-          >
-            <Plus size={21} />
-          </Link>
-        </header>
+      <main className="relative z-10 mx-auto max-w-7xl px-5 pb-20 pt-8 sm:px-8 sm:pt-12">
+        <BlurFade>
+          <header className="dashboard-welcome liquid-panel">
+            <div className="dashboard-welcome-copy">
+              <span className="dashboard-welcome-kicker">
+                <Sparkles size={13} /> Personal workspace
+              </span>
+              <h1>Halo, {name}.</h1>
+              <p>
+                Semua event yang terhubung ke akunmu ada di satu tempat, tanpa dashboard yang
+                terasa seperti spreadsheet memakai jas.
+              </p>
+            </div>
+            <Link
+              href="/events"
+              className="dashboard-add-event"
+              aria-label="Tambah event"
+              title="Tambah event"
+            >
+              <Plus size={20} />
+              <span>Tambah event</span>
+            </Link>
+          </header>
+        </BlurFade>
 
-        {unavailable && <p role="alert" className="mt-6 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">Hak akses akun belum dapat dimuat.</p>}
+        {unavailable && (
+          <p role="alert" className="mt-6 rounded-2xl border border-red-200 bg-red-50/80 p-4 text-sm text-red-700 backdrop-blur">
+            Hak akses akun belum dapat dimuat.
+          </p>
+        )}
 
         <section className="mt-10" aria-labelledby="my-events">
-          <div className="mb-4 flex items-end justify-between">
-            <div>
-              <p className="text-xs font-medium text-neutral-400">MY EVENTS</p>
-              <h2 id="my-events" className="mt-1 text-xl font-semibold tracking-tight">Event kamu</h2>
+          <BlurFade delay={0.04}>
+            <div className="mb-5 flex items-end justify-between gap-4">
+              <div>
+                <p className="section-kicker">My events</p>
+                <h2 id="my-events" className="mt-1 text-2xl font-semibold tracking-[-0.035em]">
+                  Event kamu
+                </h2>
+              </div>
+              <Link
+                href="/events"
+                className="inline-flex items-center gap-1.5 text-sm font-medium text-neutral-500 transition hover:text-neutral-950"
+              >
+                Lihat semua <ArrowUpRight size={15} />
+              </Link>
             </div>
-            <Link href="/events" className="text-sm font-medium text-neutral-500 transition hover:text-neutral-950">Lihat semua</Link>
-          </div>
+          </BlurFade>
 
           {myEvents.length > 0 ? (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {myEvents.map((event) => (
-                <Link
-                  href={`/e/${event.slug}`}
-                  key={event.id}
-                  className="group overflow-hidden rounded-2xl border border-black/5 bg-white shadow-[0_8px_30px_rgba(0,0,0,0.04)] transition hover:-translate-y-0.5 hover:shadow-[0_14px_40px_rgba(0,0,0,0.07)]"
-                >
-                  <div className="relative h-24 bg-neutral-950 p-5 text-white">
-                    <span className="absolute right-4 top-4 size-2 rounded-full bg-[#f2c94c]" />
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-white/50">PassFlow Event</p>
-                    <h3 className="mt-2 line-clamp-2 text-lg font-semibold tracking-tight">{event.name}</h3>
-                  </div>
-                  <div className="p-5">
-                    <div className="space-y-2 text-sm text-neutral-500">
-                      <p className="flex items-center gap-2"><CalendarDays size={15} /> {event.dateLabel}</p>
-                      <p className="flex items-center gap-2"><MapPin size={15} /> {event.venue || "Venue belum diumumkan"}</p>
-                    </div>
-                    <div className="mt-6 flex items-center justify-between border-t border-neutral-100 pt-4">
-                      <span className="text-xs font-medium text-neutral-500">Buka event</span>
-                      <ArrowUpRight size={17} className="text-neutral-400 transition group-hover:text-neutral-950" />
-                    </div>
-                  </div>
-                </Link>
+              {myEvents.map((event, index) => (
+                <BlurFade delay={0.07 + index * 0.04} key={event.id}>
+                  <MagicCard className="event-glass-card group overflow-hidden rounded-[24px] border border-white/70 shadow-[0_14px_45px_rgba(20,20,18,.07)] backdrop-blur-xl">
+                    <Link href={`/e/${event.slug}`} className="block">
+                      <div className="event-card-top">
+                        <div>
+                          <p>PassFlow Event</p>
+                          <h3>{event.name}</h3>
+                        </div>
+                        <span
+                          className="event-card-accent"
+                          style={{ background: event.theme.primary }}
+                        />
+                      </div>
+                      <div className="event-card-body">
+                        <div className="space-y-2.5 text-sm text-neutral-500">
+                          <p className="flex items-center gap-2">
+                            <CalendarDays size={15} /> {event.dateLabel}
+                          </p>
+                          <p className="flex items-center gap-2">
+                            <MapPin size={15} /> {event.venue || "Venue belum diumumkan"}
+                          </p>
+                        </div>
+                        <div className="event-card-footer">
+                          <span>Buka event</span>
+                          <span className="event-card-arrow">
+                            <ArrowUpRight size={16} />
+                          </span>
+                        </div>
+                      </div>
+                    </Link>
+                  </MagicCard>
+                </BlurFade>
               ))}
             </div>
           ) : (
-            <div className="rounded-2xl border border-dashed border-neutral-300 bg-white p-7 sm:p-10">
-              <span className="grid size-11 place-items-center rounded-full bg-[#fff5c7] text-neutral-950"><Plus size={20} /></span>
-              <h3 className="mt-5 text-lg font-semibold">Belum ada event.</h3>
-              <p className="mt-2 max-w-md text-sm leading-6 text-neutral-500">Tambahkan event pertama dari daftar event yang tersedia.</p>
-              <Link href="/events" className="mt-5 inline-flex items-center gap-2 rounded-xl bg-neutral-950 px-4 py-2.5 text-sm font-semibold text-white">
-                Tambah event <ArrowUpRight size={16} />
-              </Link>
-            </div>
+            <BlurFade delay={0.08}>
+              <MagicCard className="empty-glass-state rounded-[26px] border border-white/70 p-7 shadow-[0_16px_50px_rgba(20,20,18,.06)] backdrop-blur-xl sm:p-10">
+                <span className="empty-state-icon">
+                  <Plus size={20} />
+                </span>
+                <h3>Belum ada event.</h3>
+                <p>
+                  Tambahkan event pertama dari daftar event yang tersedia. Ya, untuk sekali ini
+                  tombol plus memang melakukan sesuatu.
+                </p>
+                <Link href="/events" className="button button-dark mt-5">
+                  Tambah event <ArrowUpRight size={16} />
+                </Link>
+              </MagicCard>
+            </BlurFade>
           )}
         </section>
       </main>
