@@ -20,7 +20,10 @@ export function TypingAnimation({
   const ref = useRef<HTMLSpanElement>(null);
 
   useEffect(() => {
-    if (reduceMotion) return;
+    if (reduceMotion) {
+      const reducedTimer = window.setTimeout(() => setValue(children), 0);
+      return () => window.clearTimeout(reducedTimer);
+    }
 
     let index = 0;
     let interval = 0;
@@ -40,7 +43,7 @@ export function TypingAnimation({
 
   return (
     <span ref={ref} className={cn("typing-animation", className)} aria-label={children}>
-      <span aria-hidden="true">{reduceMotion ? children : value}</span>
+      <span aria-hidden="true">{value}</span>
       <span className="typing-caret" aria-hidden="true" />
     </span>
   );
