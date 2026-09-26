@@ -39,6 +39,7 @@ export default async function AdminDashboardPage() {
         </Link>
         <div className="sidebar-section">
           <Link href="/account" className="sidebar-link">Akun saya</Link>
+          <Link href="/profile" className="sidebar-link">Profil saya</Link>
           <span className="sidebar-label">Workspace</span>
           <Link href="/admin" className="sidebar-link active">
             Overview

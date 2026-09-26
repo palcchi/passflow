@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowLeft, Mail } from "lucide-react";
+import { ArrowLeft, Mail, UserRound } from "lucide-react";
 import { AuthSubmit } from "@/components/auth-submit";
 import { GoogleIcon } from "@/components/google-icon";
 import { PasswordField } from "@/components/password-field";
@@ -31,11 +31,17 @@ export default async function RegisterPage({
           <h1 className="mt-8 text-3xl font-semibold tracking-[-0.04em] text-neutral-950">Buat akun PassFlow.</h1>
           <p className="mt-2 text-sm leading-6 text-neutral-500">Satu akun untuk event, pass, dan akses kamu.</p>
 
-          {params.error && <p role="alert" className="mt-5 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">Email belum dapat didaftarkan. Periksa kembali datanya.</p>}
+          {params.error && <p role="alert" className="mt-5 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">Periksa username, email, dan password lalu coba lagi.</p>}
           {params.notice === "check-email" && <p role="status" className="mt-5 rounded-xl bg-neutral-100 p-3 text-sm text-neutral-600">Cek email untuk menyelesaikan verifikasi akun.</p>}
 
           <form action={signUpWithEmail} className="mt-7 space-y-3">
             <input type="hidden" name="next" value={next} />
+            <div className="flex min-h-12 items-center gap-3 rounded-xl border border-border bg-background px-3 transition focus-within:border-foreground/30 focus-within:ring-2 focus-within:ring-ring/15">
+              <UserRound size={17} className="text-muted-foreground" aria-hidden="true" />
+              <label htmlFor="register-username" className="sr-only">Username</label>
+              <input id="register-username" required name="username" minLength={3} maxLength={24} pattern="[a-zA-Z0-9_]{3,24}" autoComplete="username" placeholder="Username" className="min-w-0 flex-1 bg-transparent text-sm outline-none" />
+            </div>
+            <p className="text-xs text-neutral-500">3–24 karakter, huruf, angka, atau garis bawah. Nama tampilan ini belum unik.</p>
             <div className="flex min-h-12 items-center gap-3 rounded-xl border border-border bg-background px-3 transition focus-within:border-foreground/30 focus-within:ring-2 focus-within:ring-ring/15">
               <Mail size={17} className="text-muted-foreground" aria-hidden="true" />
               <label htmlFor="register-email" className="sr-only">Email</label>

@@ -1,4 +1,5 @@
 import { createCipheriv, createDecipheriv, createHmac, randomBytes, timingSafeEqual } from "crypto";
+import { getAppOrigin } from "@/lib/supabase/config";
 
 const FIGMA_AUTHORIZE = "https://www.figma.com/oauth";
 const FIGMA_API = "https://api.figma.com/v1";
@@ -7,9 +8,9 @@ function config() {
   const clientId = process.env.FIGMA_CLIENT_ID;
   const clientSecret = process.env.FIGMA_CLIENT_SECRET;
   const encryptionKey = process.env.FIGMA_TOKEN_ENCRYPTION_KEY;
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://passflow.my.id";
-  if (!clientId || !clientSecret || !encryptionKey) return null;
-  return { clientId, clientSecret, encryptionKey, redirectUri: `${appUrl.replace(/\/$/, "")}/api/figma/callback` };
+  const appUrl = getAppOrigin();
+  if (!clientId || !clientSecret || !encryptionKey || !appUrl) return null;
+  return { clientId, clientSecret, redirectUri: `${appUrl}/api/figma/callback` };
 }
 
 function keyFromSecret(secret: string) { return createHmac("sha256", "passflow-figma-token").update(secret).digest(); }
@@ -57,9 +58,22 @@ export function decryptFigmaToken(value: string) {
 export async function exchangeFigmaCode(code: string) {
   const current = config();
   if (!current) throw new Error("Figma OAuth belum dikonfigurasi di Vercel.");
-  const response = await fetch("https://api.figma.com/v1/oauth/token", { method: "POST", headers: { "content-type": "application/x-www-form-urlencoded" }, body: new URLSearchParams({ client_id: current.clientId, client_secret: current.clientSecret, redirect_uri: current.redirectUri, code, grant_type: "authorization_code" }), cache: "no-store" });
+  const response = await fetch("https://api.figma.com/v1/oauth/token", { method: "POST", headers: { "content-type": "application/x-www-form-urlencoded", Authorization: `Basic ${Buffer.from(`${current.clientId}:${current.clientSecret}`).toString("base64")}` }, body: new URLSearchParams({ redirect_uri: current.redirectUri, code, grant_type: "authorization_code" }), cache: "no-store" });
   if (!response.ok) throw new Error("Figma menolak pertukaran OAuth code.");
-  return response.json() as Promise<{ access_token: string; refresh_token?: string; expires_in?: number; user_id?: string; scope?: string }>;
+  return response.json() as Promise<{ access_token: string; refresh_token: string; expires_in: number; user_id_string?: string; scope?: string }>;
+}
+
+export async function refreshFigmaToken(refreshToken: string) {
+  const current = config();
+  if (!current) throw new Error("Figma OAuth belum dikonfigurasi.");
+  const response = await fetch("https://api.figma.com/v1/oauth/token", {
+    method: "POST",
+    headers: { "content-type": "application/x-www-form-urlencoded", Authorization: `Basic ${Buffer.from(`${current.clientId}:${current.clientSecret}`).toString("base64")}` },
+    body: new URLSearchParams({ grant_type: "refresh_token", refresh_token: refreshToken }),
+    cache: "no-store",
+  });
+  if (!response.ok) throw new Error("Koneksi Figma sudah kedaluwarsa. Hubungkan ulang.");
+  return response.json() as Promise<{ access_token: string; expires_in: number }>;
 }
 
 export async function figmaFetch<T>(token: string, path: string) {
@@ -70,6 +84,7 @@ export async function figmaFetch<T>(token: string, path: string) {
 
 export function parseFigmaUrl(value: string) {
   const url = new URL(value);
+  if (url.protocol !== "https:" || !["figma.com", "www.figma.com"].includes(url.hostname)) throw new Error("Gunakan URL https://www.figma.com yang valid.");
   const match = url.pathname.match(/(?:file|design|proto|board)\/([a-zA-Z0-9]+)(?:\/|$)/);
   if (!match) throw new Error("Masukkan URL file atau design Figma yang valid.");
   return { fileKey: match[1], nodeId: url.searchParams.get("node-id") };

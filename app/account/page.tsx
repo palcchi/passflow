@@ -9,9 +9,10 @@ export const metadata = { title: "Dashboard | PassFlow" };
 
 export default async function AccountPage() {
   const { user, supabase } = await requireUser();
-  const name = typeof user.user_metadata.full_name === "string" && user.user_metadata.full_name.trim()
+  const username = typeof user.user_metadata.username === "string" ? user.user_metadata.username.trim() : "";
+  const name = username || (typeof user.user_metadata.full_name === "string" && user.user_metadata.full_name.trim()
     ? user.user_metadata.full_name.trim()
-    : (user.email?.split("@")[0] || "Pengunjung");
+    : (user.email?.split("@")[0] || "Pengunjung"));
 
   const [{ memberships, unavailable }, registrationsResult, publishedEvents] = await Promise.all([
     getMemberships(),

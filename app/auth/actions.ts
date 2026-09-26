@@ -46,11 +46,12 @@ export async function signInWithEmail(formData: FormData) {
 }
 export async function signUpWithEmail(formData: FormData) {
   const next=safeNext(formData.get("next")); const email=String(formData.get("email")??"").trim().toLowerCase(); const password=String(formData.get("password")??""); const origin=getAppOrigin();
-  if(!origin||!getSupabaseConfig()||!email||password.length<8) redirect(`/register?error=invalid&next=${encodeURIComponent(next)}`);
+  const username=String(formData.get("username")??"").trim().toLowerCase();
+  if(!origin||!getSupabaseConfig()||!email||password.length<8||!/^[a-z0-9_]{3,24}$/.test(username)) redirect(`/register?error=invalid&next=${encodeURIComponent(next)}`);
   let success = false;
   // Confirmation email template appends /auth/confirm and consumes TokenHash itself.
   // Keep RedirectTo at the origin so the template never duplicates callback paths.
-  try { const supabase=await createServerSupabaseClient(); const {error}=await supabase.auth.signUp({email,password,options:{emailRedirectTo:origin}}); success = !error; } catch {}
+  try { const supabase=await createServerSupabaseClient(); const {error}=await supabase.auth.signUp({email,password,options:{emailRedirectTo:origin,data:{username}}}); success = !error; } catch {}
   if (success) redirect(`/register?notice=check-email&next=${encodeURIComponent(next)}`);
   redirect(`/register?error=provider&next=${encodeURIComponent(next)}`);
 }

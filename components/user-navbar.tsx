@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { LayoutGrid, LogOut, Plus } from "lucide-react";
+import { LayoutGrid, LogOut, Plus, UserRound } from "lucide-react";
 import { signOut } from "@/app/auth/actions";
 
 type UserNavbarProps = {
@@ -43,10 +43,10 @@ export function UserNavbar({ name, email, organizer = false }: UserNavbarProps) 
           >
             <Plus size={19} />
           </Link>
-          <div className="hidden items-center gap-2 rounded-full border border-neutral-200 bg-white py-1.5 pl-1.5 pr-3 sm:flex">
+          <Link href="/profile" className="hidden items-center gap-2 rounded-full border border-neutral-200 bg-white py-1.5 pl-1.5 pr-3 transition hover:bg-neutral-100 sm:flex" aria-label="Profil saya">
             <span className="grid size-7 place-items-center rounded-full bg-[#f2c94c] text-[11px] font-bold text-neutral-950">{initial}</span>
             <span className="max-w-32 truncate text-xs font-medium text-neutral-700">{name}</span>
-          </div>
+          </Link>
           <form action={signOut}>
             <button
               type="submit"
@@ -67,6 +67,7 @@ export function UserNavbar({ name, email, organizer = false }: UserNavbarProps) 
           Event
         </Link>
         {organizer && <Link href="/admin" className="rounded-full px-3 py-1.5 text-xs font-medium text-neutral-600">Organizer</Link>}
+        <Link href="/profile" className="inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-medium text-neutral-600"><UserRound size={14}/> Profil</Link>
       </div>
     </nav>
   );
