@@ -1,8 +1,5 @@
-import { notFound } from "next/navigation";
-import { Search, Ticket, UserCog, Users } from "lucide-react";
-import { getManagedEvent } from "@/lib/events";
+import { Search } from "lucide-react";
 import { requireOrganizerMembership } from "@/lib/auth/session";
-import { EventAdminChrome, eventAdminProfile } from "@/components/event-admin-chrome";
 import { CsvImportForm } from "@/components/csv-import-form";
 import { FormattedNumberInput, SmartSelect } from "@/components/form-fields";
 import { MagicCard } from "@/components/magicui/magic-card";
@@ -25,10 +22,8 @@ function inputClass() {
 export default async function EventPeoplePage({ params, searchParams }: Props) {
   const { eventId } = await params;
   const query = await searchParams;
-  const event = await getManagedEvent(eventId);
-  if (!event) notFound();
 
-  const { supabase, user } = await requireOrganizerMembership(`/admin/events/${eventId}/people`);
+  const { supabase } = await requireOrganizerMembership(`/admin/events/${eventId}/people`);
   const search =
     typeof query.q === "string"
       ? query.q.trim().replace(/[^\p{L}\p{N}@ ._-]/gu, "").slice(0, 80)
@@ -67,7 +62,7 @@ export default async function EventPeoplePage({ params, searchParams }: Props) {
   const ticketName = new Map(tickets.map((ticket) => [ticket.id, ticket.name]));
 
   return (
-    <EventAdminChrome event={event} profile={eventAdminProfile(user)}>
+    <>
       <section className="event-admin-section liquid-panel">
         <div className="event-admin-section-head">
           <div>
@@ -83,7 +78,6 @@ export default async function EventPeoplePage({ params, searchParams }: Props) {
             <MagicCard className="event-admin-mini-card" key={ticket.id}>
               <div className="event-admin-mini-top">
                 <span className="event-admin-code">{ticket.code}</span>
-                <Ticket size={16} />
               </div>
               <h3>{ticket.name}</h3>
               <p>{ticket.description || "Tanpa deskripsi."}</p>
@@ -99,7 +93,6 @@ export default async function EventPeoplePage({ params, searchParams }: Props) {
           ))}
           {!tickets.length && (
             <div className="event-admin-empty-card">
-              <Ticket size={20} />
               <strong>Belum ada pass category</strong>
               <span>Tambahkan kategori tiket pertama dari form di bawah.</span>
             </div>
@@ -107,7 +100,7 @@ export default async function EventPeoplePage({ params, searchParams }: Props) {
         </div>
 
         <form action={createTicketType} className="event-admin-inline-form event-admin-inline-form-3">
-          <input type="hidden" name="eventId" value={event.id} />
+          <input type="hidden" name="eventId" value={eventId} />
           <input className={inputClass()} name="name" placeholder="VIP Pass" required />
           <input className={inputClass()} name="code" placeholder="VIP" />
           <FormattedNumberInput name="capacity" min={0} className={inputClass()} placeholder="Capacity" />
@@ -136,7 +129,7 @@ export default async function EventPeoplePage({ params, searchParams }: Props) {
             <p>{attendees.length} attendee ditampilkan dari hasil saat ini.</p>
           </div>
           <div className="event-admin-head-actions">
-            <a className="button button-ghost" href={`/admin/events/${event.id}/export/attendees`}>
+            <a className="button button-ghost" href={`/admin/events/${eventId}/export/attendees`}>
               Export CSV
             </a>
             <form className="event-admin-search" method="get">
@@ -178,7 +171,7 @@ export default async function EventPeoplePage({ params, searchParams }: Props) {
         </div>
 
         <form action={createAttendee} className="event-admin-inline-form event-admin-inline-form-4">
-          <input type="hidden" name="eventId" value={event.id} />
+          <input type="hidden" name="eventId" value={eventId} />
           <input className={inputClass()} name="name" placeholder="Full name" required />
           <input className={inputClass()} name="email" type="email" placeholder="Email" />
           <input className={inputClass()} name="phone" placeholder="Phone" />
@@ -194,7 +187,7 @@ export default async function EventPeoplePage({ params, searchParams }: Props) {
         </form>
 
         <div className="event-admin-import-shell">
-          <CsvImportForm eventId={event.id} />
+          <CsvImportForm eventId={eventId} />
         </div>
       </section>
 
@@ -212,7 +205,6 @@ export default async function EventPeoplePage({ params, searchParams }: Props) {
 
         {typeof query.invite === "string" && (
           <div className="event-admin-invite-banner">
-            <UserCog size={17} />
             <div>
               <strong>Link undangan berhasil dibuat</strong>
               <code>
@@ -226,14 +218,13 @@ export default async function EventPeoplePage({ params, searchParams }: Props) {
         <div className="event-admin-list-grid">
           {crew.map((member) => (
             <div key={member.user_id} className="event-admin-list-card">
-              <span className="event-admin-list-icon"><Users size={16} /></span>
               <div>
                 <strong>{member.job_title}</strong>
                 <small>{member.access_role} · {member.status}</small>
               </div>
               {member.status === "active" && (
                 <form action={revokeCrew}>
-                  <input type="hidden" name="eventId" value={event.id} />
+                  <input type="hidden" name="eventId" value={eventId} />
                   <input type="hidden" name="userId" value={member.user_id} />
                   <button className="event-admin-danger-link" type="submit">Revoke</button>
                 </form>
@@ -242,7 +233,6 @@ export default async function EventPeoplePage({ params, searchParams }: Props) {
           ))}
           {!crew.length && (
             <div className="event-admin-empty-card">
-              <UserCog size={20} />
               <strong>Belum ada crew</strong>
               <span>Buat link undangan untuk menambahkan anggota tim.</span>
             </div>
@@ -250,7 +240,7 @@ export default async function EventPeoplePage({ params, searchParams }: Props) {
         </div>
 
         <form action={createCrewInvitation} className="event-admin-inline-form event-admin-inline-form-4">
-          <input type="hidden" name="eventId" value={event.id} />
+          <input type="hidden" name="eventId" value={eventId} />
           <input className={inputClass()} name="jobTitle" placeholder="Gate Crew" required />
           <SmartSelect
             name="accessRole"
@@ -265,6 +255,6 @@ export default async function EventPeoplePage({ params, searchParams }: Props) {
           <button className="button button-dark event-admin-inline-submit" type="submit">Buat link crew</button>
         </form>
       </section>
-    </EventAdminChrome>
+    </>
   );
 }
