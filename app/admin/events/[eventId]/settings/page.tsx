@@ -2,7 +2,6 @@ import { notFound } from "next/navigation";
 import { ShieldCheck, Trash2 } from "lucide-react";
 import { getManagedEvent } from "@/lib/events";
 import { requireOrganizerMembership } from "@/lib/auth/session";
-import { EventAdminChrome, eventAdminProfile } from "@/components/event-admin-chrome";
 import { DateTimeField, FormattedNumberInput } from "@/components/form-fields";
 import { deleteEvent, setEventStatus, updateEvent } from "@/app/admin/actions";
 
@@ -17,10 +16,10 @@ export default async function EventSettingsPage({ params }: Props) {
   const event = await getManagedEvent(eventId);
   if (!event) notFound();
 
-  const { user } = await requireOrganizerMembership(`/admin/events/${eventId}/settings`);
+  await requireOrganizerMembership(`/admin/events/${eventId}/settings`);
 
   return (
-    <EventAdminChrome event={event} profile={eventAdminProfile(user)}>
+    <>
       <section className="event-admin-section liquid-panel">
         <div className="event-admin-section-head">
           <div>
@@ -111,6 +110,6 @@ export default async function EventSettingsPage({ params }: Props) {
           </button>
         </form>
       </section>
-    </EventAdminChrome>
+    </>
   );
 }
