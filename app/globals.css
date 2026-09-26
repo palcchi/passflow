@@ -6764,6 +6764,12 @@ select,
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .text-animate-segment {
+    opacity: 1 !important;
+    transform: none !important;
+    filter: none !important;
+  }
+
   .magic-shiny-button::before,
   .typing-caret {
     animation: none !important;
