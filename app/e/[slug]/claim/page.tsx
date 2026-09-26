@@ -14,7 +14,7 @@ const reasonText:Record<string,string>={not_registered:"Daftarkan dirimu ke even
 export default async function ClaimPage({params,searchParams}:ClaimPageProps){
  const {slug}=await params;const query=await searchParams;const event=await getPublishedEvent(slug);if(!event)notFound();const {supabase,user}=await requireUser(`/e/${slug}/claim`);
  const {data:attendee}=await supabase.from("attendees").select("id,name,email,phone,attendee_code,ticket_types(name,code)").eq("event_id",event.id).eq("user_id",user.id).maybeSingle();
- const {data:tickets}=await supabase.from("ticket_types").select("code,name").eq("event_id",event.id).order("created_at");
+ const {data:tickets}=await supabase.from("ticket_types").select("code,name,price,currency").eq("event_id",event.id).order("created_at");
  const {data:credential}=attendee?await supabase.from("qr_credentials").select("code,display_code,status").eq("event_id",event.id).eq("attendee_id",attendee.id).eq("status","active").maybeSingle():{data:null};
  const qrData=credential?await QRCode.toDataURL(`PF1:${credential.code}`,{margin:1,width:260,color:{dark:"#151515",light:"#ffffff"} }):null;
  const error=typeof query.error==="string"?reasonText[query.error]??"Permintaan belum dapat diproses.":null;
