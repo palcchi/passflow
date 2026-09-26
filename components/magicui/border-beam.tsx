@@ -1,2 +1,26 @@
+import type { CSSProperties } from "react";
 import { cn } from "@/lib/utils";
-export function BorderBeam({ className }: { className?: string }) { return <span aria-hidden className={cn("pointer-events-none absolute inset-0 rounded-[inherit] border border-primary/50 [mask-image:linear-gradient(transparent,black,transparent)] animate-pulse", className)} />; }
+
+export function BorderBeam({
+  className,
+  duration = 8,
+  size = 90,
+  delay = 0,
+}: {
+  className?: string;
+  duration?: number;
+  size?: number;
+  delay?: number;
+}) {
+  return (
+    <span
+      aria-hidden
+      className={cn("magic-border-beam", className)}
+      style={{
+        "--beam-duration": `${duration}s`,
+        "--beam-size": `${size}px`,
+        "--beam-delay": `${delay}s`,
+      } as CSSProperties}
+    />
+  );
+}
