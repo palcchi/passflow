@@ -4,7 +4,7 @@ import { chromium } from "playwright";
 
 const browser = await chromium.launch();
 await mkdir("verification", { recursive: true });
-const routes = ["/", "/login", "/register", "/account", "/profile", "/events", "/unauthorized", "/admin", "/e/adorne-nails-exhibition", "/e/adorne-nails-workshop", "/e/adorne-nails-exhibition/claim", "/admin/events/evt_adorne_exhibition", "/admin/events/evt_adorne_exhibition/appearance", "/admin/events/evt_adorne_exhibition/design", "/scan/main-entrance"];
+const routes = ["/", "/login", "/register", "/account", "/profile", "/events", "/unauthorized", "/admin", "/e/adorne-nails-exhibition", "/e/adorne-nails-workshop", "/e/adorne-nails-exhibition/claim", "/admin/events/evt_adorne_exhibition", "/admin/events/evt_adorne_exhibition/people", "/admin/events/evt_adorne_exhibition/access", "/admin/events/evt_adorne_exhibition/experience", "/admin/events/evt_adorne_exhibition/settings", "/admin/events/evt_adorne_exhibition/appearance", "/admin/events/evt_adorne_exhibition/design", "/scan/main-entrance"];
 const failures = [];
 try {
   for (const width of [320, 375, 430, 820, 1440]) {
