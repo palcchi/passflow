@@ -1,11 +1,11 @@
 import Link from "next/link";
-import { ExternalLink, Figma, ShieldCheck, Sparkles } from "lucide-react";
 import { requireUser, getMemberships } from "@/lib/auth/session";
 import { canManage } from "@/lib/auth/redirect";
 import { figmaConfigured } from "@/lib/figma";
 import { UserNavbar } from "@/components/user-navbar";
 import { ProfileEditor } from "@/components/profile-editor";
-import { BlurFade } from "@/components/magicui/blur-fade";
+import { KineticText } from "@/components/magicui/kinetic-text";
+import { TextAnimate } from "@/components/magicui/text-animate";
 
 export const metadata = { title: "Profil | PassFlow" };
 export const dynamic = "force-dynamic";
@@ -75,9 +75,7 @@ export default async function ProfilePage({
   const profileStatus = statusMessages[status];
 
   return (
-    <div className="app-surface min-h-screen text-neutral-950">
-      <div className="ambient-orb ambient-orb-one" />
-      <div className="ambient-orb ambient-orb-three" />
+    <div className="app-surface studio-backdrop min-h-screen">
       <UserNavbar
         name={fullName}
         email={user.email}
@@ -86,15 +84,15 @@ export default async function ProfilePage({
       />
 
       <main className="relative z-10 mx-auto max-w-6xl px-5 pb-20 pt-8 sm:px-8 sm:pt-12">
-        <BlurFade>
-          <header className="profile-page-heading">
-            <span className="dashboard-welcome-kicker">
-              <Sparkles size={13} /> Account settings
-            </span>
-            <h1>Profil kamu.</h1>
-            <p>Atur identitas, foto profil, dan koneksi desain dari satu tempat.</p>
-          </header>
-        </BlurFade>
+        <header className="profile-page-heading studio-page-hero">
+          <div>
+            <span className="section-kicker">Account settings</span>
+            <KineticText text="Profil kamu." className="studio-page-title" />
+            <TextAnimate className="studio-page-subtitle">
+              Atur identitas, foto profil, dan koneksi desain dari satu tempat.
+            </TextAnimate>
+          </div>
+        </header>
 
         {profileStatus && (
           <div
@@ -120,22 +118,16 @@ export default async function ProfilePage({
           </div>
         )}
 
-        <BlurFade delay={0.04}>
-          <ProfileEditor
+        <ProfileEditor
             fullName={fullName}
             username={username}
             email={user.email ?? ""}
             avatarUrl={avatarUrl}
             organizer={organizer}
           />
-        </BlurFade>
 
-        <BlurFade delay={0.08}>
-          <section className="profile-integration-card liquid-panel">
+        <section className="profile-integration-card">
             <div className="profile-integration-main">
-              <span className="profile-integration-icon">
-                <Figma size={20} />
-              </span>
               <div>
                 <span className="section-kicker">Integration</span>
                 <h2>Figma account</h2>
@@ -153,7 +145,6 @@ export default async function ProfilePage({
                 izinkan. File desain tetap milik akun Figma organizer.
               </p>
               <div className="profile-integration-security">
-                <ShieldCheck size={15} />
                 Token Figma disimpan terenkripsi di server.
               </div>
               {connectionError && (
@@ -184,7 +175,7 @@ export default async function ProfilePage({
                   aria-disabled={!figmaConfigured()}
                   className="button button-dark"
                 >
-                  Hubungkan Figma <ExternalLink size={15} />
+                  Hubungkan Figma
                 </a>
               )}
               {organizer && (
@@ -193,8 +184,7 @@ export default async function ProfilePage({
                 </Link>
               )}
             </div>
-          </section>
-        </BlurFade>
+        </section>
       </main>
     </div>
   );

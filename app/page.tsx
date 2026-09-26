@@ -1,145 +1,117 @@
-import { Button } from "@/components/ui/button";
-import { ThemeToggle } from "@/components/theme-toggle";
 import Link from "next/link";
-import {
-  ArrowUpRight,
-  BadgeCheck,
-  CalendarDays,
-  QrCode,
-  ScanLine,
-  Sparkles,
-} from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
+import { ThemeToggle } from "@/components/theme-toggle";
+import { KineticText } from "@/components/magicui/kinetic-text";
+import { TextAnimate } from "@/components/magicui/text-animate";
+import { VelocityScroll } from "@/components/magicui/scroll-based-velocity";
+import { ShinyButton } from "@/components/magicui/shiny-button";
+import { TypingAnimation } from "@/components/magicui/typing-animation";
+import { Text3DFlip } from "@/components/magicui/text-3d-flip";
+import { SmoothCursor } from "@/components/magicui/smooth-cursor";
 
-const features = [
-  {
-    icon: QrCode,
-    title: "Claim-Based QR Pass",
-    copy: "Wristband dibuat massal dengan QR unik, lalu diklaim sendiri oleh pengunjung.",
-  },
-  {
-    icon: ScanLine,
-    title: "Camera Scanner",
-    copy: "Arahkan QR ke kamera, validasi muncul otomatis, lalu scanner kembali siap.",
-  },
-  {
-    icon: Sparkles,
-    title: "Custom Event Theme",
-    copy: "Setiap event punya warna, identitas, hero, dan halaman publik sendiri.",
-  },
+const capabilities = [
+  ["01", "Register", "Satu identitas attendee untuk seluruh event flow."],
+  ["02", "Assign", "QR otomatis atau claim wristband, dipilih per event."],
+  ["03", "Scan", "Validasi akses, checkpoint, dan benefit dari kamera."],
+  ["04", "Design", "Pass dan ID card tetap sinkron dengan data attendee."],
 ];
 
 export default function HomePage() {
   return (
-    <main className="landing-shell">
-      <nav className="topbar">
+    <main className="landing-shell studio-backdrop">
+      <SmoothCursor />
+
+      <nav className="topbar studio-nav">
         <Link href="/" className="brand-lockup">
           <span className="brand-mark">P</span>
           <span>PassFlow</span>
         </Link>
+
         <div className="topbar-actions">
           <ThemeToggle />
-          <Link href="/e/adorne-nails-exhibition" className="text-link">
-            Event demo
-          </Link>
           <Link href="/login" className="text-link">
             Masuk
           </Link>
-          <Link href="/register" className="button button-dark">
-            Buat akun
-            <ArrowUpRight size={16} />
-          </Link>
+          <ShinyButton href="/register" className="landing-nav-cta">
+            Mulai
+          </ShinyButton>
         </div>
       </nav>
 
-      <section className="hero-section">
-        <div className="hero-copy">
-          <div className="eyebrow-pill">
-            <BadgeCheck size={15} />
-            Multi-event access platform
-          </div>
-          <h1>
-            One pass.
-            <br />
-            Every event moment.
-          </h1>
-          <p>
-            PassFlow menyatukan registrasi, QR wristband, digital pass,
-            access control, activity tracking, dan monitoring event dalam satu
-            web app.
-          </p>
-          <div className="hero-actions">
-            <Button asChild size="lg"><Link href="/register">
-              Buat akun gratis
-              <ArrowUpRight size={17} />
-            </Link></Button>
-            <Button asChild size="lg" variant="outline"><Link href="/scan/main-entrance">
-              Try scanner
-            </Link></Button>
+      <section className="studio-hero">
+        <div className="studio-hero-copy">
+          <span className="studio-eyebrow">
+            <TypingAnimation duration={28}>Event access, without the friction.</TypingAnimation>
+          </span>
+
+          <KineticText
+            text="One pass. Every event moment."
+            className="studio-hero-title"
+          />
+
+          <TextAnimate className="studio-hero-description" by="word" delay={0.08}>
+            Registrasi, credential, ID card, wristband, scanner, dan event experience bergerak dari satu sumber data yang sama.
+          </TextAnimate>
+
+          <div className="studio-hero-actions">
+            <ShinyButton href="/register">
+              Buat workspace <ArrowUpRight size={15} />
+            </ShinyButton>
+            <Link href="/e/adorne-nails-exhibition" className="button button-ghost">
+              Lihat event demo
+            </Link>
           </div>
         </div>
 
-        <div className="hero-minimal-status" aria-label="PassFlow flow preview">
-          <span className="section-kicker">Live event flow</span>
-          <div className="hero-flow-row">
-            <strong>01</strong>
-            <span>Create event</span>
-            <small>Ready</small>
+        <div className="studio-flow-panel">
+          <div className="studio-flow-head">
+            <span>Live flow</span>
+            <small>PassFlow system</small>
           </div>
-          <div className="hero-flow-row">
-            <strong>02</strong>
-            <span>Generate & claim QR</span>
-            <small>Active</small>
-          </div>
-          <div className="hero-flow-row">
-            <strong>03</strong>
-            <span>Scan access</span>
-            <small>Instant</small>
-          </div>
-          <div className="hero-flow-row">
-            <strong>04</strong>
-            <span>Track activity</span>
-            <small>Synced</small>
-          </div>
-        </div>
-      </section>
-
-      <section className="feature-grid">
-        {features.map(({ icon: Icon, title, copy }) => (
-          <article className="feature-card" key={title}>
-            <div className="feature-icon">
-              <Icon size={20} />
-            </div>
-            <h2>{title}</h2>
-            <p>{copy}</p>
-          </article>
-        ))}
-      </section>
-
-      <section className="flow-strip">
-        <div className="flow-copy">
-          <span className="section-kicker">Designed for real flow</span>
-          <h2>Generate. Claim. Scan. Validate.</h2>
-        </div>
-        <div className="flow-steps">
-          {[
-            ["01", "Create event"],
-            ["02", "Generate QR"],
-            ["03", "Visitor claims"],
-            ["04", "Scan access"],
-          ].map(([number, label]) => (
-            <div className="flow-step" key={number}>
+          {capabilities.map(([number, title, copy]) => (
+            <div className="studio-flow-item" key={number}>
               <span>{number}</span>
-              <strong>{label}</strong>
+              <div>
+                <strong>{title}</strong>
+                <small>{copy}</small>
+              </div>
             </div>
           ))}
         </div>
       </section>
 
-      <footer className="site-footer">
-        <span>PassFlow · PassFlow workspace</span>
-        <span className="footer-note">
-          <CalendarDays size={14} /> Event access platform
-        </span>
+      <div className="studio-velocity-band" aria-hidden="true">
+        <VelocityScroll defaultVelocity={0.45}>
+          REGISTER · ASSIGN · CLAIM · SCAN · VALIDATE · DESIGN ·
+        </VelocityScroll>
+      </div>
+
+      <section className="studio-capabilities">
+        <div className="studio-section-copy">
+          <span className="section-kicker">Designed around flow</span>
+          <Text3DFlip className="studio-flip-heading">
+            Less dashboard. More control.
+          </Text3DFlip>
+          <p>
+            Informasi penting tetap dekat. Halaman tidak perlu diisi kartu hanya karena manusia
+            menemukan border-radius.
+          </p>
+        </div>
+
+        <div className="studio-capability-list">
+          {capabilities.map(([number, title, copy]) => (
+            <article key={number}>
+              <span>{number}</span>
+              <h2>{title}</h2>
+              <p>{copy}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <footer className="site-footer studio-footer">
+        <span>PassFlow</span>
+        <span>Event identity → credential → access.</span>
       </footer>
     </main>
   );

@@ -10,8 +10,10 @@ try {
   for (const width of [320, 375, 430, 820, 1440]) {
     const page = await browser.newPage({ viewport: { width, height: 1000 }, reducedMotion: "reduce" });
     const errors = [];
-    page.on("pageerror", (error) => errors.push(error.message));
+    let currentRoute = "";
+    page.on("pageerror", (error) => errors.push({ route: currentRoute, message: error.message }));
     for (const route of routes) {
+      currentRoute = route;
       const response = await page.goto(`http://127.0.0.1:3000${route}`);
       assert.equal(response.status(), 200, `${width}px ${route} status`);
       await page.locator("main").waitFor();
@@ -26,7 +28,7 @@ try {
       if (overflow) failures.push(`${width}px ${route} horizontal overflow`);
       console.log(`${overflow ? "FAIL" : "PASS"} ${width}px ${route}`);
     }
-    assert.deepEqual(errors, [], `${width}px browser errors`);
+    assert.deepEqual(errors, [], `${width}px browser errors: ${JSON.stringify(errors)}`);
     await page.close();
   }
   const page = await browser.newPage();

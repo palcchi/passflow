@@ -516,6 +516,12 @@ export async function saveEventQrConfig(formData: FormData) {
   await supabase.from("events").update({
     qr_config: {
       mode,
+      claim_mode:
+        existing.claim_mode === "claim" || existing.claim_mode === "automatic"
+          ? existing.claim_mode
+          : mode === "wristband"
+            ? "claim"
+            : "automatic",
       template_url: typeof existing.template_url === "string" ? existing.template_url : null,
       width_mm: clamp("widthMm", 85.6, 20, 500),
       height_mm: clamp("heightMm", 54, 20, 500),
@@ -526,6 +532,83 @@ export async function saveEventQrConfig(formData: FormData) {
     updated_at: new Date().toISOString(),
   }).eq("id", eventId);
   revalidateEvent(eventId, current?.slug);
+}
+
+export async function saveClaimMode(formData: FormData) {
+  const eventId = text(formData, "eventId", 60);
+  const claimMode = text(formData, "claimMode", 20) === "claim" ? "claim" : "automatic";
+  const { supabase } = await managedContext(eventId);
+
+  const { data: current } = await supabase
+    .from("events")
+    .select("qr_config,slug")
+    .eq("id", eventId)
+    .single();
+  if (!current) return;
+
+  const existing =
+    current.qr_config &&
+    typeof current.qr_config === "object" &&
+    !Array.isArray(current.qr_config)
+      ? (current.qr_config as Record<string, unknown>)
+      : {};
+
+  await supabase
+    .from("events")
+    .update({
+      qr_config: { ...existing, claim_mode: claimMode },
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", eventId);
+
+  if (claimMode === "automatic") {
+    const attendees: Array<{ id: string; attendee_code: string }> = [];
+    for (let from = 0; ; from += 500) {
+      const { data } = await supabase
+        .from("attendees")
+        .select("id,attendee_code")
+        .eq("event_id", eventId)
+        .order("created_at")
+        .range(from, from + 499);
+      const page = data ?? [];
+      attendees.push(...page);
+      if (page.length < 500) break;
+    }
+
+    const activeIds = new Set<string>();
+    for (let from = 0; ; from += 500) {
+      const { data } = await supabase
+        .from("qr_credentials")
+        .select("attendee_id")
+        .eq("event_id", eventId)
+        .eq("status", "active")
+        .not("attendee_id", "is", null)
+        .range(from, from + 499);
+      const page = data ?? [];
+      for (const item of page) {
+        if (item.attendee_id) activeIds.add(item.attendee_id);
+      }
+      if (page.length < 500) break;
+    }
+
+    const missing = attendees.filter((attendee) => !activeIds.has(attendee.id));
+    const now = new Date().toISOString();
+    for (let index = 0; index < missing.length; index += 200) {
+      const rows = missing.slice(index, index + 200).map((attendee) => ({
+        event_id: eventId,
+        attendee_id: attendee.id,
+        code: randomBytes(24).toString("base64url"),
+        display_code: `PASS-${randomBytes(6).toString("hex").toUpperCase()}`,
+        status: "active" as const,
+        claimed_at: now,
+      }));
+      if (rows.length) {
+        await supabase.from("qr_credentials").insert(rows);
+      }
+    }
+  }
+
+  revalidateEvent(eventId, current.slug);
 }
 
 export async function uploadEventAsset(formData: FormData) {

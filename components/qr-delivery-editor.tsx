@@ -2,8 +2,6 @@
 
 import { useMemo, useState, useTransition } from "react";
 import Image from "next/image";
-import { motion, useReducedMotion } from "motion/react";
-import { Check, Download, Save, ScanLine } from "lucide-react";
 import type { PassFlowEvent, QrDeliveryMode } from "@/lib/events";
 import { saveEventQrConfig } from "@/app/admin/actions";
 import { AssetUploadCard } from "@/components/asset-upload-card";
@@ -50,7 +48,6 @@ export function QrDeliveryEditor({ event }: { event: PassFlowEvent }) {
   const [heightMm, setHeightMm] = useState(event.qrConfig.heightMm);
   const [message, setMessage] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
-  const reduceMotion = useReducedMotion();
   const selected = useMemo(() => modes.find((item) => item.value === mode) ?? modes[0], [mode]);
 
   function save() {
@@ -76,44 +73,36 @@ export function QrDeliveryEditor({ event }: { event: PassFlowEvent }) {
           <span className="section-kicker">QR delivery</span>
           <h2>Pilih bentuk pass yang paling sesuai.</h2>
           <p>
-            Digital aktif otomatis untuk pendaftar. Format fisik memakai template yang bisa
-            kamu posisikan secara presisi sebelum export.
+            Bentuk pass dan posisi QR diatur di sini. Cara credential diberikan ke attendee
+            diatur terpisah dari menu Access.
           </p>
         </div>
         <div className="qr-editor-header-actions">
           <a className="button button-ghost" href={`/admin/events/${event.id}/wristbands/print`}>
-            <Download size={16} /> Preview export
+            Preview export
           </a>
           <a className="button button-dark" href={`/admin/events/${event.id}/export/figma`}>
-            <Download size={16} /> Export Figma
+            Export Figma
           </a>
         </div>
       </div>
 
       <div className="qr-mode-grid">
         {modes.map((item) => (
-          <motion.button
+          <button
             type="button"
             key={item.value}
             className="qr-mode-card"
             data-active={item.value === mode}
             onClick={() => setMode(item.value)}
-            whileHover={reduceMotion ? undefined : { y: -2 }}
-            whileTap={reduceMotion ? undefined : { scale: 0.99 }}
           >
-            <span className="qr-mode-preview" style={{ aspectRatio: item.ratio }}>
-              <ScanLine size={18} />
-            </span>
+            <span className="qr-mode-preview" style={{ aspectRatio: item.ratio }} />
             <span className="qr-mode-copy">
               <strong>{item.label}</strong>
               <small>{item.description}</small>
             </span>
-            {item.value === mode && (
-              <span className="qr-mode-check">
-                <Check size={13} />
-              </span>
-            )}
-          </motion.button>
+            {item.value === mode && <span className="qr-mode-check">Selected</span>}
+          </button>
         ))}
       </div>
 
@@ -188,7 +177,6 @@ export function QrDeliveryEditor({ event }: { event: PassFlowEvent }) {
           <div className="qr-save-row">
             {message && <span className="editor-inline-success">{message}</span>}
             <button className="button button-dark" type="button" disabled={pending} onClick={save}>
-              {message && !pending ? <Check size={16} /> : <Save size={16} />}
               {pending ? "Menyimpan..." : message ? "Tersimpan" : "Simpan QR"}
             </button>
           </div>
@@ -199,11 +187,9 @@ export function QrDeliveryEditor({ event }: { event: PassFlowEvent }) {
             <span className="field-label">Pass preview</span>
             <span>{selected.label}</span>
           </div>
-          <motion.div
+          <div
             className="qr-config-preview"
             style={{ aspectRatio: selected.ratio }}
-            layout
-            transition={{ duration: reduceMotion ? 0 : 0.22 }}
           >
             {templateUrl && (
               <Image
@@ -214,18 +200,17 @@ export function QrDeliveryEditor({ event }: { event: PassFlowEvent }) {
                 sizes="(max-width: 900px) 100vw, 380px"
               />
             )}
-            <motion.div
+            <div
               className="qr-config-preview-mark"
-              animate={{
+              style={{
                 left: `${qrX}%`,
                 top: `${qrY}%`,
                 width: `${qrSize}%`,
               }}
-              transition={{ duration: reduceMotion ? 0 : 0.16 }}
             >
               QR
-            </motion.div>
-          </motion.div>
+            </div>
+          </div>
           <div className="figma-export-note">
             <strong>Figma-ready</strong>
             <span>

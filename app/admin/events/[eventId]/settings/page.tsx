@@ -1,8 +1,6 @@
 import { notFound } from "next/navigation";
-import { ShieldCheck, Trash2 } from "lucide-react";
 import { getManagedEvent } from "@/lib/events";
 import { requireOrganizerMembership } from "@/lib/auth/session";
-import { EventAdminChrome, eventAdminProfile } from "@/components/event-admin-chrome";
 import { DateTimeField, FormattedNumberInput } from "@/components/form-fields";
 import { deleteEvent, setEventStatus, updateEvent } from "@/app/admin/actions";
 
@@ -17,10 +15,10 @@ export default async function EventSettingsPage({ params }: Props) {
   const event = await getManagedEvent(eventId);
   if (!event) notFound();
 
-  const { user } = await requireOrganizerMembership(`/admin/events/${eventId}/settings`);
+  await requireOrganizerMembership(`/admin/events/${eventId}/settings`);
 
   return (
-    <EventAdminChrome event={event} profile={eventAdminProfile(user)}>
+    <>
       <section className="event-admin-section liquid-panel">
         <div className="event-admin-section-head">
           <div>
@@ -28,7 +26,6 @@ export default async function EventSettingsPage({ params }: Props) {
             <h2>Basics & lifecycle</h2>
             <p>Informasi inti event, jadwal, kapasitas, dan status publikasi.</p>
           </div>
-          <span className="event-admin-section-icon"><ShieldCheck size={18} /></span>
         </div>
 
         <form action={updateEvent} className="event-admin-form-grid">
@@ -94,7 +91,6 @@ export default async function EventSettingsPage({ params }: Props) {
 
       <section className="event-admin-danger-zone">
         <div className="event-admin-danger-copy">
-          <span className="event-admin-danger-icon"><Trash2 size={17} /></span>
           <div>
             <strong>Delete event</strong>
             <p>
@@ -111,6 +107,6 @@ export default async function EventSettingsPage({ params }: Props) {
           </button>
         </form>
       </section>
-    </EventAdminChrome>
+    </>
   );
 }
