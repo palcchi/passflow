@@ -3,21 +3,25 @@ export const revalidate = 0;
 
 import Link from "next/link";
 import {
-  ArrowRight,
-  CalendarRange,
+  ArrowUpRight,
+  CalendarDays,
   CirclePlus,
-  LayoutDashboard,
+  MapPin,
   QrCode,
   ScanLine,
   Sparkles,
   TicketCheck,
-  UserRound,
   UsersRound,
 } from "lucide-react";
 import { requireOrganizer } from "@/lib/auth/session";
 import { NumberTicker } from "@/components/magicui/number-ticker";
 import { BlurFade } from "@/components/magicui/blur-fade";
-import { Button } from "@/components/ui/button";
+import { MagicCard } from "@/components/magicui/magic-card";
+import { BorderBeam } from "@/components/magicui/border-beam";
+import { ShineBorder } from "@/components/magicui/shine-border";
+import { AnimatedShinyText } from "@/components/magicui/animated-shiny-text";
+import { ShimmerButton } from "@/components/magicui/shimmer-button";
+import { UserNavbar } from "@/components/user-navbar";
 import { getManagedEvents } from "@/lib/events";
 
 export default async function AdminDashboardPage() {
@@ -33,233 +37,220 @@ export default async function AdminDashboardPage() {
           .eq("status", "active"),
         supabase
           .from("scanner_stations")
-          .select("id,name,is_active")
+          .select("id,name,is_active,event_id")
           .in("event_id", eventIds)
           .order("name"),
       ])
     : [{ count: 0 }, { data: [] }];
 
+  const username =
+    typeof user.user_metadata.username === "string" ? user.user_metadata.username.trim() : "";
   const fullName =
-    typeof user.user_metadata.full_name === "string" && user.user_metadata.full_name.trim()
-      ? user.user_metadata.full_name.trim()
-      : typeof user.user_metadata.username === "string" && user.user_metadata.username.trim()
-        ? user.user_metadata.username.trim()
-        : user.email?.split("@")[0] || "Organizer";
+    typeof user.user_metadata.full_name === "string" ? user.user_metadata.full_name.trim() : "";
   const avatarUrl =
     typeof user.user_metadata.avatar_url === "string"
       ? user.user_metadata.avatar_url
       : typeof user.user_metadata.picture === "string"
         ? user.user_metadata.picture
         : null;
-  const initial = fullName.charAt(0).toUpperCase() || "P";
+  const name = fullName || username || user.email?.split("@")[0] || "Organizer";
+
+  const totalRegistered = events.reduce((total, event) => total + event.attendeeCount, 0);
+  const totalCheckedIn = events.reduce((total, event) => total + event.checkedInCount, 0);
+  const activeStations = (stationResult.data ?? []).filter((station) => station.is_active).length;
 
   const statCards = [
-    { label: "Total events", value: events.length, icon: CalendarRange },
-    {
-      label: "Registered",
-      value: events.reduce((total, event) => total + event.attendeeCount, 0),
-      icon: UsersRound,
-    },
-    {
-      label: "Checked in",
-      value: events.reduce((total, event) => total + event.checkedInCount, 0),
-      icon: TicketCheck,
-    },
-    { label: "QR active", value: qrResult.count ?? 0, icon: QrCode },
+    { label: "Events", value: events.length, icon: CalendarDays, note: "event dikelola" },
+    { label: "Registered", value: totalRegistered, icon: UsersRound, note: "total attendee" },
+    { label: "Checked in", value: totalCheckedIn, icon: TicketCheck, note: "sudah masuk" },
+    { label: "QR active", value: qrResult.count ?? 0, icon: QrCode, note: "credential aktif" },
   ];
 
   return (
-    <main className="dashboard-shell admin-glass-shell">
-      <aside className="sidebar admin-glass-sidebar">
-        <Link href="/admin" className="brand-lockup sidebar-brand">
-          <span className="brand-mark">P</span>
-          <span>PassFlow</span>
-        </Link>
+    <div className="app-surface min-h-screen text-neutral-950">
+      <div className="ambient-orb ambient-orb-one" />
+      <div className="ambient-orb ambient-orb-two" />
+      <div className="ambient-orb ambient-orb-three" />
 
-        <div className="sidebar-section">
-          <span className="sidebar-label">Workspace</span>
-          <Link href="/admin" className="sidebar-link active">
-            <LayoutDashboard size={15} /> Overview
-          </Link>
-          <a className="sidebar-link" href="#events">
-            <CalendarRange size={15} /> Events
-          </a>
-          <a className="sidebar-link" href="#stations">
-            <ScanLine size={15} /> Scanner
-          </a>
+      <UserNavbar
+        name={name}
+        email={user.email}
+        avatarUrl={avatarUrl}
+        organizer
+      />
 
-          <span className="sidebar-label sidebar-label-spaced">Account</span>
-          <Link href="/account" className="sidebar-link">
-            <UserRound size={15} /> My dashboard
-          </Link>
-          <Link href="/profile" className="sidebar-link">
-            <Sparkles size={15} /> Profile & integrations
-          </Link>
-        </div>
-
-        <Link href="/profile" className="sidebar-footer admin-profile-card">
-          <span
-            className="avatar admin-sidebar-avatar"
-            style={avatarUrl ? { backgroundImage: `url("${avatarUrl}")` } : undefined}
-          >
-            {!avatarUrl && initial}
-          </span>
-          <div>
-            <strong>{fullName}</strong>
-            <small>{user.email}</small>
-          </div>
-        </Link>
-      </aside>
-
-      <section className="dashboard-content">
-        <nav className="admin-mobile-nav liquid-nav">
-          <Link href="/admin" className="user-nav-brand">
-            <span className="brand-mark user-nav-brand-mark">P</span>
-            <span>PassFlow</span>
-          </Link>
-          <div>
-            <Link href="/profile" className="user-nav-icon-button" aria-label="Profile">
-              <UserRound size={17} />
-            </Link>
-            <Link href="/admin/events/new" className="user-nav-icon-button" aria-label="New event">
-              <CirclePlus size={17} />
-            </Link>
-          </div>
-        </nav>
-
+      <main className="relative z-10 mx-auto max-w-7xl px-5 pb-20 pt-8 sm:px-8 sm:pt-12">
         <BlurFade>
-          <header className="dashboard-header admin-dashboard-hero">
-            <div>
-              <span className="dashboard-welcome-kicker">
+          <header className="organizer-welcome liquid-panel">
+            <ShineBorder duration={18} borderWidth={1} />
+            <div className="organizer-welcome-copy">
+              <AnimatedShinyText className="dashboard-welcome-kicker">
                 <Sparkles size={13} /> Organizer workspace
-              </span>
-              <h1>Good evening, {fullName.split(" ")[0]}.</h1>
+              </AnimatedShinyText>
+              <h1>Kelola event dari satu workspace.</h1>
               <p>
-                Monitor event, attendance, QR, dan scanner dari satu workspace yang akhirnya
-                tidak terasa seperti panel admin tahun 2014.
+                Pantau attendee, QR access, scanner, dan desain event dengan alur yang sama
+                seperti dashboard utama PassFlow.
               </p>
             </div>
-            <Button asChild className="admin-new-event-button">
+            <ShimmerButton asChild className="organizer-primary-cta">
               <Link href="/admin/events/new">
-                <CirclePlus size={17} /> New event
+                <CirclePlus size={18} />
+                Buat event
               </Link>
-            </Button>
+            </ShimmerButton>
           </header>
         </BlurFade>
 
-        <div className="stat-grid">
-          {statCards.map(({ label, value, icon: Icon }, index) => (
+        <section className="organizer-metrics" aria-label="Organizer metrics">
+          {statCards.map(({ label, value, icon: Icon, note }, index) => (
             <BlurFade delay={0.04 + index * 0.035} key={label}>
-              <article className="stat-card admin-stat-card liquid-panel">
-                <div className="stat-icon">
-                  <Icon size={19} />
+              <MagicCard className="organizer-metric-card liquid-panel">
+                {index === 0 && <BorderBeam duration={9} size={76} />}
+                <div className="organizer-metric-icon">
+                  <Icon size={17} />
                 </div>
-                <span>{label}</span>
-                <strong>
-                  <NumberTicker value={Number(value)} />
-                </strong>
-              </article>
+                <div className="organizer-metric-copy">
+                  <span>{label}</span>
+                  <strong>
+                    <NumberTicker value={Number(value)} />
+                  </strong>
+                  <small>{note}</small>
+                </div>
+              </MagicCard>
             </BlurFade>
           ))}
-        </div>
-
-        <section className="dashboard-section" id="events">
-          <div className="section-heading">
-            <div>
-              <span className="section-kicker">Events</span>
-              <h2>Active workspace</h2>
-            </div>
-            <span className="soft-badge">{events.length} events</span>
-          </div>
-
-          <div className="event-list admin-event-list liquid-panel">
-            {events.length === 0 && (
-              <div className="admin-empty-row">
-                <strong>Belum ada event.</strong>
-                <span>Buat event pertama untuk mulai mengelola akses dan peserta.</span>
-                <Link href="/admin/events/new" className="button button-dark">
-                  <CirclePlus size={15} /> New event
-                </Link>
-              </div>
-            )}
-            {events.map((event) => {
-              const percentage = Math.round(
-                event.attendeeCount ? (event.checkedInCount / event.attendeeCount) * 100 : 0,
-              );
-
-              return (
-                <article className="event-row" key={event.id}>
-                  <div className="event-color" style={{ background: event.theme.primary }} />
-                  <div className="event-main">
-                    <span>{event.eyebrow}</span>
-                    <h3>{event.name}</h3>
-                    <small>
-                      {event.dateLabel} · {event.venue || "Venue belum ditentukan"}
-                    </small>
-                  </div>
-                  <div className="event-progress-wrap">
-                    <div className="event-progress-meta">
-                      <span>Check-in</span>
-                      <strong>{percentage}%</strong>
-                    </div>
-                    <div className="progress-track">
-                      <div
-                        className="progress-fill"
-                        style={{
-                          width: `${percentage}%`,
-                          background: event.theme.primary,
-                        }}
-                      />
-                    </div>
-                  </div>
-                  <div className="event-count">
-                    <strong>{event.checkedInCount}</strong>
-                    <span>/ {event.attendeeCount}</span>
-                  </div>
-                  <div className="event-actions">
-                    <Link
-                      href={`/e/${event.slug}`}
-                      className="icon-button"
-                      aria-label="Open public event page"
-                    >
-                      <ArrowRight size={17} />
-                    </Link>
-                    <Link href={`/admin/events/${event.id}`} className="button button-small">
-                      Manage
-                    </Link>
-                  </div>
-                </article>
-              );
-            })}
-          </div>
         </section>
 
-        <section className="dashboard-section compact-section admin-station-section" id="stations">
-          <div className="section-heading">
-            <div>
-              <span className="section-kicker">Scanner status</span>
-              <h2>Access stations</h2>
-            </div>
-            <ScanLine size={20} />
-          </div>
-          <div className="station-grid">
-            {(stationResult.data ?? []).map(({ id, name, is_active }) => (
-              <Link href={`/scan/${id}`} className="station-card" key={id}>
-                <span className={`station-status ${is_active ? "online" : "standby"}`}>
-                  {is_active ? "Active" : "Standby"}
-                </span>
-                <strong>{name}</strong>
-                <small>Open scanner</small>
+        <section className="organizer-section" aria-labelledby="managed-events">
+          <BlurFade delay={0.08}>
+            <div className="organizer-section-heading">
+              <div>
+                <p className="section-kicker">Managed events</p>
+                <h2 id="managed-events">Event kamu</h2>
+              </div>
+              <Link href="/admin/events/new" className="organizer-text-link">
+                Tambah event <ArrowUpRight size={15} />
               </Link>
-            ))}
-            {!(stationResult.data ?? []).length && (
-              <div className="admin-empty-station">
-                Belum ada scanner station pada event yang kamu kelola.
-              </div>
-            )}
-          </div>
+            </div>
+          </BlurFade>
+
+          {events.length > 0 ? (
+            <div className="organizer-event-grid">
+              {events.map((event, index) => {
+                const percentage = Math.round(
+                  event.attendeeCount ? (event.checkedInCount / event.attendeeCount) * 100 : 0,
+                );
+
+                return (
+                  <BlurFade delay={0.1 + index * 0.035} key={event.id}>
+                    <MagicCard className="organizer-event-card">
+                      <Link href={`/admin/events/${event.id}`} className="organizer-event-card-link">
+                        <div className="organizer-event-cover">
+                          <span
+                            className="organizer-event-color"
+                            style={{ background: event.theme.primary }}
+                          />
+                          <div className="organizer-event-cover-top">
+                            <span className="organizer-event-status">{event.status}</span>
+                            <ArrowUpRight size={17} />
+                          </div>
+                          <div className="organizer-event-cover-copy">
+                            <span>{event.eyebrow}</span>
+                            <h3>{event.name}</h3>
+                          </div>
+                        </div>
+
+                        <div className="organizer-event-body">
+                          <div className="organizer-event-meta">
+                            <span><CalendarDays size={14} /> {event.dateLabel}</span>
+                            <span><MapPin size={14} /> {event.venue || "Venue belum ditentukan"}</span>
+                          </div>
+
+                          <div className="organizer-event-progress">
+                            <div>
+                              <span>Check-in progress</span>
+                              <strong>{percentage}%</strong>
+                            </div>
+                            <div className="organizer-progress-track">
+                              <span
+                                style={{
+                                  width: `${percentage}%`,
+                                  background: event.theme.primary,
+                                }}
+                              />
+                            </div>
+                          </div>
+
+                          <div className="organizer-event-footer">
+                            <span>{event.checkedInCount} / {event.attendeeCount} checked in</span>
+                            <strong>Manage</strong>
+                          </div>
+                        </div>
+                      </Link>
+                    </MagicCard>
+                  </BlurFade>
+                );
+              })}
+            </div>
+          ) : (
+            <BlurFade delay={0.1}>
+              <MagicCard className="organizer-empty liquid-panel">
+                <CirclePlus size={22} />
+                <h3>Belum ada event.</h3>
+                <p>Buat event pertama untuk mulai mengelola attendee, QR, dan access control.</p>
+                <ShimmerButton asChild className="organizer-primary-cta">
+                  <Link href="/admin/events/new">Buat event pertama</Link>
+                </ShimmerButton>
+              </MagicCard>
+            </BlurFade>
+          )}
         </section>
-      </section>
-    </main>
+
+        <section className="organizer-section" id="stations" aria-labelledby="scanner-stations">
+          <BlurFade delay={0.12}>
+            <div className="organizer-section-heading">
+              <div>
+                <p className="section-kicker">Scanner network</p>
+                <h2 id="scanner-stations">Access stations</h2>
+              </div>
+              <span className="organizer-soft-count">
+                {activeStations} active
+              </span>
+            </div>
+          </BlurFade>
+
+          <BlurFade delay={0.15}>
+            <div className="organizer-station-shell liquid-panel">
+              <div className="organizer-station-summary">
+                <span className="organizer-station-icon"><ScanLine size={19} /></span>
+                <div>
+                  <strong>{(stationResult.data ?? []).length} scanner station</strong>
+                  <small>{activeStations} sedang aktif sekarang</small>
+                </div>
+              </div>
+
+              <div className="organizer-station-list">
+                {(stationResult.data ?? []).map(({ id, name: stationLabel, is_active }) => (
+                  <Link href={`/scan/${id}`} className="organizer-station-card" key={id}>
+                    <span className={`organizer-station-dot ${is_active ? "is-active" : ""}`} />
+                    <div>
+                      <strong>{stationLabel}</strong>
+                      <small>{is_active ? "Active" : "Standby"}</small>
+                    </div>
+                    <ArrowUpRight size={15} />
+                  </Link>
+                ))}
+                {!(stationResult.data ?? []).length && (
+                  <div className="organizer-station-empty">
+                    Belum ada scanner station pada event yang kamu kelola.
+                  </div>
+                )}
+              </div>
+            </div>
+          </BlurFade>
+        </section>
+      </main>
+    </div>
   );
 }
