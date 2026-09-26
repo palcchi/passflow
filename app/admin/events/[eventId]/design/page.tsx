@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { Figma, RefreshCw } from "lucide-react";
+import { Figma } from "lucide-react";
 import {
   designKinds,
   defaultTemplate,
@@ -13,6 +13,7 @@ import { getManagedEvent } from "@/lib/events";
 import { syncFigmaDesign } from "@/app/admin/actions";
 import { DeleteDesignForm } from "@/components/delete-design-form";
 import { SmartSelect } from "@/components/form-fields";
+import { EventDesignFlow } from "@/components/event-design-flow";
 
 const markerHelp = Object.keys(dynamicMarkers).join(" · ");
 
@@ -69,7 +70,9 @@ export default async function EventDesignPage({
         </p>
       </header>
 
-        {!connection ? (
+      <EventDesignFlow />
+
+      {!connection ? (
           <section className="design-connect-card liquid-panel">
             <div className="design-connect-icon">
               <Figma size={25} />
