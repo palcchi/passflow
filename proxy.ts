@@ -40,6 +40,8 @@ export const config = {
   matcher: [
     "/admin/:path*",
     "/account/:path*",
+    "/profile",
+    "/api/figma/:path*",
     "/events",
     "/login",
     "/register",
