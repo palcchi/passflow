@@ -1,73 +1,218 @@
+"use client";
+
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { LayoutGrid, LogOut, Plus, UserRound } from "lucide-react";
+import { usePathname } from "next/navigation";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import {
+  CalendarDays,
+  ChevronDown,
+  LayoutDashboard,
+  LogOut,
+  Menu,
+  Plus,
+  Settings2,
+  Sparkles,
+  UserRound,
+  X,
+} from "lucide-react";
 import { signOut } from "@/app/auth/actions";
 
 type UserNavbarProps = {
   name: string;
   email?: string | null;
+  avatarUrl?: string | null;
   organizer?: boolean;
 };
 
-export function UserNavbar({ name, email, organizer = false }: UserNavbarProps) {
+export function UserNavbar({
+  name,
+  email,
+  avatarUrl,
+  organizer = false,
+}: UserNavbarProps) {
+  const pathname = usePathname();
+  const reduceMotion = useReducedMotion();
+  const [openMenu, setOpenMenu] = useState<"profile" | "mobile" | null>(null);
+  const rootRef = useRef<HTMLElement>(null);
   const initial = (name || email || "P").trim().charAt(0).toUpperCase() || "P";
 
+  useEffect(() => {
+    function closeOutside(event: PointerEvent) {
+      if (!rootRef.current?.contains(event.target as Node)) setOpenMenu(null);
+    }
+    function escape(event: KeyboardEvent) {
+      if (event.key === "Escape") setOpenMenu(null);
+    }
+    document.addEventListener("pointerdown", closeOutside, true);
+    document.addEventListener("keydown", escape);
+    return () => {
+      document.removeEventListener("pointerdown", closeOutside, true);
+      document.removeEventListener("keydown", escape);
+    };
+  }, []);
+
+  const navItems = [
+    { href: "/account", label: "Dashboard", icon: LayoutDashboard },
+    { href: "/events", label: "Event", icon: CalendarDays },
+    ...(organizer
+      ? [{ href: "/admin", label: "Organizer", icon: Sparkles }]
+      : []),
+  ];
+
+  function active(href: string) {
+    return href === "/account"
+      ? pathname === href
+      : pathname === href || pathname.startsWith(href + "/");
+  }
+
   return (
-    <nav className="sticky top-0 z-40 border-b border-black/5 bg-white/90 backdrop-blur-xl">
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-5 sm:px-8">
-        <div className="flex items-center gap-7">
-          <Link href="/account" className="flex items-center gap-2.5 font-semibold tracking-tight">
-            <span className="grid size-8 place-items-center rounded-xl bg-neutral-950 text-xs font-bold text-white">P</span>
+    <nav ref={rootRef} className="user-nav-shell">
+      <div className="user-nav liquid-nav">
+        <div className="user-nav-left">
+          <Link href="/account" className="user-nav-brand" aria-label="PassFlow dashboard">
+            <span className="brand-mark user-nav-brand-mark">P</span>
             <span>PassFlow</span>
           </Link>
-          <div className="hidden items-center gap-1 sm:flex">
-            <Link href="/account" className="rounded-lg px-3 py-2 text-sm text-neutral-600 transition hover:bg-neutral-100 hover:text-neutral-950">
-              Dashboard
-            </Link>
-            <Link href="/events" className="rounded-lg px-3 py-2 text-sm text-neutral-600 transition hover:bg-neutral-100 hover:text-neutral-950">
-              Event
-            </Link>
-            {organizer && (
-              <Link href="/admin" className="rounded-lg px-3 py-2 text-sm text-neutral-600 transition hover:bg-neutral-100 hover:text-neutral-950">
-                Organizer
+
+          <div className="user-nav-links">
+            {navItems.map(({ href, label }) => (
+              <Link
+                href={href}
+                key={href}
+                className="user-nav-link"
+                data-active={active(href)}
+              >
+                {label}
               </Link>
-            )}
+            ))}
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="user-nav-actions">
           <Link
             href="/events"
-            className="grid size-10 place-items-center rounded-full border border-neutral-200 bg-white text-neutral-900 transition hover:bg-neutral-100"
+            className="user-nav-icon-button"
             aria-label="Tambah event"
             title="Tambah event"
           >
-            <Plus size={19} />
+            <Plus size={18} />
           </Link>
-          <Link href="/profile" className="hidden items-center gap-2 rounded-full border border-neutral-200 bg-white py-1.5 pl-1.5 pr-3 transition hover:bg-neutral-100 sm:flex" aria-label="Profil saya">
-            <span className="grid size-7 place-items-center rounded-full bg-[#f2c94c] text-[11px] font-bold text-neutral-950">{initial}</span>
-            <span className="max-w-32 truncate text-xs font-medium text-neutral-700">{name}</span>
-          </Link>
-          <form action={signOut}>
-            <button
-              type="submit"
-              className="grid size-10 place-items-center rounded-full text-neutral-500 transition hover:bg-neutral-100 hover:text-neutral-950"
-              aria-label="Keluar"
-              title="Keluar"
+
+          <button
+            type="button"
+            className="user-profile-trigger"
+            aria-expanded={openMenu === "profile"}
+            onClick={() => setOpenMenu(openMenu === "profile" ? null : "profile")}
+          >
+            <span
+              className="user-avatar"
+              style={avatarUrl ? { backgroundImage: `url("${avatarUrl}")` } : undefined}
             >
-              <LogOut size={18} />
-            </button>
-          </form>
+              {!avatarUrl && initial}
+            </span>
+            <span className="user-profile-trigger-copy">
+              <strong>{name}</strong>
+              <small>{organizer ? "Organizer" : "Attendee"}</small>
+            </span>
+            <ChevronDown
+              size={14}
+              className={openMenu === "profile" ? "is-open" : ""}
+            />
+          </button>
+
+          <button
+            type="button"
+            className="user-mobile-menu-button"
+            aria-label={openMenu === "mobile" ? "Tutup menu" : "Buka menu"}
+            aria-expanded={openMenu === "mobile"}
+            onClick={() => setOpenMenu(openMenu === "mobile" ? null : "mobile")}
+          >
+            {openMenu === "mobile" ? <X size={18} /> : <Menu size={18} />}
+          </button>
         </div>
-      </div>
-      <div className="mx-auto flex max-w-7xl items-center gap-2 overflow-x-auto px-5 pb-2 sm:hidden">
-        <Link href="/account" className="inline-flex items-center gap-2 rounded-full bg-neutral-100 px-3 py-1.5 text-xs font-medium text-neutral-800">
-          <LayoutGrid size={14} /> Dashboard
-        </Link>
-        <Link href="/events" className="inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-medium text-neutral-600">
-          Event
-        </Link>
-        {organizer && <Link href="/admin" className="rounded-full px-3 py-1.5 text-xs font-medium text-neutral-600">Organizer</Link>}
-        <Link href="/profile" className="inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-medium text-neutral-600"><UserRound size={14}/> Profil</Link>
+
+        <AnimatePresence>
+          {openMenu === "profile" && (
+            <motion.div
+              className="user-profile-menu liquid-popover"
+              initial={reduceMotion ? false : { opacity: 0, y: -7, scale: 0.985 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={reduceMotion ? { opacity: 0 } : { opacity: 0, y: -5, scale: 0.99 }}
+              transition={{ duration: reduceMotion ? 0 : 0.16 }}
+            >
+              <div className="user-profile-menu-head">
+                <span
+                  className="user-avatar user-avatar-large"
+                  style={avatarUrl ? { backgroundImage: `url("${avatarUrl}")` } : undefined}
+                >
+                  {!avatarUrl && initial}
+                </span>
+                <div>
+                  <strong>{name}</strong>
+                  <small>{email}</small>
+                </div>
+              </div>
+              <div className="user-profile-menu-divider" />
+              <Link href="/profile" onClick={() => setOpenMenu(null)}>
+                <UserRound size={16} />
+                <span>
+                  <strong>Profile</strong>
+                  <small>Foto, nama, username, Figma</small>
+                </span>
+              </Link>
+              {organizer && (
+                <Link href="/admin" onClick={() => setOpenMenu(null)}>
+                  <Settings2 size={16} />
+                  <span>
+                    <strong>Organizer workspace</strong>
+                    <small>Event, scanner, design</small>
+                  </span>
+                </Link>
+              )}
+              <form action={signOut}>
+                <button type="submit" className="user-profile-logout">
+                  <LogOut size={16} />
+                  <span>Keluar</span>
+                </button>
+              </form>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <AnimatePresence>
+          {openMenu === "mobile" && (
+            <motion.div
+              className="user-mobile-menu liquid-popover"
+              initial={reduceMotion ? false : { opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -5 }}
+              transition={{ duration: reduceMotion ? 0 : 0.16 }}
+            >
+              {navItems.map(({ href, label, icon: Icon }) => (
+                <Link
+                  href={href}
+                  key={href}
+                  data-active={active(href)}
+                  onClick={() => setOpenMenu(null)}
+                >
+                  <Icon size={16} />
+                  {label}
+                </Link>
+              ))}
+              <Link href="/profile" onClick={() => setOpenMenu(null)}>
+                <UserRound size={16} />
+                Profile
+              </Link>
+              <form action={signOut}>
+                <button type="submit">
+                  <LogOut size={16} />
+                  Keluar
+                </button>
+              </form>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </nav>
   );
