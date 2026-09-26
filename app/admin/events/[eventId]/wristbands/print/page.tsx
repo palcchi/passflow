@@ -15,14 +15,17 @@ export default async function WristbandPrintPage({ params }: { params: Promise<{
   if (!event) notFound();
   const { supabase } = await requireOrganizerMembership(`/admin/events/${eventId}/wristbands/print`);
   const { data: credentials } = await supabase.from("qr_credentials").select("id, code, display_code, status, attendee_id, attendees(name,email)").eq("event_id", eventId).order("display_code", { ascending: true });
-  const qrCodes = await Promise.all((credentials ?? []).map(async (qr) => ({ ...qr, src: await QRCode.toDataURL(`PF1:${qr.code}`, { margin: 1, width: 480, errorCorrectionLevel: "M" }) })));
+  const sourceCredentials = event.qrConfig.mode === "id_card_portrait" || event.qrConfig.mode === "id_card_landscape"
+    ? (credentials ?? []).filter((qr) => qr.attendee_id)
+    : (credentials ?? []);
+  const qrCodes = await Promise.all(sourceCredentials.map(async (qr) => ({ ...qr, src: await QRCode.toDataURL(`PF1:${qr.code}`, { margin: 1, width: 480, errorCorrectionLevel: "M" }) })));
   const config = event.qrConfig;
   const physical = config.mode !== "digital";
   const width = physical ? config.widthMm : 86;
   const height = physical ? config.heightMm : 54;
 
   return <main className="qr-export-page">
-    <header className="qr-export-toolbar print:hidden"><Link href={`/admin/events/${eventId}#wristbands`} className="back-link"><ArrowLeft size={16}/> Kembali ke event</Link><div className="flex items-center gap-2"><span className="soft-badge">{labels[config.mode]}</span><a className="button button-ghost" href={`/admin/events/${eventId}/export/figma`}>Download SVG untuk Figma</a><PrintButton /></div></header>
+    <header className="qr-export-toolbar print:hidden"><Link href={`/admin/events/${eventId}/access`} className="back-link"><ArrowLeft size={16}/> Kembali ke event</Link><div className="flex items-center gap-2"><span className="soft-badge">{labels[config.mode]}</span><a className="button button-ghost" href={`/admin/events/${eventId}/export/figma`}>Download SVG untuk Figma</a><PrintButton /></div></header>
     <div className={`qr-export-sheet qr-export-${config.mode}`}>
       <div className="qr-export-heading print:hidden"><p className="section-kicker">PassFlow export</p><h1>{event.name}</h1><p>{labels[config.mode]} · {qrCodes.length} QR credential</p></div>
       <div className="qr-export-grid">{qrCodes.map((qr) => { const attendee = Array.isArray(qr.attendees) ? qr.attendees[0] : qr.attendees; return <article className="qr-export-card" key={qr.id} style={{ width: `${width}mm`, minHeight: `${height}mm` }}>
