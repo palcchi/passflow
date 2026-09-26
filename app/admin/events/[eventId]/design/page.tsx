@@ -1,12 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import {
-  ArrowLeft,
-  ExternalLink,
-  Figma,
-  RefreshCw,
-  Sparkles,
-} from "lucide-react";
+import { Figma, RefreshCw } from "lucide-react";
 import {
   designKinds,
   defaultTemplate,
@@ -19,7 +13,6 @@ import { getManagedEvent } from "@/lib/events";
 import { syncFigmaDesign } from "@/app/admin/actions";
 import { DeleteDesignForm } from "@/components/delete-design-form";
 import { SmartSelect } from "@/components/form-fields";
-import { BlurFade } from "@/components/magicui/blur-fade";
 
 const markerHelp = Object.keys(dynamicMarkers).join(" · ");
 
@@ -66,37 +59,16 @@ export default async function EventDesignPage({
   const error = typeof query.error === "string" ? query.error : null;
 
   return (
-    <main className="editor-page">
-      <BlurFade>
-        <header className="editor-header design-editor-header">
-          <div>
-            <Link href={`/admin/events/${eventId}`} className="back-link">
-              <ArrowLeft size={16} /> Kembali ke event
-            </Link>
-            <span className="dashboard-welcome-kicker design-page-kicker">
-              <Sparkles size={13} /> PassFlow Design
-            </span>
-            <h1>Design {event.name}</h1>
-            <p>
-              Sinkronkan frame Figma, hubungkan elemen dinamis, dan ekspor pass per peserta
-              tanpa mengubah file aslimu.
-            </p>
-          </div>
-          <div className="editor-header-actions">
-            <Link
-              href={`/admin/events/${eventId}/appearance`}
-              className="button button-ghost"
-            >
-              Customize
-            </Link>
-            <Link href={`/e/${event.slug}`} className="button button-dark">
-              <ExternalLink size={16} /> Public page
-            </Link>
-          </div>
-        </header>
-      </BlurFade>
+    <div className="event-admin-editor-page">
+      <header className="event-admin-local-heading">
+        <span className="section-kicker">PassFlow Design</span>
+        <h2>Design library</h2>
+        <p>
+          Sinkronkan frame Figma dan marker dinamis tanpa mengulang identitas
+          event yang sudah tampil di atas.
+        </p>
+      </header>
 
-      <BlurFade delay={0.04}>
         {!connection ? (
           <section className="design-connect-card liquid-panel">
             <div className="design-connect-icon">
@@ -134,7 +106,7 @@ export default async function EventDesignPage({
             </Link>
           </section>
         )}
-      </BlurFade>
+      
 
       {(error ||
         connectionError ||
@@ -157,7 +129,7 @@ export default async function EventDesignPage({
         </p>
       )}
 
-      <BlurFade delay={0.07}>
+      
         <section className="design-workspace liquid-panel">
           <div className="section-heading">
             <div>
@@ -225,7 +197,7 @@ export default async function EventDesignPage({
                           href={`/admin/events/${eventId}/export/figma?designId=${design.id}`}
                           className="button button-ghost"
                         >
-                          <ExternalLink size={14} /> Save as
+                          Save as
                         </a>
                         <a
                           href={design.figma_file_url}
@@ -233,7 +205,7 @@ export default async function EventDesignPage({
                           rel="noreferrer"
                           className="button button-ghost"
                         >
-                          <ExternalLink size={14} /> Edit in Figma
+                          Edit in Figma
                         </a>
                         <form action={syncFigmaDesign}>
                           <input type="hidden" name="eventId" value={eventId} />
@@ -266,7 +238,7 @@ export default async function EventDesignPage({
                             value={template.qrStyle.modules}
                           />
                           <button className="button button-ghost" type="submit">
-                            <RefreshCw size={14} /> Sync
+                            Sync
                           </button>
                         </form>
                         <DeleteDesignForm
@@ -397,7 +369,7 @@ export default async function EventDesignPage({
 
               <div className="design-form-submit">
                 <button className="button button-dark" type="submit">
-                  <RefreshCw size={16} /> Sync design
+                  Sync design
                 </button>
                 <p>
                   Desain asli tetap aman. Save as membuat ekspor terpisah dan tidak mengedit
@@ -407,9 +379,9 @@ export default async function EventDesignPage({
             </form>
           )}
         </section>
-      </BlurFade>
+      
 
-      <BlurFade delay={0.1}>
+      
         <section className="figma-howto liquid-panel">
           <strong>PassFlow Design workflow</strong>
           <span>
@@ -418,7 +390,6 @@ export default async function EventDesignPage({
             milik PassFlow.
           </span>
         </section>
-      </BlurFade>
-    </main>
+    </div>
   );
 }
