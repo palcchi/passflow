@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
 export default function ResetPasswordPage() {
   const ready = !!getSupabaseConfig() && !!getAppOrigin();
   return (
-    <main className="min-h-screen bg-background px-5 py-8 text-foreground sm:py-14">
+    <main className="min-h-screen studio-backdrop px-5 py-8 text-foreground sm:py-14">
       <div className="mx-auto max-w-md">
         <div className="flex items-center justify-between gap-4">
           <Link href="/login" className="inline-flex min-h-11 items-center gap-2 text-sm text-muted-foreground">
