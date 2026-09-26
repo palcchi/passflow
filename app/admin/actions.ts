@@ -83,7 +83,7 @@ async function resolveQrBatch(input: QrBatchInput) {
   const eventId = String(input.eventId || "").slice(0, 60);
   const prefix = normalizeQrPrefix(String(input.prefix || "WR"));
   const amount = Math.min(Math.max(Math.floor(Number(input.amount) || 1), 1), 250);
-  const mode = input.mode === "custom" ? "custom" : "auto";
+  const mode: "auto" | "custom" = input.mode === "custom" ? "custom" : "auto";
   const requestedStart =
     mode === "custom" && Number.isFinite(Number(input.startNumber))
       ? Math.max(1, Math.floor(Number(input.startNumber)))
@@ -306,8 +306,20 @@ export async function importAttendees(formData: FormData) {
 export async function checkQrCodeAvailability(input: QrBatchInput) {
   const resolved = await resolveQrBatch(input);
   if (!resolved.ok) return resolved;
-  const { supabase: _supabase, ...safe } = resolved;
-  return safe;
+  return {
+    ok: true as const,
+    eventId: resolved.eventId,
+    prefix: resolved.prefix,
+    amount: resolved.amount,
+    mode: resolved.mode,
+    requestedStart: resolved.requestedStart,
+    requestedAvailable: resolved.requestedAvailable,
+    start: resolved.start,
+    end: resolved.end,
+    firstCode: resolved.firstCode,
+    lastCode: resolved.lastCode,
+    usedCount: resolved.usedCount,
+  };
 }
 
 export async function generateQrBatch(input: QrBatchInput) {
@@ -315,12 +327,14 @@ export async function generateQrBatch(input: QrBatchInput) {
   if (!resolved.ok) return resolved;
 
   if (resolved.mode === "custom" && !resolved.requestedAvailable) {
-    const { supabase: _supabase, ...safe } = resolved;
     return {
-      ...safe,
       ok: false as const,
       conflict: true as const,
       message: `Range yang dipilih sudah terpakai. Range tersedia berikutnya: ${resolved.firstCode} – ${resolved.lastCode}.`,
+      firstCode: resolved.firstCode,
+      lastCode: resolved.lastCode,
+      start: resolved.start,
+      end: resolved.end,
     };
   }
 
