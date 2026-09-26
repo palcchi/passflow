@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { EventThemeEditor } from "@/components/event-theme-editor";
+import { QrDeliveryEditor } from "@/components/qr-delivery-editor";
 import { getManagedEvent } from "@/lib/events";
 
 type AppearancePageProps = {
@@ -37,6 +38,7 @@ export default async function EventAppearancePage({
         </Link>
       </header>
       <EventThemeEditor event={event} />
+      <QrDeliveryEditor event={event} />
     </main>
   );
 }

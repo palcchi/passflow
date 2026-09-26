@@ -4,6 +4,7 @@ import { ChangeEvent, useMemo, useState, useTransition } from "react";
 import { ImagePlus, RotateCcw, Save } from "lucide-react";
 import type { PassFlowEvent } from "@/lib/events";
 import { saveEventTheme, uploadEventAsset } from "@/app/admin/actions";
+import { SmartSelect } from "@/components/form-fields";
 
 export function EventThemeEditor({ event }: { event: PassFlowEvent }) {
   const [primary, setPrimary] = useState(event.theme.primary);
@@ -75,11 +76,7 @@ export function EventThemeEditor({ event }: { event: PassFlowEvent }) {
         <div className="control-block">
           <span className="field-label">Public header</span>
           <label className="text-sm">Layout
-            <select value={headerStyle} onChange={(e) => setHeaderStyle(e.target.value as "minimal" | "editorial" | "split")} className="mt-2 min-h-11 w-full rounded-md border border-input bg-background px-3">
-              <option value="minimal">Minimal · fokus ke judul</option>
-              <option value="editorial">Editorial · image dan informasi</option>
-              <option value="split">Split · copy dan visual seimbang</option>
-            </select>
+            <div className="mt-2"><SmartSelect name="headerStylePreview" value={headerStyle} onValueChange={(value) => setHeaderStyle(value as "minimal" | "editorial" | "split")} options={[{value:"minimal",label:"Minimal",description:"Fokus ke judul"},{value:"editorial",label:"Editorial",description:"Image dan informasi"},{value:"split",label:"Split",description:"Copy dan visual seimbang"}]} /></div>
           </label>
           <p className="mt-2 text-xs text-muted-foreground">Pilihan ini mengatur struktur header halaman event publik.</p>
         </div>

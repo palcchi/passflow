@@ -82,13 +82,13 @@ export default async function PublicEventPage({ params }: EventPageProps) {
       <section className="event-info-grid">
         <article>
           <span>01</span>
-          <h2>Claim your wristband</h2>
-          <p>Ambil wristband yang tersedia lalu scan QR untuk menghubungkannya ke akunmu.</p>
+          <h2>{event.qrConfig.mode === "digital" ? "Get your digital pass" : "Claim your event pass"}</h2>
+          <p>{event.qrConfig.mode === "digital" ? "Setelah mendaftar, QR digital otomatis tersedia di akunmu tanpa wristband fisik." : "Gunakan QR pada ID card atau wristband yang ditentukan organizer."}</p>
         </article>
         <article>
           <span>02</span>
           <h2>Use either format</h2>
-          <p>QR yang sama dapat dipakai langsung dari gelang atau Digital Event Pass di HP.</p>
+          <p>{event.qrConfig.mode === "digital" ? "QR digital dapat ditampilkan langsung dari HP dan dipakai di seluruh titik akses." : "QR yang sama dapat dipakai dari format fisik dan Digital Event Pass di HP."}</p>
         </article>
         <article>
           <span>03</span>

@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { createEvent } from "@/app/admin/actions";
+import { DateTimeField, FormattedNumberInput } from "@/components/form-fields";
 
 export default async function NewEventPage({
   searchParams,
@@ -31,14 +32,10 @@ export default async function NewEventPage({
           <label className="block text-sm font-medium">Venue
             <input name="venue" maxLength={160} className="mt-2 min-h-12 w-full rounded-md border border-input bg-background px-3" placeholder="Adorne Studio" />
           </label>
-          <label className="block text-sm font-medium">Starts at
-            <input name="startsAt" type="datetime-local" className="mt-2 min-h-12 w-full rounded-md border border-input bg-background px-3" />
-          </label>
-          <label className="block text-sm font-medium">Ends at
-            <input name="endsAt" type="datetime-local" className="mt-2 min-h-12 w-full rounded-md border border-input bg-background px-3" />
-          </label>
+          <DateTimeField name="startsAt" label="Starts at" />
+          <DateTimeField name="endsAt" label="Ends at" />
           <label className="block text-sm font-medium">Capacity
-            <input name="capacity" type="number" min="0" className="mt-2 min-h-12 w-full rounded-md border border-input bg-background px-3" placeholder="500" />
+            <FormattedNumberInput name="capacity" min={0} className="mt-2 min-h-12 w-full rounded-md border border-input bg-background px-3" placeholder="500" />
           </label>
           <label className="block text-sm font-medium sm:col-span-2">Description
             <textarea name="description" maxLength={1200} rows={5} className="mt-2 w-full rounded-md border border-input bg-background p-3" />

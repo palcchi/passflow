@@ -387,6 +387,7 @@ export type Database = {
           name: string
           organization_id: string
           poster_url: string | null
+          qr_config: Json
           slug: string
           starts_at: string | null
           status: Database["public"]["Enums"]["event_status"]
@@ -406,6 +407,7 @@ export type Database = {
           name: string
           organization_id: string
           poster_url?: string | null
+          qr_config?: Json
           slug: string
           starts_at?: string | null
           status?: Database["public"]["Enums"]["event_status"]
@@ -425,6 +427,7 @@ export type Database = {
           name?: string
           organization_id?: string
           poster_url?: string | null
+          qr_config?: Json
           slug?: string
           starts_at?: string | null
           status?: Database["public"]["Enums"]["event_status"]

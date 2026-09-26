@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { CsvImportForm } from "@/components/csv-import-form";
+import { DateTimeField, FormattedNumberInput, SmartSelect } from "@/components/form-fields";
 import { notFound } from "next/navigation";
 import {
   ArrowLeft,
@@ -147,10 +148,10 @@ export default async function EventManagePage({ params, searchParams }: Props) {
             <input type="hidden" name="eventId" value={event.id} />
             <label className="text-sm font-medium sm:col-span-2">Name<input className={inputClass()} name="name" defaultValue={event.name} required /></label>
             <label className="text-sm font-medium">Slug<input className={inputClass()} name="slug" defaultValue={event.slug} required /></label>
-            <label className="text-sm font-medium">Capacity<input className={inputClass()} name="capacity" type="number" min="0" defaultValue={event.capacity ?? ""} /></label>
+            <label className="text-sm font-medium">Capacity<FormattedNumberInput name="capacity" defaultValue={event.capacity ?? ""} min={0} className={inputClass()} /></label>
             <label className="text-sm font-medium">Venue<input className={inputClass()} name="venue" defaultValue={event.venue} /></label>
-            <label className="text-sm font-medium">Starts at<input className={inputClass()} name="startsAt" type="datetime-local" defaultValue={event.startsAt ? event.startsAt.slice(0,16) : ""} /></label>
-            <label className="text-sm font-medium">Ends at<input className={inputClass()} name="endsAt" type="datetime-local" defaultValue={event.endsAt ? event.endsAt.slice(0,16) : ""} /></label>
+            <DateTimeField name="startsAt" defaultValue={event.startsAt} label="Starts at" />
+            <DateTimeField name="endsAt" defaultValue={event.endsAt} label="Ends at" />
             <label className="text-sm font-medium sm:col-span-2">Description<textarea className="mt-2 w-full rounded-md border border-input bg-background p-3" rows={3} name="description" defaultValue={event.description} /></label>
             <button className="button button-dark sm:col-span-2" type="submit">Save event</button>
           </form>
@@ -173,9 +174,9 @@ export default async function EventManagePage({ params, searchParams }: Props) {
             <input type="hidden" name="eventId" value={event.id} />
             <input className={inputClass()} name="name" placeholder="VIP Pass" required />
             <input className={inputClass()} name="code" placeholder="VIP" />
-            <input className={inputClass()} name="capacity" type="number" min="0" placeholder="Capacity" />
-            <input className={inputClass()} name="price" type="number" min="0" step="1000" placeholder="Harga (0 = gratis)" />
-            <input className={inputClass()} name="currency" defaultValue="IDR" maxLength={8} placeholder="Currency" />
+            <FormattedNumberInput name="capacity" min={0} className={inputClass()} placeholder="Capacity" />
+            <FormattedNumberInput name="price" min={0} className={inputClass()} placeholder="Harga (0 = gratis)" />
+            <SmartSelect name="currency" value="IDR" options={[{value:"IDR",label:"IDR · Rupiah"},{value:"USD",label:"USD · US Dollar"},{value:"SGD",label:"SGD · Singapore Dollar"}]} />
             <input className={inputClass()} name="description" placeholder="Description" />
             <button className="button button-dark sm:col-span-4" type="submit">Add ticket type</button>
           </form>
@@ -217,7 +218,7 @@ export default async function EventManagePage({ params, searchParams }: Props) {
           </div>
           <form action={generateWristbands} className="mt-5 flex max-w-sm gap-2">
             <input type="hidden" name="eventId" value={event.id} />
-            <input className="min-h-11 min-w-0 flex-1 rounded-md border border-input bg-background px-3" name="amount" type="number" min="1" max="250" defaultValue="10" />
+            <FormattedNumberInput name="amount" min={1} max={250} defaultValue="10" className="min-h-11 min-w-0 flex-1 rounded-md border border-input bg-background px-3" />
             <button className="button button-dark" type="submit">Generate</button>
           </form>
           <div className="mt-5 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">

@@ -19,7 +19,7 @@ function optionalText(formData: FormData, key: string, max = 500) {
 function numberValue(formData: FormData, key: string) {
   const raw = text(formData, key, 20);
   if (!raw) return null;
-  const value = Number(raw);
+  const value = Number(raw.replace(/[^0-9-]/g, ""));
   return Number.isFinite(value) && value >= 0 ? Math.floor(value) : null;
 }
 
@@ -347,11 +347,38 @@ export async function saveEventTheme(formData: FormData) {
   revalidateEvent(eventId, data?.slug);
 }
 
+export async function saveEventQrConfig(formData: FormData) {
+  const eventId = text(formData, "eventId", 60);
+  const { supabase } = await managedContext(eventId);
+  const allowed = ["digital", "id_card_portrait", "id_card_landscape", "wristband"] as const;
+  const modeValue = text(formData, "mode", 30);
+  const mode = allowed.includes(modeValue as (typeof allowed)[number]) ? modeValue : "digital";
+  const clamp = (key: string, fallback: number, min: number, max: number) => {
+    const value = Number(text(formData, key, 20).replace(/[^0-9.-]/g, ""));
+    return Number.isFinite(value) ? Math.min(max, Math.max(min, value)) : fallback;
+  };
+  const { data: current } = await supabase.from("events").select("qr_config,slug").eq("id", eventId).single();
+  const existing = current?.qr_config && typeof current.qr_config === "object" && !Array.isArray(current.qr_config) ? current.qr_config as Record<string, unknown> : {};
+  await supabase.from("events").update({
+    qr_config: {
+      mode,
+      template_url: typeof existing.template_url === "string" ? existing.template_url : null,
+      width_mm: clamp("widthMm", 85.6, 20, 500),
+      height_mm: clamp("heightMm", 54, 20, 500),
+      qr_x: clamp("qrX", 68, 0, 100),
+      qr_y: clamp("qrY", 50, 0, 100),
+      qr_size: clamp("qrSize", 22, 5, 80),
+    },
+    updated_at: new Date().toISOString(),
+  }).eq("id", eventId);
+  revalidateEvent(eventId, current?.slug);
+}
+
 export async function uploadEventAsset(formData: FormData) {
   const eventId = text(formData, "eventId", 60);
   const assetType = text(formData, "assetType", 20);
   const file = formData.get("file");
-  if (!(file instanceof File) || !["logo", "hero", "poster"].includes(assetType)) return;
+  if (!(file instanceof File) || !["logo", "hero", "poster", "qr_template"].includes(assetType)) return;
   if (!["image/jpeg", "image/png", "image/webp"].includes(file.type) || file.size > 5 * 1024 * 1024) return;
 
   const { supabase } = await managedContext(eventId);
@@ -375,6 +402,13 @@ export async function uploadEventAsset(formData: FormData) {
     public_url: publicUrl,
   });
 
+  if (assetType === "qr_template") {
+    const { data: current } = await supabase.from("events").select("qr_config,slug").eq("id", eventId).single();
+    const existing = current?.qr_config && typeof current.qr_config === "object" && !Array.isArray(current.qr_config) ? current.qr_config as Record<string, unknown> : {};
+    await supabase.from("events").update({ qr_config: { ...existing, template_url: publicUrl }, updated_at: new Date().toISOString() }).eq("id", eventId);
+    revalidateEvent(eventId, current?.slug);
+    return;
+  }
   const column = assetType === "logo" ? "logo_url" : assetType === "hero" ? "hero_image_url" : "poster_url";
   const updatePayload: { logo_url?: string; hero_image_url?: string; poster_url?: string; updated_at: string } = { updated_at: new Date().toISOString() };
   updatePayload[column] = publicUrl;
