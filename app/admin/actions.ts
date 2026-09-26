@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireOrganizerMembership } from "@/lib/auth/session";
 import { defaultEventTheme } from "@/lib/events";
+import { decryptFigmaToken, figmaFetch, parseFigmaUrl } from "@/lib/figma";
 
 function text(formData: FormData, key: string, max = 500) {
   const value = formData.get(key);
@@ -438,4 +439,44 @@ export async function revokeCrew(formData: FormData) {
   const { supabase } = await managedContext(eventId);
   await supabase.from("event_members").update({ status: "revoked" }).eq("event_id", eventId).eq("user_id", userId);
   revalidateEvent(eventId);
+}
+
+export async function syncFigmaDesign(formData: FormData) {
+  const eventId = text(formData, "eventId", 60);
+  const designId = optionalText(formData, "designId", 60);
+  const assetType = text(formData, "assetType", 30);
+  const name = text(formData, "name", 120);
+  const figmaUrl = text(formData, "figmaUrl", 500);
+  if (!eventId || !name || !figmaUrl || !["id_card", "lanyard", "wristband", "ticket", "event_cover", "event_page"].includes(assetType)) return;
+  const { supabase, user } = await managedContext(eventId);
+  const { data: connection } = await supabase.from("figma_connections").select("access_token_encrypted").eq("user_id", user.id).maybeSingle();
+  if (!connection) redirect(`/admin/events/${eventId}/design?error=figma_not_connected`);
+  try {
+    const token = decryptFigmaToken(connection.access_token_encrypted);
+    const parsed = parseFigmaUrl(figmaUrl);
+    const nodeId = parsed.nodeId?.replace(/-/g, ":") ?? null;
+    const query = nodeId ? `?ids=${encodeURIComponent(nodeId)}&depth=1` : "?depth=1";
+    const file = await figmaFetch<{ name: string; version?: string; lastModified?: string; document?: unknown }>(token, `/files/${parsed.fileKey}${query}`);
+    let previewUrl: string | null = null;
+    if (nodeId) {
+      const images = await figmaFetch<{ images?: Record<string, string> }>(token, `/images/${parsed.fileKey}?ids=${encodeURIComponent(nodeId)}&format=png&scale=1`);
+      previewUrl = images.images?.[nodeId] ?? null;
+    }
+    const payload = { event_id: eventId, created_by: user.id, asset_type: assetType, name, figma_file_key: parsed.fileKey, figma_node_id: nodeId, figma_url: figmaUrl, figma_file_name: file.name ?? null, figma_version: file.version ?? null, preview_url: previewUrl, metadata: { lastModified: file.lastModified ?? null }, last_synced_at: new Date().toISOString(), updated_at: new Date().toISOString() };
+    if (designId) await supabase.from("event_designs").update(payload).eq("id", designId).eq("event_id", eventId);
+    else await supabase.from("event_designs").insert(payload);
+    revalidatePath(`/admin/events/${eventId}/design`);
+    redirect(`/admin/events/${eventId}/design?synced=1`);
+  } catch {
+    redirect(`/admin/events/${eventId}/design?error=figma_sync_failed`);
+  }
+}
+
+export async function deleteFigmaDesign(formData: FormData) {
+  const eventId = text(formData, "eventId", 60);
+  const designId = text(formData, "designId", 60);
+  if (!eventId || !designId) return;
+  const { supabase } = await managedContext(eventId);
+  await supabase.from("event_designs").delete().eq("id", designId).eq("event_id", eventId);
+  revalidatePath(`/admin/events/${eventId}/design`);
 }
