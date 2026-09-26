@@ -11,6 +11,7 @@ export function EventThemeEditor({ event }: { event: PassFlowEvent }) {
   const [background, setBackground] = useState(event.theme.background);
   const [foreground, setForeground] = useState(event.theme.foreground);
   const [surface, setSurface] = useState(event.theme.surface);
+  const [headerStyle, setHeaderStyle] = useState(event.theme.headerStyle ?? "editorial");
   const [heroPreview, setHeroPreview] = useState<string | null>(event.heroImageUrl);
   const [message, setMessage] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -38,6 +39,7 @@ export function EventThemeEditor({ event }: { event: PassFlowEvent }) {
     formData.set("background", background);
     formData.set("foreground", foreground);
     formData.set("surface", surface);
+    formData.set("headerStyle", headerStyle);
     setMessage(null);
     startTransition(async () => {
       await saveEventTheme(formData);
@@ -68,6 +70,18 @@ export function EventThemeEditor({ event }: { event: PassFlowEvent }) {
               </label>
             );
           })}
+        </div>
+
+        <div className="control-block">
+          <span className="field-label">Public header</span>
+          <label className="text-sm">Layout
+            <select value={headerStyle} onChange={(e) => setHeaderStyle(e.target.value as "minimal" | "editorial" | "split")} className="mt-2 min-h-11 w-full rounded-md border border-input bg-background px-3">
+              <option value="minimal">Minimal · fokus ke judul</option>
+              <option value="editorial">Editorial · image dan informasi</option>
+              <option value="split">Split · copy dan visual seimbang</option>
+            </select>
+          </label>
+          <p className="mt-2 text-xs text-muted-foreground">Pilihan ini mengatur struktur header halaman event publik.</p>
         </div>
 
         <div className="control-block">
@@ -107,6 +121,7 @@ export function EventThemeEditor({ event }: { event: PassFlowEvent }) {
               setBackground(event.theme.background);
               setForeground(event.theme.foreground);
               setSurface(event.theme.surface);
+              setHeaderStyle(event.theme.headerStyle ?? "editorial");
               setHeroPreview(event.heroImageUrl);
             }}
           >

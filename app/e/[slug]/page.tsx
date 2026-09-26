@@ -40,7 +40,7 @@ export default async function PublicEventPage({ params }: EventPageProps) {
         </Link>
       </nav>
 
-      <section className="event-public-hero">
+      <section className={`event-public-hero event-header-${event.theme.headerStyle ?? "editorial"}`}>
         <div className="event-public-copy">
           {event.logoUrl && <Image src={event.logoUrl} alt={event.name} width={120} height={80} unoptimized className="mb-5 object-contain" />}
           <span className="event-kicker">{event.eyebrow}</span>

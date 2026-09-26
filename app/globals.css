@@ -4,13 +4,13 @@
 /* Legacy prototype styles are layered so utilities can override them. */
 @layer components {
 :root {
-  --ink: #171717;
-  --muted-text: #737373;
-  --line: #e2e8f0;
+  --ink: #242421;
+  --muted-text: #74736d;
+  --line: #e6e5df;
   --paper: #ffffff;
   --surface: #ffffff;
-  --accent: #181818;
-  --accent-soft: #fff5c7;
+  --accent: #292a25;
+  --accent-soft: #f2f1eb;
 }
 
 * {
@@ -57,7 +57,7 @@ button {
   height: 30px;
   place-items: center;
   border-radius: 9px;
-  background: #181818;
+  background: #292a25;
   color: #fff;
   font-size: 14px;
 }
@@ -79,7 +79,7 @@ button {
 }
 
 .button-dark {
-  background: #181818;
+  background: #292a25;
   color: #fff;
 }
 
@@ -239,7 +239,7 @@ button {
 }
 
 .pass-card-front {
-  background: linear-gradient(145deg, #181818 0%, #181818 68%, #f2c94c 68%, #f2c94c 100%);
+  background: linear-gradient(145deg, #292a25 0%, #292a25 68%, #eee9d8 68%, #eee9d8 100%);
   color: #fff;
   transform: rotate(7deg) translate(65px, -15px);
   display: flex;
@@ -741,6 +741,14 @@ button {
   gap: 8vw;
   align-items: center;
 }
+
+.event-header-minimal { grid-template-columns: 1fr; max-width: 900px; }
+.event-header-minimal .event-public-copy { max-width: 760px; }
+.event-header-minimal .event-poster,
+.event-header-minimal > img { display: none; }
+.event-header-split { grid-template-columns: 1fr 1fr; align-items: stretch; }
+.event-header-split .event-poster,
+.event-header-split > img { min-height: 520px; }
 
 .event-kicker {
   color: var(--event-primary);

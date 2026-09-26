@@ -362,10 +362,23 @@ export type Database = {
           },
         ]
       }
+      event_invitations: {
+        Row: { id: string; event_id: string; token: string; job_title: string; access_role: string; invited_email: string | null; expires_at: string; accepted_at: string | null; accepted_by: string | null; created_at: string }
+        Insert: { id?: string; event_id: string; token: string; job_title?: string; access_role?: string; invited_email?: string | null; expires_at?: string; accepted_at?: string | null; accepted_by?: string | null; created_at?: string }
+        Update: { id?: string; event_id?: string; token?: string; job_title?: string; access_role?: string; invited_email?: string | null; expires_at?: string; accepted_at?: string | null; accepted_by?: string | null; created_at?: string }
+        Relationships: []
+      }
+      event_members: {
+        Row: { event_id: string; user_id: string; job_title: string; access_role: string; status: string; created_at: string }
+        Insert: { event_id: string; user_id: string; job_title?: string; access_role?: string; status?: string; created_at?: string }
+        Update: { event_id?: string; user_id?: string; job_title?: string; access_role?: string; status?: string; created_at?: string }
+        Relationships: []
+      }
       events: {
         Row: {
           capacity: number | null
           created_at: string
+          created_by: string | null
           description: string | null
           ends_at: string | null
           hero_image_url: string | null
@@ -384,6 +397,7 @@ export type Database = {
         Insert: {
           capacity?: number | null
           created_at?: string
+          created_by?: string | null
           description?: string | null
           ends_at?: string | null
           hero_image_url?: string | null
@@ -402,6 +416,7 @@ export type Database = {
         Update: {
           capacity?: number | null
           created_at?: string
+          created_by?: string | null
           description?: string | null
           ends_at?: string | null
           hero_image_url?: string | null
@@ -461,18 +476,24 @@ export type Database = {
           created_at: string
           id: string
           name: string
+          plan: string
+          plan_event_limit: number
           slug: string
         }
         Insert: {
           created_at?: string
           id?: string
           name: string
+          plan?: string
+          plan_event_limit?: number
           slug: string
         }
         Update: {
           created_at?: string
           id?: string
           name?: string
+          plan?: string
+          plan_event_limit?: number
           slug?: string
         }
         Relationships: []
@@ -656,28 +677,34 @@ export type Database = {
           capacity: number | null
           code: string
           created_at: string
+          currency: string
           description: string | null
           event_id: string
           id: string
           name: string
+          price: number
         }
         Insert: {
           capacity?: number | null
           code: string
           created_at?: string
+          currency?: string
           description?: string | null
           event_id: string
           id?: string
           name: string
+          price?: number
         }
         Update: {
           capacity?: number | null
           code?: string
           created_at?: string
+          currency?: string
           description?: string | null
           event_id?: string
           id?: string
           name?: string
+          price?: number
         }
         Relationships: [
           {
@@ -694,6 +721,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      accept_event_invitation: { Args: { p_token: string }; Returns: Json }
       claim_qr: {
         Args: { p_code: string; p_event_slug: string }
         Returns: Json

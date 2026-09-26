@@ -17,6 +17,7 @@ import {
   createActivity,
   createAttendee,
   createBenefit,
+  createCrewInvitation,
   createStation,
   createTicketType,
   createZone,
@@ -27,6 +28,7 @@ import {
   setEventStatus,
   toggleStation,
   updateEvent,
+  revokeCrew,
 } from "@/app/admin/actions";
 
 type Props = {
@@ -67,8 +69,9 @@ export default async function EventManagePage({ params, searchParams }: Props) {
     scansResult,
     activityCountResult,
     benefitCountResult,
+    eventMembersResult,
   ] = await Promise.all([
-    supabase.from("ticket_types").select("id, name, code, description, capacity").eq("event_id", eventId).order("created_at"),
+    supabase.from("ticket_types").select("id, name, code, description, capacity, price, currency").eq("event_id", eventId).order("created_at"),
     attendeeQuery,
     supabase.from("qr_credentials").select("id, code, display_code, status, attendee_id, claimed_at, revoked_at").eq("event_id", eventId).order("created_at", { ascending: false }).limit(120),
     supabase.from("access_zones").select("id, name, code, description").eq("event_id", eventId).order("created_at"),
@@ -79,6 +82,7 @@ export default async function EventManagePage({ params, searchParams }: Props) {
     supabase.from("scan_logs").select("id, decision, scanned_at, attendee_id, scanner_station_id, metadata").eq("event_id", eventId).order("scanned_at", { ascending: false }).limit(20),
     supabase.from("activity_logs").select("id", { count: "exact", head: true }).eq("event_id", eventId),
     supabase.from("benefit_claims").select("id", { count: "exact", head: true }).eq("event_id", eventId),
+    supabase.from("event_members").select("event_id,user_id,job_title,access_role,status,created_at").eq("event_id", eventId).order("created_at"),
   ]);
 
   const tickets = ticketsResult.data ?? [];
@@ -89,6 +93,7 @@ export default async function EventManagePage({ params, searchParams }: Props) {
   const stations = stationsResult.data ?? [];
   const activities = activitiesResult.data ?? [];
   const benefits = benefitsResult.data ?? [];
+  const crew = eventMembersResult.data ?? [];
   const scans = scansResult.data ?? [];
 
   const ticketName = new Map(tickets.map((ticket) => [ticket.id, ticket.name]));
@@ -162,13 +167,15 @@ export default async function EventManagePage({ params, searchParams }: Props) {
         <section id="tickets" className="mt-8 rounded-lg border border-border bg-card p-5 sm:p-7">
           <span className="section-kicker">Tickets</span><h2 className="mt-2 text-2xl font-semibold">Pass categories</h2>
           <div className="mt-5 grid gap-3 md:grid-cols-3">
-            {tickets.map((ticket) => <article className="rounded-md bg-muted p-4" key={ticket.id}><strong>{ticket.name}</strong><p className="mt-1 text-xs text-muted-foreground">{ticket.code} · capacity {ticket.capacity ?? "∞"}</p><p className="mt-3 text-sm">{ticket.description}</p></article>)}
+            {tickets.map((ticket) => <article className="rounded-md bg-muted p-4" key={ticket.id}><strong>{ticket.name}</strong><p className="mt-1 text-xs text-muted-foreground">{ticket.code} · capacity {ticket.capacity ?? "∞"}</p><p className="mt-2 text-sm font-medium">{ticket.price > 0 ? `${ticket.currency} ${Number(ticket.price).toLocaleString("id-ID")}` : "Gratis"}</p><p className="mt-2 text-sm">{ticket.description}</p></article>)}
           </div>
           <form action={createTicketType} className="mt-5 grid gap-3 sm:grid-cols-4">
             <input type="hidden" name="eventId" value={event.id} />
             <input className={inputClass()} name="name" placeholder="VIP Pass" required />
             <input className={inputClass()} name="code" placeholder="VIP" />
             <input className={inputClass()} name="capacity" type="number" min="0" placeholder="Capacity" />
+            <input className={inputClass()} name="price" type="number" min="0" step="1000" placeholder="Harga (0 = gratis)" />
+            <input className={inputClass()} name="currency" defaultValue="IDR" maxLength={8} placeholder="Currency" />
             <input className={inputClass()} name="description" placeholder="Description" />
             <button className="button button-dark sm:col-span-4" type="submit">Add ticket type</button>
           </form>
@@ -194,6 +201,13 @@ export default async function EventManagePage({ params, searchParams }: Props) {
             <button className="button button-dark sm:col-span-4" type="submit">Add attendee</button>
           </form>
           <CsvImportForm eventId={event.id} />
+        </section>
+
+        <section id="crew" className="mt-8 rounded-lg border border-border bg-card p-5 sm:p-7">
+          <div className="flex flex-wrap items-end justify-between gap-3"><div><span className="section-kicker">Crew</span><h2 className="mt-2 text-2xl font-semibold">Event team</h2><p className="mt-2 text-sm text-muted-foreground">Buat link undangan untuk crew. Mereka masuk ke event ini saja.</p></div><span className="soft-badge">{crew.filter(member => member.status === "active").length} active</span></div>
+          {typeof query.invite === "string" && <div className="mt-5 rounded-md border border-border bg-muted p-4"><p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Link undangan berhasil dibuat</p><p className="mt-2 break-all font-mono text-xs">{`${process.env.NEXT_PUBLIC_APP_URL ?? "https://passflow.my.id"}/crew/join?token=${query.invite}`}</p><p className="mt-2 text-xs text-muted-foreground">Kirim link ini kepada crew. Link berlaku 7 hari.</p></div>}
+          <div className="mt-5 grid gap-2 sm:grid-cols-2">{crew.map(member => <div key={member.user_id} className="flex items-center justify-between rounded-md bg-muted p-3"><div><strong className="text-sm">{member.job_title}</strong><p className="text-xs text-muted-foreground">{member.access_role} · {member.status}</p></div>{member.status === "active" && <form action={revokeCrew}><input type="hidden" name="eventId" value={event.id}/><input type="hidden" name="userId" value={member.user_id}/><button className="text-xs text-destructive hover:underline" type="submit">Revoke</button></form>}</div>)}</div>
+          <form action={createCrewInvitation} className="mt-5 grid gap-3 border-t border-border pt-5 sm:grid-cols-4"><input type="hidden" name="eventId" value={event.id}/><input className={inputClass()} name="jobTitle" placeholder="Job, mis. Gate Crew" required/><select className={inputClass()} name="accessRole" defaultValue="crew"><option value="crew">Crew</option><option value="lead">Lead</option><option value="scanner">Scanner</option></select><input className={inputClass()} name="email" type="email" placeholder="Email (opsional)"/><button className="button button-dark" type="submit">Buat link crew</button></form>
         </section>
 
         <section id="wristbands" className="mt-8 rounded-lg border border-border bg-card p-5 sm:p-7">

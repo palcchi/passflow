@@ -1,7 +1,7 @@
 import { getSupabaseConfig } from "@/lib/supabase/config";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-export const defaultEventTheme={primary:"#181818",secondary:"#f2c94c",background:"#ffffff",foreground:"#171717",surface:"#ffffff"};
-export type EventTheme={primary:string;secondary:string;background:string;foreground:string;surface:string};
+export const defaultEventTheme={primary:"#292a25",secondary:"#eee9d8",background:"#ffffff",foreground:"#242421",surface:"#ffffff",headerStyle:"editorial"};
+export type EventTheme={primary:string;secondary:string;background:string;foreground:string;surface:string;headerStyle?:"minimal"|"editorial"|"split"};
 export type PassFlowEvent={id:string;name:string;slug:string;eyebrow:string;description:string;venue:string;dateLabel:string;attendeeCount:number;checkedInCount:number;theme:EventTheme;status?:string;capacity?:number;startsAt?:string|null;endsAt?:string|null;heroImageUrl:string|null;logoUrl:string|null;posterUrl:string|null};
 export const demoEvents:PassFlowEvent[]=[
 {id:"evt_adorne_exhibition",name:"Adorne Nails Exhibition",slug:"adorne-nails-exhibition",eyebrow:"Beauty Exhibition",description:"A multi-zone beauty experience with workshops, exhibitions, product showcases, and QR-based access.",venue:"Adorne Studio",dateLabel:"12 October 2026",attendeeCount:428,checkedInCount:286,theme:{primary:"#7b1734",secondary:"#f0b8c6",background:"#fff8f9",foreground:"#211216",surface:"#ffffff"},heroImageUrl:null,logoUrl:null,posterUrl:null},
@@ -17,11 +17,12 @@ function mapEvent(row: EventRow, attendeeCount = 0, checkedInCount = 0): PassFlo
     const value = theme[key as keyof EventTheme];
     return [key, typeof value === "string" && /^#[0-9a-f]{3,8}$/i.test(value) ? value : fallback];
   })) as EventTheme;
+  const headerStyle = theme.headerStyle === "minimal" || theme.headerStyle === "split" || theme.headerStyle === "editorial" ? theme.headerStyle : "editorial";
   return { id: row.id, name: row.name, slug: row.slug, eyebrow: row.status === "published" ? "Published event" : "Draft event",
     description: row.description ?? "", venue: row.venue ?? "", status: row.status, capacity: row.capacity ?? undefined,
     startsAt: row.starts_at, endsAt: row.ends_at,
     dateLabel: row.starts_at ? new Intl.DateTimeFormat("en-US", { dateStyle: "long", timeZone: "Asia/Jakarta" }).format(new Date(row.starts_at)) : "Date to be announced",
-    attendeeCount, checkedInCount, theme: safeTheme, heroImageUrl: row.hero_image_url, logoUrl: row.logo_url, posterUrl: row.poster_url };
+    attendeeCount, checkedInCount, theme: { ...safeTheme, headerStyle }, heroImageUrl: row.hero_image_url, logoUrl: row.logo_url, posterUrl: row.poster_url };
 }
 export async function getManagedEvent(id: string): Promise<PassFlowEvent | undefined> {
   const { requireOrganizer } = await import("@/lib/auth/session");

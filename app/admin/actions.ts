@@ -60,7 +60,7 @@ function revalidateEvent(eventId: string, slug?: string | null) {
 }
 
 export async function createEvent(formData: FormData) {
-  const { supabase, membership } = await managedContext();
+  const { supabase, membership, user } = await managedContext();
   const name = text(formData, "name", 120);
   const slug = slugify(text(formData, "slug", 100) || name);
   if (name.length < 2 || !slug) redirect("/admin/events/new?error=invalid");
@@ -71,6 +71,7 @@ export async function createEvent(formData: FormData) {
     .from("events")
     .insert({
       organization_id: membership.organization_id,
+      created_by: user.id,
       name,
       slug,
       description: optionalText(formData, "description", 1200),
@@ -154,6 +155,8 @@ export async function createTicketType(formData: FormData) {
     code,
     description: optionalText(formData, "description", 500),
     capacity: numberValue(formData, "capacity"),
+    price: numberValue(formData, "price") ?? 0,
+    currency: text(formData, "currency", 8) || "IDR",
   });
   revalidateEvent(eventId);
 }
@@ -338,6 +341,7 @@ export async function saveEventTheme(formData: FormData) {
     background: text(formData, "background", 20) || defaultEventTheme.background,
     foreground: text(formData, "foreground", 20) || defaultEventTheme.foreground,
     surface: text(formData, "surface", 20) || defaultEventTheme.surface,
+    headerStyle: ["minimal", "editorial", "split"].includes(text(formData, "headerStyle", 20)) ? text(formData, "headerStyle", 20) : defaultEventTheme.headerStyle,
   };
   const { data } = await supabase.from("events").update({ theme, updated_at: new Date().toISOString() }).eq("id", eventId).select("slug").single();
   revalidateEvent(eventId, data?.slug);
@@ -382,4 +386,22 @@ export async function uploadEventAsset(formData: FormData) {
     .single();
 
   revalidateEvent(eventId, data?.slug);
+}
+
+
+export async function createCrewInvitation(formData: FormData) {
+  const eventId = text(formData, "eventId", 60);
+  const { supabase } = await managedContext(eventId);
+  const token = randomBytes(24).toString("base64url");
+  const { data } = await supabase.from("event_invitations").insert({ event_id: eventId, token, job_title: text(formData, "jobTitle", 80) || "Crew", access_role: text(formData, "accessRole", 20) || "crew", invited_email: optionalText(formData, "email", 254) }).select("token").single();
+  if (!data) return;
+  revalidateEvent(eventId);
+  redirect(`/admin/events/${eventId}?invite=${encodeURIComponent(data.token)}`);
+}
+
+export async function revokeCrew(formData: FormData) {
+  const eventId = text(formData, "eventId", 60); const userId = text(formData, "userId", 60);
+  const { supabase } = await managedContext(eventId);
+  await supabase.from("event_members").update({ status: "revoked" }).eq("event_id", eventId).eq("user_id", userId);
+  revalidateEvent(eventId);
 }
