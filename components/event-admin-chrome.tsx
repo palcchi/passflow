@@ -4,6 +4,9 @@ import { ArrowLeft } from "lucide-react";
 import type { PassFlowEvent } from "@/lib/events";
 import { UserNavbar } from "@/components/user-navbar";
 import { EventAdminNav } from "@/components/event-admin-nav";
+import { KineticText } from "@/components/magicui/kinetic-text";
+import { TextAnimate } from "@/components/magicui/text-animate";
+import { ShinyButton } from "@/components/magicui/shiny-button";
 
 type Profile = {
   name: string;
@@ -34,11 +37,12 @@ export function EventAdminChrome({
     "--event-admin-accent": event.theme.primary,
     "--event-admin-secondary": event.theme.secondary,
     "--event-admin-accent-text": eventAccentText(event.theme.primary),
+    "--page-accent": event.theme.primary,
   } as CSSProperties;
 
   return (
     <div
-      className="app-surface event-admin-context min-h-screen"
+      className="app-surface studio-backdrop event-admin-context min-h-screen"
       style={eventStyle}
     >
       <UserNavbar
@@ -49,7 +53,7 @@ export function EventAdminChrome({
       />
 
       <main className="event-admin-shell mx-auto max-w-7xl px-5 pb-24 pt-8 sm:px-8 sm:pt-10">
-        <header className="event-admin-hero">
+        <header className="event-admin-hero studio-event-hero">
           <div className="event-admin-hero-main">
             <Link href="/admin" className="event-admin-back">
               <ArrowLeft size={14} /> Organizer
@@ -57,15 +61,13 @@ export function EventAdminChrome({
 
             <span className="event-admin-kicker">{event.status} event</span>
 
-            <div className="event-admin-title-row">
-              <div>
-                <h1>{event.name}</h1>
-                <p>
-                  {event.dateLabel} · {event.venue || "Venue belum ditentukan"}
-                </p>
-              </div>
-              <span className="event-admin-slug">{event.slug}</span>
-            </div>
+            <KineticText
+              text={event.name}
+              className="event-admin-kinetic-title"
+            />
+            <TextAnimate className="event-admin-meta-line" delay={0.03}>
+              {`${event.dateLabel} · ${event.venue || "Venue belum ditentukan"}`}
+            </TextAnimate>
           </div>
 
           <div className="event-admin-hero-actions">
@@ -79,14 +81,14 @@ export function EventAdminChrome({
               className="button button-ghost"
               href={`/admin/events/${event.id}/design`}
             >
-              PassFlow Design
+              Design
             </Link>
-            <Link
-              className="button event-admin-public-cta"
+            <ShinyButton
               href={`/e/${event.slug}`}
+              className="event-admin-public-cta"
             >
               Public page
-            </Link>
+            </ShinyButton>
           </div>
         </header>
 
