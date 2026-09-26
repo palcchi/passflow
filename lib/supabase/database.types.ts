@@ -362,17 +362,149 @@ export type Database = {
           },
         ]
       }
+      event_designs: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          event_id: string
+          figma_file_key: string
+          figma_file_name: string | null
+          figma_file_url: string
+          figma_node_id: string | null
+          figma_version: string | null
+          id: string
+          kind: string
+          last_synced_at: string | null
+          metadata: Json
+          name: string
+          preview_url: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          event_id: string
+          figma_file_key: string
+          figma_file_name?: string | null
+          figma_file_url: string
+          figma_node_id?: string | null
+          figma_version?: string | null
+          id?: string
+          kind: string
+          last_synced_at?: string | null
+          metadata?: Json
+          name: string
+          preview_url?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          event_id?: string
+          figma_file_key?: string
+          figma_file_name?: string | null
+          figma_file_url?: string
+          figma_node_id?: string | null
+          figma_version?: string | null
+          id?: string
+          kind?: string
+          last_synced_at?: string | null
+          metadata?: Json
+          name?: string
+          preview_url?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_designs_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       event_invitations: {
-        Row: { id: string; event_id: string; token: string; job_title: string; access_role: string; invited_email: string | null; expires_at: string; accepted_at: string | null; accepted_by: string | null; created_at: string }
-        Insert: { id?: string; event_id: string; token: string; job_title?: string; access_role?: string; invited_email?: string | null; expires_at?: string; accepted_at?: string | null; accepted_by?: string | null; created_at?: string }
-        Update: { id?: string; event_id?: string; token?: string; job_title?: string; access_role?: string; invited_email?: string | null; expires_at?: string; accepted_at?: string | null; accepted_by?: string | null; created_at?: string }
-        Relationships: []
+        Row: {
+          accepted_at: string | null
+          accepted_by: string | null
+          access_role: string
+          created_at: string
+          event_id: string
+          expires_at: string
+          id: string
+          invited_email: string | null
+          job_title: string
+          token: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          accepted_by?: string | null
+          access_role?: string
+          created_at?: string
+          event_id: string
+          expires_at?: string
+          id?: string
+          invited_email?: string | null
+          job_title?: string
+          token: string
+        }
+        Update: {
+          accepted_at?: string | null
+          accepted_by?: string | null
+          access_role?: string
+          created_at?: string
+          event_id?: string
+          expires_at?: string
+          id?: string
+          invited_email?: string | null
+          job_title?: string
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_invitations_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       event_members: {
-        Row: { event_id: string; user_id: string; job_title: string; access_role: string; status: string; created_at: string }
-        Insert: { event_id: string; user_id: string; job_title?: string; access_role?: string; status?: string; created_at?: string }
-        Update: { event_id?: string; user_id?: string; job_title?: string; access_role?: string; status?: string; created_at?: string }
-        Relationships: []
+        Row: {
+          access_role: string
+          created_at: string
+          event_id: string
+          job_title: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          access_role?: string
+          created_at?: string
+          event_id: string
+          job_title?: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          access_role?: string
+          created_at?: string
+          event_id?: string
+          job_title?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_members_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       events: {
         Row: {
@@ -444,6 +576,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      figma_connections: {
+        Row: {
+          access_token_encrypted: string
+          avatar_url: string | null
+          connected_at: string
+          email: string | null
+          expires_at: string
+          figma_user_id: string
+          handle: string | null
+          refresh_token_encrypted: string
+          scopes: string[]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          access_token_encrypted: string
+          avatar_url?: string | null
+          connected_at?: string
+          email?: string | null
+          expires_at: string
+          figma_user_id: string
+          handle?: string | null
+          refresh_token_encrypted: string
+          scopes?: string[]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          access_token_encrypted?: string
+          avatar_url?: string | null
+          connected_at?: string
+          email?: string | null
+          expires_at?: string
+          figma_user_id?: string
+          handle?: string | null
+          refresh_token_encrypted?: string
+          scopes?: string[]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       organization_members: {
         Row: {
