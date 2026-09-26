@@ -4,6 +4,14 @@ import { useRef } from "react";
 import { motion, useInView, useReducedMotion } from "motion/react";
 import { cn } from "@/lib/utils";
 
+const motionTags = {
+  p: motion.p,
+  span: motion.span,
+  h1: motion.h1,
+  h2: motion.h2,
+  h3: motion.h3,
+} as const;
+
 type TextAnimateProps = {
   children: string;
   as?: "p" | "span" | "h1" | "h2" | "h3";
@@ -25,7 +33,7 @@ export function TextAnimate({
   const inView = useInView(ref, { once, margin: "-8% 0px" });
   const reduceMotion = useReducedMotion();
   const segments = by === "character" ? Array.from(children) : children.split(" ");
-  const MotionTag = motion.create(as);
+  const MotionTag = motionTags[as];
 
   return (
     <MotionTag
