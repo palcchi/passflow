@@ -6,7 +6,7 @@ import { redirect } from "next/navigation";
 import { requireOrganizerMembership } from "@/lib/auth/session";
 import { defaultEventTheme } from "@/lib/events";
 import { decryptFigmaToken, encryptFigmaToken, figmaFetch, parseFigmaUrl, refreshFigmaToken } from "@/lib/figma";
-import { designKinds, defaultTemplate, type FigmaTemplate } from "@/lib/design-template";
+import { designKinds, type FigmaTemplate } from "@/lib/design-template";
 
 function text(formData: FormData, key: string, max = 500) {
   const value = formData.get(key);
@@ -449,8 +449,6 @@ export async function syncFigmaDesign(formData: FormData) {
   const name = text(formData, "name", 120);
   const figmaUrl = text(formData, "figmaUrl", 500);
   if (!eventId || !name || !figmaUrl || !designKinds.some((item) => item.value === assetType)) return;
-  let template = defaultTemplate;
-  try { const raw = formData.get("template"); if (typeof raw === "string") template = { ...defaultTemplate, ...JSON.parse(raw) }; } catch { /* default */ }
   const { supabase, user } = await managedContext(eventId);
   const { data: connection, error: connectionError } = await supabase.from("figma_connections")
     .select("access_token_encrypted,refresh_token_encrypted,expires_at").eq("user_id", user.id).maybeSingle();
@@ -482,9 +480,10 @@ export async function syncFigmaDesign(formData: FormData) {
     const marker = optionalText(formData, "qrMarker", 80) || "PASSFLOW_QR";
     const qrNode = find(frameNode, (node) => (node.name ?? "").trim().toLowerCase() === marker.toLowerCase() || (node.name ?? "").toLowerCase().includes("{{passflow.qr}}"));
     const qrBounds = qrNode?.absoluteBoundingBox;
+    const qrWidth = qrBounds?.width ?? 0, qrHeight = qrBounds?.height ?? 0;
     const frameX = bounds.x ?? 0, frameY = bounds.y ?? 0;
     const template: FigmaTemplate = { source: "figma", unit: "px", frame: { x: 0, y: 0, width: bounds.width, height: bounds.height }, frameNodeId: nodeId, qrMarker: marker, hasQr: !!qrBounds,
-      qrPlaceholder: qrBounds && qrNode?.id ? { nodeId: qrNode.id, name: qrNode.name ?? marker, x: qrBounds.x - frameX, y: qrBounds.y - frameY, width: qrBounds.width, height: qrBounds.height } : null };
+      qrPlaceholder: qrBounds && qrNode?.id ? { nodeId: qrNode.id, name: qrNode.name ?? marker, x: (qrBounds.x ?? 0) - frameX, y: (qrBounds.y ?? 0) - frameY, width: qrWidth, height: qrHeight } : null };
     let previewUrl: string | null = file.thumbnailUrl ?? null;
     if (nodeId) {
       const images = await figmaFetch<{ images?: Record<string, string> }>(token, `/images/${parsed.fileKey}?ids=${encodeURIComponent(nodeId)}&format=png&scale=1`);
