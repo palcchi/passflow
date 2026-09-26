@@ -2,7 +2,6 @@ import { notFound } from "next/navigation";
 import { Activity, Gift } from "lucide-react";
 import { getManagedEvent } from "@/lib/events";
 import { requireOrganizerMembership } from "@/lib/auth/session";
-import { EventAdminChrome, eventAdminProfile } from "@/components/event-admin-chrome";
 import { MagicCard } from "@/components/magicui/magic-card";
 import { createActivity, createBenefit } from "@/app/admin/actions";
 
@@ -17,7 +16,7 @@ export default async function EventExperiencePage({ params }: Props) {
   const event = await getManagedEvent(eventId);
   if (!event) notFound();
 
-  const { supabase, user } = await requireOrganizerMembership(`/admin/events/${eventId}/experience`);
+  const { supabase } = await requireOrganizerMembership(`/admin/events/${eventId}/experience`);
   const [activitiesResult, benefitsResult, activityCountResult, benefitCountResult] = await Promise.all([
     supabase
       .from("activities")
@@ -43,7 +42,7 @@ export default async function EventExperiencePage({ params }: Props) {
   const benefits = benefitsResult.data ?? [];
 
   return (
-    <EventAdminChrome event={event} profile={eventAdminProfile(user)}>
+    <>
       <section className="event-admin-metrics event-experience-metrics" aria-label="Experience metrics">
         <MagicCard className="event-admin-metric liquid-panel">
           <span className="event-admin-metric-icon"><Activity size={17} /></span>
@@ -128,6 +127,6 @@ export default async function EventExperiencePage({ params }: Props) {
           </form>
         </MagicCard>
       </section>
-    </EventAdminChrome>
+    </>
   );
 }
