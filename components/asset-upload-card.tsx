@@ -14,6 +14,7 @@ export function AssetUploadCard({
   hint = "JPG, PNG, WEBP · max 5 MB",
   compact = false,
   onUploaded,
+  onPreview,
 }: {
   eventId: string;
   assetType: AssetType;
@@ -22,6 +23,7 @@ export function AssetUploadCard({
   hint?: string;
   compact?: boolean;
   onUploaded?: (url: string) => void;
+  onPreview?: (url: string | null) => void;
 }) {
   const inputId = useId();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -59,6 +61,7 @@ export function AssetUploadCard({
     if (objectUrlRef.current) URL.revokeObjectURL(objectUrlRef.current);
     objectUrlRef.current = URL.createObjectURL(file);
     setPreview(objectUrlRef.current);
+    onPreview?.(objectUrlRef.current);
     setFileName(file.name);
   }
 
@@ -66,6 +69,7 @@ export function AssetUploadCard({
     if (objectUrlRef.current) URL.revokeObjectURL(objectUrlRef.current);
     objectUrlRef.current = null;
     setPreview(currentUrl ?? null);
+    onPreview?.(currentUrl ?? null);
     setFileName("");
     setMessage(null);
     setSuccess(false);
@@ -84,6 +88,7 @@ export function AssetUploadCard({
         setSuccess(result.ok);
         if (result.ok && result.publicUrl) {
           setPreview(result.publicUrl);
+          onPreview?.(result.publicUrl);
           onUploaded?.(result.publicUrl);
           setFileName("");
           if (objectUrlRef.current) URL.revokeObjectURL(objectUrlRef.current);
