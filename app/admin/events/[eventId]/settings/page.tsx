@@ -1,5 +1,4 @@
 import { notFound } from "next/navigation";
-import { ShieldCheck, Trash2 } from "lucide-react";
 import { getManagedEvent } from "@/lib/events";
 import { requireOrganizerMembership } from "@/lib/auth/session";
 import { DateTimeField, FormattedNumberInput } from "@/components/form-fields";
@@ -27,7 +26,6 @@ export default async function EventSettingsPage({ params }: Props) {
             <h2>Basics & lifecycle</h2>
             <p>Informasi inti event, jadwal, kapasitas, dan status publikasi.</p>
           </div>
-          <span className="event-admin-section-icon"><ShieldCheck size={18} /></span>
         </div>
 
         <form action={updateEvent} className="event-admin-form-grid">
@@ -93,7 +91,6 @@ export default async function EventSettingsPage({ params }: Props) {
 
       <section className="event-admin-danger-zone">
         <div className="event-admin-danger-copy">
-          <span className="event-admin-danger-icon"><Trash2 size={17} /></span>
           <div>
             <strong>Delete event</strong>
             <p>
