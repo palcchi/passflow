@@ -40,6 +40,101 @@ function normalizeCode(value: string) {
   return value.toUpperCase().replace(/[^A-Z0-9_-]/g, "_").slice(0, 40);
 }
 
+function normalizeQrPrefix(value: string) {
+  const normalized = value
+    .toUpperCase()
+    .replace(/[^A-Z0-9-]/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "")
+    .slice(0, 16);
+  return normalized || "WR";
+}
+
+function qrDisplayCode(prefix: string, number: number) {
+  return `${prefix}-${String(number).padStart(4, "0")}`;
+}
+
+function findContiguousQrRange(used: Set<number>, amount: number, preferredStart = 1) {
+  let start = Math.max(1, Math.floor(preferredStart));
+  const maxStart = Math.max(start + 50000, ...used, 0) + amount + 1;
+  while (start <= maxStart) {
+    let available = true;
+    for (let offset = 0; offset < amount; offset += 1) {
+      if (used.has(start + offset)) {
+        start += offset + 1;
+        available = false;
+        break;
+      }
+    }
+    if (available) return start;
+  }
+  return Math.max(1, preferredStart);
+}
+
+type QrBatchInput = {
+  eventId: string;
+  prefix?: string;
+  amount?: number;
+  startNumber?: number | null;
+  mode?: "auto" | "custom";
+};
+
+async function resolveQrBatch(input: QrBatchInput) {
+  const eventId = String(input.eventId || "").slice(0, 60);
+  const prefix = normalizeQrPrefix(String(input.prefix || "WR"));
+  const amount = Math.min(Math.max(Math.floor(Number(input.amount) || 1), 1), 250);
+  const mode = input.mode === "custom" ? "custom" : "auto";
+  const requestedStart =
+    mode === "custom" && Number.isFinite(Number(input.startNumber))
+      ? Math.max(1, Math.floor(Number(input.startNumber)))
+      : 1;
+  const { supabase } = await managedContext(eventId);
+  const { data, error } = await supabase
+    .from("qr_credentials")
+    .select("display_code")
+    .eq("event_id", eventId)
+    .like("display_code", `${prefix}-%`);
+
+  if (error) {
+    return { ok: false as const, message: "Kode QR belum dapat diperiksa." };
+  }
+
+  const used = new Set<number>();
+  for (const row of data ?? []) {
+    const value = row.display_code;
+    if (!value || !value.startsWith(prefix + "-")) continue;
+    const suffix = value.slice(prefix.length + 1);
+    if (/^\d+$/.test(suffix)) used.add(Number(suffix));
+  }
+
+  const requestedAvailable =
+    mode !== "custom" ||
+    Array.from({ length: amount }, (_, index) => requestedStart + index).every(
+      (number) => !used.has(number),
+    );
+  const start = requestedAvailable
+    ? mode === "custom"
+      ? requestedStart
+      : findContiguousQrRange(used, amount, 1)
+    : findContiguousQrRange(used, amount, requestedStart);
+
+  return {
+    ok: true as const,
+    eventId,
+    prefix,
+    amount,
+    mode,
+    requestedStart,
+    requestedAvailable,
+    start,
+    end: start + amount - 1,
+    firstCode: qrDisplayCode(prefix, start),
+    lastCode: qrDisplayCode(prefix, start + amount - 1),
+    usedCount: used.size,
+    supabase,
+  };
+}
+
 async function managedContext(eventId?: string) {
   const context = await requireOrganizerMembership(eventId ? `/admin/events/${eventId}` : "/admin");
   if (eventId) {
@@ -54,6 +149,10 @@ async function managedContext(eventId?: string) {
 function revalidateEvent(eventId: string, slug?: string | null) {
   revalidatePath("/admin");
   revalidatePath(`/admin/events/${eventId}`);
+  revalidatePath(`/admin/events/${eventId}/people`);
+  revalidatePath(`/admin/events/${eventId}/access`);
+  revalidatePath(`/admin/events/${eventId}/experience`);
+  revalidatePath(`/admin/events/${eventId}/settings`);
   revalidatePath(`/admin/events/${eventId}/appearance`);
   if (slug) {
     revalidatePath(`/e/${slug}`);
@@ -204,28 +303,67 @@ export async function importAttendees(formData: FormData) {
   revalidateEvent(eventId);
 }
 
-export async function generateWristbands(formData: FormData) {
-  const eventId = text(formData, "eventId", 60);
-  const amount = Math.min(Math.max(numberValue(formData, "amount") ?? 1, 1), 250);
-  const { supabase } = await managedContext(eventId);
-  const { data: last } = await supabase
-    .from("qr_credentials")
-    .select("display_code")
-    .eq("event_id", eventId)
-    .not("display_code", "is", null)
-    .order("display_code", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+export async function checkQrCodeAvailability(input: QrBatchInput) {
+  const resolved = await resolveQrBatch(input);
+  if (!resolved.ok) return resolved;
+  const { supabase: _supabase, ...safe } = resolved;
+  return safe;
+}
 
-  const start = Number(last?.display_code?.replace(/\D/g, "") || "0") + 1;
-  const rows = Array.from({ length: amount }, (_, index) => ({
-    event_id: eventId,
+export async function generateQrBatch(input: QrBatchInput) {
+  const resolved = await resolveQrBatch(input);
+  if (!resolved.ok) return resolved;
+
+  if (resolved.mode === "custom" && !resolved.requestedAvailable) {
+    const { supabase: _supabase, ...safe } = resolved;
+    return {
+      ...safe,
+      ok: false as const,
+      conflict: true as const,
+      message: `Range yang dipilih sudah terpakai. Range tersedia berikutnya: ${resolved.firstCode} – ${resolved.lastCode}.`,
+    };
+  }
+
+  const rows = Array.from({ length: resolved.amount }, (_, index) => ({
+    event_id: resolved.eventId,
     code: randomBytes(24).toString("base64url"),
-    display_code: `WR-${String(start + index).padStart(4, "0")}`,
+    display_code: qrDisplayCode(resolved.prefix, resolved.start + index),
     status: "unclaimed" as const,
   }));
-  await supabase.from("qr_credentials").insert(rows);
-  revalidateEvent(eventId);
+
+  const { error } = await resolved.supabase.from("qr_credentials").insert(rows);
+  if (error) {
+    const retry = await resolveQrBatch({ ...input, mode: "auto", startNumber: null });
+    return {
+      ok: false as const,
+      conflict: true as const,
+      message:
+        retry.ok
+          ? `Kode berubah saat proses generate. Coba range ${retry.firstCode} – ${retry.lastCode}.`
+          : "QR belum berhasil dibuat. Coba periksa ketersediaan lagi.",
+    };
+  }
+
+  revalidateEvent(resolved.eventId);
+  return {
+    ok: true as const,
+    message: `${resolved.amount} QR berhasil dibuat.`,
+    prefix: resolved.prefix,
+    start: resolved.start,
+    end: resolved.end,
+    firstCode: resolved.firstCode,
+    lastCode: resolved.lastCode,
+  };
+}
+
+export async function generateWristbands(formData: FormData) {
+  return generateQrBatch({
+    eventId: text(formData, "eventId", 60),
+    prefix: text(formData, "prefix", 16) || "WR",
+    amount: numberValue(formData, "amount") ?? 1,
+    startNumber: numberValue(formData, "startNumber"),
+    mode: text(formData, "mode", 10) === "custom" ? "custom" : "auto",
+  });
 }
 
 export async function revokeCredential(formData: FormData) {
@@ -490,7 +628,7 @@ export async function createCrewInvitation(formData: FormData) {
   const { data } = await supabase.from("event_invitations").insert({ event_id: eventId, token, job_title: text(formData, "jobTitle", 80) || "Crew", access_role: text(formData, "accessRole", 20) || "crew", invited_email: optionalText(formData, "email", 254) }).select("token").single();
   if (!data) return;
   revalidateEvent(eventId);
-  redirect(`/admin/events/${eventId}?invite=${encodeURIComponent(data.token)}`);
+  redirect(`/admin/events/${eventId}/people?invite=${encodeURIComponent(data.token)}`);
 }
 
 export async function revokeCrew(formData: FormData) {
