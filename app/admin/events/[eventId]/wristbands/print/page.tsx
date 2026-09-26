@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
-import { getEventById } from "@/lib/events";
+import { getManagedEvent } from "@/lib/events";
 import { requireOrganizerMembership } from "@/lib/auth/session";
 import { QrCodeImage } from "@/components/qr-code-image";
 import { PrintButton } from "@/components/print-button";
@@ -12,7 +12,7 @@ export default async function WristbandPrintPage({
   params: Promise<{ eventId: string }>;
 }) {
   const { eventId } = await params;
-  const event = await getEventById(eventId);
+  const event = await getManagedEvent(eventId);
   if (!event) notFound();
   const { supabase } = await requireOrganizerMembership(`/admin/events/${eventId}/wristbands/print`);
   const { data: credentials } = await supabase

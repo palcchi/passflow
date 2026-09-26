@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { EventThemeEditor } from "@/components/event-theme-editor";
-import { getPublishedEventById } from "@/lib/events";
+import { getManagedEvent } from "@/lib/events";
 
 type AppearancePageProps = {
   params: Promise<{ eventId: string }>;
@@ -14,7 +14,7 @@ export default async function EventAppearancePage({
 }: AppearancePageProps) {
   const { eventId } = await params;
   await requireOrganizer(`/admin/events/${eventId}/appearance`);
-  const event = await getPublishedEventById(eventId);
+  const event = await getManagedEvent(eventId);
 
   if (!event) notFound();
 
@@ -40,4 +40,3 @@ export default async function EventAppearancePage({
     </main>
   );
 }
-

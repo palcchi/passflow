@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import QRCode from "qrcode";
+import Image from "next/image";
 
 export function QrCodeImage({
   value,
@@ -33,5 +34,5 @@ export function QrCodeImage({
     return <div className="grid place-items-center rounded-md bg-muted" style={{ width: size, height: size }}>Generating QR...</div>;
   }
 
-  return <img src={src} width={size} height={size} alt={alt} className="rounded-md bg-white p-2" />;
+  return <Image src={src} width={size} height={size} alt={alt} unoptimized className="rounded-md bg-white p-2" />;
 }

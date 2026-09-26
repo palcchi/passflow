@@ -21,8 +21,7 @@ export default async function ScannerPage({ params }: ScannerPageProps) {
         </Link>
         <span className="scanner-brand">PASSFLOW SCANNER</span>
       </nav>
-      <QrScanner stationId={stationId} />
+      <QrScanner stationId={station.id} stationName={station.name} />
     </main>
   );
 }
-

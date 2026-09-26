@@ -1,5 +1,6 @@
 import type { CSSProperties } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import {
   ArrowRight,
@@ -41,6 +42,7 @@ export default async function PublicEventPage({ params }: EventPageProps) {
 
       <section className="event-public-hero">
         <div className="event-public-copy">
+          {event.logoUrl && <Image src={event.logoUrl} alt={event.name} width={120} height={80} unoptimized className="mb-5 object-contain" />}
           <span className="event-kicker">{event.eyebrow}</span>
           <h1>{event.name}</h1>
           <p>{event.description}</p>
@@ -64,7 +66,7 @@ export default async function PublicEventPage({ params }: EventPageProps) {
           </div>
         </div>
 
-        <div className="event-poster">
+        {event.heroImageUrl || event.posterUrl ? <Image src={(event.heroImageUrl || event.posterUrl)!} alt={event.name} width={720} height={900} unoptimized className="w-full rounded-xl object-cover" /> : <div className="event-poster">
           <div className="poster-topline">
             <span>{event.eyebrow}</span>
             <span>2026</span>
@@ -74,7 +76,7 @@ export default async function PublicEventPage({ params }: EventPageProps) {
             <QrCode size={72} strokeWidth={1.4} />
           </div>
           <small>ONE PASS · MULTIPLE ACCESS POINTS</small>
-        </div>
+        </div>}
       </section>
 
       <section className="event-info-grid">
@@ -97,4 +99,3 @@ export default async function PublicEventPage({ params }: EventPageProps) {
     </main>
   );
 }
-
