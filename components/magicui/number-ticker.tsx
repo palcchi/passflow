@@ -14,14 +14,10 @@ export function NumberTicker({
   const ref = useRef<HTMLSpanElement>(null);
   const inView = useInView(ref, { once: true });
   const reduceMotion = useReducedMotion();
-  const [display, setDisplay] = useState(reduceMotion ? value : 0);
+  const [display, setDisplay] = useState(0);
 
   useEffect(() => {
-    if (!inView) return;
-    if (reduceMotion) {
-      setDisplay(value);
-      return;
-    }
+    if (!inView || reduceMotion) return;
     const controls = animate(0, value, {
       duration: 0.72,
       ease: [0.22, 0.8, 0.3, 1],
@@ -32,7 +28,9 @@ export function NumberTicker({
 
   return (
     <span ref={ref} className={cn("tabular-nums", className)}>
-      {new Intl.NumberFormat("id-ID", { maximumFractionDigits: 0 }).format(display)}
+      {new Intl.NumberFormat("id-ID", { maximumFractionDigits: 0 }).format(
+        reduceMotion ? value : display,
+      )}
     </span>
   );
 }
