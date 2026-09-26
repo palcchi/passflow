@@ -2,36 +2,37 @@ import { NextResponse } from "next/server";
 import QRCode from "qrcode";
 import { getManagedEvent } from "@/lib/events";
 import { requireOrganizerMembership } from "@/lib/auth/session";
+import { readTemplate, xml } from "@/lib/design-template";
 
-function escapeXml(value: string) { return value.replace(/[<>&'"]/g, (char) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;", "'": "&apos;", "\"": "&quot;" })[char] ?? char); }
+async function dataImage(url: string | null) {
+  if (!url) return null;
+  try { const response = await fetch(url, { cache: "no-store" }); if (!response.ok) return null; const type = response.headers.get("content-type") || "image/png"; return `data:${type};base64,${Buffer.from(await response.arrayBuffer()).toString("base64")}`; } catch { return null; }
+}
+function safeFile(name: string) { return name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 70) || "passflow-export"; }
 
-export async function GET(_request: Request, { params }: { params: Promise<{ eventId: string }> }) {
+export async function GET(request: Request, { params }: { params: Promise<{ eventId: string }> }) {
   const { eventId } = await params;
+  const url = new URL(request.url), designId = url.searchParams.get("designId");
   const event = await getManagedEvent(eventId);
-  if (!event) return new NextResponse("Not found", { status: 404 });
-  const { supabase } = await requireOrganizerMembership(`/admin/events/${eventId}/export/figma`);
-  const { data: credentials } = await supabase.from("qr_credentials").select("id, code, display_code, status").eq("event_id", eventId).order("display_code");
-  const config = event.qrConfig;
-  const cardWidth = Math.max(240, Math.round((config.mode === "wristband" ? config.widthMm : config.widthMm || 85.6) * 3.78));
-  const cardHeight = Math.max(150, Math.round((config.mode === "wristband" ? config.heightMm : config.heightMm || 54) * 3.78));
-  const gap = 32;
-  const columns = config.mode === "wristband" ? 2 : 3;
+  if (!event || !designId) return new NextResponse("Desain tidak ditemukan", { status: 404 });
+  const { supabase } = await requireOrganizerMembership(`/admin/events/${eventId}/design`);
+  const [{ data: design }, { data: credentials }] = await Promise.all([
+    supabase.from("event_designs").select("id,name,kind,preview_url,template").eq("id", designId).eq("event_id", eventId).maybeSingle(),
+    supabase.from("qr_credentials").select("id,code,display_code,status").eq("event_id", eventId).order("display_code"),
+  ]);
+  if (!design) return new NextResponse("Desain tidak ditemukan", { status: 404 });
+  const template = readTemplate(design.template);
+  if (!template.hasQr || !template.qrPlaceholder) return new NextResponse("Layer QR belum ditemukan. Namai layer QR PASSFLOW_QR di Figma lalu Sync ulang.", { status: 422 });
+  const background = await dataImage(design.preview_url);
+  const frame = template.frame, qr = template.qrPlaceholder;
+  const columns = frame.width > frame.height * 1.3 ? 2 : 1, gap = Math.max(24, Math.round(frame.width * .08));
   const rows = Math.max(1, Math.ceil((credentials?.length ?? 0) / columns));
-  const headerHeight = 180;
-  const width = columns * cardWidth + (columns - 1) * gap;
-  const height = headerHeight + gap + rows * cardHeight + (rows - 1) * gap;
-  let templateHref = "";
-  if (config.templateUrl) {
-    try { const response = await fetch(config.templateUrl); if (response.ok) { const type = response.headers.get("content-type") || "image/png"; templateHref = `data:${type};base64,${Buffer.from(await response.arrayBuffer()).toString("base64")}`; } } catch { /* optional template */ }
-  }
+  const width = columns * frame.width + (columns - 1) * gap, height = rows * frame.height + (rows - 1) * gap;
   const cards = await Promise.all((credentials ?? []).map(async (credential, index) => {
-    const qr = await QRCode.toDataURL(`PF1:${credential.code}`, { margin: 1, width: 600 });
-    const x = (index % columns) * (cardWidth + gap); const y = headerHeight + gap + Math.floor(index / columns) * (cardHeight + gap);
-    const qrSize = cardWidth * (config.qrSize / 100); const qrX = x + cardWidth * (config.qrX / 100) - qrSize / 2; const qrY = y + cardHeight * (config.qrY / 100) - qrSize / 2;
-    return `<g id="passflow-${escapeXml(credential.display_code ?? credential.id)}"><rect x="${x}" y="${y}" width="${cardWidth}" height="${cardHeight}" rx="18" fill="#fff" stroke="#deddd6"/>${templateHref ? `<image href="${templateHref}" x="${x}" y="${y}" width="${cardWidth}" height="${cardHeight}" preserveAspectRatio="xMidYMid slice"/>` : ""}<image href="${qr}" x="${qrX}" y="${qrY}" width="${qrSize}" height="${qrSize}"/><text x="${x + cardWidth * .07}" y="${y + cardHeight * .86}" font-family="Arial, sans-serif" font-size="18" font-weight="700" fill="#111">${escapeXml(event.name)}</text><text x="${x + cardWidth * .07}" y="${y + cardHeight * .92}" font-family="Arial, sans-serif" font-size="12" fill="#555">${escapeXml(credential.display_code ?? credential.id.slice(0, 8))}</text></g>`;
+    const x = (index % columns) * (frame.width + gap), y = Math.floor(index / columns) * (frame.height + gap);
+    const qrData = await QRCode.toDataURL(`PF1:${credential.code}`, { margin: 0, width: Math.ceil(qr.width), errorCorrectionLevel: "M" });
+    return `<g id="passflow-${xml(credential.display_code ?? credential.id)}"><rect x="${x}" y="${y}" width="${frame.width}" height="${frame.height}" fill="#fff"/>${background ? `<image href="${background}" x="${x}" y="${y}" width="${frame.width}" height="${frame.height}" preserveAspectRatio="none"/>` : ""}<image href="${qrData}" x="${x + qr.x}" y="${y + qr.y}" width="${qr.width}" height="${qr.height}" preserveAspectRatio="none"/></g>`;
   }));
-  const theme = event.theme;
-  const header = `<g id="passflow-event-header"><rect x="0" y="0" width="${width}" height="${headerHeight}" fill="${escapeXml(theme.background)}"/><rect x="0" y="${headerHeight - 8}" width="${width}" height="8" fill="${escapeXml(theme.primary)}"/><text x="32" y="58" font-family="Arial, sans-serif" font-size="14" font-weight="700" letter-spacing="3" fill="${escapeXml(theme.primary)}">PASSFLOW / EVENT PASS</text><text x="32" y="112" font-family="Arial, sans-serif" font-size="34" font-weight="700" fill="${escapeXml(theme.foreground)}">${escapeXml(event.name)}</text><text x="32" y="144" font-family="Arial, sans-serif" font-size="14" fill="${escapeXml(theme.foreground)}">Editable SVG layout for Figma</text></g>`;
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}"><title>${escapeXml(event.name)} PassFlow QR export</title>${header}${cards.join("")}</svg>`;
-  return new NextResponse(svg, { headers: { "content-type": "image/svg+xml; charset=utf-8", "content-disposition": `attachment; filename="${event.slug}-passflow-figma.svg"` } });
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}"><title>${xml(design.name)} · ${xml(event.name)}</title>${cards.join("")}</svg>`;
+  return new NextResponse(svg, { headers: { "content-type": "image/svg+xml; charset=utf-8", "content-disposition": `attachment; filename="${safeFile(event.name)}-${safeFile(design.name)}-save-as.svg"`, "cache-control": "no-store" } });
 }

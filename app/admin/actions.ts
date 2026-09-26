@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { requireOrganizerMembership } from "@/lib/auth/session";
 import { defaultEventTheme } from "@/lib/events";
 import { decryptFigmaToken, encryptFigmaToken, figmaFetch, parseFigmaUrl, refreshFigmaToken } from "@/lib/figma";
+import { designKinds, defaultTemplate, type FigmaTemplate } from "@/lib/design-template";
 
 function text(formData: FormData, key: string, max = 500) {
   const value = formData.get(key);
@@ -447,7 +448,9 @@ export async function syncFigmaDesign(formData: FormData) {
   const assetType = text(formData, "assetType", 30);
   const name = text(formData, "name", 120);
   const figmaUrl = text(formData, "figmaUrl", 500);
-  if (!eventId || !name || !figmaUrl || !["id_card", "lanyard", "wristband", "ticket", "event_cover", "event_page"].includes(assetType)) return;
+  if (!eventId || !name || !figmaUrl || !designKinds.some((item) => item.value === assetType)) return;
+  let template = defaultTemplate;
+  try { const raw = formData.get("template"); if (typeof raw === "string") template = { ...defaultTemplate, ...JSON.parse(raw) }; } catch { /* default */ }
   const { supabase, user } = await managedContext(eventId);
   const { data: connection, error: connectionError } = await supabase.from("figma_connections")
     .select("access_token_encrypted,refresh_token_encrypted,expires_at").eq("user_id", user.id).maybeSingle();
@@ -468,17 +471,29 @@ export async function syncFigmaDesign(formData: FormData) {
     }
     const parsed = parseFigmaUrl(figmaUrl);
     const nodeId = parsed.nodeId?.replace(/-/g, ":") ?? null;
-    const query = nodeId ? `?ids=${encodeURIComponent(nodeId)}&depth=1` : "?depth=1";
-    const file = await figmaFetch<{ name: string; version?: string; lastModified?: string; thumbnailUrl?: string }>(token, `/files/${parsed.fileKey}${query}`);
+    if (!nodeId) throw new Error("Pilih frame dan gunakan URL selection dari Figma.");
+    const query = `?ids=${encodeURIComponent(nodeId)}&depth=10`;
+    type FigmaNode = { id?: string; name?: string; type?: string; absoluteBoundingBox?: { x?: number; y?: number; width?: number; height?: number }; children?: FigmaNode[] };
+    const file = await figmaFetch<{ name: string; version?: string; lastModified?: string; thumbnailUrl?: string; document?: FigmaNode }>(token, `/files/${parsed.fileKey}${query}`);
+    const find = (root: FigmaNode | undefined, predicate: (node: FigmaNode) => boolean): FigmaNode | null => { if (!root) return null; if (predicate(root)) return root; for (const child of root.children ?? []) { const match = find(child, predicate); if (match) return match; } return null; };
+    const frameNode = find(file.document, (node) => node.id === nodeId) ?? file.document;
+    const bounds = frameNode?.absoluteBoundingBox;
+    if (!bounds?.width || !bounds.height) throw new Error("Ukuran frame Figma tidak terbaca.");
+    const marker = optionalText(formData, "qrMarker", 80) || "PASSFLOW_QR";
+    const qrNode = find(frameNode, (node) => (node.name ?? "").trim().toLowerCase() === marker.toLowerCase() || (node.name ?? "").toLowerCase().includes("{{passflow.qr}}"));
+    const qrBounds = qrNode?.absoluteBoundingBox;
+    const frameX = bounds.x ?? 0, frameY = bounds.y ?? 0;
+    const template: FigmaTemplate = { source: "figma", unit: "px", frame: { x: 0, y: 0, width: bounds.width, height: bounds.height }, frameNodeId: nodeId, qrMarker: marker, hasQr: !!qrBounds,
+      qrPlaceholder: qrBounds && qrNode?.id ? { nodeId: qrNode.id, name: qrNode.name ?? marker, x: qrBounds.x - frameX, y: qrBounds.y - frameY, width: qrBounds.width, height: qrBounds.height } : null };
     let previewUrl: string | null = file.thumbnailUrl ?? null;
     if (nodeId) {
       const images = await figmaFetch<{ images?: Record<string, string> }>(token, `/images/${parsed.fileKey}?ids=${encodeURIComponent(nodeId)}&format=png&scale=1`);
       previewUrl = images.images?.[nodeId] ?? null;
     }
-    const payload = { event_id: eventId, created_by: user.id, kind: assetType, name, figma_file_key: parsed.fileKey, figma_node_id: nodeId, figma_file_url: figmaUrl, figma_file_name: file.name ?? null, figma_version: file.version ?? null, preview_url: previewUrl, metadata: { lastModified: file.lastModified ?? null }, last_synced_at: new Date().toISOString(), updated_at: new Date().toISOString() };
+    const payload = { event_id: eventId, created_by: user.id, kind: assetType, name, figma_file_key: parsed.fileKey, figma_node_id: nodeId, figma_file_url: figmaUrl, figma_file_name: file.name ?? null, figma_version: file.version ?? null, preview_url: previewUrl, template, metadata: { lastModified: file.lastModified ?? null, frame: template.frame, qrPlaceholder: template.qrPlaceholder, qrMarker: template.qrMarker }, last_synced_at: new Date().toISOString(), updated_at: new Date().toISOString() };
     const result = designId
       ? await supabase.from("event_designs").update(payload).eq("id", designId).eq("event_id", eventId).select("id").single()
-      : await supabase.from("event_designs").upsert(payload, { onConflict: "event_id,kind" }).select("id").single();
+      : await supabase.from("event_designs").insert(payload).select("id").single();
     if (result.error || !result.data) throw result.error ?? new Error("Design was not saved");
   } catch {
     redirect(`/admin/events/${eventId}/design?error=figma_sync_failed`);
