@@ -380,48 +380,106 @@ export async function uploadEventAsset(formData: FormData) {
   const eventId = text(formData, "eventId", 60);
   const assetType = text(formData, "assetType", 20);
   const file = formData.get("file");
-  if (!(file instanceof File) || !["logo", "hero", "poster", "qr_template"].includes(assetType)) return;
-  if (!["image/jpeg", "image/png", "image/webp"].includes(file.type) || file.size > 5 * 1024 * 1024) return;
+
+  if (!eventId || !["logo", "hero", "poster", "qr_template"].includes(assetType)) {
+    return { ok: false, message: "Asset atau event tidak valid." };
+  }
+  if (!(file instanceof File) || file.size === 0) {
+    return { ok: false, message: "Pilih file gambar terlebih dahulu." };
+  }
+  if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+    return { ok: false, message: "Format harus JPG, PNG, atau WEBP." };
+  }
+  if (file.size > 5 * 1024 * 1024) {
+    return { ok: false, message: "Ukuran file maksimal 5 MB." };
+  }
 
   const { supabase } = await managedContext(eventId);
   const ext = file.name.split(".").pop()?.toLowerCase().replace(/[^a-z0-9]/g, "") || "bin";
   const path = `${eventId}/${assetType}-${Date.now()}-${randomBytes(4).toString("hex")}.${ext}`;
   const buffer = Buffer.from(await file.arrayBuffer());
 
-  const { error } = await supabase.storage.from("event-assets").upload(path, buffer, {
+  const { error: uploadError } = await supabase.storage.from("event-assets").upload(path, buffer, {
     contentType: file.type,
     upsert: false,
+    cacheControl: "3600",
   });
-  if (error) return;
+  if (uploadError) {
+    return { ok: false, message: `Upload gagal: ${uploadError.message}` };
+  }
 
   const { data: publicData } = supabase.storage.from("event-assets").getPublicUrl(path);
   const publicUrl = publicData.publicUrl;
 
-  await supabase.from("event_assets").insert({
+  const { error: assetError } = await supabase.from("event_assets").insert({
     event_id: eventId,
     asset_type: assetType,
     storage_path: path,
     public_url: publicUrl,
   });
 
-  if (assetType === "qr_template") {
-    const { data: current } = await supabase.from("events").select("qr_config,slug").eq("id", eventId).single();
-    const existing = current?.qr_config && typeof current.qr_config === "object" && !Array.isArray(current.qr_config) ? current.qr_config as Record<string, unknown> : {};
-    await supabase.from("events").update({ qr_config: { ...existing, template_url: publicUrl }, updated_at: new Date().toISOString() }).eq("id", eventId);
-    revalidateEvent(eventId, current?.slug);
-    return;
+  if (assetError) {
+    await supabase.storage.from("event-assets").remove([path]).catch(() => undefined);
+    return { ok: false, message: "File terunggah, tetapi metadata asset gagal disimpan." };
   }
-  const column = assetType === "logo" ? "logo_url" : assetType === "hero" ? "hero_image_url" : "poster_url";
-  const updatePayload: { logo_url?: string; hero_image_url?: string; poster_url?: string; updated_at: string } = { updated_at: new Date().toISOString() };
+
+  if (assetType === "qr_template") {
+    const { data: current } = await supabase
+      .from("events")
+      .select("qr_config,slug")
+      .eq("id", eventId)
+      .single();
+    const existing =
+      current?.qr_config && typeof current.qr_config === "object" && !Array.isArray(current.qr_config)
+        ? (current.qr_config as Record<string, unknown>)
+        : {};
+    const { error: updateError } = await supabase
+      .from("events")
+      .update({
+        qr_config: { ...existing, template_url: publicUrl },
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", eventId);
+
+    if (updateError) {
+      return { ok: false, message: "Template terunggah, tetapi event belum berhasil diperbarui." };
+    }
+    revalidateEvent(eventId, current?.slug);
+    return { ok: true, message: "Template QR berhasil diperbarui.", publicUrl };
+  }
+
+  const column =
+    assetType === "logo" ? "logo_url" : assetType === "hero" ? "hero_image_url" : "poster_url";
+  const updatePayload: {
+    logo_url?: string;
+    hero_image_url?: string;
+    poster_url?: string;
+    updated_at: string;
+  } = { updated_at: new Date().toISOString() };
   updatePayload[column] = publicUrl;
-  const { data } = await supabase
+
+  const { data, error: eventError } = await supabase
     .from("events")
     .update(updatePayload)
     .eq("id", eventId)
     .select("slug")
     .single();
 
+  if (eventError) {
+    return { ok: false, message: "Asset terunggah, tetapi event belum berhasil diperbarui." };
+  }
+
   revalidateEvent(eventId, data?.slug);
+  return {
+    ok: true,
+    message:
+      assetType === "hero"
+        ? "Hero image berhasil diperbarui."
+        : assetType === "logo"
+          ? "Logo berhasil diperbarui."
+          : "Poster berhasil diperbarui.",
+    publicUrl,
+  };
 }
 
 

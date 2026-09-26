@@ -105,9 +105,9 @@ export default async function EventManagePage({ params, searchParams }: Props) {
   const denied = scans.filter((item) => item.decision === "denied" || item.decision === "invalid").length;
 
   return (
-    <main className="min-h-screen bg-background px-4 py-7 sm:px-6 lg:px-10">
+    <main className="event-manage-page min-h-screen px-4 py-7 sm:px-6 lg:px-10">
       <div className="mx-auto max-w-7xl">
-        <header className="flex flex-col gap-5 border-b border-border pb-7 lg:flex-row lg:items-end lg:justify-between">
+        <header className="event-manage-header liquid-panel flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <Link href="/admin" className="back-link"><ArrowLeft size={16} /> Dashboard</Link>
             <div className="mt-5 flex flex-wrap items-center gap-3">
@@ -124,7 +124,7 @@ export default async function EventManagePage({ params, searchParams }: Props) {
           </div>
         </header>
 
-        <nav className="my-6 flex gap-2 overflow-x-auto pb-2 text-sm">
+        <nav className="event-manage-tabs liquid-panel my-6 flex gap-2 overflow-x-auto text-sm">
           {["Overview","Tickets","Attendees","Wristbands","Access","Activities","Analytics"].map((label) => (
             <a key={label} href={`#${label.toLowerCase()}`} className="whitespace-nowrap rounded-full border border-border px-4 py-2">{label}</a>
           ))}
@@ -138,11 +138,11 @@ export default async function EventManagePage({ params, searchParams }: Props) {
             ["Denied / invalid", denied, BarChart3],
           ].map(([label, value, Icon]) => {
             const IconComponent = Icon as typeof Users;
-            return <article key={String(label)} className="rounded-lg border border-border bg-card p-5"><IconComponent size={18} /><p className="mt-5 text-sm text-muted-foreground">{String(label)}</p><strong className="text-3xl">{Number(value)}</strong></article>;
+            return <article key={String(label)} className="event-manage-stat liquid-panel rounded-lg p-5"><IconComponent size={18} /><p className="mt-5 text-sm text-muted-foreground">{String(label)}</p><strong className="text-3xl">{Number(value)}</strong></article>;
           })}
         </section>
 
-        <section className="mt-8 rounded-lg border border-border bg-card p-5 sm:p-7">
+        <section className="event-manage-panel liquid-panel mt-8 p-5 sm:p-7">
           <div className="flex items-center justify-between gap-3"><div><span className="section-kicker">Event settings</span><h2 className="mt-2 text-2xl font-semibold">Basics & lifecycle</h2></div></div>
           <form action={updateEvent} className="mt-6 grid gap-4 sm:grid-cols-2">
             <input type="hidden" name="eventId" value={event.id} />
@@ -165,7 +165,7 @@ export default async function EventManagePage({ params, searchParams }: Props) {
           </div>
         </section>
 
-        <section id="tickets" className="mt-8 rounded-lg border border-border bg-card p-5 sm:p-7">
+        <section id="tickets" className="event-manage-panel liquid-panel mt-8 p-5 sm:p-7">
           <span className="section-kicker">Tickets</span><h2 className="mt-2 text-2xl font-semibold">Pass categories</h2>
           <div className="mt-5 grid gap-3 md:grid-cols-3">
             {tickets.map((ticket) => <article className="rounded-md bg-muted p-4" key={ticket.id}><strong>{ticket.name}</strong><p className="mt-1 text-xs text-muted-foreground">{ticket.code} · capacity {ticket.capacity ?? "∞"}</p><p className="mt-2 text-sm font-medium">{ticket.price > 0 ? `${ticket.currency} ${Number(ticket.price).toLocaleString("id-ID")}` : "Gratis"}</p><p className="mt-2 text-sm">{ticket.description}</p></article>)}
@@ -182,7 +182,7 @@ export default async function EventManagePage({ params, searchParams }: Props) {
           </form>
         </section>
 
-        <section id="attendees" className="mt-8 rounded-lg border border-border bg-card p-5 sm:p-7">
+        <section id="attendees" className="event-manage-panel liquid-panel mt-8 p-5 sm:p-7">
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div><span className="section-kicker">Attendees</span><h2 className="mt-2 text-2xl font-semibold">Registration list</h2></div>
             <a className="button button-ghost" href={`/admin/events/${event.id}/export/attendees`}>Export CSV</a>
@@ -204,14 +204,14 @@ export default async function EventManagePage({ params, searchParams }: Props) {
           <CsvImportForm eventId={event.id} />
         </section>
 
-        <section id="crew" className="mt-8 rounded-lg border border-border bg-card p-5 sm:p-7">
+        <section id="crew" className="event-manage-panel liquid-panel mt-8 p-5 sm:p-7">
           <div className="flex flex-wrap items-end justify-between gap-3"><div><span className="section-kicker">Crew</span><h2 className="mt-2 text-2xl font-semibold">Event team</h2><p className="mt-2 text-sm text-muted-foreground">Buat link undangan untuk crew. Mereka masuk ke event ini saja.</p></div><span className="soft-badge">{crew.filter(member => member.status === "active").length} active</span></div>
           {typeof query.invite === "string" && <div className="mt-5 rounded-md border border-border bg-muted p-4"><p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Link undangan berhasil dibuat</p><p className="mt-2 break-all font-mono text-xs">{`${process.env.NEXT_PUBLIC_APP_URL ?? "https://passflow.my.id"}/crew/join?token=${query.invite}`}</p><p className="mt-2 text-xs text-muted-foreground">Kirim link ini kepada crew. Link berlaku 7 hari.</p></div>}
           <div className="mt-5 grid gap-2 sm:grid-cols-2">{crew.map(member => <div key={member.user_id} className="flex items-center justify-between rounded-md bg-muted p-3"><div><strong className="text-sm">{member.job_title}</strong><p className="text-xs text-muted-foreground">{member.access_role} · {member.status}</p></div>{member.status === "active" && <form action={revokeCrew}><input type="hidden" name="eventId" value={event.id}/><input type="hidden" name="userId" value={member.user_id}/><button className="text-xs text-destructive hover:underline" type="submit">Revoke</button></form>}</div>)}</div>
           <form action={createCrewInvitation} className="mt-5 grid gap-3 border-t border-border pt-5 sm:grid-cols-4"><input type="hidden" name="eventId" value={event.id}/><input className={inputClass()} name="jobTitle" placeholder="Job, mis. Gate Crew" required/><SmartSelect name="accessRole" value="crew" options={[{value:"crew",label:"Crew"},{value:"lead",label:"Lead"},{value:"scanner",label:"Scanner"}]} /><input className={inputClass()} name="email" type="email" placeholder="Email (opsional)"/><button className="button button-dark" type="submit">Buat link crew</button></form>
         </section>
 
-        <section id="wristbands" className="mt-8 rounded-lg border border-border bg-card p-5 sm:p-7">
+        <section id="wristbands" className="event-manage-panel liquid-panel mt-8 p-5 sm:p-7">
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div><span className="section-kicker">QR wristbands</span><h2 className="mt-2 text-2xl font-semibold">{unclaimed} unclaimed · {claimed} active</h2></div>
             <Link className="button button-ghost" href={`/admin/events/${event.id}/wristbands/print`}>Print QR batch</Link>
@@ -226,7 +226,7 @@ export default async function EventManagePage({ params, searchParams }: Props) {
           </div>
         </section>
 
-        <section id="access" className="mt-8 rounded-lg border border-border bg-card p-5 sm:p-7">
+        <section id="access" className="event-manage-panel liquid-panel mt-8 p-5 sm:p-7">
           <span className="section-kicker">Access control</span><h2 className="mt-2 text-2xl font-semibold">Zones, rules & scanner stations</h2>
           <div className="mt-5 grid gap-5 lg:grid-cols-3">
             <div>
@@ -260,7 +260,7 @@ export default async function EventManagePage({ params, searchParams }: Props) {
           </div>
         </section>
 
-        <section id="analytics" className="mt-8 rounded-lg border border-border bg-card p-5 sm:p-7">
+        <section id="analytics" className="event-manage-panel liquid-panel mt-8 p-5 sm:p-7">
           <div className="flex items-center gap-2"><BarChart3 size={19}/><span className="section-kicker">Analytics</span></div>
           <div className="mt-4 grid gap-3 sm:grid-cols-4">
             <div className="rounded-md bg-muted p-4"><small>Scans shown</small><strong className="mt-2 block text-2xl">{scans.length}</strong></div>

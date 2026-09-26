@@ -1,9 +1,10 @@
 import { requireOrganizer } from "@/lib/auth/session";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, ExternalLink, Figma, Sparkles } from "lucide-react";
 import { EventThemeEditor } from "@/components/event-theme-editor";
 import { QrDeliveryEditor } from "@/components/qr-delivery-editor";
+import { BlurFade } from "@/components/magicui/blur-fade";
 import { getManagedEvent } from "@/lib/events";
 
 type AppearancePageProps = {
@@ -21,24 +22,38 @@ export default async function EventAppearancePage({
 
   return (
     <main className="editor-page">
-      <header className="editor-header">
-        <div>
-          <Link href="/admin" className="back-link">
-            <ArrowLeft size={16} />
-            Back to dashboard
-          </Link>
-          <span className="section-kicker">Event appearance</span>
-          <h1>Customize {event.name}</h1>
-          <p>
-            Tema ini akan dipakai pada halaman publik event dan dapat berbeda untuk setiap event.
-          </p>
-        </div>
-        <Link href={`/e/${event.slug}`} className="button button-dark">
-          View public page
-        </Link>
-      </header>
-      <EventThemeEditor event={event} />
-      <QrDeliveryEditor event={event} />
+      <BlurFade>
+        <header className="editor-header">
+          <div>
+            <Link href={`/admin/events/${eventId}`} className="back-link">
+              <ArrowLeft size={16} />
+              Kembali ke event
+            </Link>
+            <span className="dashboard-welcome-kicker design-page-kicker">
+              <Sparkles size={13} /> Event customization
+            </span>
+            <h1>Customize {event.name}</h1>
+            <p>
+              Atur visual publik, asset event, dan format QR dari satu workspace dengan
+              preview langsung.
+            </p>
+          </div>
+          <div className="editor-header-actions">
+            <Link href={`/admin/events/${eventId}/design`} className="button button-ghost">
+              <Figma size={16} /> PassFlow Design
+            </Link>
+            <Link href={`/e/${event.slug}`} className="button button-dark">
+              <ExternalLink size={16} /> Public page
+            </Link>
+          </div>
+        </header>
+      </BlurFade>
+      <BlurFade delay={0.04}>
+        <EventThemeEditor event={event} />
+      </BlurFade>
+      <BlurFade delay={0.08}>
+        <QrDeliveryEditor event={event} />
+      </BlurFade>
     </main>
   );
 }
