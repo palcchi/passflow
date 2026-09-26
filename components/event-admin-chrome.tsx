@@ -54,6 +54,11 @@ export function EventAdminChrome({
 
       <main className="event-admin-shell mx-auto max-w-7xl px-5 pb-24 pt-8 sm:px-8 sm:pt-10">
         <header className="event-admin-hero studio-event-hero">
+          <div
+            className="event-admin-hero-art"
+            aria-hidden="true"
+            style={event.heroImageUrl ? { backgroundImage: `linear-gradient(90deg, color-mix(in srgb, ${event.theme.background} 84%, transparent), color-mix(in srgb, ${event.theme.background} 32%, transparent)), url(\"${event.heroImageUrl}\")` } : { background: `radial-gradient(circle at 82% 24%, color-mix(in srgb, ${event.theme.secondary} 76%, transparent), transparent 52%), linear-gradient(120deg, color-mix(in srgb, ${event.theme.primary} 14%, transparent), transparent 68%)` }}
+          />
           <div className="event-admin-hero-main">
             <Link href="/admin" className="event-admin-back">
               <ArrowLeft size={14} /> Organizer
