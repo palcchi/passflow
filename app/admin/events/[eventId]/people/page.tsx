@@ -1,8 +1,8 @@
 import { Search } from "lucide-react";
 import { requireOrganizerMembership } from "@/lib/auth/session";
 import { CsvImportForm } from "@/components/csv-import-form";
+import { AvatarCircles } from "@/components/magicui/avatar-circles";
 import { FormattedNumberInput, SmartSelect } from "@/components/form-fields";
-import { MagicCard } from "@/components/magicui/magic-card";
 import {
   createAttendee,
   createCrewInvitation,
@@ -75,7 +75,7 @@ export default async function EventPeoplePage({ params, searchParams }: Props) {
 
         <div className="event-admin-card-grid">
           {tickets.map((ticket) => (
-            <MagicCard className="event-admin-mini-card" key={ticket.id}>
+            <div className="event-admin-mini-card" key={ticket.id}>
               <div className="event-admin-mini-top">
                 <span className="event-admin-code">{ticket.code}</span>
               </div>
@@ -89,7 +89,7 @@ export default async function EventPeoplePage({ params, searchParams }: Props) {
                     : "Gratis"}
                 </strong>
               </div>
-            </MagicCard>
+            </div>
           ))}
           {!tickets.length && (
             <div className="event-admin-empty-card">
@@ -129,6 +129,10 @@ export default async function EventPeoplePage({ params, searchParams }: Props) {
             <p>{attendees.length} attendee ditampilkan dari hasil saat ini.</p>
           </div>
           <div className="event-admin-head-actions">
+            <AvatarCircles
+              people={attendees.slice(0, 5).map((attendee) => ({ name: attendee.name }))}
+              extra={Math.max(0, attendees.length - 5)}
+            />
             <a className="button button-ghost" href={`/admin/events/${eventId}/export/attendees`}>
               Export CSV
             </a>
