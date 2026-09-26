@@ -122,6 +122,33 @@ select { appearance: none; background-image: linear-gradient(45deg, transparent 
 .smart-select-option:hover, .smart-select-option[aria-selected="true"] { background: var(--accent-soft); }
 .figma-export-note { display: grid; gap: 4px; border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; background: var(--accent-soft); font-size: 12px; }
 .figma-export-note span { color: var(--muted-text); line-height: 1.5; }
+.design-connect-card, .figma-howto { display: flex; align-items: center; gap: 16px; border: 1px solid var(--line); border-radius: 18px; padding: 18px; background: var(--paper); }
+.design-connect-card { margin-top: 30px; }
+.design-connect-card > div:nth-child(2) { flex: 1; }
+.design-connect-card h2 { margin: 4px 0; font-size: 20px; }
+.design-connect-card p, .figma-howto span { margin: 0; color: var(--muted-text); font-size: 13px; line-height: 1.5; }
+.design-connect-icon { width: 48px; height: 48px; display: grid; place-items: center; flex: 0 0 48px; border-radius: 14px; background: #171717; color: #fff; }
+.design-workspace { margin-top: 30px; border: 1px solid var(--line); border-radius: 18px; padding: 20px; background: var(--paper); }
+.design-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-top: 18px; }
+.design-card { min-width: 0; overflow: hidden; border: 1px solid var(--line); border-radius: 14px; background: #fff; }
+.design-card > img, .design-preview-empty { width: 100%; height: 170px; object-fit: cover; background: var(--accent-soft); }
+.design-preview-empty { display: grid; place-items: center; align-content: center; gap: 8px; color: var(--muted-text); font-size: 12px; }
+.design-card-body { display: grid; gap: 7px; padding: 14px; }
+.design-card-body h3 { margin: 0; font-size: 16px; }
+.design-card-body p { margin: 0; color: var(--muted-text); font-size: 12px; }
+.design-card-actions { display: flex; align-items: center; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+.design-card-actions .button { padding: 8px 10px; font-size: 11px; }
+.icon-button { width: 32px; height: 32px; display: grid; place-items: center; border: 1px solid var(--line); border-radius: 9px; background: transparent; }
+.icon-button.danger { color: #a23c3c; }
+.design-form { display: grid; grid-template-columns: 150px minmax(160px, .7fr) minmax(240px, 1.4fr) auto; align-items: end; gap: 10px; margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--line); }
+.design-form label { display: grid; gap: 6px; font-size: 11px; font-weight: 700; color: var(--muted-text); }
+.design-form input, .design-form select { min-height: 42px; border: 1px solid var(--line); border-radius: 10px; background: var(--paper); padding: 8px 10px; color: var(--ink); font-size: 13px; }
+.design-alert, .design-success { margin-top: 18px; border-radius: 12px; padding: 12px 14px; font-size: 13px; }
+.design-alert { border: 1px solid #e9b7b7; color: #9d4141; background: #fff7f7; }
+.design-success { border: 1px solid #b8ddc4; color: #277541; background: #f4fbf5; }
+.figma-howto { margin-top: 16px; align-items: flex-start; flex-direction: column; gap: 5px; background: var(--accent-soft); }
+@media (max-width: 900px) { .design-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .design-form { grid-template-columns: repeat(2, minmax(0, 1fr)); } .design-form-url { grid-column: 1 / -1; } }
+@media (max-width: 560px) { .design-connect-card { align-items: flex-start; flex-wrap: wrap; } .design-connect-card .button, .design-connect-card form { width: 100%; } .design-grid, .design-form { grid-template-columns: 1fr; } .design-form-url { grid-column: auto; } }
 .date-time-field { display: grid; gap: 8px; }
 .date-time-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; }
 .date-picker-wrap, .time-picker-wrap { position: relative; display: grid; gap: 5px; min-width: 0; color: var(--muted-text); font-size: 11px; font-weight: 600; letter-spacing: .02em; }
