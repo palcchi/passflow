@@ -7,6 +7,7 @@ import {
   Settings2,
   Ticket,
   Users,
+  UserCog,
   Workflow,
 } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
@@ -16,6 +17,7 @@ const items = [
   { id: "overview", label: "Overview", icon: Settings2 },
   { id: "tickets", label: "Tickets", icon: Ticket },
   { id: "attendees", label: "Attendees", icon: Users },
+  { id: "crew", label: "Crew", icon: UserCog },
   { id: "wristbands", label: "Wristbands", icon: QrCode },
   { id: "access", label: "Access", icon: Workflow },
   { id: "activities", label: "Activities", icon: Activity },
