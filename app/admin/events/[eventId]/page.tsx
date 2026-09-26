@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { CsvImportForm } from "@/components/csv-import-form";
 import { notFound } from "next/navigation";
 import {
   ArrowLeft,
@@ -176,6 +177,7 @@ export default async function EventManagePage({ params, searchParams }: Props) {
         <section id="attendees" className="mt-8 rounded-lg border border-border bg-card p-5 sm:p-7">
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div><span className="section-kicker">Attendees</span><h2 className="mt-2 text-2xl font-semibold">Registration list</h2></div>
+            <a className="button button-ghost" href={`/admin/events/${event.id}/export/attendees`}>Export CSV</a>
             <form className="flex gap-2" method="get"><input className="min-h-10 rounded-md border border-input bg-background px-3 text-sm" name="q" defaultValue={search} placeholder="Search attendee" /><button className="button button-ghost" type="submit">Search</button></form>
           </div>
           <div className="mt-5 overflow-x-auto">
@@ -191,13 +193,7 @@ export default async function EventManagePage({ params, searchParams }: Props) {
             <select className={inputClass()} name="ticketTypeId"><option value="">No pass type</option>{tickets.map((ticket) => <option key={ticket.id} value={ticket.id}>{ticket.name}</option>)}</select>
             <button className="button button-dark sm:col-span-4" type="submit">Add attendee</button>
           </form>
-          <form action={importAttendees} className="mt-5">
-            <input type="hidden" name="eventId" value={event.id} />
-            <label className="text-sm font-medium">Bulk import, one line: <code>name,email,ticket_code,phone</code>
-              <textarea className="mt-2 w-full rounded-md border border-input bg-background p-3 font-mono text-xs" rows={4} name="rows" placeholder="Vallian,vallian@example.com,VIP,0812..." />
-            </label>
-            <button className="button button-ghost mt-3" type="submit">Import rows</button>
-          </form>
+          <CsvImportForm eventId={event.id} />
         </section>
 
         <section id="wristbands" className="mt-8 rounded-lg border border-border bg-card p-5 sm:p-7">
