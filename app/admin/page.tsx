@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 import { requireOrganizer } from "@/lib/auth/session";
 import { NumberTicker } from "@/components/magicui/number-ticker";
 import { Button } from "@/components/ui/button";
