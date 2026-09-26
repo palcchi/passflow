@@ -39,7 +39,8 @@ export async function proxy(request: NextRequest) {
 export const config = {
   matcher: [
     "/admin/:path*",
-    "/account",
+    "/account/:path*",
+    "/events",
     "/login",
     "/register",
     "/forgot-password",
