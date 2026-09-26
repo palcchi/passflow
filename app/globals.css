@@ -131,7 +131,7 @@ select { appearance: none; background-image: linear-gradient(45deg, transparent 
 .design-workspace { margin-top: 30px; border: 1px solid var(--line); border-radius: 18px; padding: 20px; background: var(--paper); }
 .design-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-top: 18px; }
 .design-card { min-width: 0; overflow: hidden; border: 1px solid var(--line); border-radius: 14px; background: #fff; }
-.design-card > img, .design-preview-empty { width: 100%; height: 170px; object-fit: cover; background: var(--accent-soft); }
+.design-card > img, .design-card > .design-preview-image, .design-preview-empty { width: 100%; height: 170px; object-fit: cover; background: var(--accent-soft); }
 .design-preview-empty { display: grid; place-items: center; align-content: center; gap: 8px; color: var(--muted-text); font-size: 12px; }
 .design-card-body { display: grid; gap: 7px; padding: 14px; }
 .design-card-body h3 { margin: 0; font-size: 16px; }
@@ -782,6 +782,69 @@ select { appearance: none; background-image: linear-gradient(45deg, transparent 
   background: var(--event-bg);
   color: var(--event-fg);
   padding: 0 5vw 70px;
+}
+
+.event-figma-shell {
+  min-height: 100svh;
+  width: 100%;
+  padding: 0;
+  overflow: hidden;
+  background: var(--event-bg);
+  color: var(--event-fg);
+}
+
+.event-figma-frame {
+  position: relative;
+  width: min(100%, 1920px);
+  margin: 0 auto;
+  container-type: inline-size;
+  overflow: hidden;
+}
+
+.event-figma-background {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+}
+
+.event-figma-cta-hitbox {
+  position: absolute;
+  z-index: 3;
+  display: block;
+  border-radius: 4px;
+  background: transparent;
+}
+
+.event-figma-cta-hitbox:focus-visible {
+  outline: 3px solid var(--event-primary);
+  outline-offset: 3px;
+}
+
+.event-figma-default-cta {
+  width: fit-content;
+  margin: 20px auto;
+}
+
+.claim-figma-pass {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+  container-type: inline-size;
+}
+
+.claim-figma-background {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
 }
 
 .event-public-nav {

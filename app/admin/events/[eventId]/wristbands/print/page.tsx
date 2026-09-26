@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import QRCode from "qrcode";
 import { ArrowLeft } from "lucide-react";
@@ -25,8 +26,8 @@ export default async function WristbandPrintPage({ params }: { params: Promise<{
     <div className={`qr-export-sheet qr-export-${config.mode}`}>
       <div className="qr-export-heading print:hidden"><p className="section-kicker">PassFlow export</p><h1>{event.name}</h1><p>{labels[config.mode]} · {qrCodes.length} QR credential</p></div>
       <div className="qr-export-grid">{qrCodes.map((qr) => { const attendee = Array.isArray(qr.attendees) ? qr.attendees[0] : qr.attendees; return <article className="qr-export-card" key={qr.id} style={{ width: `${width}mm`, minHeight: `${height}mm` }}>
-        {config.templateUrl && <img className="qr-export-template" src={config.templateUrl} alt="" />}
-        <div className="qr-export-qr" style={{ left: `${config.qrX}%`, top: `${config.qrY}%`, width: `${config.qrSize}%` }}><img src={qr.src} alt={`QR ${qr.display_code ?? "credential"}`} /></div>
+        {config.templateUrl && <Image className="qr-export-template" src={config.templateUrl} alt="" fill unoptimized sizes={`${width}mm`} />}
+        <div className="qr-export-qr" style={{ left: `${config.qrX}%`, top: `${config.qrY}%`, width: `${config.qrSize}%` }}><Image src={qr.src} width={480} height={480} unoptimized alt={`QR ${qr.display_code ?? "credential"}`} /></div>
         <div className="qr-export-copy"><strong>{attendee?.name ?? event.name}</strong><span>{attendee?.email ?? qr.display_code ?? qr.id.slice(0, 8)}</span></div><small className="qr-export-status">{qr.status}</small>
       </article>; })}</div>
     </div>

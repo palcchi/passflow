@@ -240,6 +240,15 @@ export type Database = {
           },
         ]
       }
+      attendee_profiles: {
+        Row: { attendee_id: string; event_id: string; user_id: string; photo_storage_path: string | null; updated_at: string }
+        Insert: { attendee_id: string; event_id: string; user_id: string; photo_storage_path?: string | null; updated_at?: string }
+        Update: { attendee_id?: string; event_id?: string; user_id?: string; photo_storage_path?: string | null; updated_at?: string }
+        Relationships: [
+          { foreignKeyName: "attendee_profiles_attendee_id_fkey"; columns: ["attendee_id"]; isOneToOne: true; referencedRelation: "attendees"; referencedColumns: ["id"] },
+          { foreignKeyName: "attendee_profiles_event_id_fkey"; columns: ["event_id"]; isOneToOne: false; referencedRelation: "events"; referencedColumns: ["id"] }
+        ]
+      }
       benefit_claims: {
         Row: {
           attendee_id: string

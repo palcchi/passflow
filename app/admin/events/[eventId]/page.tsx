@@ -24,7 +24,6 @@ import {
   createZone,
   deleteEvent,
   generateWristbands,
-  importAttendees,
   revokeCredential,
   setEventStatus,
   toggleStation,

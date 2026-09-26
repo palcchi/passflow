@@ -10,6 +10,9 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { getPublishedEvent } from "@/lib/events";
+import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { getSupabaseConfig } from "@/lib/supabase/config";
+import { readTemplate } from "@/lib/design-template";
 
 type EventPageProps = {
   params: Promise<{ slug: string }>;
@@ -28,6 +31,24 @@ export default async function PublicEventPage({ params }: EventPageProps) {
     "--event-fg": event.theme.foreground,
     "--event-surface": event.theme.surface,
   } as CSSProperties;
+
+  const supabase = getSupabaseConfig() ? await createServerSupabaseClient() : null;
+  const { data: eventDesign } = supabase ? await supabase.from("event_designs").select("name,preview_url,template")
+    .eq("event_id", event.id).eq("kind", "event_page").is("ticket_type_id", null).order("updated_at", { ascending: false }).limit(1).maybeSingle() : { data: null };
+  if (eventDesign?.preview_url) {
+    const template = readTemplate(eventDesign.template);
+    const frame = template.frame;
+    const cta = template.elements.find((element) => ["cta", "register", "claim"].includes(element.field));
+    const values: Record<string, string> = { event_name: event.name, event_date: event.dateLabel, venue: event.venue };
+    return <main className="event-figma-shell" style={themeStyle}>
+      <div className="event-figma-frame" style={{ aspectRatio: `${frame.width} / ${frame.height}` }}>
+        <Image src={eventDesign.preview_url} alt={`Desain event ${event.name}`} fill unoptimized sizes="100vw" className="event-figma-background" />
+        {template.elements.filter((element) => element.field in values).map((element) => <span key={element.nodeId} style={{ position: "absolute", left: `${element.x / frame.width * 100}%`, top: `${element.y / frame.height * 100}%`, width: `${element.width / frame.width * 100}%`, height: `${element.height / frame.height * 100}%`, display: "flex", alignItems: "center", justifyContent: element.textAlign === "CENTER" ? "center" : element.textAlign === "RIGHT" ? "flex-end" : "flex-start", overflow: "hidden", padding: 2, backgroundColor: element.fill ?? "rgba(255,255,255,.94)", color: element.fontColor ?? event.theme.foreground, fontFamily: element.fontFamily ?? "inherit", fontSize: `${Math.max(10, element.fontSize ?? 18) / frame.width * 100}cqw`, fontWeight: element.fontWeight ?? 500, borderRadius: element.cornerRadius ?? 0 }}>{values[element.field]}</span>)}
+        {cta ? <Link href={`/e/${event.slug}/claim`} aria-label="Daftar atau buka pass event" title="Daftar / buka pass" className="event-figma-cta-hitbox" style={{ left: `${cta.x / frame.width * 100}%`, top: `${cta.y / frame.height * 100}%`, width: `${cta.width / frame.width * 100}%`, height: `${cta.height / frame.height * 100}%` }} /> : null}
+      </div>
+      {!cta && <Link href={`/e/${event.slug}/claim`} className="event-primary-button event-figma-default-cta">Daftar / buka pass <ArrowRight size={17}/></Link>}
+    </main>;
+  }
 
   return (
     <main className="event-public-shell" style={themeStyle}>
