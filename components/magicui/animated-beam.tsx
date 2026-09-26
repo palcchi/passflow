@@ -19,6 +19,7 @@ export function AnimatedBeam({
 }) {
   const [from, setFrom] = useState<Point>({ x: 0, y: 0 });
   const [to, setTo] = useState<Point>({ x: 0, y: 0 });
+  const [size, setSize] = useState({ width: 1, height: 1 });
   const reduceMotion = useReducedMotion();
   const id = useId().replaceAll(":", "");
 
@@ -28,6 +29,10 @@ export function AnimatedBeam({
       const start = fromRef.current?.getBoundingClientRect();
       const end = toRef.current?.getBoundingClientRect();
       if (!container || !start || !end) return;
+      setSize({
+        width: Math.max(1, container.width),
+        height: Math.max(1, container.height),
+      });
       setFrom({
         x: start.left - container.left + start.width / 2,
         y: start.top - container.top + start.height / 2,
@@ -67,16 +72,13 @@ export function AnimatedBeam({
     " " +
     to.y;
 
-  const width = Math.max(1, containerRef.current?.clientWidth ?? 1);
-  const height = Math.max(1, containerRef.current?.clientHeight ?? 1);
-
   return (
     <svg
       className={cn("animated-beam-svg", className)}
       aria-hidden="true"
       width="100%"
       height="100%"
-      viewBox={"0 0 " + width + " " + height}
+      viewBox={"0 0 " + size.width + " " + size.height}
       preserveAspectRatio="none"
     >
       <path d={path} className="animated-beam-path" />
