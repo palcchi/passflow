@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, useReducedMotion } from "motion/react";
+import { motion } from "motion/react";
 import { cn } from "@/lib/utils";
 
 const motionTags = {
@@ -28,7 +28,6 @@ export function TextAnimate({
   delay = 0,
   once = true,
 }: TextAnimateProps) {
-  const reduceMotion = useReducedMotion();
   const segments = by === "character" ? Array.from(children) : children.split(" ");
   const MotionTag = motionTags[as];
 
@@ -42,12 +41,12 @@ export function TextAnimate({
           key={`${segment}-${index}`}
           aria-hidden="true"
           className="text-animate-segment"
-          initial={reduceMotion ? false : { opacity: 0, y: 12, filter: "blur(5px)" }}
+          initial={{ opacity: 0, y: 12, filter: "blur(5px)" }}
           whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
           viewport={{ once, amount: 0.4 }}
           transition={{
-            duration: reduceMotion ? 0 : 0.42,
-            delay: reduceMotion ? 0 : delay + index * (by === "character" ? 0.018 : 0.045),
+            duration: 0.42,
+            delay: delay + index * (by === "character" ? 0.018 : 0.045),
             ease: [0.22, 0.8, 0.3, 1],
           }}
         >
