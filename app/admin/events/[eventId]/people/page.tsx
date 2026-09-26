@@ -1,4 +1,5 @@
 import { Search } from "lucide-react";
+import { PeopleRecordEditor } from "@/components/people-record-editor";
 import { requireOrganizerMembership } from "@/lib/auth/session";
 import { CsvImportForm } from "@/components/csv-import-form";
 import { AvatarCircles } from "@/components/magicui/avatar-circles";
@@ -80,6 +81,7 @@ export default async function EventPeoplePage({ params, searchParams }: Props) {
                 <span className="event-admin-code">{ticket.code}</span>
               </div>
               <h3>{ticket.name}</h3>
+              <PeopleRecordEditor eventId={eventId} kind="ticket" record={ticket}/>
               <p>{ticket.description || "Tanpa deskripsi."}</p>
               <div className="event-admin-mini-meta">
                 <span>{ticket.capacity ?? "∞"} capacity</span>
@@ -153,6 +155,7 @@ export default async function EventPeoplePage({ params, searchParams }: Props) {
                 <th>Email</th>
                 <th>Pass</th>
                 <th>Check-in</th>
+                <th>Kelola</th>
               </tr>
             </thead>
             <tbody>
@@ -167,6 +170,7 @@ export default async function EventPeoplePage({ params, searchParams }: Props) {
                       {attendee.checked_in_at ? "Checked in" : "Pending"}
                     </span>
                   </td>
+                  <td><PeopleRecordEditor eventId={eventId} kind="attendee" record={attendee} tickets={tickets}/></td>
                 </tr>
               ))}
             </tbody>
