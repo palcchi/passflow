@@ -98,7 +98,8 @@ export function SmartSelect({
   onValueChange?: (value: string) => void;
 }) {
   const [open, setOpen] = useState(false);
-  const [value, setValue] = useState(initialValue);
+  const [internalValue, setInternalValue] = useState(initialValue);
+  const value = onValueChange ? initialValue : internalValue;
   const reduceMotion = useReducedMotion();
   const { id, rootRef } = useExclusivePopover(open, setOpen);
   const selected = useMemo(
@@ -106,11 +107,9 @@ export function SmartSelect({
     [options, value],
   );
 
-  useEffect(() => setValue(initialValue), [initialValue]);
-
   function choose(next: string) {
-    setValue(next);
-    onValueChange?.(next);
+    if (onValueChange) onValueChange(next);
+    else setInternalValue(next);
     setOpen(false);
   }
 
