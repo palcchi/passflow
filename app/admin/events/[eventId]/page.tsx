@@ -120,6 +120,7 @@ export default async function EventManagePage({ params, searchParams }: Props) {
           </div>
           <div className="flex flex-wrap gap-2">
             <Link className="button button-ghost" href={`/admin/events/${event.id}/appearance`}><Palette size={16} /> Appearance</Link>
+            <Link className="button button-ghost" href={`/admin/events/${event.id}/design`}>PassFlow Design</Link>
             <Link className="button button-dark" href={`/e/${event.slug}`}><ExternalLink size={16} /> Public page</Link>
           </div>
         </header>
