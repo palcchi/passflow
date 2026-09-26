@@ -129,6 +129,11 @@ export default async function AdminDashboardPage() {
                     key={event.id}
                     style={{ "--row-accent": event.theme.primary } as React.CSSProperties}
                   >
+                    <span
+                      className="studio-managed-visual"
+                      aria-hidden="true"
+                      style={event.heroImageUrl ? { backgroundImage: `linear-gradient(135deg, color-mix(in srgb, ${event.theme.primary} 48%, transparent), rgba(20,20,18,.16)), url(\"${event.heroImageUrl}\")` } : { background: `linear-gradient(135deg, ${event.theme.primary}, color-mix(in srgb, ${event.theme.secondary} 62%, white))` }}
+                    />
                     <span className="studio-event-accent" />
                     <div className="studio-managed-main">
                       <span>{event.status} · {event.dateLabel}</span>
