@@ -16,7 +16,6 @@ export function KineticText({
 }: KineticTextProps) {
   const [active, setActive] = useState<number | null>(null);
   const words = text.split(" ");
-  let offset = 0;
 
   return (
     <Tag
@@ -25,8 +24,9 @@ export function KineticText({
       onPointerLeave={() => setActive(null)}
     >
       {words.map((word, wordIndex) => {
-        const start = offset;
-        offset += word.length;
+        const start = words
+          .slice(0, wordIndex)
+          .reduce((total, item) => total + item.length, 0);
         return (
           <span className="kinetic-word" key={`${word}-${wordIndex}`}>
             {Array.from(word).map((letter, letterIndex) => {
