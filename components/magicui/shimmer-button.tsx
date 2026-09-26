@@ -10,10 +10,5 @@ export function ShimmerButton({
   asChild?: boolean;
 }) {
   const Comp = asChild ? Slot.Root : "button";
-  return (
-    <Comp
-      className={cn("magic-shimmer-button", className)}
-      {...props}
-    />
-  );
+  return <Comp className={cn("flat-primary-button", className)} {...props} />;
 }
