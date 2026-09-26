@@ -2,6 +2,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowUpRight } from "lucide-react";
 import { getManagedEvent } from "@/lib/events";
+import { NumberTicker } from "@/components/magicui/number-ticker";
+import { AnimatedList } from "@/components/magicui/animated-list";
 import { requireOrganizerMembership } from "@/lib/auth/session";
 
 type Props = { params: Promise<{ eventId: string }> };
@@ -107,7 +109,7 @@ export default async function EventOverviewPage({ params }: Props) {
         {metrics.map(({ label, value, note }) => (
           <div className="event-admin-metric" key={label}>
             <span>{label}</span>
-            <strong>{value.toLocaleString("id-ID")}</strong>
+            <strong><NumberTicker value={Number(value)} /></strong>
             <small>{note}</small>
           </div>
         ))}
@@ -184,7 +186,7 @@ export default async function EventOverviewPage({ params }: Props) {
           </Link>
         </div>
 
-        <div className="event-admin-scan-list">
+        <AnimatedList className="event-admin-scan-list">
           {scans.map((scan) => (
             <div className="event-admin-scan-row" key={scan.id}>
               <span>
@@ -207,7 +209,7 @@ export default async function EventOverviewPage({ params }: Props) {
           {!scans.length && (
             <div className="event-admin-table-empty">Belum ada scan log.</div>
           )}
-        </div>
+        </AnimatedList>
       </section>
     </>
   );
