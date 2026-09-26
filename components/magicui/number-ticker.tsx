@@ -1,3 +1,7 @@
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+import { animate, useInView, useReducedMotion } from "motion/react";
 import { cn } from "@/lib/utils";
 
 export function NumberTicker({
@@ -7,9 +11,28 @@ export function NumberTicker({
   value: number;
   className?: string;
 }) {
+  const ref = useRef<HTMLSpanElement>(null);
+  const inView = useInView(ref, { once: true });
+  const reduceMotion = useReducedMotion();
+  const [display, setDisplay] = useState(reduceMotion ? value : 0);
+
+  useEffect(() => {
+    if (!inView) return;
+    if (reduceMotion) {
+      setDisplay(value);
+      return;
+    }
+    const controls = animate(0, value, {
+      duration: 0.72,
+      ease: [0.22, 0.8, 0.3, 1],
+      onUpdate: (latest) => setDisplay(latest),
+    });
+    return () => controls.stop();
+  }, [inView, reduceMotion, value]);
+
   return (
-    <span className={cn("tabular-nums", className)}>
-      {new Intl.NumberFormat("id-ID").format(value)}
+    <span ref={ref} className={cn("tabular-nums", className)}>
+      {new Intl.NumberFormat("id-ID", { maximumFractionDigits: 0 }).format(display)}
     </span>
   );
 }
