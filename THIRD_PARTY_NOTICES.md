@@ -26,9 +26,9 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
-## Magic UI Blur Fade and Number Ticker
+## Magic UI components
 
-Adapted for PassFlow with reduced-motion support, server-rendered content, and inherited colors.
+Blur Fade, Number Ticker, Border Beam, Shine Border, Shimmer Button, shiny text, and dock-style interactions are adapted for PassFlow with reduced-motion support, server-rendered content, and the PassFlow visual system.
 Source: https://github.com/magicuidesign/magicui/tree/main/apps/www/registry/magicui
 
 MIT License
