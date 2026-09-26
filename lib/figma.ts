@@ -34,7 +34,7 @@ export function verifyFigmaState(value: string, userId: string) {
 export function figmaAuthorizeUrl(state: string) {
   const current = config();
   if (!current) return null;
-  const query = new URLSearchParams({ client_id: current.clientId, redirect_uri: current.redirectUri, response_type: "code", scope: "current_user:read file_content:read file_metadata:read", state });
+  const query = new URLSearchParams({ client_id: current.clientId, redirect_uri: current.redirectUri, response_type: "code", scope: "current_user:read file_content:read", state });
   return `${FIGMA_AUTHORIZE}?${query.toString()}`;
 }
 

@@ -56,7 +56,7 @@ export async function GET(request: Request) {
       access_token_encrypted: encryptFigmaToken(tokens.access_token),
       refresh_token_encrypted: encryptFigmaToken(tokens.refresh_token),
       expires_at: new Date(Date.now() + tokens.expires_in * 1000).toISOString(),
-      scopes: ["current_user:read", "file_content:read", "file_metadata:read"],
+      scopes: ["current_user:read", "file_content:read"],
       updated_at: new Date().toISOString(),
     }, { onConflict: "user_id" });
     if (saveError) throw saveError;
