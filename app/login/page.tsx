@@ -34,7 +34,7 @@ export default async function LoginPage({
   const message = typeof params.error === "string" ? errors[params.error] : null;
 
   return (
-    <main className="min-h-screen bg-background px-5 py-7 text-foreground sm:py-12">
+    <main className="min-h-screen studio-backdrop px-5 py-7 text-foreground sm:py-12">
       <div className="mx-auto max-w-md">
         <div className="flex items-center justify-between gap-4">
           <Link href="/" className="inline-flex min-h-11 items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground">
