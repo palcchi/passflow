@@ -1,0 +1,32 @@
+import Link from "next/link";
+import { ArrowLeft, ExternalLink, Figma, RefreshCw, Trash2 } from "lucide-react";
+import { notFound } from "next/navigation";
+import { requireOrganizerMembership } from "@/lib/auth/session";
+import { getManagedEvent } from "@/lib/events";
+import { deleteFigmaDesign, syncFigmaDesign } from "@/app/admin/actions";
+
+const assetTypes = [
+  ["id_card", "ID Card"], ["lanyard", "Lanyard"], ["wristband", "Wristband"],
+  ["ticket", "Ticket"], ["event_cover", "Event Cover"], ["event_page", "Event Page"],
+] as const;
+
+export default async function EventDesignPage({ params, searchParams }: { params: Promise<{ eventId: string }>; searchParams: Promise<Record<string, string | string[] | undefined>> }) {
+  const { eventId } = await params;
+  const query = await searchParams;
+  const event = await getManagedEvent(eventId);
+  if (!event) notFound();
+  const { supabase, user } = await requireOrganizerMembership(`/admin/events/${eventId}/design`);
+  const [{ data: connection }, { data: designs }] = await Promise.all([
+    supabase.from("figma_connections").select("figma_name,figma_email,updated_at").eq("user_id", user.id).maybeSingle(),
+    supabase.from("event_designs").select("id,asset_type,name,figma_url,figma_file_name,figma_version,preview_url,last_synced_at").eq("event_id", eventId).order("updated_at", { ascending: false }),
+  ]);
+  const error = typeof query.error === "string" ? query.error : null;
+  return <main className="editor-page">
+    <header className="editor-header"><div><Link href={`/admin/events/${eventId}`} className="back-link"><ArrowLeft size={16}/> Kembali ke event</Link><span className="section-kicker">PassFlow Design</span><h1>Design {event.name}</h1><p>Hubungkan desain milik organizer dari Figma, lalu sinkronkan preview-nya ke event ini.</p></div><Link href={`/e/${event.slug}`} className="button button-dark"><ExternalLink size={16}/> Public page</Link></header>
+    {!connection ? <section className="design-connect-card"><div className="design-connect-icon"><Figma size={25}/></div><div><span className="section-kicker">Figma account</span><h2>Connect your Figma</h2><p>Login dengan akun Figma organizer. PassFlow hanya membaca metadata, frame, dan preview yang kamu izinkan.</p></div><a className="button button-dark" href="/api/figma/connect">Connect Figma</a></section> : <section className="design-connect-card is-connected"><div className="design-connect-icon"><Figma size={25}/></div><div><span className="section-kicker">Connected</span><h2>{connection.figma_name ?? connection.figma_email ?? "Figma account"}</h2><p>{connection.figma_email ?? "Akun Figma terhubung ke workspace ini."}</p></div><form action="/api/figma/disconnect" method="post"><button className="button button-ghost" type="submit">Disconnect</button></form></section>}
+    {error && <p className="design-alert">Figma belum berhasil diproses. Cek koneksi dan URL file yang dimasukkan.</p>}
+    {query.synced && <p className="design-success">Desain berhasil disinkronkan.</p>}
+    <section className="design-workspace"><div className="section-heading"><div><span className="section-kicker">Event assets</span><h2>Design library</h2></div><span className="soft-badge">{designs?.length ?? 0} assets</span></div><div className="design-grid">{(designs ?? []).map((design) => <article className="design-card" key={design.id}>{design.preview_url ? <img src={design.preview_url} alt="" /> : <div className="design-preview-empty"><Figma size={26}/><span>Preview belum tersedia</span></div>}<div className="design-card-body"><span className="section-kicker">{assetTypes.find(([value]) => value === design.asset_type)?.[1] ?? design.asset_type}</span><h3>{design.name}</h3><p>{design.figma_file_name ?? "Figma file"}{design.figma_version ? ` · ${design.figma_version.slice(0, 8)}` : ""}</p><div className="design-card-actions"><a href={design.figma_url} target="_blank" rel="noreferrer" className="button button-ghost"><ExternalLink size={14}/> Edit in Figma</a><form action={syncFigmaDesign}><input type="hidden" name="eventId" value={eventId}/><input type="hidden" name="designId" value={design.id}/><input type="hidden" name="assetType" value={design.asset_type}/><input type="hidden" name="name" value={design.name}/><input type="hidden" name="figmaUrl" value={design.figma_url}/><button className="button button-ghost" type="submit"><RefreshCw size={14}/> Sync</button></form><form action={deleteFigmaDesign}><input type="hidden" name="eventId" value={eventId}/><input type="hidden" name="designId" value={design.id}/><button className="icon-button danger" type="submit" aria-label="Hapus desain"><Trash2 size={15}/></button></form></div></div></article>)}</div>{connection && <form action={syncFigmaDesign} className="design-form"><input type="hidden" name="eventId" value={eventId}/><label>Jenis asset<select name="assetType" defaultValue="id_card">{assetTypes.map(([value,label]) => <option key={value} value={value}>{label}</option>)}</select></label><label>Nama desain<input name="name" required placeholder="VIP ID Card" /></label><label className="design-form-url">Figma file atau frame URL<input name="figmaUrl" required placeholder="https://www.figma.com/design/..." /></label><button className="button button-dark" type="submit"><RefreshCw size={16}/> Sync design</button></form>}</section>
+    <section className="figma-howto"><strong>PassFlow Design workflow</strong><span>Atur desain di Figma milikmu → paste URL file atau frame di sini → Sync design → preview tersimpan di event. Data attendee, QR, ticket, dan scanner tetap dikelola PassFlow.</span></section>
+  </main>;
+}
