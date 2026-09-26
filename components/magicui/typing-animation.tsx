@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useReducedMotion } from "motion/react";
 import { cn } from "@/lib/utils";
 
 export function TypingAnimation({
@@ -15,13 +16,11 @@ export function TypingAnimation({
   delay?: number;
 }) {
   const [value, setValue] = useState("");
+  const reduceMotion = useReducedMotion();
   const ref = useRef<HTMLSpanElement>(null);
 
   useEffect(() => {
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      setValue(children);
-      return;
-    }
+    if (reduceMotion) return;
 
     let index = 0;
     let interval = 0;
@@ -37,11 +36,11 @@ export function TypingAnimation({
       window.clearTimeout(timeout);
       window.clearInterval(interval);
     };
-  }, [children, delay, duration]);
+  }, [children, delay, duration, reduceMotion]);
 
   return (
     <span ref={ref} className={cn("typing-animation", className)} aria-label={children}>
-      <span aria-hidden="true">{value}</span>
+      <span aria-hidden="true">{reduceMotion ? children : value}</span>
       <span className="typing-caret" aria-hidden="true" />
     </span>
   );
