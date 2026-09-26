@@ -177,7 +177,6 @@ export function QrDeliveryEditor({ event }: { event: PassFlowEvent }) {
           <div className="qr-save-row">
             {message && <span className="editor-inline-success">{message}</span>}
             <button className="button button-dark" type="button" disabled={pending} onClick={save}>
-              {message && !pending ? <Check size={16} /> : }
               {pending ? "Menyimpan..." : message ? "Tersimpan" : "Simpan QR"}
             </button>
           </div>
