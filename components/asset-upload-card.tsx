@@ -30,13 +30,10 @@ export function AssetUploadCard({
   const objectUrlRef = useRef<string | null>(null);
   const [preview, setPreview] = useState<string | null>(currentUrl ?? null);
   const [fileName, setFileName] = useState("");
+  const [hasFile, setHasFile] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [pending, startTransition] = useTransition();
-
-  useEffect(() => {
-    setPreview(currentUrl ?? null);
-  }, [currentUrl]);
 
   useEffect(() => {
     return () => {
@@ -63,6 +60,7 @@ export function AssetUploadCard({
     setPreview(objectUrlRef.current);
     onPreview?.(objectUrlRef.current);
     setFileName(file.name);
+    setHasFile(true);
   }
 
   function clearSelection() {
@@ -71,6 +69,7 @@ export function AssetUploadCard({
     setPreview(currentUrl ?? null);
     onPreview?.(currentUrl ?? null);
     setFileName("");
+    setHasFile(false);
     setMessage(null);
     setSuccess(false);
     if (inputRef.current) inputRef.current.value = "";
@@ -91,6 +90,7 @@ export function AssetUploadCard({
           onPreview?.(result.publicUrl);
           onUploaded?.(result.publicUrl);
           setFileName("");
+          setHasFile(false);
           if (objectUrlRef.current) URL.revokeObjectURL(objectUrlRef.current);
           objectUrlRef.current = null;
           if (inputRef.current) inputRef.current.value = "";
@@ -133,7 +133,7 @@ export function AssetUploadCard({
         <button
           className="button button-dark"
           type="submit"
-          disabled={pending || !inputRef.current?.files?.length}
+          disabled={pending || !hasFile}
         >
           {pending ? <LoaderCircle className="animate-spin" size={15} /> : <UploadCloud size={15} />}
           {pending ? "Uploading..." : "Upload"}
