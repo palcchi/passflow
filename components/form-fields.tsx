@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Check, ChevronDown } from "lucide-react";
+import { Check, ChevronDown, ChevronLeft, ChevronRight, CalendarDays } from "lucide-react";
 
 function formatInteger(value: string | number | null | undefined) {
   const digits = String(value ?? "").replace(/[^0-9]/g, "");
@@ -41,7 +41,22 @@ export function SmartSelect({ name, value: initialValue, options, className = ""
 
 export function DateTimeField({ name, defaultValue, label = "Tanggal dan waktu" }: { name: string; defaultValue?: string | null; label?: string }) {
   const initial = defaultValue ? new Date(defaultValue) : null;
-  const [date, setDate] = useState(initial && !Number.isNaN(initial.getTime()) ? new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Jakarta" }).format(initial) : "");
-  const [time, setTime] = useState(initial && !Number.isNaN(initial.getTime()) ? new Intl.DateTimeFormat("en-GB", { timeZone: "Asia/Jakarta", hour: "2-digit", minute: "2-digit", hour12: false }).format(initial) : "10:00");
-  return <div className="date-time-field"><span className="field-label">{label}</span><div className="date-time-grid"><label><span>Tanggal</span><input type="date" value={date} onChange={(event) => setDate(event.target.value)} /></label><label><span>Jam</span><input type="time" value={time} onChange={(event) => setTime(event.target.value)} /></label></div><input type="hidden" name={name} value={date ? `${date}T${time || "00:00"}` : ""} /></div>;
+  const initialDate = initial && !Number.isNaN(initial.getTime()) ? new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Jakarta" }).format(initial) : "";
+  const initialTime = initial && !Number.isNaN(initial.getTime()) ? new Intl.DateTimeFormat("en-GB", { timeZone: "Asia/Jakarta", hour: "2-digit", minute: "2-digit", hour12: false }).format(initial) : "10:00";
+  const [date, setDate] = useState(initialDate);
+  const [time, setTime] = useState(initialTime);
+  const [open, setOpen] = useState(false);
+  const [month, setMonth] = useState(() => { const source = initial && !Number.isNaN(initial.getTime()) ? initial : new Date(); return new Date(source.getFullYear(), source.getMonth(), 1); });
+  const year = month.getFullYear();
+  const monthIndex = month.getMonth();
+  const firstDay = new Date(year, monthIndex, 1).getDay();
+  const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
+  const cells = Array.from({ length: Math.ceil((firstDay + daysInMonth) / 7) * 7 }, (_, index) => {
+    const day = index - firstDay + 1;
+    return day > 0 && day <= daysInMonth ? day : null;
+  });
+  const dateLabel = date ? new Intl.DateTimeFormat("id-ID", { day: "2-digit", month: "short", year: "numeric" }).format(new Date(`${date}T00:00:00`)) : "Pilih tanggal";
+  const timeOptions = Array.from({ length: 48 }, (_, index) => { const hours = String(Math.floor(index / 2)).padStart(2, "0"); return `${hours}:${index % 2 ? "30" : "00"}`; });
+  function chooseDay(day: number) { const next = `${year}-${String(monthIndex + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`; setDate(next); setOpen(false); }
+  return <div className="date-time-field"><span className="field-label">{label}</span><div className="date-time-grid"><div className="date-picker-wrap"><span>Tanggal</span><button type="button" className="date-picker-trigger" aria-expanded={open} onClick={() => setOpen((current) => !current)}><CalendarDays size={16} /><span>{dateLabel}</span><ChevronDown size={15} /></button>{open && <div className="date-picker-popover"><div className="date-picker-head"><button type="button" aria-label="Bulan sebelumnya" onClick={() => setMonth(new Date(year, monthIndex - 1, 1))}><ChevronLeft size={16} /></button><strong>{new Intl.DateTimeFormat("id-ID", { month: "long", year: "numeric" }).format(month)}</strong><button type="button" aria-label="Bulan berikutnya" onClick={() => setMonth(new Date(year, monthIndex + 1, 1))}><ChevronRight size={16} /></button></div><div className="calendar-weekdays">{["Mg", "Sn", "Sl", "Rb", "Km", "Jm", "Sb"].map((day) => <span key={day}>{day}</span>)}</div><div className="calendar-grid">{cells.map((day, index) => day ? <button type="button" key={`${year}-${monthIndex}-${day}`} className={date === `${year}-${String(monthIndex + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}` ? "is-selected" : ""} onClick={() => chooseDay(day)}>{day}</button> : <span key={`empty-${index}`} />)}</div></div>}</div><div className="time-picker-wrap"><span>Jam</span><SmartSelect name={`${name}_time`} value={time} options={timeOptions.map((value) => ({ value, label: value }))} onValueChange={setTime} /></div></div><input type="hidden" name={name} value={date ? `${date}T${time || "00:00"}` : ""} /></div>;
 }
