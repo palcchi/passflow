@@ -1,5 +1,37 @@
 # PassFlow
 
+## Release checkpoint, 26 September 2026
+
+This checkpoint supersedes historical progress notes below. Status: **NOT YET ACCEPTED FOR LIVE OPERATIONS**.
+
+Implemented in this continuation:
+- Email registration remains the primary CTA; Google OAuth is optional.
+- Organizer dashboard uses scoped database events and counts, including drafts.
+- Event management, appearance, and wristband printing resolve real managed events.
+- Public pages load stored assets; configured deployments never fall back to demo events on a database error.
+- Registration choices come from actual ticket types.
+- Wristband claim/replacement supports camera input with explicit confirmation.
+- Scanner API accepts station UUIDs and slugs, rejects oversized/invalid input, and returns JSON for expired sessions.
+- Scanner displays already-claimed results correctly; loading and retry states are available.
+
+Verified live configuration:
+- Vercel production existed and was READY before this release.
+- Production login still displayed "Login sedang disiapkan": application Supabase environment configuration is missing or invalid.
+- Supabase contains Adorne Nails Exhibition and Adorne Nails Workshop, under Vallian Event Studio.
+- All public tables have RLS enabled.
+- There are zero organization memberships. The user must identify the first owner account; never infer or grant this role automatically.
+
+Remaining acceptance gates:
+- Configure Vercel public Supabase URL/key and app origin, redeploy.
+- User confirms first owner, then assign membership through a trusted admin workflow.
+- Test real email verification, Google consent, recovery, storage upload, and authenticated UI.
+- Audit concurrent registration capacity and simultaneous check-in before operational rollout.
+- Test camera permissions and QR decode on real Safari/iPhone/iPad devices.
+- Complete the full 20-step operational scenario below. Passing build/anonymous responsive tests alone does not satisfy it.
+
+Historical roadmap checkboxes below are not an assertion of completion.
+
+
 > **Satu QR, dua media, satu identitas pengunjung.**
 
 PassFlow adalah platform **multi-event berbasis web** untuk mengelola event, attendee, Claim-Based QR Wristband, Digital Event Pass, access control, activity tracking, merchandise claim, dan monitoring melalui QR Scanner Station.
@@ -25,9 +57,9 @@ PassFlow bukan website untuk satu event saja. Satu deployment dapat memiliki ban
 Contoh:
 
 ```text
-passflow.vercel.app/e/adorne-nails-exhibition
-passflow.vercel.app/e/adorne-nails-workshop
-passflow.vercel.app/e/festival-of-ideas
+passflow.my.id/e/adorne-nails-exhibition
+passflow.my.id/e/adorne-nails-workshop
+passflow.my.id/e/adorne-creator-day
 ```
 
 Semua halaman tersebut menggunakan source code yang sama. Data dan tema event dibaca secara dinamis dari database.
@@ -152,7 +184,7 @@ Keduanya merupakan **satu credential yang sama dalam dua media**, bukan dua iden
 
 - [x] Supabase project sudah terhubung
 - [x] Database migration dan RLS sudah dijalankan ke Supabase
-- [x] Email/password authentication, verifikasi email, reset password, dan logout
+- [x] Email/password authentication, verifikasi email, reset password, logout, dan opsi Google OAuth
 - [ ] Dashboard masih menggunakan demo data
 - [ ] Event page masih menggunakan demo data
 - [x] Registrasi event dan claim QR menulis ke database melalui RPC
@@ -445,7 +477,7 @@ File tidak disimpan ke GitHub. Upload disimpan ke **Supabase Storage**, database
 
 ## 10. Magic UI Design Direction
 
-PassFlow akan memakai komponen dan motion dari **Magic UI** supaya terasa interaktif, modern, dan tidak seperti dashboard tugas kuliah default.
+PassFlow akan memakai komponen dan motion dari **Magic UI** supaya terasa interaktif, modern, dengan interaksi yang konsisten.
 
 Magic UI mengikuti workflow instalasi bergaya shadcn, jadi komponennya masuk ke project dan tetap bisa kita edit sendiri.
 
@@ -618,7 +650,7 @@ Status: **COMPLETE** (build + Chromium responsive baseline verified)
 
 ## Phase 2, Authentication & Roles
 
-Status: **IMPLEMENTED, EXTERNAL SETUP PENDING**. Panduan: [email Auth setup](docs/EMAIL_AUTH_SETUP.md).
+Status: **IMPLEMENTED, EXTERNAL SETUP PENDING**. Panduan: [authentication setup](docs/EMAIL_AUTH_SETUP.md).
 
 Roles:
 
@@ -904,7 +936,7 @@ CLAIM
 
 ## Phase 15, Final Demo Preparation
 
-Demo flow yang harus bisa dilakukan di depan dosen:
+Alur penerimaan operasional:
 
 ```text
 1. Organizer opens dashboard
@@ -1073,7 +1105,7 @@ Workflow GitHub Actions juga memeriksa route responsive memakai Chromium.
 Next priority:
 1. provision Supabase,
 2. run migration + RLS,
-3. activate and verify email email authentication using docs/EMAIL_AUTH_SETUP.md,
+3. activate and verify email/password authentication plus optional Google OAuth using docs/EMAIL_AUTH_SETUP.md,
 4. replace mock data,
 5. implement real QR claim,
 6. implement scanner validation,
@@ -1109,14 +1141,14 @@ Mobile/iPad support wajib.
 
 ## Authentication continuation, 25 September 2026
 
-- Login/register disatukan pada `/login`; `/register` meneruskan ke flow yang sama.
+- `/register` adalah CTA utama dari landing page untuk membuat akun email/password. `/login` dipakai untuk akun yang sudah ada; keduanya menawarkan Google sebagai opsi tambahan.
 - `/account` menampilkan user terverifikasi. Role organizer/staff hanya berasal dari `organization_members`, bukan metadata user.
 - `lib/supabase/server.ts` sekarang client SSR berbasis cookie dengan public key dan RLS, bukan service-role client.
 - `proxy.ts` refresh session; halaman privat memakai `getUser()`, validasi membership, dan response no-store. Callback hanya mengizinkan tujuan internal yang dikenal.
 - Migration `0002_auth_read_policies.sql` menambahkan read policies. Membership tidak dapat ditulis pengguna melalui browser. Writes operasional lainnya masih tertutup.
 - Halaman claim/scanner yang dilindungi tidak lagi menampilkan sukses simulasi. Backend transaksi QR belum diimplementasikan.
-- Konfigurasi Supabase/email belum tersedia di environment ini. email login sungguhan belum diuji atau diaktifkan. Ikuti [panduan setup](docs/EMAIL_AUTH_SETUP.md), termasuk pembuatan owner pertama via SQL tepercaya.
-- CI diperbarui untuk anonymous route protection, callback failures, redirect validation, dan pengujian PostgreSQL RLS antar organisasi. Checklist implementasi bukan klaim bahwa email authentication production sudah aktif.
+- Aplikasi tidak menyimpan SMTP atau Google client secret. Ikuti [panduan setup](docs/EMAIL_AUTH_SETUP.md), termasuk pembuatan owner pertama via SQL tepercaya dan URL callback Google yang benar.
+- Pastikan `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, dan `NEXT_PUBLIC_APP_URL=https://passflow.my.id` tersedia di Vercel sebelum menguji login production. CI memeriksa route protection, callback failures, redirect validation, dan pengujian PostgreSQL RLS antar organisasi.
 
 ---
 
@@ -1127,4 +1159,3 @@ Mobile/iPad support wajib.
 - Vercel: https://vercel.com/docs
 - Magic UI: https://magicui.design/docs
 - shadcn/ui: https://ui.shadcn.com
-

@@ -41,8 +41,11 @@ export default function HomePage() {
           <Link href="/e/adorne-nails-exhibition" className="text-link">
             Event demo
           </Link>
-          <Link href="/login" className="button button-dark">
-            Masuk / Daftar
+          <Link href="/login" className="text-link">
+            Masuk
+          </Link>
+          <Link href="/register" className="button button-dark">
+            Buat akun
             <ArrowUpRight size={16} />
           </Link>
         </div>
@@ -65,8 +68,8 @@ export default function HomePage() {
             web app.
           </p>
           <div className="hero-actions">
-            <Button asChild size="lg"><Link href="/login">
-              Start from dashboard
+            <Button asChild size="lg"><Link href="/register">
+              Buat akun gratis
               <ArrowUpRight size={17} />
             </Link></Button>
             <Button asChild size="lg" variant="outline"><Link href="/scan/main-entrance">
@@ -142,4 +145,3 @@ export default function HomePage() {
     </main>
   );
 }
-

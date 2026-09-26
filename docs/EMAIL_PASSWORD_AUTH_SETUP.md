@@ -102,7 +102,7 @@ Gunakan link seperti:
 <h2>Verifikasi akun PassFlow</h2>
 <p>Klik tombol berikut untuk mengaktifkan akunmu.</p>
 <p>
-  <a href="{{ .RedirectTo }}/auth/confirm?token_hash={{ .TokenHash }}&type=email&next=/account">
+  <a href="https://passflow.my.id/auth/confirm?token_hash={{ .TokenHash }}&type=signup&next=/account">
     Verifikasi email
   </a>
 </p>
@@ -158,13 +158,13 @@ Sebagai project owner, jalankan SQL berikut dan ganti UUID:
 begin;
 
 insert into public.organizations (name, slug)
-values ('Kelompok 7', 'kelompok-7')
+values ('Vallian Event Studio', 'vallian-event-studio')
 on conflict (slug) do nothing;
 
 insert into public.organization_members (organization_id, user_id, role)
 select id, 'REPLACE_WITH_AUTH_USER_UUID'::uuid, 'owner'
 from public.organizations
-where slug = 'kelompok-7'
+where slug = 'vallian-event-studio'
 on conflict (organization_id, user_id)
 do update set role = 'owner';
 

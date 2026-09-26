@@ -22,13 +22,13 @@ export default async function NewEventPage({
 
         <form action={createEvent} className="mt-8 grid gap-5 rounded-lg border border-border bg-card p-6 sm:grid-cols-2">
           <label className="block text-sm font-medium sm:col-span-2">Event name
-            <input name="name" required maxLength={120} className="mt-2 min-h-12 w-full rounded-md border border-input bg-background px-3" placeholder="Discoveries 2027" />
+            <input name="name" required maxLength={120} className="mt-2 min-h-12 w-full rounded-md border border-input bg-background px-3" placeholder="Adorne Nails Exhibition" />
           </label>
           <label className="block text-sm font-medium">Slug
-            <input name="slug" maxLength={100} className="mt-2 min-h-12 w-full rounded-md border border-input bg-background px-3" placeholder="discoveries-2027" />
+            <input name="slug" maxLength={100} className="mt-2 min-h-12 w-full rounded-md border border-input bg-background px-3" placeholder="adorne-nails-exhibition" />
           </label>
           <label className="block text-sm font-medium">Venue
-            <input name="venue" maxLength={160} className="mt-2 min-h-12 w-full rounded-md border border-input bg-background px-3" placeholder="Main Campus Hall" />
+            <input name="venue" maxLength={160} className="mt-2 min-h-12 w-full rounded-md border border-input bg-background px-3" placeholder="Adorne Studio" />
           </label>
           <label className="block text-sm font-medium">Starts at
             <input name="startsAt" type="datetime-local" className="mt-2 min-h-12 w-full rounded-md border border-input bg-background px-3" />

@@ -5,21 +5,62 @@ import { safeNext } from "@/lib/auth/redirect";
 import { getAppOrigin, getSupabaseConfig } from "@/lib/supabase/config";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 function authRedirect(path: string, key: string) { return `/login?${key}=1&next=${encodeURIComponent(path)}`; }
+
+export async function signInWithGoogle(formData: FormData) {
+  const next = safeNext(formData.get("next"));
+  const origin = getAppOrigin();
+  if (!origin || !getSupabaseConfig()) redirect(authRedirect(next, "unavailable"));
+
+  let providerUrl: string | null = null;
+  try {
+    const callback = new URL("/auth/callback", origin);
+    callback.searchParams.set("next", next);
+    const supabase = await createServerSupabaseClient();
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo: callback.toString() },
+    });
+    if (!error) providerUrl = data.url;
+  } catch {
+    // The button resolves to a local, non-sensitive error state below.
+  }
+
+  if (!providerUrl) redirect(authRedirect(next, "provider"));
+  redirect(providerUrl);
+}
+
 export async function signInWithEmail(formData: FormData) {
   const next=safeNext(formData.get("next")); const email=String(formData.get("email")??"").trim().toLowerCase(); const password=String(formData.get("password")??"");
   if(!email||password.length<8) redirect(authRedirect(next,"invalid"));
   let success = false;
-  try { const supabase=await createServerSupabaseClient(); const {error}=await supabase.auth.signInWithPassword({email,password}); success = !error; } catch {}
+  let errorCode = "invalid";
+  try {
+    const supabase=await createServerSupabaseClient();
+    const {error}=await supabase.auth.signInWithPassword({email,password});
+    success = !error;
+    if (error?.code === "email_not_confirmed") errorCode = "unverified";
+  } catch {}
   if (success) redirect(next);
+  if (errorCode === "unverified") redirect(authRedirect(next,"unverified"));
   redirect(authRedirect(next,"invalid"));
 }
 export async function signUpWithEmail(formData: FormData) {
   const next=safeNext(formData.get("next")); const email=String(formData.get("email")??"").trim().toLowerCase(); const password=String(formData.get("password")??""); const origin=getAppOrigin();
   if(!origin||!getSupabaseConfig()||!email||password.length<8) redirect(`/register?error=invalid&next=${encodeURIComponent(next)}`);
   let success = false;
-  try { const supabase=await createServerSupabaseClient(); const {error}=await supabase.auth.signUp({email,password,options:{emailRedirectTo:`${origin}/auth/callback?next=${encodeURIComponent(next)}`}}); success = !error; } catch {}
+  // Confirmation email template appends /auth/confirm and consumes TokenHash itself.
+  // Keep RedirectTo at the origin so the template never duplicates callback paths.
+  try { const supabase=await createServerSupabaseClient(); const {error}=await supabase.auth.signUp({email,password,options:{emailRedirectTo:origin}}); success = !error; } catch {}
   if (success) redirect(`/register?notice=check-email&next=${encodeURIComponent(next)}`);
   redirect(`/register?error=provider&next=${encodeURIComponent(next)}`);
+}
+export async function resendSignupConfirmation(formData: FormData) {
+  const next=safeNext(formData.get("next")); const email=String(formData.get("email")??"").trim().toLowerCase(); const origin=getAppOrigin();
+  if(!email||!origin||!getSupabaseConfig()) redirect(`/login?error=provider&next=${encodeURIComponent(next)}`);
+  let success=false;
+  try { const supabase=await createServerSupabaseClient(); const {error}=await supabase.auth.resend({type:"signup",email,options:{emailRedirectTo:origin}}); success=!error; } catch {}
+  if(success) redirect(`/login?notice=verification-sent&next=${encodeURIComponent(next)}`);
+  redirect(`/login?error=provider&next=${encodeURIComponent(next)}`);
 }
 export async function requestPasswordReset(formData: FormData) {
   const email=String(formData.get("email")??"").trim().toLowerCase(); const origin=getAppOrigin();

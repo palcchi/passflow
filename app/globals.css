@@ -4,13 +4,13 @@
 /* Legacy prototype styles are layered so utilities can override them. */
 @layer components {
 :root {
-  --ink: #151515;
-  --muted-text: #696969;
-  --line: #e7e7e5;
-  --paper: #f5f5f2;
+  --ink: #14213d;
+  --muted-text: #64748b;
+  --line: #e2e8f0;
+  --paper: #ffffff;
   --surface: #ffffff;
-  --accent: #7448ff;
-  --accent-soft: #eee8ff;
+  --accent: #1769c2;
+  --accent-soft: #eaf3ff;
 }
 
 * {
@@ -57,7 +57,7 @@ button {
   height: 30px;
   place-items: center;
   border-radius: 9px;
-  background: #111;
+  background: #1769c2;
   color: #fff;
   font-size: 14px;
 }
@@ -79,7 +79,7 @@ button {
 }
 
 .button-dark {
-  background: #151515;
+  background: #1769c2;
   color: #fff;
 }
 
@@ -239,7 +239,7 @@ button {
 }
 
 .pass-card-front {
-  background: linear-gradient(160deg, #8d67ff 0%, #6b3fff 45%, #4321b9 100%);
+  background: linear-gradient(145deg, #1769c2 0%, #1769c2 68%, #ffd447 68%, #ffd447 100%);
   color: #fff;
   transform: rotate(7deg) translate(65px, -15px);
   display: flex;

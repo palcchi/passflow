@@ -1,6 +1,6 @@
 import { getSupabaseConfig } from "@/lib/supabase/config";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-export const defaultEventTheme={primary:"#7448ff",secondary:"#eee8ff",background:"#f5f5f2",foreground:"#151515",surface:"#ffffff"};
+export const defaultEventTheme={primary:"#1769c2",secondary:"#ffd447",background:"#ffffff",foreground:"#14213d",surface:"#ffffff"};
 export type EventTheme={primary:string;secondary:string;background:string;foreground:string;surface:string};
 export type PassFlowEvent={id:string;name:string;slug:string;eyebrow:string;description:string;venue:string;dateLabel:string;attendeeCount:number;checkedInCount:number;theme:EventTheme;status?:string;capacity?:number;startsAt?:string|null;endsAt?:string|null;heroImageUrl:string|null;logoUrl:string|null;posterUrl:string|null};
 export const demoEvents:PassFlowEvent[]=[
@@ -9,37 +9,59 @@ export const demoEvents:PassFlowEvent[]=[
 ];
 export function getEventBySlug(slug:string){return demoEvents.find(event=>event.slug===slug)}
 export function getEventById(id:string){return demoEvents.find(event=>event.id===id||event.slug===id)}
-export async function getPublishedEventById(id: string): Promise<PassFlowEvent | undefined> {
-  const local = getEventById(id);
-  if (local) return local;
-  if (!getSupabaseConfig()) return undefined;
-  try {
-    const supabase = await createServerSupabaseClient();
-    const { data, error } = await supabase.from("events").select("slug").eq("id", id).eq("status", "published").maybeSingle();
-    return !error && data ? getPublishedEvent(data.slug) : undefined;
-  } catch { return undefined; }
-}
 
-export async function getPublishedEvents(): Promise<PassFlowEvent[]> {
-  if (getSupabaseConfig()) {
-    try {
-      const supabase = await createServerSupabaseClient();
-      const { data, error } = await supabase.from("events").select("id,name,slug,description,venue,starts_at,theme").eq("status", "published").order("starts_at");
-      if (!error && data?.length) {
-        return Promise.all(data.map(async (row) => {
-          const [{ count: attendeeCount }, { count: checkedInCount }] = await Promise.all([
-            supabase.from("attendees").select("id", { count: "exact", head: true }).eq("event_id", row.id),
-            supabase.from("attendees").select("id", { count: "exact", head: true }).eq("event_id", row.id).not("checked_in_at", "is", null),
-          ]);
-          const theme = (row.theme ?? {}) as Partial<EventTheme>;
-          return { id: row.id, name: row.name, slug: row.slug, eyebrow: "Published event", description: row.description ?? "", venue: row.venue ?? "", dateLabel: row.starts_at ? new Intl.DateTimeFormat("en-US", { dateStyle: "long" }).format(new Date(row.starts_at)) : "Date to be announced", attendeeCount: attendeeCount ?? 0, checkedInCount: checkedInCount ?? 0, theme: { primary: theme.primary ?? "#7448ff", secondary: theme.secondary ?? "#eee8ff", background: theme.background ?? "#f5f5f2", foreground: theme.foreground ?? "#151515", surface: theme.surface ?? "#fff" }, heroImageUrl: null, logoUrl: null, posterUrl: null };
-        }));
-      }
-    } catch {}
-  }
-  return demoEvents;
+type EventRow = import("@/lib/supabase/database.types").Database["public"]["Tables"]["events"]["Row"];
+function mapEvent(row: EventRow, attendeeCount = 0, checkedInCount = 0): PassFlowEvent {
+  const theme = row.theme && typeof row.theme === "object" && !Array.isArray(row.theme) ? row.theme as Partial<EventTheme> : {};
+  const safeTheme = Object.fromEntries(Object.entries(defaultEventTheme).map(([key, fallback]) => {
+    const value = theme[key as keyof EventTheme];
+    return [key, typeof value === "string" && /^#[0-9a-f]{3,8}$/i.test(value) ? value : fallback];
+  })) as EventTheme;
+  return { id: row.id, name: row.name, slug: row.slug, eyebrow: row.status === "published" ? "Published event" : "Draft event",
+    description: row.description ?? "", venue: row.venue ?? "", status: row.status, capacity: row.capacity ?? undefined,
+    startsAt: row.starts_at, endsAt: row.ends_at,
+    dateLabel: row.starts_at ? new Intl.DateTimeFormat("en-US", { dateStyle: "long", timeZone: "Asia/Jakarta" }).format(new Date(row.starts_at)) : "Date to be announced",
+    attendeeCount, checkedInCount, theme: safeTheme, heroImageUrl: row.hero_image_url, logoUrl: row.logo_url, posterUrl: row.poster_url };
 }
-export async function getPublishedEvent(slug:string):Promise<PassFlowEvent|undefined>{
-  if(getSupabaseConfig()){try{const supabase=await createServerSupabaseClient();const {data,error}=await supabase.from("events").select("id,name,slug,description,venue,starts_at,theme").eq("slug",slug).eq("status","published").maybeSingle();if(!error&&data){const [{count:attendeeCount},{count:checkedInCount}]=await Promise.all([supabase.from("attendees").select("id",{count:"exact",head:true}).eq("event_id",data.id),supabase.from("attendees").select("id",{count:"exact",head:true}).eq("event_id",data.id).not("checked_in_at","is",null)]);const theme=(data.theme??{}) as EventTheme;return {id:data.id,name:data.name,slug:data.slug,eyebrow:"Featured Event",description:data.description??"",venue:data.venue??"",dateLabel:data.starts_at?new Intl.DateTimeFormat("en-US",{dateStyle:"long"}).format(new Date(data.starts_at)):"Date to be announced",attendeeCount:attendeeCount??0,checkedInCount:checkedInCount??0,theme:{primary:theme.primary??"#7448ff",secondary:theme.secondary??"#eee8ff",background:theme.background??"#f5f5f2",foreground:theme.foreground??"#151515",surface:theme.surface??"#fff"},heroImageUrl:null,logoUrl:null,posterUrl:null}}}catch{}}
-  return getEventBySlug(slug);
+export async function getManagedEvent(id: string): Promise<PassFlowEvent | undefined> {
+  const { requireOrganizer } = await import("@/lib/auth/session");
+  const { supabase } = await requireOrganizer(`/admin/events/${id}`);
+  const { data: allowed } = await supabase.rpc("is_event_manager", { p_event_id: id });
+  if (!allowed) return undefined;
+  const [{data, error}, registered, checked] = await Promise.all([
+    supabase.from("events").select("*").eq("id", id).maybeSingle(),
+    supabase.from("attendees").select("id", {count:"exact",head:true}).eq("event_id",id),
+    supabase.from("attendees").select("id", {count:"exact",head:true}).eq("event_id",id).not("checked_in_at","is",null)
+  ]);
+  if (error) throw new Error("Event could not be loaded.");
+  return data ? mapEvent(data, registered.count ?? 0, checked.count ?? 0) : undefined;
+}
+export async function getManagedEvents(): Promise<PassFlowEvent[]> {
+  const { requireOrganizer, getMemberships } = await import("@/lib/auth/session");
+  const { supabase } = await requireOrganizer();
+  const { memberships } = await getMemberships();
+  const ids = memberships.filter(m => m.role === "owner" || m.role === "admin").map(m=>m.organization_id);
+  const { data, error } = await supabase.from("events").select("*").in("organization_id",ids).order("created_at",{ascending:false});
+  if (error) throw new Error("Events could not be loaded.");
+  return Promise.all((data ?? []).map(async row => {
+    const [a,c] = await Promise.all([
+      supabase.from("attendees").select("id",{count:"exact",head:true}).eq("event_id",row.id),
+      supabase.from("attendees").select("id",{count:"exact",head:true}).eq("event_id",row.id).not("checked_in_at","is",null)
+    ]);
+    return mapEvent(row,a.count ?? 0,c.count ?? 0);
+  }));
+}
+export async function getPublishedEvents(): Promise<PassFlowEvent[]> {
+  if (!getSupabaseConfig()) return demoEvents;
+  const supabase = await createServerSupabaseClient();
+  const {data,error} = await supabase.from("events").select("*").eq("status","published").order("starts_at");
+  if (error) throw new Error("Events are temporarily unavailable.");
+  return (data ?? []).map(row=>mapEvent(row));
+}
+export async function getPublishedEvent(slug: string): Promise<PassFlowEvent | undefined> {
+  if (!getSupabaseConfig()) return getEventBySlug(slug);
+  const supabase = await createServerSupabaseClient();
+  const {data,error} = await supabase.from("events").select("*").eq("slug",slug).eq("status","published").maybeSingle();
+  if (error) throw new Error("Event is temporarily unavailable.");
+  return data ? mapEvent(data) : undefined;
 }
