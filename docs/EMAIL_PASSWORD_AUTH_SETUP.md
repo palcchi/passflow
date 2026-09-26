@@ -158,13 +158,13 @@ Sebagai project owner, jalankan SQL berikut dan ganti UUID:
 begin;
 
 insert into public.organizations (name, slug)
-values ('Kelompok 7', 'kelompok-7')
+values ('Vallian Event Studio', 'vallian-event-studio')
 on conflict (slug) do nothing;
 
 insert into public.organization_members (organization_id, user_id, role)
 select id, 'REPLACE_WITH_AUTH_USER_UUID'::uuid, 'owner'
 from public.organizations
-where slug = 'kelompok-7'
+where slug = 'vallian-event-studio'
 on conflict (organization_id, user_id)
 do update set role = 'owner';
 

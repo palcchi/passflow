@@ -5,6 +5,30 @@ import { safeNext } from "@/lib/auth/redirect";
 import { getAppOrigin, getSupabaseConfig } from "@/lib/supabase/config";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 function authRedirect(path: string, key: string) { return `/login?${key}=1&next=${encodeURIComponent(path)}`; }
+
+export async function signInWithGoogle(formData: FormData) {
+  const next = safeNext(formData.get("next"));
+  const origin = getAppOrigin();
+  if (!origin || !getSupabaseConfig()) redirect(authRedirect(next, "unavailable"));
+
+  let providerUrl: string | null = null;
+  try {
+    const callback = new URL("/auth/callback", origin);
+    callback.searchParams.set("next", next);
+    const supabase = await createServerSupabaseClient();
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo: callback.toString() },
+    });
+    if (!error) providerUrl = data.url;
+  } catch {
+    // The button resolves to a local, non-sensitive error state below.
+  }
+
+  if (!providerUrl) redirect(authRedirect(next, "provider"));
+  redirect(providerUrl);
+}
+
 export async function signInWithEmail(formData: FormData) {
   const next=safeNext(formData.get("next")); const email=String(formData.get("email")??"").trim().toLowerCase(); const password=String(formData.get("password")??"");
   if(!email||password.length<8) redirect(authRedirect(next,"invalid"));

@@ -7,16 +7,18 @@ import { Button } from "@/components/ui/button";
 export function AuthSubmit({
   children,
   disabled = false,
+  variant = "default",
 }: {
   children: React.ReactNode;
   disabled?: boolean;
+  variant?: "default" | "outline";
 }) {
   const { pending } = useFormStatus();
 
   return (
     <Button
       className="w-full"
-      variant="outline"
+      variant={variant}
       size="lg"
       type="submit"
       disabled={disabled || pending}

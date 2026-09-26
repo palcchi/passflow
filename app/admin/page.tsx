@@ -11,18 +11,23 @@ import {
   TicketCheck,
   UsersRound,
 } from "lucide-react";
-import { getPublishedEvents } from "@/lib/events";
+import { getManagedEvents } from "@/lib/events";
 
-const statCards = [
-  { label: "Total events", value: "2", icon: CalendarRange },
-  { label: "Registered", value: "688", icon: UsersRound },
-  { label: "Checked in", value: "398", icon: TicketCheck },
-  { label: "QR active", value: "371", icon: QrCode },
-];
 
 export default async function AdminDashboardPage() {
-  await requireOrganizer();
-  const events = await getPublishedEvents();
+  const { supabase } = await requireOrganizer();
+  const events = await getManagedEvents();
+  const eventIds = events.map(event => event.id);
+  const [qrResult, stationResult] = eventIds.length ? await Promise.all([
+    supabase.from("qr_credentials").select("id", {count:"exact",head:true}).in("event_id",eventIds).eq("status","active"),
+    supabase.from("scanner_stations").select("id,name,is_active").in("event_id",eventIds).order("name")
+  ]) : [{count:0}, {data:[]}];
+  const statCards = [
+    {label:"Total events",value:events.length,icon:CalendarRange},
+    {label:"Registered",value:events.reduce((n,e)=>n+e.attendeeCount,0),icon:UsersRound},
+    {label:"Checked in",value:events.reduce((n,e)=>n+e.checkedInCount,0),icon:TicketCheck},
+    {label:"QR active",value:qrResult.count ?? 0,icon:QrCode}
+  ];
   return (
     <main className="dashboard-shell">
       <aside className="sidebar">
@@ -39,12 +44,12 @@ export default async function AdminDashboardPage() {
           <a className="sidebar-link" href="#events">
             Events
           </a>
-          <Link href="/scan/main-entrance" className="sidebar-link">
+          <Link href="#stations" className="sidebar-link">
             Scanner
           </Link>
         </div>
         <div className="sidebar-footer">
-          <span className="avatar">K7</span>
+          <span className="avatar">PF</span>
           <div>
             <strong>PassFlow workspace</strong>
             <small>Project workspace</small>
@@ -59,10 +64,7 @@ export default async function AdminDashboardPage() {
             <h1>Good afternoon, organizer.</h1>
             <p>Monitor semua event dari satu tempat. Data event dan check-in terbaru dari workspace.</p>
           </div>
-          <Button variant="secondary" type="button" disabled title="Event management tersedia pada Phase 3">
-            <CirclePlus size={17} />
-            New event
-          </Button>
+          <Button asChild><Link href="/admin/events/new"><CirclePlus size={17} /> New event</Link></Button>
         </header>
 
         <div className="stat-grid">
@@ -87,9 +89,10 @@ export default async function AdminDashboardPage() {
           </div>
 
           <div className="event-list">
+            {events.length === 0 && <p>Belum ada event. Pilih New event untuk mulai.</p>}
             {events.map((event) => {
               const percentage = Math.round(
-                (event.checkedInCount / event.attendeeCount) * 100
+                event.attendeeCount ? (event.checkedInCount / event.attendeeCount) * 100 : 0
               );
 
               return (
@@ -133,10 +136,10 @@ export default async function AdminDashboardPage() {
                       <ArrowRight size={17} />
                     </Link>
                     <Link
-                      href={`/admin/events/${event.id}/appearance`}
+                      href={`/admin/events/${event.id}`}
                       className="button button-small"
                     >
-                      Customize
+                      Manage
                     </Link>
                   </div>
                 </article>
@@ -145,7 +148,7 @@ export default async function AdminDashboardPage() {
           </div>
         </section>
 
-        <section className="dashboard-section compact-section">
+        <section className="dashboard-section compact-section" id="stations">
           <div className="section-heading">
             <div>
               <span className="section-kicker">Scanner status</span>
@@ -154,18 +157,14 @@ export default async function AdminDashboardPage() {
             <ScanLine size={20} />
           </div>
           <div className="station-grid">
-            {[
-              ["Main Entrance", "Online", "312 scans"],
-              ["VIP Lounge", "Online", "74 scans"],
-              ["Workshop A", "Standby", "38 scans"],
-            ].map(([name, status, scans]) => (
-              <div className="station-card" key={name}>
-                <span className={`station-status ${status.toLowerCase()}`}>
-                  {status}
+            {(stationResult.data ?? []).map(({id, name, is_active}) => (
+              <Link href={`/scan/${id}`} className="station-card" key={id}>
+                <span className={`station-status ${is_active ? "online" : "standby"}`}>
+                  {is_active ? "Active" : "Standby"}
                 </span>
                 <strong>{name}</strong>
-                <small>{scans}</small>
-              </div>
+                <small>Open scanner</small>
+              </Link>
             ))}
           </div>
         </section>
@@ -173,4 +172,3 @@ export default async function AdminDashboardPage() {
     </main>
   );
 }
-

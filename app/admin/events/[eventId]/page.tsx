@@ -6,11 +6,10 @@ import {
   ExternalLink,
   Palette,
   QrCode,
-  ScanLine,
   Ticket,
   Users,
 } from "lucide-react";
-import { getEventById } from "@/lib/events";
+import { getManagedEvent } from "@/lib/events";
 import { requireOrganizerMembership } from "@/lib/auth/session";
 import {
   createAccessRule,
@@ -41,11 +40,11 @@ function inputClass() {
 export default async function EventManagePage({ params, searchParams }: Props) {
   const { eventId } = await params;
   const query = await searchParams;
-  const event = await getEventById(eventId);
+  const event = await getManagedEvent(eventId);
   if (!event) notFound();
 
   const { supabase } = await requireOrganizerMembership(`/admin/events/${eventId}`);
-  const search = typeof query.q === "string" ? query.q.trim().slice(0, 80) : "";
+  const search = typeof query.q === "string" ? query.q.trim().replace(/[^\p{L}\p{N}@ ._-]/gu, "").slice(0, 80) : "";
 
   let attendeeQuery = supabase
     .from("attendees")
@@ -195,7 +194,7 @@ export default async function EventManagePage({ params, searchParams }: Props) {
           <form action={importAttendees} className="mt-5">
             <input type="hidden" name="eventId" value={event.id} />
             <label className="text-sm font-medium">Bulk import, one line: <code>name,email,ticket_code,phone</code>
-              <textarea className="mt-2 w-full rounded-md border border-input bg-background p-3 font-mono text-xs" rows={4} name="rows" placeholder="Jane Doe,jane@example.com,VIP,0812..." />
+              <textarea className="mt-2 w-full rounded-md border border-input bg-background p-3 font-mono text-xs" rows={4} name="rows" placeholder="Vallian,vallian@example.com,VIP,0812..." />
             </label>
             <button className="button button-ghost mt-3" type="submit">Import rows</button>
           </form>
