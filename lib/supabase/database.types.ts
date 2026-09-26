@@ -374,6 +374,18 @@ export type Database = {
         Update: { event_id?: string; user_id?: string; job_title?: string; access_role?: string; status?: string; created_at?: string }
         Relationships: []
       }
+      event_designs: {
+        Row: { id: string; event_id: string; created_by: string; asset_type: string; name: string; figma_file_key: string; figma_node_id: string | null; figma_url: string; figma_file_name: string | null; figma_version: string | null; preview_url: string | null; metadata: Json; last_synced_at: string | null; created_at: string; updated_at: string }
+        Insert: { id?: string; event_id: string; created_by: string; asset_type: string; name: string; figma_file_key: string; figma_node_id?: string | null; figma_url: string; figma_file_name?: string | null; figma_version?: string | null; preview_url?: string | null; metadata?: Json; last_synced_at?: string | null; created_at?: string; updated_at?: string }
+        Update: { id?: string; event_id?: string; created_by?: string; asset_type?: string; name?: string; figma_file_key?: string; figma_node_id?: string | null; figma_url?: string; figma_file_name?: string | null; figma_version?: string | null; preview_url?: string | null; metadata?: Json; last_synced_at?: string | null; created_at?: string; updated_at?: string }
+        Relationships: []
+      }
+      figma_connections: {
+        Row: { id: string; user_id: string; figma_user_id: string; figma_email: string | null; figma_name: string | null; access_token_encrypted: string; refresh_token_encrypted: string | null; expires_at: string | null; scopes: string[]; created_at: string; updated_at: string }
+        Insert: { id?: string; user_id: string; figma_user_id: string; figma_email?: string | null; figma_name?: string | null; access_token_encrypted: string; refresh_token_encrypted?: string | null; expires_at?: string | null; scopes?: string[]; created_at?: string; updated_at?: string }
+        Update: { id?: string; user_id?: string; figma_user_id?: string; figma_email?: string | null; figma_name?: string | null; access_token_encrypted?: string; refresh_token_encrypted?: string | null; expires_at?: string | null; scopes?: string[]; created_at?: string; updated_at?: string }
+        Relationships: []
+      }
       events: {
         Row: {
           capacity: number | null
