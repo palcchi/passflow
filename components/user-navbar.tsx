@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import {
   CalendarDays,
   ChevronDown,
@@ -17,6 +16,7 @@ import {
   X,
 } from "lucide-react";
 import { signOut } from "@/app/auth/actions";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 type UserNavbarProps = {
   name: string;
@@ -32,7 +32,6 @@ export function UserNavbar({
   organizer = false,
 }: UserNavbarProps) {
   const pathname = usePathname();
-  const reduceMotion = useReducedMotion();
   const [openMenu, setOpenMenu] = useState<"profile" | "mobile" | null>(null);
   const rootRef = useRef<HTMLElement>(null);
   const initial = (name || email || "P").trim().charAt(0).toUpperCase() || "P";
@@ -68,7 +67,7 @@ export function UserNavbar({
 
   return (
     <nav ref={rootRef} className="user-nav-shell">
-      <div className="user-nav liquid-nav">
+      <div className="user-nav user-nav-flat">
         <div className="user-nav-left">
           <Link href="/account" className="user-nav-brand" aria-label="PassFlow dashboard">
             <span className="brand-mark user-nav-brand-mark">P</span>
@@ -90,6 +89,8 @@ export function UserNavbar({
         </div>
 
         <div className="user-nav-actions">
+          <ThemeToggle />
+
           <Link
             href="/events"
             className="user-nav-icon-button"
@@ -132,87 +133,71 @@ export function UserNavbar({
           </button>
         </div>
 
-        <AnimatePresence>
-          {openMenu === "profile" && (
-            <motion.div
-              className="user-profile-menu liquid-popover"
-              initial={reduceMotion ? false : { opacity: 0, y: -7, scale: 0.985 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={reduceMotion ? { opacity: 0 } : { opacity: 0, y: -5, scale: 0.99 }}
-              transition={{ duration: reduceMotion ? 0 : 0.16 }}
-            >
-              <div className="user-profile-menu-head">
-                <span
-                  className="user-avatar user-avatar-large"
-                  style={avatarUrl ? { backgroundImage: `url("${avatarUrl}")` } : undefined}
-                >
-                  {!avatarUrl && initial}
-                </span>
-                <div>
-                  <strong>{name}</strong>
-                  <small>{email}</small>
-                </div>
+        {openMenu === "profile" && (
+          <div className="user-profile-menu flat-popover">
+            <div className="user-profile-menu-head">
+              <span
+                className="user-avatar user-avatar-large"
+                style={avatarUrl ? { backgroundImage: `url("${avatarUrl}")` } : undefined}
+              >
+                {!avatarUrl && initial}
+              </span>
+              <div>
+                <strong>{name}</strong>
+                <small>{email}</small>
               </div>
-              <div className="user-profile-menu-divider" />
-              <Link href="/profile" onClick={() => setOpenMenu(null)}>
-                <UserRound size={16} />
+            </div>
+            <div className="user-profile-menu-divider" />
+            <Link href="/profile" onClick={() => setOpenMenu(null)}>
+              <UserRound size={16} />
+              <span>
+                <strong>Profile</strong>
+                <small>Foto, nama, username, Figma</small>
+              </span>
+            </Link>
+            {organizer && (
+              <Link href="/admin" onClick={() => setOpenMenu(null)}>
+                <Settings2 size={16} />
                 <span>
-                  <strong>Profile</strong>
-                  <small>Foto, nama, username, Figma</small>
+                  <strong>Organizer workspace</strong>
+                  <small>Event, scanner, design</small>
                 </span>
               </Link>
-              {organizer && (
-                <Link href="/admin" onClick={() => setOpenMenu(null)}>
-                  <Settings2 size={16} />
-                  <span>
-                    <strong>Organizer workspace</strong>
-                    <small>Event, scanner, design</small>
-                  </span>
-                </Link>
-              )}
-              <form action={signOut}>
-                <button type="submit" className="user-profile-logout">
-                  <LogOut size={16} />
-                  <span>Keluar</span>
-                </button>
-              </form>
-            </motion.div>
-          )}
-        </AnimatePresence>
+            )}
+            <form action={signOut}>
+              <button type="submit" className="user-profile-logout">
+                <LogOut size={16} />
+                <span>Keluar</span>
+              </button>
+            </form>
+          </div>
+        )}
 
-        <AnimatePresence>
-          {openMenu === "mobile" && (
-            <motion.div
-              className="user-mobile-menu liquid-popover"
-              initial={reduceMotion ? false : { opacity: 0, y: -8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -5 }}
-              transition={{ duration: reduceMotion ? 0 : 0.16 }}
-            >
-              {navItems.map(({ href, label, icon: Icon }) => (
-                <Link
-                  href={href}
-                  key={href}
-                  data-active={active(href)}
-                  onClick={() => setOpenMenu(null)}
-                >
-                  <Icon size={16} />
-                  {label}
-                </Link>
-              ))}
-              <Link href="/profile" onClick={() => setOpenMenu(null)}>
-                <UserRound size={16} />
-                Profile
+        {openMenu === "mobile" && (
+          <div className="user-mobile-menu flat-popover">
+            {navItems.map(({ href, label, icon: Icon }) => (
+              <Link
+                href={href}
+                key={href}
+                data-active={active(href)}
+                onClick={() => setOpenMenu(null)}
+              >
+                <Icon size={16} />
+                {label}
               </Link>
-              <form action={signOut}>
-                <button type="submit">
-                  <LogOut size={16} />
-                  Keluar
-                </button>
-              </form>
-            </motion.div>
-          )}
-        </AnimatePresence>
+            ))}
+            <Link href="/profile" onClick={() => setOpenMenu(null)}>
+              <UserRound size={16} />
+              Profile
+            </Link>
+            <form action={signOut}>
+              <button type="submit">
+                <LogOut size={16} />
+                Keluar
+              </button>
+            </form>
+          </div>
+        )}
       </div>
     </nav>
   );
