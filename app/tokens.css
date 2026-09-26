@@ -28,17 +28,17 @@
 @layer base {
   :root {
     --background: #ffffff;
-    --foreground: #14213d;
+    --foreground: #171717;
     --card: #ffffff;
-    --primary: #1769c2;
+    --primary: #171717;
     --primary-foreground: #ffffff;
-    --secondary: #ffd447;
-    --secondary-foreground: #14213d;
-    --muted: #f4f7fb;
-    --muted-foreground: #64748b;
-    --accent-soft: #eaf3ff;
-    --border: #e2e8f0;
-    --ring: #1769c2;
+    --secondary: #f2c94c;
+    --secondary-foreground: #171717;
+    --muted: #f6f6f4;
+    --muted-foreground: #737373;
+    --accent-soft: #fff5c7;
+    --border: #e7e7e4;
+    --ring: #171717;
     --destructive: #b42318;
     --success: #187343;
     --radius: 0.8125rem;

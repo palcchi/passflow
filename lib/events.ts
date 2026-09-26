@@ -1,6 +1,6 @@
 import { getSupabaseConfig } from "@/lib/supabase/config";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-export const defaultEventTheme={primary:"#1769c2",secondary:"#ffd447",background:"#ffffff",foreground:"#14213d",surface:"#ffffff"};
+export const defaultEventTheme={primary:"#181818",secondary:"#f2c94c",background:"#ffffff",foreground:"#171717",surface:"#ffffff"};
 export type EventTheme={primary:string;secondary:string;background:string;foreground:string;surface:string};
 export type PassFlowEvent={id:string;name:string;slug:string;eyebrow:string;description:string;venue:string;dateLabel:string;attendeeCount:number;checkedInCount:number;theme:EventTheme;status?:string;capacity?:number;startsAt?:string|null;endsAt?:string|null;heroImageUrl:string|null;logoUrl:string|null;posterUrl:string|null};
 export const demoEvents:PassFlowEvent[]=[

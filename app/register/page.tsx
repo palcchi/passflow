@@ -1,14 +1,71 @@
 import Link from "next/link";
-import { ArrowLeft, KeyRound, Mail } from "lucide-react";
+import { ArrowLeft, Mail } from "lucide-react";
 import { AuthSubmit } from "@/components/auth-submit";
 import { GoogleIcon } from "@/components/google-icon";
+import { PasswordField } from "@/components/password-field";
 import { signInWithGoogle, signUpWithEmail } from "@/app/auth/actions";
 import { safeNext } from "@/lib/auth/redirect";
 import { getAppOrigin, getSupabaseConfig } from "@/lib/supabase/config";
-export const metadata={title:"Buat akun"}; export const dynamic="force-dynamic";
-export default async function RegisterPage({searchParams}:{searchParams:Promise<Record<string,string|string[]|undefined>>}){
-  const p=await searchParams;
-  const next=safeNext(p.next);
-  const ready=!!getSupabaseConfig()&&!!getAppOrigin();
-  return <main className="min-h-screen bg-background px-5 py-8 sm:py-14"><div className="mx-auto max-w-md"><Link href="/" className="inline-flex min-h-11 items-center gap-2 text-sm text-muted-foreground"><ArrowLeft size={16}/> Kembali ke PassFlow</Link><section className="mt-10 rounded-lg border border-border bg-card p-6 sm:p-9"><span className="brand-mark mb-8">P</span><p className="text-xs font-semibold uppercase tracking-widest text-primary">Buat akun pengunjung</p><h1 className="mt-3 text-4xl font-semibold tracking-tight">Mulai dengan<br/>PassFlow.</h1><p className="mt-4 text-sm leading-6 text-muted-foreground">Daftar dengan email aktif. Tautan verifikasi akan dikirim ke inbox-mu.</p>{p.error&&<p role="alert" className="mt-6 rounded-md border border-destructive/30 p-3 text-sm text-destructive">Data tidak valid atau email belum dapat didaftarkan.</p>}{p.notice==="check-email"&&<p role="status" className="mt-6 rounded-md bg-muted p-3 text-sm">Cek inbox untuk memverifikasi email sebelum masuk.</p>}<form action={signUpWithEmail} className="mt-7 space-y-3"><input type="hidden" name="next" value={next}/><label className="flex items-center gap-2 rounded-md border border-border px-3"><Mail size={16} className="text-muted-foreground"/><span className="sr-only">Email</span><input required name="email" type="email" autoComplete="email" placeholder="email@contoh.com" className="min-h-11 w-full bg-transparent text-sm outline-none"/></label><label className="flex items-center gap-2 rounded-md border border-border px-3"><KeyRound size={16} className="text-muted-foreground"/><span className="sr-only">Password</span><input required name="password" type="password" minLength={8} autoComplete="new-password" placeholder="Password minimal 8 karakter" className="min-h-11 w-full bg-transparent text-sm outline-none"/></label><AuthSubmit disabled={!ready}>Buat akun dengan email</AuthSubmit></form><div className="my-6 flex items-center gap-3 text-xs text-muted-foreground before:h-px before:flex-1 before:bg-border after:h-px after:flex-1 after:bg-border">atau</div><form action={signInWithGoogle}><input type="hidden" name="next" value={next}/><AuthSubmit disabled={!ready} variant="outline"><GoogleIcon className="size-4" /> Daftar dengan Google</AuthSubmit></form><p className="mt-5 text-center text-xs text-muted-foreground">Sudah punya akun? <Link href={`/login?next=${encodeURIComponent(next)}`} className="font-semibold text-primary">Masuk</Link></p></section></div></main>
+
+export const metadata = { title: "Buat akun | PassFlow" };
+export const dynamic = "force-dynamic";
+
+export default async function RegisterPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const params = await searchParams;
+  const next = safeNext(params.next);
+  const ready = !!getSupabaseConfig() && !!getAppOrigin();
+
+  return (
+    <main className="min-h-screen bg-[#fafafa] px-5 py-7 sm:py-12">
+      <div className="mx-auto max-w-md">
+        <Link href="/" className="inline-flex min-h-11 items-center gap-2 text-sm text-neutral-500 transition hover:text-neutral-950">
+          <ArrowLeft size={16} /> Kembali
+        </Link>
+
+        <section className="mt-8 rounded-2xl border border-black/5 bg-white p-6 shadow-[0_18px_60px_rgba(0,0,0,0.05)] sm:p-9">
+          <span className="grid size-10 place-items-center rounded-xl bg-neutral-950 text-sm font-bold text-white">P</span>
+          <h1 className="mt-8 text-3xl font-semibold tracking-[-0.04em] text-neutral-950">Buat akun PassFlow.</h1>
+          <p className="mt-2 text-sm leading-6 text-neutral-500">Satu akun untuk event, pass, dan akses kamu.</p>
+
+          {params.error && <p role="alert" className="mt-5 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">Email belum dapat didaftarkan. Periksa kembali datanya.</p>}
+          {params.notice === "check-email" && <p role="status" className="mt-5 rounded-xl bg-neutral-100 p-3 text-sm text-neutral-600">Cek email untuk menyelesaikan verifikasi akun.</p>}
+
+          <form action={signUpWithEmail} className="mt-7 space-y-3">
+            <input type="hidden" name="next" value={next} />
+            <div className="flex min-h-12 items-center gap-3 rounded-xl border border-border bg-background px-3 transition focus-within:border-foreground/30 focus-within:ring-2 focus-within:ring-ring/15">
+              <Mail size={17} className="text-muted-foreground" aria-hidden="true" />
+              <label htmlFor="register-email" className="sr-only">Email</label>
+              <input
+                id="register-email"
+                required
+                name="email"
+                type="email"
+                autoComplete="email"
+                placeholder="Email"
+                className="min-w-0 flex-1 bg-transparent text-sm outline-none"
+              />
+            </div>
+            <PasswordField autoComplete="new-password" placeholder="Password minimal 8 karakter" />
+            <AuthSubmit disabled={!ready}>Buat akun</AuthSubmit>
+          </form>
+
+          <div className="my-5 flex items-center gap-3 text-[11px] uppercase tracking-[0.16em] text-neutral-400 before:h-px before:flex-1 before:bg-neutral-200 after:h-px after:flex-1 after:bg-neutral-200">atau</div>
+
+          <form action={signInWithGoogle}>
+            <input type="hidden" name="next" value={next} />
+            <AuthSubmit disabled={!ready} variant="outline"><GoogleIcon className="size-4" /> Daftar dengan Google</AuthSubmit>
+          </form>
+
+          <p className="mt-6 text-center text-xs text-neutral-500">
+            Sudah punya akun?{" "}
+            <Link href={`/login?next=${encodeURIComponent(next)}`} className="font-semibold text-neutral-950">Masuk</Link>
+          </p>
+        </section>
+      </div>
+    </main>
+  );
 }
