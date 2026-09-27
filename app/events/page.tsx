@@ -15,7 +15,7 @@ export default async function EventsPage() {
     typeof user.user_metadata.full_name === "string" &&
     user.user_metadata.full_name.trim()
       ? user.user_metadata.full_name.trim()
-      : user.email?.split("@")[0] || "Pengunjung";
+      : user.email?.split("@")[0] || "Attendee";
   const avatarUrl =
     typeof user.user_metadata.avatar_url === "string"
       ? user.user_metadata.avatar_url
