@@ -88,7 +88,7 @@ export default async function EventPeoplePage({ params, searchParams }: Props) {
                 <strong>
                   {ticket.price > 0
                     ? `${ticket.currency} ${Number(ticket.price).toLocaleString("id-ID")}`
-                    : "Gratis"}
+                    : "Free"}
                 </strong>
               </div>
             </div>
@@ -128,7 +128,7 @@ export default async function EventPeoplePage({ params, searchParams }: Props) {
           <div>
             <span className="section-kicker">Attendees</span>
             <h2>Registration list</h2>
-            <p>{attendees.length} attendee ditampilkan dari hasil saat ini.</p>
+            <p>{attendees.length} attendees shown in the current results.</p>
           </div>
           <div className="event-admin-head-actions">
             <AvatarCircles
