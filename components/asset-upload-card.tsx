@@ -100,7 +100,7 @@ export function AssetUploadCard({
           if (inputRef.current) inputRef.current.value = "";
         }
       } catch {
-        setMessage("Upload belum berhasil. Periksa koneksi lalu coba lagi.");
+        setMessage("Upload failed. Check your connection and try again.");
         setSuccess(false);
       }
     });
@@ -145,7 +145,7 @@ export function AssetUploadCard({
         </button>
         {fileName && (
           <button className="button button-ghost" type="button" disabled={pending} onClick={clearSelection}>
-            <X size={15} /> Batal
+            <X size={15} /> Cancel
           </button>
         )}
       </div>
