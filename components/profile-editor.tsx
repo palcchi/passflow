@@ -16,7 +16,7 @@ function SubmitButton({
   return (
     <button className={className} type="submit" disabled={pending}>
       {pending ? <span className="loading-dot" /> : null}
-      {pending ? "Menyimpan..." : children}
+      {pending ? "Saving..." : children}
     </button>
   );
 }
