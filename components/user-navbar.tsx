@@ -92,7 +92,7 @@ export function UserNavbar({
           </div>
         </div>
 
-        <div className="flow-sidebar-note"><FlowShapes/><strong>Make events flow.</strong><span>Satu ruang untuk setiap momen.</span></div>
+        <div className="flow-sidebar-note"><FlowShapes/><strong>Make events flow.</strong><span>One workspace for every event.</span></div>
 
         <div className="user-nav-actions">
           <ThemeToggle />
@@ -100,8 +100,8 @@ export function UserNavbar({
           <Link
             href={organizer ? "/admin/events/new" : "/events"}
             className="user-nav-icon-button"
-            aria-label={organizer ? "Buat event" : "Jelajahi event"}
-            title={organizer ? "Buat event" : "Jelajahi event"}
+            aria-label={organizer ? "Create event" : "Explore events"}
+            title={organizer ? "Create event" : "Explore events"}
           >
             <Plus size={18} />
           </Link>
@@ -110,7 +110,7 @@ export function UserNavbar({
             type="button"
             className="user-profile-trigger"
             aria-expanded={openMenu === "profile"}
-            aria-label="Menu akun"
+            aria-label="Account menu"
             onClick={() => setOpenMenu(openMenu === "profile" ? null : "profile")}
           >
             <span
@@ -159,7 +159,7 @@ export function UserNavbar({
               <UserRound size={16} />
               <span>
                 <strong>Profile</strong>
-                <small>Foto, nama, username, Figma</small>
+                <small>Photo, name, username, and Figma</small>
               </span>
             </Link>
             {organizer && (
@@ -174,7 +174,7 @@ export function UserNavbar({
             <form action={signOut}>
               <button type="submit" className="user-profile-logout">
                 <LogOut size={16} />
-                <span>Keluar</span>
+                <span>Sign out</span>
               </button>
             </form>
           </div>
@@ -197,7 +197,7 @@ export function UserNavbar({
             <form action={signOut}>
               <button type="submit">
                 <LogOut size={16} />
-                Keluar
+                Sign out
               </button>
             </form>
           </div>
