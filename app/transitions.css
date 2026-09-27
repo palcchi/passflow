@@ -10,7 +10,6 @@ body {
 .pf-route-stage {
   width: 100%;
   min-height: 100dvh;
-  will-change: transform;
 }
 
 .user-nav-link,
@@ -168,7 +167,8 @@ body {
 /* Native view transitions keep shared chrome visually stable while the
    server-rendered route tree swaps underneath it. */
 @supports (view-transition-name: passflow-route-content) {
-  .pf-route-stage {
+  .pf-route-stage > .flow-workspace > main,
+  .pf-route-stage > main {
     view-transition-name: passflow-route-content;
   }
 
@@ -187,26 +187,29 @@ body {
   }
 
   ::view-transition-old(passflow-route-content) {
-    animation: pf-route-out 190ms cubic-bezier(0.4, 0, 1, 1) both;
+    animation: pf-route-out 180ms cubic-bezier(0.4, 0, 1, 1) both;
   }
 
   ::view-transition-new(passflow-route-content) {
-    animation: pf-route-in 260ms cubic-bezier(0.22, 1, 0.36, 1) both;
+    animation: pf-route-in 280ms cubic-bezier(0.22, 1, 0.36, 1) both;
   }
 }
 
 @keyframes pf-route-out {
   to {
-    transform: translateX(-8px);
+    opacity: .96;
+    transform: translateY(-5px);
   }
 }
 
 @keyframes pf-route-in {
   from {
-    transform: translateX(12px);
+    opacity: .72;
+    transform: translateY(12px);
   }
 
   to {
-    transform: translateX(0);
+    opacity: 1;
+    transform: translateY(0);
   }
 }

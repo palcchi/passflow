@@ -107,7 +107,7 @@ export function UserNavbar({
                     <motion.span
                       className="user-nav-active-pill"
                       layoutId="passflow-global-nav-pill"
-                      transition={reduceMotion ? { duration: 0 } : { type: "spring", stiffness: 420, damping: 36, mass: 0.72 }}
+                      transition={reduceMotion ? { duration: 0 } : { type: "spring", stiffness: 300, damping: 30, mass: 0.82 }}
                     />
                   )}
                   <span className="user-nav-link-content"><Icon size={16}/>{label}</span>

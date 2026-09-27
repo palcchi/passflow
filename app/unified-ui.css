@@ -1063,6 +1063,9 @@
     max-height: 100dvh !important;
     overflow-y: auto !important;
     overscroll-behavior: contain;
+    z-index: 60 !important;
+    transform: none !important;
+    will-change: auto !important;
   }
 
   .flow-workspace {
@@ -1070,13 +1073,122 @@
   }
 }
 
-/* Participant presence, based on the Magic UI avatar-circle pattern. */
-.metric-avatar-circles {
-  margin-top: 8px;
+/* Participant presence on organizer event cards. */
+.class-event-footer-right {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
 }
 
-.metric-avatar-circles .avatar-circle {
+.event-card-avatar-circles {
+  padding-left: 6px;
+}
+
+.event-card-avatar-circles .avatar-circle {
+  width: 27px;
+  height: 27px;
+  margin-left: -7px;
+  font-size: 8px;
+}
+
+.flow-event-list .event-card-avatar-circles .avatar-circle {
+  width: 25px;
+  height: 25px;
+}
+
+.people-identity {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.people-avatar {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--muted);
+  background-position: center;
+  background-size: cover;
+  color: var(--foreground);
+  font-size: 10px;
+  font-weight: 750;
+}
+
+@media (max-width: 680px) {
+  .flow-event-list .event-card-avatar-circles {
+    display: none;
+  }
+
+  .people-avatar {
+    width: 30px;
+    height: 30px;
+    flex-basis: 30px;
+  }
+}
+
+
+/* Event cards show real attendee presence beside the action arrow. */
+.class-event-footer-presence {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
+}
+
+.class-event-footer-presence .avatar-circles {
+  padding-left: 6px;
+}
+
+.class-event-footer-presence .avatar-circle {
+  width: 25px;
+  height: 25px;
+  font-size: 8px;
+}
+
+/* Compact attendee list with the attendee's private pass photo when available. */
+.attendee-name-cell {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.attendee-list-avatar {
   width: 30px;
   height: 30px;
+  flex: 0 0 30px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background-color: var(--muted);
+  background-position: center;
+  background-size: cover;
+  color: var(--foreground);
   font-size: 9px;
+  font-weight: 750;
+}
+
+/* Desktop sidebar stays pinned because route motion now only targets page content. */
+@media (min-width: 1024px) {
+  .flow-sidebar.user-nav-shell {
+    position: fixed !important;
+    top: 0 !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    z-index: 50 !important;
+    width: 218px !important;
+    height: 100dvh !important;
+    max-height: 100dvh !important;
+    overflow-y: auto !important;
+    transform: none !important;
+  }
 }
