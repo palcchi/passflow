@@ -36,7 +36,7 @@ export default async function NewEventPage({
           <label className="block text-sm font-medium">Venue
             <input name="venue" maxLength={160} className="mt-2 min-h-12 w-full rounded-md border border-input bg-background px-3" placeholder="e.g. Jakarta Convention Center" />
           </label>
-          <DateTimeField name="startsAt" label="Mulai" />
+          <DateTimeField name="startsAt" label="Start date & time" />
           <DateTimeField name="endsAt" label="Selesai" />
           <label className="block text-sm font-medium">Attendee capacity
             <FormattedNumberInput name="capacity" min={0} className="mt-2 min-h-12 w-full rounded-md border border-input bg-background px-3" placeholder="e.g. 500" />
