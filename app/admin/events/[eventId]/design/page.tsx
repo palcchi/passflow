@@ -66,7 +66,7 @@ export default async function EventDesignPage({
         <h2>Design library</h2>
         <p>
           Sinkronkan frame Figma dan marker dinamis tanpa mengulang identitas
-          event yang sudah tampil di atas.
+          the event shown above.
         </p>
       </header>
 
@@ -291,7 +291,7 @@ export default async function EventDesignPage({
               </label>
 
               <label>
-                Untuk kategori tiket
+                For pass category
                 <SmartSelect
                   name="ticketTypeId"
                   value=""
@@ -361,7 +361,7 @@ export default async function EventDesignPage({
               </label>
 
               <div className="design-form-url design-marker-note">
-                <strong>Marker yang didukung</strong>
+                <strong>Supported markers</strong>
                 <p>{markerHelp}</p>
                 <p>
                   The PassFlow Design plugin can insert these markers automatically. Layer names
