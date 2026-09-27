@@ -19,7 +19,7 @@ export default async function EventAppearancePage({
         <span className="section-kicker">Customize</span>
         <h2>Make it yours.</h2>
         <p>
-          Beri event kamu karakter. Pilih tampilan, lihat hasilnya, lalu simpan.
+          Define the event identity, preview the result, and publish a consistent visual experience.
         </p>
       </header>
 
