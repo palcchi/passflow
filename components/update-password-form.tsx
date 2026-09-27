@@ -23,7 +23,7 @@ export function UpdatePasswordForm() {
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const password = String(new FormData(event.currentTarget).get("password") ?? "");
-    if (password.length < 8) { setError("Password minimal 8 karakter."); return; }
+    if (password.length < 8) { setError("Password must be at least 8 characters."); return; }
     setSaving(true); setError("");
     try {
       const { error: updateError } = await createBrowserSupabaseClient().auth.updateUser({ password });
