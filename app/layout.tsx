@@ -5,7 +5,9 @@ import "./apple-workspace.css";
 import "./editorial.css";
 import "./flow.css";
 import "./unified-ui.css";
+import "./transitions.css";
 import LanguagePolish from "./language-polish";
+import { RouteTransition } from "@/components/route-transition";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -55,7 +57,7 @@ export default function RootLayout({
       </head>
       <body>
         <LanguagePolish />
-        {children}
+        <RouteTransition>{children}</RouteTransition>
       </body>
     </html>
   );
