@@ -180,7 +180,7 @@ export default async function ProfilePage({
                 </button>
               </form>
             ) : figmaConfigured() ? (
-              <a href="/api/figma/connect" className="button button-dark">
+              <a href="/api/figma/connect" data-no-transition="true" className="button button-dark">
                 Connect Figma
               </a>
             ) : (
