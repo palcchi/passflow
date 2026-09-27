@@ -22,19 +22,19 @@ const modes: Array<{
   {
     value: "id_card_portrait",
     label: "ID card portrait",
-    description: "Kartu tegak untuk badge atau lanyard",
+    description: "Portrait card for badges or lanyards",
     ratio: "0.707",
   },
   {
     value: "id_card_landscape",
     label: "ID card landscape",
-    description: "Kartu mendatar untuk akses cepat",
+    description: "Landscape card for quick access",
     ratio: "1.586",
   },
   {
     value: "wristband",
     label: "Wristband",
-    description: "Format strip untuk gelang fisik",
+    description: "Strip format for physical wristbands",
     ratio: "3.2",
   },
 ];
@@ -196,7 +196,7 @@ export function QrDeliveryEditor({ event }: { event: PassFlowEvent }) {
 
           <div className="qr-save-row">
             {message && <span role={success ? "status" : "alert"} className={`customize-feedback ${success ? "is-success" : "is-error"}`}>{message}</span>}
-            {!validDimensions && <p role="alert" className="customize-feedback is-error">Ukuran template harus 20 sampai 500 mm.</p>}
+            {!validDimensions && <p role="alert" className="customize-feedback is-error">Template dimensions must be between 20 and 500 mm.</p>}
             {validDimensions && !qrFits && <p role="alert" className="customize-feedback is-error">QR melewati tepi pass. Sesuaikan posisi atau ukurannya.</p>}
             <button className="button button-dark" type="button" disabled={pending || !validDimensions || !qrFits} onClick={save}>
               {pending ? "Saving..." : message && success ? "Saved" : "Save QR settings"}
