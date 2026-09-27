@@ -108,11 +108,11 @@ export function QrScanner({ stationId, stationName, eventName, venue }: {
       <p>Select the camera on this device before scanning attendee QR codes.</p>
       <button className="camera-discover" onClick={discover} disabled={discovering}>
         {discovering ? <LoaderCircle className="animate-spin" size={18}/> : <Camera size={18}/>}
-        {discovering ? "Mendeteksi kamera…" : devices.length ? "Deteksi ulang kamera" : "Izinkan & deteksi kamera"}
+        {discovering ? "Detecting cameras…" : devices.length ? "Detect cameras again" : "Allow & detect cameras"}
       </button>
-      {!!devices.length && <fieldset className="camera-device-list"><legend>Kamera terdeteksi</legend>
+      {!!devices.length && <fieldset className="camera-device-list"><legend>Detected cameras</legend>
         {devices.map((device, index) => <label key={device.id} data-selected={selected === device.id}>
-          <Camera size={20}/><span>{device.label || `Kamera ${index + 1}`}</span>
+          <Camera size={20}/><span>{device.label || `Camera ${index + 1}`}</span>
           <input type="radio" name="camera" value={device.id} checked={selected === device.id} onChange={() => setSelected(device.id)}/>
         </label>)}
       </fieldset>}
@@ -128,13 +128,13 @@ export function QrScanner({ stationId, stationName, eventName, venue }: {
       <div><span>PassFlow · {stationName}</span><h1>{eventName}</h1><p>{venue || stationName}</p></div>
       <span className="camera-live-status">{ready && !error ? "LIVE" : "…"}</span>
     </header>
-    {!ready && !error && <div className="camera-live-loading" role="status"><LoaderCircle className="animate-spin"/> Menyalakan kamera…</div>}
+    {!ready && !error && <div className="camera-live-loading" role="status"><LoaderCircle className="animate-spin"/> Starting camera…</div>}
     {error && <div className="camera-verdict" role="alert"><ShieldAlert size={42}/><h2>Camera not ready.</h2><p>{error}</p><button onClick={() => { setActive(""); setError(""); }}>Choose another camera</button></div>}
     {result && <div className="camera-verdict" data-success={success} role="status" aria-live="polite">
       {success ? <Check size={48}/> : <ShieldAlert size={48}/>}
       <h2>{titles[result.status] ?? "Periksa pass."}</h2>
-      {result.name && <strong>{result.name}</strong>}<p>{result.message}</p><small>Siap scan berikutnya dalam 3 detik</small>
+      {result.name && <strong>{result.name}</strong>}<p>{result.message}</p><small>Ready for the next scan in 3 seconds</small>
     </div>}
-    {!result && !error && <footer className="camera-live-footer"><strong>{ready ? "Arahkan QR ke kamera." : "Tunggu sebentar."}</strong><span>Digital pass · ID card · Wristband</span></footer>}
+    {!result && !error && <footer className="camera-live-footer"><strong>{ready ? "Hold the QR code in front of the camera." : "Please wait."}</strong><span>Digital pass · ID card · Wristband</span></footer>}
   </main>;
 }
