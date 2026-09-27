@@ -38,10 +38,10 @@ export function PeopleRecordEditor({ eventId, kind, record, tickets = [] }: {
           <label>Name<input name="name" defaultValue={record.name} required maxLength={100}/></label>
           {kind === "attendee" ? <>
             <label>Email<input name="email" type="email" defaultValue={record.email ?? ""}/></label>
-            <label>Telepon<input name="phone" type="tel" inputMode="tel" defaultValue={record.phone ?? ""} maxLength={40}/></label>
+            <label>Phone<input name="phone" type="tel" inputMode="tel" defaultValue={record.phone ?? ""} maxLength={40}/></label>
             <label>Pass category<SmartSelect name="ticketTypeId" value={record.ticket_type_id ?? ""} options={[{ value: "", label: "No category" }, ...tickets.map(ticket => ({ value: ticket.id, label: ticket.name }))]}/></label>
           </> : <>
-            <label>Deskripsi<textarea name="description" defaultValue={record.description ?? ""} maxLength={500}/></label>
+            <label>Description<textarea name="description" defaultValue={record.description ?? ""} maxLength={500}/></label>
             <label>Capacity (leave blank for unlimited)<FormattedNumberInput name="capacity" defaultValue={record.capacity ?? undefined} min={0}/></label>
             <label>Price<input name="price" inputMode="decimal" defaultValue={(record.price ?? 0).toLocaleString("en-US", { maximumFractionDigits: 2 })} required onBlur={event => {
               const value = event.target.value.trim();
