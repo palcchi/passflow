@@ -35,10 +35,10 @@ export async function managePersonRecord(form: FormData): Promise<{ error?: stri
       if (error || !data) return { error: "The attendee could not be saved. Review the information and try again." };
     } else {
       const capacityRaw = String(form.get("capacity") ?? "").trim();
-      const capacity = capacityRaw ? Number(capacityRaw.replace(/\./g, "")) : null;
+      const capacity = capacityRaw ? Number(capacityRaw.replace(/,/g, "")) : null;
       const priceRaw = String(form.get("price") ?? "").trim();
-      if (!/^(?:\d+|\d{1,3}(?:\.\d{3})+)(?:,\d{1,2})?$/.test(priceRaw)) return { error: "Use a valid price format, for example 150,000 or 12.50." };
-      const price = Number(priceRaw.replace(/\./g, "").replace(",", "."));
+      if (!/^(?:\d+|\d{1,3}(?:,\d{3})+)(?:\.\d{1,2})?$/.test(priceRaw)) return { error: "Use a valid price format, for example 150,000 or 12.50." };
+      const price = Number(priceRaw.replace(/,/g, ""));
       if ((capacity !== null && (!Number.isSafeInteger(capacity) || capacity < 0)) || !Number.isFinite(price) || price < 0) return { error: "Capacity and price must be zero or positive numbers." };
       const { count, error: countError } = await supabase.from("attendees").select("id", { count: "exact", head: true }).eq("event_id", eventId).eq("ticket_type_id", id);
       if (countError) return { error: "The attendee count could not be verified." };
