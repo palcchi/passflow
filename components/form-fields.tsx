@@ -45,7 +45,7 @@ function useExclusivePopover(open: boolean, setOpen: (value: boolean) => void) {
 
 function formatInteger(value: string | number | null | undefined) {
   const digits = String(value ?? "").replace(/[^0-9]/g, "");
-  return digits ? Number(digits).toLocaleString("id-ID") : "";
+  return digits ? Number(digits).toLocaleString("en-US") : "";
 }
 
 export function FormattedNumberInput({
@@ -69,7 +69,7 @@ export function FormattedNumberInput({
       name={name}
       value={value}
       inputMode="numeric"
-      pattern="[0-9.]*"
+      pattern="[0-9,]*"
       type="text"
       placeholder={placeholder}
       className={className}
@@ -213,7 +213,7 @@ export function DateTimeField({
     },
   );
   const dateLabel = date
-    ? new Intl.DateTimeFormat("id-ID", {
+    ? new Intl.DateTimeFormat("en-US", {
         day: "2-digit",
         month: "short",
         year: "numeric",
@@ -269,7 +269,7 @@ export function DateTimeField({
                     <ChevronLeft size={16} />
                   </button>
                   <strong>
-                    {new Intl.DateTimeFormat("id-ID", {
+                    {new Intl.DateTimeFormat("en-US", {
                       month: "long",
                       year: "numeric",
                     }).format(month)}
@@ -283,7 +283,7 @@ export function DateTimeField({
                   </button>
                 </div>
                 <div className="calendar-weekdays">
-                  {["Mg", "Sn", "Sl", "Rb", "Km", "Jm", "Sb"].map((day) => (
+                  {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
                     <span key={day}>{day}</span>
                   ))}
                 </div>
@@ -313,7 +313,7 @@ export function DateTimeField({
           </AnimatePresence>
         </div>
         <div className="time-picker-wrap">
-          <span>Jam</span>
+          <span>Time</span>
           <SmartSelect
             name={`${name}_time`}
             value={time}
