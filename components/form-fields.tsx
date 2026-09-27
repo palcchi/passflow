@@ -170,7 +170,7 @@ export function SmartSelect({
 export function DateTimeField({
   name,
   defaultValue,
-  label = "Tanggal dan waktu",
+  label = "Date and time",
 }: {
   name: string;
   defaultValue?: string | null;
@@ -218,7 +218,7 @@ export function DateTimeField({
         month: "short",
         year: "numeric",
       }).format(new Date(`${date}T00:00:00`))
-    : "Pilih tanggal";
+    : "Select a date";
   const timeOptions = Array.from({ length: 48 }, (_, index) => {
     const hours = String(Math.floor(index / 2)).padStart(2, "0");
     return `${hours}:${index % 2 ? "30" : "00"}`;
@@ -235,7 +235,7 @@ export function DateTimeField({
       <span className="field-label">{label}</span>
       <div className="date-time-grid">
         <div className="date-picker-wrap" ref={rootRef}>
-          <span>Tanggal</span>
+          <span>Date</span>
           <button
             type="button"
             className="date-picker-trigger"
@@ -263,7 +263,7 @@ export function DateTimeField({
                 <div className="date-picker-head">
                   <button
                     type="button"
-                    aria-label="Bulan sebelumnya"
+                    aria-label="Previous month"
                     onClick={() => setMonth(new Date(year, monthIndex - 1, 1))}
                   >
                     <ChevronLeft size={16} />
@@ -276,7 +276,7 @@ export function DateTimeField({
                   </strong>
                   <button
                     type="button"
-                    aria-label="Bulan berikutnya"
+                    aria-label="Next month"
                     onClick={() => setMonth(new Date(year, monthIndex + 1, 1))}
                   >
                     <ChevronRight size={16} />
