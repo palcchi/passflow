@@ -117,7 +117,7 @@ export function QrScanner({ stationId, stationName, eventName, venue }: {
         </label>)}
       </fieldset>}
       {error && <p role="alert" className="camera-feedback">{error}</p>}
-      <button className="camera-start" disabled={!selected || discovering} onClick={() => { setError(""); setReady(false); setResult(null); setActive(selected); }}>Mulai scan <ArrowLeft className="rotate-180" size={18}/></button>
+      <button className="camera-start" disabled={!selected || discovering} onClick={() => { setError(""); setReady(false); setResult(null); setActive(selected); }}>Start scanning <ArrowLeft className="rotate-180" size={18}/></button>
     </section>
   </main>;
 
@@ -132,7 +132,7 @@ export function QrScanner({ stationId, stationName, eventName, venue }: {
     {error && <div className="camera-verdict" role="alert"><ShieldAlert size={42}/><h2>Camera not ready.</h2><p>{error}</p><button onClick={() => { setActive(""); setError(""); }}>Choose another camera</button></div>}
     {result && <div className="camera-verdict" data-success={success} role="status" aria-live="polite">
       {success ? <Check size={48}/> : <ShieldAlert size={48}/>}
-      <h2>{titles[result.status] ?? "Periksa pass."}</h2>
+      <h2>{titles[result.status] ?? "Check this pass."}</h2>
       {result.name && <strong>{result.name}</strong>}<p>{result.message}</p><small>Ready for the next scan in 3 seconds</small>
     </div>}
     {!result && !error && <footer className="camera-live-footer"><strong>{ready ? "Hold the QR code in front of the camera." : "Please wait."}</strong><span>Digital pass · ID card · Wristband</span></footer>}
