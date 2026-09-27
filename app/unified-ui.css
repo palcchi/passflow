@@ -1,0 +1,397 @@
+/* PassFlow unified visual layer.
+   Public landing, auth, attendee and organizer surfaces share the same quiet
+   rounded language. Scanner and print surfaces are intentionally untouched. */
+
+:root {
+  --pf-radius-xl: 28px;
+  --pf-radius-lg: 22px;
+  --pf-radius-md: 16px;
+  --pf-radius-sm: 12px;
+  --pf-float-shadow: 0 16px 45px rgba(20, 20, 20, 0.08);
+}
+
+:root[data-theme="dark"] {
+  --pf-float-shadow: 0 18px 48px rgba(0, 0, 0, 0.28);
+}
+
+/* Public homepage */
+.editorial-landing {
+  max-width: 1500px;
+}
+
+.editorial-nav {
+  position: sticky;
+  top: 12px;
+  z-index: 50;
+  min-height: 64px;
+  height: 64px;
+  margin: 12px auto 20px;
+  padding: 0 14px 0 18px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: color-mix(in srgb, var(--card) 88%, transparent);
+  box-shadow: 0 8px 30px rgba(20, 20, 20, 0.045);
+  backdrop-filter: blur(18px) saturate(130%);
+  -webkit-backdrop-filter: blur(18px) saturate(130%);
+}
+
+.editorial-canvas {
+  border-radius: var(--pf-radius-xl);
+}
+
+.organizer-invitation {
+  border-radius: var(--pf-radius-xl);
+}
+
+.class-event-card {
+  overflow: hidden;
+  border-radius: var(--pf-radius-lg);
+}
+
+.editorial-section .class-event-cover,
+.flow-workspace .class-event-grid:not(.flow-event-list) .class-event-cover {
+  height: auto !important;
+  aspect-ratio: 16 / 9;
+  border-radius: var(--pf-radius-md) !important;
+  overflow: hidden;
+}
+
+.class-event-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.class-event-footer {
+  border-bottom-left-radius: var(--pf-radius-lg);
+  border-bottom-right-radius: var(--pf-radius-lg);
+}
+
+/* Workspace: keep the desktop sidebar, but use the same canvas and cards as home. */
+.flow-workspace {
+  background: var(--background) !important;
+}
+
+@media (min-width: 981px) {
+  .flow-sidebar.user-nav-shell {
+    background: color-mix(in srgb, var(--card) 96%, transparent) !important;
+  }
+
+  .flow-sidebar .user-nav-link {
+    border-radius: var(--pf-radius-sm) !important;
+  }
+
+  .flow-sidebar-note {
+    border: 1px solid color-mix(in srgb, var(--flow-violet) 14%, var(--border));
+    border-radius: 18px;
+  }
+}
+
+.flow-workspace .workspace-welcome {
+  min-height: 190px !important;
+  padding: 28px 30px !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--pf-radius-lg) !important;
+  background: var(--card) !important;
+  overflow: hidden;
+}
+
+.flow-workspace .studio-metric,
+.flow-workspace .event-admin-metric {
+  border: 1px solid var(--border) !important;
+  border-radius: 18px !important;
+  background: var(--card) !important;
+}
+
+.flow-workspace .studio-metric:first-child {
+  background: color-mix(in srgb, var(--flow-violet) 8%, var(--card)) !important;
+}
+
+.flow-workspace .studio-metric:nth-child(3) {
+  background: color-mix(in srgb, #8dcc62 7%, var(--card)) !important;
+}
+
+.flow-workspace .class-event-card {
+  border: 1px solid var(--border);
+  border-radius: var(--pf-radius-lg);
+  background: var(--card);
+}
+
+.flow-workspace .class-event-cover {
+  border-radius: var(--pf-radius-md) !important;
+}
+
+.flow-workspace .collection-search,
+.flow-workspace .collection-filters button,
+.flow-workspace .studio-empty-state {
+  border-radius: var(--pf-radius-md) !important;
+}
+
+.flow-workspace .flow-event-list {
+  gap: 10px;
+}
+
+.flow-workspace .flow-event-list .class-event-card {
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--pf-radius-md);
+  background: var(--card);
+}
+
+.flow-workspace .flow-event-list .class-event-card:hover {
+  background: color-mix(in srgb, var(--muted) 66%, var(--card));
+}
+
+.flow-workspace .flow-event-list .class-event-cover {
+  width: 62px;
+  height: 62px !important;
+  aspect-ratio: auto;
+  border-radius: 12px !important;
+}
+
+.flow-workspace :is(
+  .event-admin-section,
+  .theme-controls,
+  .design-workspace,
+  .design-connect-card,
+  .studio-panel,
+  .profile-card.liquid-panel,
+  .profile-integration-card,
+  .create-event-form,
+  .qr-editor-section
+) {
+  border-radius: var(--pf-radius-lg) !important;
+}
+
+.flow-workspace :is(
+  .event-admin-mini-card,
+  .event-admin-list-card,
+  .event-overview-action,
+  .event-admin-subpanel,
+  .event-admin-credential-card,
+  .event-admin-row-card,
+  .asset-upload-card
+) {
+  border-radius: var(--pf-radius-md) !important;
+}
+
+.flow-workspace :is(
+  .event-admin-input,
+  .event-admin-search,
+  .smart-select-trigger,
+  .date-picker-trigger,
+  .date-time-grid input,
+  .profile-details-form input
+) {
+  border-radius: 13px !important;
+}
+
+/* Event management header and the event-local flying navigation. */
+.flow-workspace .studio-event-hero {
+  padding: 26px 28px !important;
+  border: 1px solid color-mix(in srgb, var(--event-admin-accent) 16%, var(--border)) !important;
+  border-radius: var(--pf-radius-lg) !important;
+  background: color-mix(in srgb, var(--event-admin-accent) 4%, var(--card)) !important;
+  overflow: hidden;
+}
+
+.flow-workspace.event-admin-context .event-section-dock {
+  position: sticky !important;
+  top: 14px !important;
+  z-index: 38;
+  width: max-content;
+  max-width: 100%;
+  margin: 18px auto 24px !important;
+  padding: 6px !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 999px !important;
+  background: color-mix(in srgb, var(--card) 88%, transparent) !important;
+  box-shadow: var(--pf-float-shadow);
+  backdrop-filter: blur(18px) saturate(135%) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(135%) !important;
+}
+
+.flow-workspace.event-admin-context .event-section-dock-scroll {
+  gap: 2px !important;
+  padding: 0 !important;
+  scrollbar-width: none;
+}
+
+.flow-workspace.event-admin-context .event-section-dock-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.flow-workspace.event-admin-context .event-dock-item {
+  min-height: 38px;
+  padding: 9px 14px !important;
+  border: 0 !important;
+  border-radius: 999px !important;
+  background: transparent !important;
+  color: var(--muted-foreground) !important;
+  transition: background 160ms ease, color 160ms ease, transform 160ms ease;
+}
+
+.flow-workspace.event-admin-context .event-dock-item:hover {
+  background: var(--muted) !important;
+  color: var(--foreground) !important;
+}
+
+.flow-workspace.event-admin-context .event-dock-item[data-active="true"] {
+  background: var(--event-admin-accent) !important;
+  color: var(--event-admin-accent-text) !important;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--event-admin-accent-text) 9%, transparent);
+}
+
+/* Auth and profile */
+.auth-layout {
+  border-radius: var(--pf-radius-xl) !important;
+}
+
+.auth-story {
+  border-radius: var(--pf-radius-lg) !important;
+}
+
+.auth-input,
+.auth-shell .auth-submit[data-slot="button"],
+.profile-avatar-picker,
+.profile-integration-card {
+  border-radius: var(--pf-radius-md) !important;
+}
+
+/* Public event template keeps the organizer palette, only the structure is unified. */
+.event-public-shell.flow-public-event {
+  min-height: 100vh;
+  padding: 12px 22px 38px;
+}
+
+.event-public-nav {
+  position: sticky;
+  top: 12px;
+  z-index: 40;
+  height: 64px;
+  padding: 0 16px;
+  border: 1px solid color-mix(in srgb, var(--event-fg) 12%, transparent);
+  border-radius: 20px;
+  background: color-mix(in srgb, var(--event-surface) 88%, transparent);
+  box-shadow: 0 10px 35px color-mix(in srgb, var(--event-fg) 7%, transparent);
+  backdrop-filter: blur(18px) saturate(130%);
+  -webkit-backdrop-filter: blur(18px) saturate(130%);
+}
+
+.event-public-hero {
+  margin-top: 18px;
+  padding: 48px;
+  border: 1px solid color-mix(in srgb, var(--event-fg) 11%, transparent);
+  border-radius: var(--pf-radius-xl);
+  background: var(--event-surface);
+  overflow: hidden;
+}
+
+.event-public-cover,
+.event-public-art {
+  border-radius: var(--pf-radius-lg);
+  overflow: hidden;
+}
+
+.event-public-cover {
+  width: 100%;
+  max-height: 560px;
+  object-fit: cover;
+}
+
+.event-info-grid article {
+  border-radius: var(--pf-radius-lg) !important;
+  background: var(--event-surface);
+}
+
+/* Customize: the hero upload is the public discovery banner, so preview it like one. */
+.customize-assets,
+.customize-card,
+.customize-preview-stage,
+.customize-preview-page {
+  border-radius: var(--pf-radius-lg) !important;
+}
+
+.customize-preview-art {
+  border-radius: var(--pf-radius-md);
+  overflow: hidden;
+}
+
+.customize-preview-art img {
+  object-fit: cover;
+}
+
+@media (max-width: 980px) {
+  .flow-workspace.event-admin-context .event-section-dock {
+    top: 78px !important;
+    width: 100%;
+    margin: 14px 0 22px !important;
+    border-radius: 18px !important;
+  }
+
+  .flow-workspace.event-admin-context .event-section-dock-scroll {
+    overflow-x: auto;
+  }
+}
+
+@media (max-width: 680px) {
+  .editorial-nav {
+    top: 8px;
+    height: 58px;
+    min-height: 58px;
+    margin: 8px 0 14px;
+    padding: 0 8px;
+    border-radius: 17px;
+  }
+
+  .editorial-nav-actions {
+    gap: 10px !important;
+  }
+
+  .editorial-canvas,
+  .organizer-invitation,
+  .auth-layout,
+  .event-public-hero {
+    border-radius: 22px !important;
+  }
+
+  .flow-workspace .workspace-welcome {
+    min-height: 210px !important;
+    padding: 24px !important;
+    border-radius: 20px !important;
+  }
+
+  .flow-workspace .flow-event-list .class-event-card {
+    padding: 10px;
+  }
+
+  .flow-workspace .flow-event-list .class-event-cover {
+    width: 50px;
+    height: 54px !important;
+  }
+
+  .flow-workspace.event-admin-context .event-section-dock {
+    top: 74px !important;
+    padding: 5px !important;
+    border-radius: 16px !important;
+  }
+
+  .flow-workspace.event-admin-context .event-dock-item {
+    padding: 9px 12px !important;
+  }
+
+  .event-public-shell.flow-public-event {
+    padding: 8px 12px 28px;
+  }
+
+  .event-public-nav {
+    top: 8px;
+    height: 58px;
+    border-radius: 17px;
+  }
+
+  .event-public-hero {
+    margin-top: 12px;
+    padding: 28px 22px;
+  }
+}
