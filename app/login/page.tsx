@@ -36,13 +36,13 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
     {params.notice === "reset-sent" && <p role="status" className="auth-notice">If the email is registered, a reset link has been sent.</p>}
     <form action={signInWithEmail} className="auth-form">
       <input type="hidden" name="next" value={next}/>
-      <label className="auth-field" htmlFor="login-email">Email<div className="auth-input"><Mail size={17} aria-hidden="true"/><input id="login-email" required name="email" type="email" autoComplete="email" inputMode="email" placeholder="name@company.com"/></div></label>
+      <label className="auth-field" htmlFor="login-email">Email<div className="auth-input"><Mail size={17} aria-hidden="true"/><input id="login-email" required name="email" type="email" autoComplete="email" inputMode="email" placeholder="you@company.com"/></div></label>
       <div className="auth-field"><span aria-hidden="true">Password</span><PasswordField autoComplete="current-password"/></div>
       <AuthSubmit disabled={!ready}>Sign in to PassFlow ↗</AuthSubmit>
     </form>
     <div className="auth-divider">or</div>
     <form action={signInWithGoogle}><input type="hidden" name="next" value={next}/><AuthSubmit disabled={!ready} variant="outline"><GoogleIcon className="size-4"/>Continue with Google</AuthSubmit></form>
     <div className="auth-form-links"><Link href={"/register?next=" + encodeURIComponent(next)}>Create an account</Link><Link href="/reset-password">Forgot password?</Link></div>
-    {params.error === "unverified" && <form action={resendSignupConfirmation} className="auth-form auth-resend"><input type="hidden" name="next" value={next}/><label className="auth-field">Verification email<div className="auth-input"><Mail size={17} aria-hidden="true"/><input required name="email" type="email" autoComplete="email" placeholder="name@company.com"/></div></label><AuthSubmit disabled={!ready} variant="outline">Resend verification email</AuthSubmit></form>}
+    {params.error === "unverified" && <form action={resendSignupConfirmation} className="auth-form auth-resend"><input type="hidden" name="next" value={next}/><label className="auth-field">Verification email<div className="auth-input"><Mail size={17} aria-hidden="true"/><input required name="email" type="email" autoComplete="email" placeholder="you@company.com"/></div></label><AuthSubmit disabled={!ready} variant="outline">Resend verification email</AuthSubmit></form>}
   </AuthShell>;
 }
