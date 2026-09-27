@@ -879,3 +879,20 @@
     min-height: 240px;
   }
 }
+
+
+@media (max-width: 340px) {
+  .editorial-section#events {
+    padding-inline: 16px;
+  }
+
+  .editorial-section#events .editorial-section-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .editorial-section#events .studio-text-link {
+    align-self: flex-start;
+    max-width: 100%;
+  }
+}
