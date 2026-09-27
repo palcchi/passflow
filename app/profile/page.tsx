@@ -163,7 +163,7 @@ export default async function ProfilePage({
                     href="/api/figma/connect"
                     className="button button-ghost"
                   >
-                    Hubungkan ulang
+                    Reconnect
                   </a>
                   <form action="/api/figma/disconnect" method="post">
                     <button type="submit" className="button button-ghost text-red-700">
@@ -176,7 +176,7 @@ export default async function ProfilePage({
                   href="/api/figma/connect"
                   className="button button-dark"
                 >
-                  Hubungkan Figma
+                  Connect Figma
                 </a>
               ) : <button type="button" className="button button-dark" disabled title="Figma integration is not available in this environment">Figma unavailable</button>}
               {organizer && (
