@@ -56,8 +56,8 @@ export default async function ProfilePage({
     },
     "invalid-name": { tone: "error", text: "Display name must be between 2 and 60 characters." },
     "avatar-missing": { tone: "error", text: "Choose a photo before saving." },
-    "avatar-format": { tone: "error", text: "Foto harus berformat JPG, PNG, atau WEBP." },
-    "avatar-size": { tone: "error", text: "Ukuran foto maksimal 2 MB." },
+    "avatar-format": { tone: "error", text: "Use a JPG, PNG, or WEBP image." },
+    "avatar-size": { tone: "error", text: "The maximum photo size is 2 MB." },
     "avatar-error": { tone: "error", text: "The profile photo could not be saved." },
     error: { tone: "error", text: "The profile could not be saved." },
   };
