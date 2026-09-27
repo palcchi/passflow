@@ -15,6 +15,7 @@ import { getSupabaseConfig } from "@/lib/supabase/config";
 import { readTemplate } from "@/lib/design-template";
 import { CollectionArtwork, Sticker } from "@/components/flow-brand-art";
 import { KineticText } from "@/components/magicui/kinetic-text";
+import { FlowMark } from "@/components/flow-art";
 import { eventInk } from "@/lib/event-colors";
 
 type EventPageProps = {
@@ -34,6 +35,8 @@ export default async function PublicEventPage({ params, searchParams }: EventPag
   }
 
   const themeStyle = {
+    "--foreground": event.theme.foreground,
+    "--muted-foreground": `color-mix(in srgb, ${event.theme.foreground} 72%, ${event.theme.background})`,
     "--event-primary": event.theme.primary,
     "--event-primary-ink": eventInk(event.theme.primary),
     "--event-secondary": event.theme.secondary,
@@ -64,7 +67,7 @@ export default async function PublicEventPage({ params, searchParams }: EventPag
     <main className="event-public-shell flow-public-event" style={themeStyle}>
       <nav className="event-public-nav">
         <Link href="/" className="event-wordmark">
-          <span className="brand-mark">P</span> PassFlow
+          <FlowMark/> PassFlow
         </Link>
         <Link href={`/e/${event.slug}/claim`} className="event-nav-link">
           My pass
@@ -97,7 +100,7 @@ export default async function PublicEventPage({ params, searchParams }: EventPag
           </div>
         </div>
 
-        {event.heroImageUrl || event.posterUrl ? <Image src={(event.heroImageUrl || event.posterUrl)!} alt={event.name} width={720} height={900} unoptimized className="event-public-cover" /> : <div className="event-public-art"><span className="section-kicker">SAVE THE DATE. MAKE A MEMORY.</span><CollectionArtwork compact/></div>}
+        {event.heroImageUrl || event.posterUrl ? <Image src={(event.heroImageUrl || event.posterUrl)!} alt={event.name} width={1600} height={900} unoptimized className="event-public-cover" /> : <div className="event-public-art"><span className="section-kicker">SAVE THE DATE. MAKE A MEMORY.</span><CollectionArtwork compact/></div>}
       </section>
 
       <section className="event-info-grid">
