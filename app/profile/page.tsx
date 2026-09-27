@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { requireUser, getMemberships } from "@/lib/auth/session";
 import { canManage } from "@/lib/auth/redirect";
 import { figmaConfigured } from "@/lib/figma";
@@ -32,8 +33,7 @@ export default async function ProfilePage({
       ? user.user_metadata.username
       : user.email?.split("@")[0] || "";
   const fullName =
-    typeof user.user_metadata.full_name === "string" &&
-    user.user_metadata.full_name.trim()
+    typeof user.user_metadata.full_name === "string" && user.user_metadata.full_name.trim()
       ? user.user_metadata.full_name.trim()
       : username || "Attendee";
   const avatarUrl =
@@ -46,56 +46,34 @@ export default async function ProfilePage({
   const status = typeof query.status === "string" ? query.status : "";
   const figma = typeof query.figma === "string" ? query.figma : "";
 
-  const statusMessages: Record<
-    string,
-    { tone: "success" | "error" | "neutral"; text: string }
-  > = {
+  const statusMessages: Record<string, { tone: "success" | "error" | "neutral"; text: string }> = {
     saved: { tone: "success", text: "Profile updated successfully." },
-    "avatar-saved": {
-      tone: "success",
-      text: "Profile photo updated successfully.",
-    },
+    "avatar-saved": { tone: "success", text: "Profile photo updated successfully." },
     "avatar-removed": { tone: "neutral", text: "Profile photo removed." },
     "invalid-username": {
       tone: "error",
       text: "Username must be 3–24 characters and contain only letters, numbers, or underscores.",
     },
-    "invalid-name": {
-      tone: "error",
-      text: "Display name must be between 2 and 60 characters.",
-    },
-    "avatar-missing": {
-      tone: "error",
-      text: "Choose a photo before saving.",
-    },
-    "avatar-format": {
-      tone: "error",
-      text: "Use a JPG, PNG, or WEBP image.",
-    },
-    "avatar-size": {
-      tone: "error",
-      text: "The maximum photo size is 2 MB.",
-    },
-    "avatar-error": {
-      tone: "error",
-      text: "The profile photo could not be saved.",
-    },
+    "invalid-name": { tone: "error", text: "Display name must be between 2 and 60 characters." },
+    "avatar-missing": { tone: "error", text: "Choose a photo before saving." },
+    "avatar-format": { tone: "error", text: "Use a JPG, PNG, or WEBP image." },
+    "avatar-size": { tone: "error", text: "The maximum photo size is 2 MB." },
+    "avatar-error": { tone: "error", text: "The profile photo could not be saved." },
     error: { tone: "error", text: "The profile could not be saved." },
   };
 
   const figmaErrors: Record<string, string> = {
-    "not-configured": "Figma is not configured for this environment.",
+    "not-configured": "The Figma server configuration is incomplete.",
     "invalid-state": "The Figma connection session changed. Please reconnect.",
     "missing-code": "Figma did not return an access code.",
     cancelled: "Figma access was cancelled.",
     "token-error": "The Figma access code was rejected or has expired.",
     "profile-error": "PassFlow could not read the connected Figma account.",
-    "database-error": "The Figma connection could not be saved.",
+    "database-error": "The connection was accepted but could not be saved.",
     error: "The Figma connection could not be completed.",
   };
 
   const profileStatus = statusMessages[status];
-  const figmaConnected = Boolean(connection);
 
   return (
     <div className="app-surface flow-workspace studio-backdrop min-h-screen">
@@ -112,10 +90,10 @@ export default async function ProfilePage({
             <span className="section-kicker">Account settings</span>
             <KineticText text="Your profile." className="studio-page-title" />
             <TextAnimate className="studio-page-subtitle">
-              Keep your PassFlow identity current across events and organizer tools.
+              Manage your identity, profile photo, and design connections in one place.
             </TextAnimate>
           </div>
-          <Sticker kind="smile" />
+          <Sticker kind="smile"/>
         </header>
 
         {profileStatus && (
@@ -128,12 +106,12 @@ export default async function ProfilePage({
         )}
         {figma === "connected" && (
           <div role="status" className="profile-status-message is-success">
-            Figma connected.
+            Figma account connected successfully.
           </div>
         )}
         {figma === "disconnected" && (
           <div role="status" className="profile-status-message is-neutral">
-            Figma disconnected.
+            Figma account disconnected.
           </div>
         )}
         {figma && figmaErrors[figma] && (
@@ -143,63 +121,70 @@ export default async function ProfilePage({
         )}
 
         <ProfileEditor
-          fullName={fullName}
-          username={username}
-          email={user.email ?? ""}
-          avatarUrl={avatarUrl}
-          organizer={organizer}
-        />
+            fullName={fullName}
+            username={username}
+            email={user.email ?? ""}
+            avatarUrl={avatarUrl}
+            organizer={organizer}
+          />
 
-        <section className="profile-integration-card profile-integration-simple">
-          <div className="profile-integration-main">
-            <span
-              className={`profile-integration-status-dot ${figmaConnected ? "is-connected" : ""}`}
-              aria-hidden="true"
-            />
-            <div>
-              <span className="section-kicker">Integration</span>
-              <h2>Figma</h2>
-              <p className="profile-integration-status">
-                {figmaConnected ? "Connected" : "Disconnected"}
+        <section className="profile-integration-card">
+            <div className="profile-integration-main">
+              <div>
+                <span className="section-kicker">Integration</span>
+                <h2>Figma account</h2>
+                <p>
+                  {connection
+                    ? connection.handle ?? connection.email ?? "Connected account"
+                    : "Not connected"}
+                </p>
+              </div>
+            </div>
+
+            <div className="profile-integration-body">
+              <p>
+                PassFlow reads the account identity, metadata, previews, and file structure you
+                authorize. Your design files remain in the connected Figma account.
               </p>
-              {figmaConnected && (
-                <small>
-                  {connection?.handle ??
-                    connection?.email ??
-                    "Connected Figma account"}
-                </small>
+              <div className="profile-integration-security">
+                Figma tokens are stored encrypted on the server.
+              </div>
+              {connectionError && (
+                <p role="alert" className="text-sm text-red-700">
+                  The Figma connection status could not be loaded. Refresh the page and try again.
+                </p>
               )}
             </div>
-          </div>
 
-          <div className="profile-integration-actions">
-            {figmaConnected ? (
-              <form action="/api/figma/disconnect" method="post">
-                <button type="submit" className="button button-ghost">
-                  Disconnect
-                </button>
-              </form>
-            ) : figmaConfigured() ? (
-              <a href="/api/figma/connect" data-no-transition="true" className="button button-dark">
-                Connect Figma
-              </a>
-            ) : (
-              <button
-                type="button"
-                className="button button-ghost"
-                disabled
-                title="Figma integration is not available in this environment"
-              >
-                Unavailable
-              </button>
-            )}
-          </div>
-
-          {connectionError && (
-            <p role="alert" className="profile-integration-error">
-              Connection status could not be loaded.
-            </p>
-          )}
+            <div className="profile-integration-actions">
+              {connection ? (
+                <>
+                  <a
+                    href="/api/figma/connect"
+                    className="button button-ghost"
+                  >
+                    Reconnect
+                  </a>
+                  <form action="/api/figma/disconnect" method="post">
+                    <button type="submit" className="button button-ghost text-red-700">
+                      Disconnect
+                    </button>
+                  </form>
+                </>
+              ) : figmaConfigured() ? (
+                <a
+                  href="/api/figma/connect"
+                  className="button button-dark"
+                >
+                  Connect Figma
+                </a>
+              ) : <button type="button" className="button button-dark" disabled title="Figma integration is not available in this environment">Figma unavailable</button>}
+              {organizer && (
+                <Link href="/admin" className="button button-ghost">
+                  Manage events
+                </Link>
+              )}
+            </div>
         </section>
       </main>
     </div>
