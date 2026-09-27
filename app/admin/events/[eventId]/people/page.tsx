@@ -103,10 +103,10 @@ export default async function EventPeoplePage({ params, searchParams }: Props) {
 
         <form action={createTicketType} className="event-admin-inline-form event-admin-inline-form-3">
           <input type="hidden" name="eventId" value={eventId} />
-          <input className={inputClass()} name="name" placeholder="e.g. VIP Pass" required />
-          <input className={inputClass()} name="code" placeholder="e.g. VIP" />
-          <FormattedNumberInput name="capacity" min={0} className={inputClass()} placeholder="e.g. 250" />
-          <FormattedNumberInput name="price" min={0} className={inputClass()} placeholder="e.g. 150,000" />
+          <input className={inputClass()} name="name" placeholder="VIP Access" required />
+          <input className={inputClass()} name="code" placeholder="VIP" />
+          <FormattedNumberInput name="capacity" min={0} className={inputClass()} placeholder="250" />
+          <FormattedNumberInput name="price" min={0} className={inputClass()} placeholder="150,000" />
           <SmartSelect
             name="currency"
             value="IDR"
@@ -116,7 +116,7 @@ export default async function EventPeoplePage({ params, searchParams }: Props) {
               { value: "SGD", label: "SGD · Singapore Dollar" },
             ]}
           />
-          <input className={inputClass()} name="description" placeholder="Optional description" />
+          <input className={inputClass()} name="description" placeholder="Describe this pass (optional)" />
           <button className="button button-dark event-admin-inline-submit" type="submit">
             Add ticket type
           </button>
@@ -140,7 +140,7 @@ export default async function EventPeoplePage({ params, searchParams }: Props) {
             </a>
             <form className="event-admin-search" method="get">
               <Search size={15} />
-              <input name="q" defaultValue={search} placeholder="Search by name, email, or phone" />
+              <input name="q" defaultValue={search} placeholder="Search attendees by name, email, or phone" />
               <button type="submit">Search</button>
             </form>
           </div>
@@ -180,9 +180,9 @@ export default async function EventPeoplePage({ params, searchParams }: Props) {
 
         <form action={createAttendee} className="event-admin-inline-form event-admin-inline-form-4">
           <input type="hidden" name="eventId" value={eventId} />
-          <input className={inputClass()} name="name" placeholder="Attendee full name" required />
-          <input className={inputClass()} name="email" type="email" placeholder="name@company.com" />
-          <input className={inputClass()} name="phone" placeholder="e.g. +62 812 3456 7890" />
+          <input className={inputClass()} name="name" placeholder="Enter attendee full name" required />
+          <input className={inputClass()} name="email" type="email" placeholder="attendee@company.com" />
+          <input className={inputClass()} name="phone" placeholder="+62 812 3456 7890" />
           <SmartSelect
             name="ticketTypeId"
             value=""
@@ -249,7 +249,7 @@ export default async function EventPeoplePage({ params, searchParams }: Props) {
 
         <form action={createCrewInvitation} className="event-admin-inline-form event-admin-inline-form-4">
           <input type="hidden" name="eventId" value={eventId} />
-          <input className={inputClass()} name="jobTitle" placeholder="e.g. Gate Operations" required />
+          <input className={inputClass()} name="jobTitle" placeholder="Gate Operations" required />
           <SmartSelect
             name="accessRole"
             value="crew"
@@ -259,7 +259,7 @@ export default async function EventPeoplePage({ params, searchParams }: Props) {
               { value: "scanner", label: "Scanner" },
             ]}
           />
-          <input className={inputClass()} name="email" type="email" placeholder="Crew email (optional)" />
+          <input className={inputClass()} name="email" type="email" placeholder="crew@company.com (optional)" />
           <button className="button button-dark event-admin-inline-submit" type="submit">Create crew invitation</button>
         </form>
       </section>
