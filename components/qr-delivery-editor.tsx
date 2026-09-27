@@ -16,7 +16,7 @@ const modes: Array<{
   {
     value: "digital",
     label: "Digital pass",
-    description: "QR tampil di ponsel attendee",
+    description: "Display the QR pass on the attendee’s phone",
     ratio: "1.586",
   },
   {
@@ -87,7 +87,7 @@ export function QrDeliveryEditor({ event }: { event: PassFlowEvent }) {
       <div className="qr-editor-header">
         <div>
           <span className="section-kicker">QR delivery</span>
-          <h2>Satu pass, banyak kemungkinan.</h2>
+          <h2>One pass, multiple formats.</h2>
           <p>
             Pass layout and QR placement are configured here. Credential delivery to attendees
             is configured separately in Access.
@@ -128,7 +128,7 @@ export function QrDeliveryEditor({ event }: { event: PassFlowEvent }) {
         <fieldset className="qr-control-panel" disabled={pending}><legend className="sr-only">QR size and position</legend>
           <div className="qr-dimension-grid">
             <label>
-              <span>Lebar template</span>
+              <span>Template width</span>
               <div className="number-unit-field">
                 <input
                   type="number"
@@ -143,7 +143,7 @@ export function QrDeliveryEditor({ event }: { event: PassFlowEvent }) {
               </div>
             </label>
             <label>
-              <span>Tinggi template</span>
+              <span>Template height</span>
               <div className="number-unit-field">
                 <input
                   type="number"
@@ -161,8 +161,8 @@ export function QrDeliveryEditor({ event }: { event: PassFlowEvent }) {
 
           <div className="qr-slider-stack">
             {[
-              { label: "Posisi X", value: qrX, set: setQrX, min: 0, max: 100 },
-              { label: "Posisi Y", value: qrY, set: setQrY, min: 0, max: 100 },
+              { label: "X position", value: qrX, set: setQrX, min: 0, max: 100 },
+              { label: "Y position", value: qrY, set: setQrY, min: 0, max: 100 },
               { label: "QR size", value: qrSize, set: setQrSize, min: 8, max: 50 },
             ].map((item) => (
               <label className="range-field" key={item.label}>
@@ -182,11 +182,11 @@ export function QrDeliveryEditor({ event }: { event: PassFlowEvent }) {
           </div>
 
           <div className="qr-template-upload">
-            <span className="field-label">Template fisik</span>
+            <span className="field-label">Physical template</span>
             <AssetUploadCard
               eventId={event.id}
               assetType="qr_template"
-              label={templateUrl ? "Ganti template" : "Upload template"}
+              label={templateUrl ? "Replace template" : "Upload template"}
               currentUrl={templateUrl}
               compact
               onPreview={setTemplateUrl}
@@ -216,7 +216,7 @@ export function QrDeliveryEditor({ event }: { event: PassFlowEvent }) {
             {templateUrl && (
               <Image
                 src={templateUrl}
-                alt="Template pass"
+                alt="Pass template"
                 fill
                 unoptimized
                 sizes="(max-width: 900px) 100vw, 380px"
@@ -230,10 +230,10 @@ export function QrDeliveryEditor({ event }: { event: PassFlowEvent }) {
                 width: `${qrSize}%`,
               }}
             >
-              <QrCode aria-hidden="true"/><span className="sr-only">Posisi QR contoh</span>
+              <QrCode aria-hidden="true"/><span className="sr-only">Example QR position</span>
             </div>
           </div>
-          <p className="customize-preview-note">{widthMm} × {heightMm} mm · QR contoh, bukan credential aktif.</p>
+          <p className="customize-preview-note">{widthMm} × {heightMm} mm · Example QR only, not an active credential.</p>
           <div className="figma-export-note">
             <strong>Figma-ready</strong>
             <span>
