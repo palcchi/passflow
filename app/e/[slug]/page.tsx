@@ -112,12 +112,12 @@ export default async function PublicEventPage({ params, searchParams }: EventPag
         <article>
           <Sticker kind="check"/>
           <h2>Use either format</h2>
-          <p>{event.qrConfig.mode === "digital" ? "QR digital dapat ditampilkan langsung dari HP dan dipakai di seluruh titik akses." : "QR yang sama dapat dipakai dari format fisik dan Digital Event Pass di HP."}</p>
+          <p>{event.qrConfig.mode === "digital" ? "Your digital QR can be displayed directly on your phone and used across authorized access points." : "The same QR credential works in physical format and in the Digital Event Pass on your phone."}</p>
         </article>
         <article>
           <Sticker kind="smile"/>
           <h2>Move through the event</h2>
-          <p>Scanner otomatis membaca identitas, akses, aktivitas, dan benefit yang tersedia.</p>
+          <p>Scanners automatically validate identity, access permissions, activities, and available benefits.</p>
         </article>
       </section>
     </main>
