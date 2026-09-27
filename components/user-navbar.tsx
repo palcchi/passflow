@@ -36,6 +36,7 @@ export function UserNavbar({
   const pathname = usePathname();
   const reduceMotion = useReducedMotion();
   const [openMenu, setOpenMenu] = useState<"profile" | "mobile" | null>(null);
+  const [pendingHref, setPendingHref] = useState<string | null>(null);
   const rootRef = useRef<HTMLElement>(null);
   const initial = (name || email || "P").trim().charAt(0).toUpperCase() || "P";
 
@@ -54,6 +55,10 @@ export function UserNavbar({
     };
   }, []);
 
+  useEffect(() => {
+    setPendingHref(null);
+  }, [pathname]);
+
   const navItems = [
     { href: "/account", label: "Dashboard", icon: LayoutDashboard },
     { href: "/events", label: "Events", icon: CalendarDays },
@@ -63,10 +68,14 @@ export function UserNavbar({
     { href: "/profile", label: "Profile", icon: UserRound },
   ];
 
-  function active(href: string) {
+  function routeActive(href: string) {
     return href === "/account"
       ? pathname === href
       : pathname === href || pathname.startsWith(href + "/");
+  }
+
+  function active(href: string) {
+    return pendingHref ? pendingHref === href : routeActive(href);
   }
 
   return (
@@ -85,10 +94,14 @@ export function UserNavbar({
                 <Link
                   href={href}
                   key={href}
+                  prefetch={true}
                   className="user-nav-link"
                   data-active={isActive}
                   aria-current={isActive ? "page" : undefined}
-                  onClick={() => setOpenMenu(null)}
+                  onClick={() => {
+                    setPendingHref(href);
+                    setOpenMenu(null);
+                  }}
                 >
                   {isActive && (
                     <motion.span
@@ -111,6 +124,7 @@ export function UserNavbar({
 
           <Link
             href={organizer ? "/admin/events/new" : "/events"}
+            prefetch={true}
             className="user-nav-icon-button"
             aria-label={organizer ? "Create event" : "Explore events"}
             title={organizer ? "Create event" : "Explore events"}
@@ -200,7 +214,10 @@ export function UserNavbar({
                 key={href}
                 data-active={active(href)}
                 aria-current={active(href) ? "page" : undefined}
-                onClick={() => setOpenMenu(null)}
+                onClick={() => {
+                  setPendingHref(href);
+                  setOpenMenu(null);
+                }}
               >
                 <Icon size={16} />
                 {label}
