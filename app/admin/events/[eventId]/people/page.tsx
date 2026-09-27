@@ -3,7 +3,6 @@ import { PeopleRecordEditor } from "@/components/people-record-editor";
 import { requireOrganizerMembership } from "@/lib/auth/session";
 import { CsvImportForm } from "@/components/csv-import-form";
 import { AvatarCircles } from "@/components/magicui/avatar-circles";
-import { PersonProfileCard } from "@/components/person-profile-card";
 import { FormattedNumberInput, SmartSelect } from "@/components/form-fields";
 import {
   createAttendee,
@@ -33,7 +32,7 @@ export default async function EventPeoplePage({ params, searchParams }: Props) {
 
   let attendeeQuery = supabase
     .from("attendees")
-    .select("id, attendee_code, name, email, phone, checked_in_at, ticket_type_id, user_id")
+    .select("id, attendee_code, name, email, phone, checked_in_at, ticket_type_id")
     .eq("event_id", eventId)
     .order("created_at", { ascending: false })
     .limit(100);
@@ -147,26 +146,36 @@ export default async function EventPeoplePage({ params, searchParams }: Props) {
           </div>
         </div>
 
-        <div className="person-profile-grid">
-          {attendees.map((attendee) => (
-            <PersonProfileCard
-              key={attendee.id}
-              eventId={eventId}
-              attendee={attendee}
-              ticketName={
-                attendee.ticket_type_id
-                  ? ticketName.get(attendee.ticket_type_id) ?? null
-                  : null
-              }
-              tickets={tickets}
-            />
-          ))}
-          {!attendees.length && (
-            <div className="event-admin-empty-card person-profile-empty">
-              <strong>No attendees have registered yet</strong>
-              <span>New registrations will appear here as profile cards.</span>
-            </div>
-          )}
+        <div className="event-admin-table-shell">
+          <table className="event-admin-table">
+            <thead>
+              <tr>
+                <th>Code</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Pass</th>
+                <th>Check-in</th>
+                <th>Manage</th>
+              </tr>
+            </thead>
+            <tbody>
+              {attendees.map((attendee) => (
+                <tr key={attendee.id}>
+                  <td><code>{attendee.attendee_code}</code></td>
+                  <td><strong>{attendee.name}</strong></td>
+                  <td>{attendee.email ?? "-"}</td>
+                  <td>{attendee.ticket_type_id ? ticketName.get(attendee.ticket_type_id) ?? "-" : "-"}</td>
+                  <td>
+                    <span className={`event-admin-state ${attendee.checked_in_at ? "is-success" : ""}`}>
+                      {attendee.checked_in_at ? "Checked in" : "Pending"}
+                    </span>
+                  </td>
+                  <td><PeopleRecordEditor eventId={eventId} kind="attendee" record={attendee} tickets={tickets}/></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {!attendees.length && <div className="event-admin-table-empty">No attendees have registered yet.</div>}
         </div>
 
         <form action={createAttendee} className="event-admin-inline-form event-admin-inline-form-4">
