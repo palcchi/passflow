@@ -132,8 +132,8 @@ export default async function EventPeoplePage({ params, searchParams }: Props) {
           </div>
           <div className="event-admin-head-actions">
             <AvatarCircles
-              people={attendees.slice(0, 5).map((attendee) => ({ name: attendee.name }))}
-              extra={Math.max(0, attendees.length - 5)}
+              people={attendees.slice(0, 3).map((attendee) => ({ name: attendee.name }))}
+              extra={Math.max(0, attendees.length - 3)}
             />
             <a className="button button-ghost" href={`/admin/events/${eventId}/export/attendees`}>
               Export CSV
