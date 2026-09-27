@@ -134,7 +134,7 @@ export function QrCodeGenerator({ eventId }: { eventId: string }) {
               invalidatePreview();
             }}
           />
-          <small>Maksimal 250 per batch.</small>
+          <small>Maximum 250 credentials per batch.</small>
         </label>
 
         <div className="event-admin-field">
