@@ -125,7 +125,7 @@ export function QrDeliveryEditor({ event }: { event: PassFlowEvent }) {
       </div>
 
       <div className="qr-editor-workspace">
-        <fieldset className="qr-control-panel" disabled={pending}><legend className="sr-only">Ukuran dan posisi QR</legend>
+        <fieldset className="qr-control-panel" disabled={pending}><legend className="sr-only">QR size and position</legend>
           <div className="qr-dimension-grid">
             <label>
               <span>Lebar template</span>
@@ -163,7 +163,7 @@ export function QrDeliveryEditor({ event }: { event: PassFlowEvent }) {
             {[
               { label: "Posisi X", value: qrX, set: setQrX, min: 0, max: 100 },
               { label: "Posisi Y", value: qrY, set: setQrY, min: 0, max: 100 },
-              { label: "Ukuran QR", value: qrSize, set: setQrSize, min: 8, max: 50 },
+              { label: "QR size", value: qrSize, set: setQrSize, min: 8, max: 50 },
             ].map((item) => (
               <label className="range-field" key={item.label}>
                 <span>
@@ -197,7 +197,7 @@ export function QrDeliveryEditor({ event }: { event: PassFlowEvent }) {
           <div className="qr-save-row">
             {message && <span role={success ? "status" : "alert"} className={`customize-feedback ${success ? "is-success" : "is-error"}`}>{message}</span>}
             {!validDimensions && <p role="alert" className="customize-feedback is-error">Template dimensions must be between 20 and 500 mm.</p>}
-            {validDimensions && !qrFits && <p role="alert" className="customize-feedback is-error">QR melewati tepi pass. Sesuaikan posisi atau ukurannya.</p>}
+            {validDimensions && !qrFits && <p role="alert" className="customize-feedback is-error">The QR code extends beyond the pass boundary. Adjust its position or size.</p>}
             <button className="button button-dark" type="button" disabled={pending || !validDimensions || !qrFits} onClick={save}>
               {pending ? "Saving..." : message && success ? "Saved" : "Save QR settings"}
             </button>
