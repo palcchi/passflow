@@ -86,6 +86,12 @@ export default async function EventPeoplePage({ params, searchParams }: Props) {
       profile.photo_storage_path,
     ]),
   );
+  const attendeePhoto = new Map(
+    attendees.map((attendee) => {
+      const path = photoPathByAttendee.get(attendee.id);
+      return [attendee.id, path ? signedUrlByPath.get(path) ?? null : null];
+    }),
+  );
 
   return (
     <>

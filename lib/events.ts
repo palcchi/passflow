@@ -137,6 +137,55 @@ export function getEventById(id: string) {
 type EventRow =
   import("@/lib/supabase/database.types").Database["public"]["Tables"]["events"]["Row"];
 
+type EventClient = Awaited<ReturnType<typeof createServerSupabaseClient>>;
+
+async function loadParticipantPreview(
+  supabase: EventClient,
+  eventId: string,
+): Promise<{ count: number; people: ParticipantPreview[] }> {
+  const { data: attendees, count } = await supabase
+    .from("attendees")
+    .select("id,name", { count: "exact" })
+    .eq("event_id", eventId)
+    .order("created_at", { ascending: false })
+    .limit(3);
+
+  const rows = attendees ?? [];
+  if (!rows.length) return { count: count ?? 0, people: [] };
+
+  const { data: profiles } = await supabase
+    .from("attendee_profiles")
+    .select("attendee_id,photo_storage_path")
+    .in("attendee_id", rows.map((attendee) => attendee.id));
+
+  const pathByAttendee = new Map(
+    (profiles ?? [])
+      .filter((profile) => profile.photo_storage_path)
+      .map((profile) => [profile.attendee_id, profile.photo_storage_path as string]),
+  );
+  const paths = [...new Set(pathByAttendee.values())];
+  const { data: signed } = paths.length
+    ? await supabase.storage.from("attendee-photos").createSignedUrls(paths, 300)
+    : { data: [] };
+
+  const urlByPath = new Map(
+    (signed ?? [])
+      .filter((item) => item.path && item.signedUrl)
+      .map((item) => [item.path, item.signedUrl]),
+  );
+
+  return {
+    count: count ?? rows.length,
+    people: rows.map((attendee) => {
+      const path = pathByAttendee.get(attendee.id);
+      return {
+        name: attendee.name,
+        imageUrl: path ? urlByPath.get(path) ?? null : null,
+      };
+    }),
+  };
+}
+
 function mapEvent(
   row: EventRow,
   attendeeCount = 0,
