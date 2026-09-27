@@ -27,7 +27,7 @@ export default async function RegisterPage({ searchParams }: { searchParams: Pro
       <div className="auth-field"><span aria-hidden="true">Password</span><PasswordField autoComplete="new-password" placeholder="At least 8 characters"/></div>
       <AuthSubmit disabled={!ready}>Create account ↗</AuthSubmit>
     </form>
-    <div className="auth-divider">atau</div>
+    <div className="auth-divider">or</div>
     <form action={signInWithGoogle}><input type="hidden" name="next" value={next}/><AuthSubmit disabled={!ready} variant="outline"><GoogleIcon className="size-4"/>Continue with Google</AuthSubmit></form>
     <p className="auth-switch">Already have an account? <Link href={"/login?next=" + encodeURIComponent(next)}>Sign in</Link></p>
   </AuthShell>;
