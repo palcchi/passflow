@@ -395,3 +395,504 @@
     padding: 28px 22px;
   }
 }
+
+
+/* Strong visual unification pass.
+   This intentionally makes the relationship between public home and the
+   authenticated workspace obvious instead of merely adjusting radii. */
+
+/* Home sections become the same rounded white canvases used in workspace. */
+.editorial-section#events {
+  margin-top: 34px;
+  padding: 42px;
+  border: 1px solid var(--border);
+  border-radius: 30px;
+  background: var(--card);
+}
+
+.editorial-section#events .editorial-section-heading {
+  margin-bottom: 30px;
+}
+
+.editorial-section#events .class-event-card {
+  background: color-mix(in srgb, var(--background) 48%, var(--card));
+}
+
+.organizer-invitation {
+  margin-top: 28px;
+  border: 1px solid var(--border);
+  background: var(--card);
+}
+
+/* Give the app an actual canvas, not a white sheet with a sidebar. */
+.flow-workspace {
+  background:
+    radial-gradient(circle at 88% 7%, color-mix(in srgb, var(--flow-lavender) 58%, transparent) 0 120px, transparent 121px),
+    radial-gradient(circle at 78% 93%, color-mix(in srgb, var(--flow-lime) 18%, transparent) 0 150px, transparent 151px),
+    var(--background) !important;
+}
+
+.flow-workspace .studio-page-shell {
+  max-width: 1240px !important;
+  padding: 26px 30px 74px !important;
+}
+
+/* Workspace hero now follows the homepage's large editorial canvas. */
+.flow-workspace .workspace-welcome {
+  position: relative;
+  min-height: 310px !important;
+  padding: 44px 48px !important;
+  border-radius: 30px !important;
+  background: var(--card) !important;
+  box-shadow: 0 1px 0 rgba(0,0,0,.02);
+}
+
+.flow-workspace .workspace-welcome::before,
+.flow-workspace .workspace-welcome::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+  border-radius: 34%;
+  z-index: 0;
+}
+
+.flow-workspace .workspace-welcome::before {
+  width: 150px;
+  height: 150px;
+  right: 36px;
+  top: 26px;
+  transform: rotate(18deg);
+  background: color-mix(in srgb, var(--flow-violet) 22%, var(--card));
+}
+
+.flow-workspace .workspace-welcome::after {
+  width: 78px;
+  height: 78px;
+  right: 150px;
+  bottom: 30px;
+  transform: rotate(-16deg);
+  background: color-mix(in srgb, var(--flow-lime) 58%, var(--card));
+}
+
+.flow-workspace .workspace-welcome-copy,
+.flow-workspace .workspace-art {
+  position: relative;
+  z-index: 2;
+}
+
+.flow-workspace .workspace-welcome-copy {
+  max-width: 720px;
+}
+
+.flow-workspace .workspace-welcome .studio-page-title {
+  max-width: 760px;
+  margin: 12px 0 14px !important;
+  font-size: clamp(46px, 5.6vw, 72px) !important;
+  line-height: .98 !important;
+  letter-spacing: -.065em !important;
+  font-weight: 590;
+}
+
+.flow-workspace .workspace-welcome .studio-page-subtitle {
+  max-width: 47ch;
+  font-size: 15px !important;
+  line-height: 1.65;
+}
+
+.flow-workspace .workspace-welcome .magic-shiny-button {
+  margin-top: 22px;
+}
+
+.flow-workspace .workspace-art {
+  width: 220px !important;
+  margin-right: 12px;
+}
+
+/* Real content areas are now individual editorial panels. */
+.flow-workspace .studio-section {
+  margin-top: 24px !important;
+  padding: 28px 30px 30px;
+  border: 1px solid var(--border);
+  border-radius: 26px;
+  background: var(--card);
+}
+
+.flow-workspace .studio-section-heading {
+  margin-bottom: 24px;
+}
+
+.flow-workspace .studio-section-heading h2 {
+  font-size: 28px !important;
+  letter-spacing: -.045em;
+}
+
+.flow-workspace .recent-project {
+  margin: 16px 0 0 !important;
+  padding: 16px 18px !important;
+  border-radius: 18px !important;
+  background: var(--card);
+}
+
+.flow-workspace .studio-metric-strip {
+  margin: 18px 0 24px !important;
+  gap: 12px !important;
+}
+
+.flow-workspace .studio-metric,
+.flow-workspace .event-admin-metric {
+  min-height: 124px !important;
+  padding: 22px 24px !important;
+  border-radius: 20px !important;
+  box-shadow: none !important;
+}
+
+.flow-workspace .studio-metric strong,
+.flow-workspace .event-admin-metric strong {
+  font-size: 36px !important;
+  letter-spacing: -.05em;
+}
+
+/* Discovery cards use wide event-banner proportions everywhere. */
+.flow-workspace .class-event-grid:not(.flow-event-list) {
+  gap: 16px;
+}
+
+.flow-workspace .class-event-grid:not(.flow-event-list) .class-event-card {
+  border-radius: 22px !important;
+  background: var(--background);
+}
+
+.flow-workspace .class-event-grid:not(.flow-event-list) .class-event-cover {
+  margin: 8px 8px 0;
+  aspect-ratio: 16 / 9;
+  border-radius: 16px !important;
+}
+
+.flow-workspace .class-event-grid:not(.flow-event-list) .class-event-body {
+  padding: 20px 20px 15px;
+}
+
+.flow-workspace .class-event-grid:not(.flow-event-list) .class-event-body h3 {
+  font-size: 22px;
+  letter-spacing: -.04em;
+}
+
+/* Organizer event list becomes a family of rounded mini-cards instead of table-like rows. */
+.flow-workspace .flow-event-list {
+  gap: 10px !important;
+}
+
+.flow-workspace .flow-event-list .class-event-card {
+  grid-template-columns: 92px minmax(0,1fr) 170px 40px !important;
+  gap: 18px !important;
+  padding: 10px !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 18px !important;
+  background: var(--background) !important;
+}
+
+.flow-workspace .flow-event-list .class-event-card:hover {
+  background: color-mix(in srgb, var(--flow-violet) 5%, var(--background)) !important;
+}
+
+.flow-workspace .flow-event-list .class-event-cover {
+  width: 92px !important;
+  height: 64px !important;
+  margin: 0 !important;
+  border-radius: 13px !important;
+}
+
+.flow-workspace .flow-event-list .class-event-body h3 {
+  font-size: 16px;
+}
+
+/* Event management gets a real event header and a visibly floating tab dock. */
+.flow-workspace .event-admin-shell {
+  max-width: 1250px !important;
+  padding: 26px 30px 80px !important;
+}
+
+.flow-workspace .studio-event-hero {
+  grid-template-columns: minmax(0,1fr) 230px !important;
+  gap: 26px !important;
+  padding: 30px 32px !important;
+  border-radius: 28px !important;
+  background: var(--card) !important;
+}
+
+.flow-workspace .event-admin-cover {
+  display: block !important;
+  position: relative;
+  grid-column: 2;
+  grid-row: 1;
+  width: 230px !important;
+  height: 150px !important;
+  border: 1px solid var(--border);
+  border-radius: 20px !important;
+  overflow: hidden;
+  background: var(--background);
+}
+
+.flow-workspace .event-admin-cover img {
+  object-fit: cover;
+}
+
+.flow-workspace .event-admin-hero-main {
+  align-self: center;
+}
+
+.flow-workspace .event-admin-kinetic-title {
+  max-width: 760px;
+  font-size: clamp(38px, 5vw, 58px) !important;
+  line-height: 1 !important;
+  letter-spacing: -.06em !important;
+}
+
+.flow-workspace .event-admin-meta-line {
+  margin-top: 10px;
+}
+
+.flow-workspace .event-admin-hero-actions {
+  grid-column: 1 / -1 !important;
+  justify-content: flex-start !important;
+  max-width: none !important;
+  padding-top: 4px;
+}
+
+.flow-workspace.event-admin-context .event-section-dock {
+  top: 16px !important;
+  margin: 16px auto 22px !important;
+  padding: 7px !important;
+  border: 1px solid color-mix(in srgb, var(--event-admin-accent) 20%, var(--border)) !important;
+  border-radius: 999px !important;
+  background: color-mix(in srgb, var(--card) 90%, transparent) !important;
+  box-shadow: 0 18px 50px rgba(20,20,20,.10) !important;
+}
+
+.flow-workspace.event-admin-context .event-dock-item {
+  padding: 10px 16px !important;
+  border-radius: 999px !important;
+}
+
+.flow-workspace.event-admin-context .event-dock-item[data-active="true"] {
+  background: var(--event-admin-accent) !important;
+  color: var(--event-admin-accent-text) !important;
+  box-shadow: 0 5px 16px color-mix(in srgb, var(--event-admin-accent) 20%, transparent);
+}
+
+/* Admin content follows the same generous rounded-canvas treatment. */
+.flow-workspace .event-admin-section {
+  margin-top: 18px !important;
+  padding: 28px !important;
+  border-radius: 24px !important;
+  background: var(--card) !important;
+}
+
+/* Public event page gets a clear banner-first composition when an image exists. */
+.event-public-shell.flow-public-event {
+  background:
+    radial-gradient(circle at 94% 5%, color-mix(in srgb, var(--event-primary) 12%, transparent) 0 130px, transparent 131px),
+    var(--event-bg);
+}
+
+.event-public-hero {
+  grid-template-columns: minmax(0,.88fr) minmax(360px,1.12fr) !important;
+  min-height: 600px;
+  gap: 42px !important;
+  padding: 42px !important;
+}
+
+.event-public-cover {
+  align-self: stretch;
+  height: 100% !important;
+  min-height: 420px;
+  max-height: 560px;
+  border-radius: 22px !important;
+  object-fit: cover;
+}
+
+.event-info-grid {
+  padding-top: 20px !important;
+}
+
+.event-info-grid article {
+  border-radius: 22px !important;
+}
+
+/* Customize makes the banner role impossible to miss. */
+.customize-assets {
+  border: 1px solid var(--border);
+}
+
+.customize-assets .asset-upload-form:nth-child(2) .asset-upload-card {
+  min-height: 150px;
+  border-style: solid !important;
+  border-width: 1px;
+}
+
+.customize-assets .asset-upload-form:nth-child(2) .asset-upload-copy strong {
+  font-size: 14px;
+}
+
+@media (max-width: 980px) {
+  .flow-workspace .workspace-welcome {
+    min-height: 260px !important;
+    padding: 36px !important;
+  }
+
+  .flow-workspace .workspace-welcome .studio-page-title {
+    font-size: clamp(42px, 7vw, 58px) !important;
+  }
+
+  .flow-workspace .workspace-art {
+    width: 170px !important;
+  }
+
+  .flow-workspace .studio-event-hero {
+    grid-template-columns: minmax(0,1fr) 180px !important;
+  }
+
+  .flow-workspace .event-admin-cover {
+    width: 180px !important;
+    height: 126px !important;
+  }
+
+  .event-public-hero {
+    grid-template-columns: 1fr !important;
+  }
+
+  .event-public-cover {
+    min-height: 320px;
+  }
+}
+
+@media (max-width: 680px) {
+  .editorial-section#events {
+    margin-top: 20px;
+    padding: 26px 20px;
+    border-radius: 22px;
+  }
+
+  .flow-workspace {
+    background: var(--background) !important;
+  }
+
+  .flow-workspace .studio-page-shell {
+    padding: 16px 14px 54px !important;
+  }
+
+  .flow-workspace .workspace-welcome {
+    min-height: 250px !important;
+    padding: 28px 24px !important;
+    border-radius: 22px !important;
+  }
+
+  .flow-workspace .workspace-welcome::before {
+    width: 96px;
+    height: 96px;
+    right: -18px;
+    top: 22px;
+  }
+
+  .flow-workspace .workspace-welcome::after {
+    width: 58px;
+    height: 58px;
+    right: 34px;
+    bottom: 20px;
+  }
+
+  .flow-workspace .workspace-welcome .studio-page-title {
+    max-width: 90%;
+    font-size: 39px !important;
+  }
+
+  .flow-workspace .workspace-welcome .studio-page-subtitle {
+    max-width: 30ch;
+    font-size: 13px !important;
+  }
+
+  .flow-workspace .workspace-art {
+    display: none !important;
+  }
+
+  .flow-workspace .studio-section {
+    padding: 22px 18px 24px;
+    border-radius: 20px;
+  }
+
+  .flow-workspace .studio-metric,
+  .flow-workspace .event-admin-metric {
+    min-height: 110px !important;
+    padding: 17px 18px !important;
+  }
+
+  .flow-workspace .studio-metric strong,
+  .flow-workspace .event-admin-metric strong {
+    font-size: 30px !important;
+  }
+
+  .flow-workspace .flow-event-list .class-event-card {
+    grid-template-columns: 58px minmax(0,1fr) 70px !important;
+    gap: 12px !important;
+    padding: 9px !important;
+  }
+
+  .flow-workspace .flow-event-list .class-event-cover {
+    width: 58px !important;
+    height: 58px !important;
+  }
+
+  .flow-workspace .event-admin-shell {
+    padding: 16px 14px 58px !important;
+  }
+
+  .flow-workspace .studio-event-hero {
+    grid-template-columns: 1fr !important;
+    padding: 24px 20px !important;
+    border-radius: 22px !important;
+  }
+
+  .flow-workspace .event-admin-cover {
+    display: none !important;
+  }
+
+  .flow-workspace .event-admin-kinetic-title {
+    font-size: 38px !important;
+  }
+
+  .flow-workspace.event-admin-context .event-section-dock {
+    top: 72px !important;
+    margin: 12px 0 18px !important;
+    border-radius: 18px !important;
+  }
+
+  .flow-workspace.event-admin-context .event-section-dock-scroll {
+    overflow-x: auto;
+  }
+
+  .event-public-hero {
+    padding: 26px 20px !important;
+    border-radius: 22px !important;
+  }
+
+  .event-public-cover {
+    min-height: 240px;
+  }
+}
+
+
+@media (max-width: 340px) {
+  .editorial-section#events {
+    padding-inline: 16px;
+  }
+
+  .editorial-section#events .editorial-section-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .editorial-section#events .studio-text-link {
+    align-self: flex-start;
+    max-width: 100%;
+  }
+}
