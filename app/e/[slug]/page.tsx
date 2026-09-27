@@ -57,9 +57,9 @@ export default async function PublicEventPage({ params, searchParams }: EventPag
       <div className="event-figma-frame" style={{ aspectRatio: `${frame.width} / ${frame.height}` }}>
         <Image src={eventDesign.preview_url} alt={`Desain event ${event.name}`} fill unoptimized sizes="100vw" className="event-figma-background" />
         {template.elements.filter((element) => element.field in values).map((element) => <span key={element.nodeId} style={{ position: "absolute", left: `${element.x / frame.width * 100}%`, top: `${element.y / frame.height * 100}%`, width: `${element.width / frame.width * 100}%`, height: `${element.height / frame.height * 100}%`, display: "flex", alignItems: "center", justifyContent: element.textAlign === "CENTER" ? "center" : element.textAlign === "RIGHT" ? "flex-end" : "flex-start", overflow: "hidden", padding: 2, backgroundColor: element.fill ?? "rgba(255,255,255,.94)", color: element.fontColor ?? event.theme.foreground, fontFamily: element.fontFamily ?? "inherit", fontSize: `${Math.max(10, element.fontSize ?? 18) / frame.width * 100}cqw`, fontWeight: element.fontWeight ?? 500, borderRadius: element.cornerRadius ?? 0 }}>{values[element.field]}</span>)}
-        {cta ? <Link href={`/e/${event.slug}/claim`} aria-label="Daftar atau buka pass event" title="Daftar / buka pass" className="event-figma-cta-hitbox" style={{ left: `${cta.x / frame.width * 100}%`, top: `${cta.y / frame.height * 100}%`, width: `${cta.width / frame.width * 100}%`, height: `${cta.height / frame.height * 100}%` }} /> : null}
+        {cta ? <Link href={`/e/${event.slug}/claim`} aria-label="Register or open event pass" title="Register / open pass" className="event-figma-cta-hitbox" style={{ left: `${cta.x / frame.width * 100}%`, top: `${cta.y / frame.height * 100}%`, width: `${cta.width / frame.width * 100}%`, height: `${cta.height / frame.height * 100}%` }} /> : null}
       </div>
-      {!cta && <Link href={`/e/${event.slug}/claim`} className="event-primary-button event-figma-default-cta">Daftar / buka pass <ArrowRight size={17}/></Link>}
+      {!cta && <Link href={`/e/${event.slug}/claim`} className="event-primary-button event-figma-default-cta">Register / open pass <ArrowRight size={17}/></Link>}
     </main>;
   }
 
@@ -90,7 +90,7 @@ export default async function PublicEventPage({ params, searchParams }: EventPag
           </div>
           <div className="event-cta-row">
             <Link href={`/e/${event.slug}/claim`} className="event-primary-button">
-              Daftar / buka pass
+              Register / open pass
               <ArrowRight size={17} />
             </Link>
             <span className="event-helper">
@@ -107,7 +107,7 @@ export default async function PublicEventPage({ params, searchParams }: EventPag
         <article>
           <Sticker kind="arrow"/>
           <h2>{event.qrConfig.mode === "digital" ? "Get your digital pass" : "Claim your event pass"}</h2>
-          <p>{event.qrConfig.mode === "digital" ? "Setelah mendaftar, QR digital otomatis tersedia di akunmu tanpa wristband fisik." : "Gunakan QR pada ID card atau wristband yang ditentukan organizer."}</p>
+          <p>{event.qrConfig.mode === "digital" ? "After registration, your digital QR pass is available in your account automatically." : "Use the QR code on the ID card or wristband provided by the organizer."}</p>
         </article>
         <article>
           <Sticker kind="check"/>
