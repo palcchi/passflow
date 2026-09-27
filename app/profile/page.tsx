@@ -111,7 +111,7 @@ export default async function ProfilePage({
         )}
         {figma === "disconnected" && (
           <div role="status" className="profile-status-message is-neutral">
-            Koneksi Figma diputus.
+            Figma account disconnected.
           </div>
         )}
         {figma && figmaErrors[figma] && (
@@ -167,7 +167,7 @@ export default async function ProfilePage({
                   </a>
                   <form action="/api/figma/disconnect" method="post">
                     <button type="submit" className="button button-ghost text-red-700">
-                      Putuskan koneksi
+                      Disconnect
                     </button>
                   </form>
                 </>
