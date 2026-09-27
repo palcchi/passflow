@@ -76,7 +76,7 @@ export default async function ProfilePage({
   const profileStatus = statusMessages[status];
 
   return (
-    <div className="app-surface studio-backdrop min-h-screen">
+    <div className="app-surface flow-workspace studio-backdrop min-h-screen">
       <UserNavbar
         name={fullName}
         email={user.email}

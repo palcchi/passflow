@@ -7,7 +7,7 @@ import { UserNavbar } from "@/components/user-navbar";
 import { KineticText } from "@/components/magicui/kinetic-text";
 import { TextAnimate } from "@/components/magicui/text-animate";
 import { EventClassCard } from "@/components/event-class-card";
-import { FolderArtwork, Sticker } from "@/components/brand-art";
+import { FolderArtwork, Sticker } from "@/components/flow-brand-art";
 
 export const metadata = { title: "Dashboard | PassFlow" };
 export const dynamic = "force-dynamic";
@@ -51,7 +51,7 @@ export default async function AccountPage() {
   );
 
   return (
-    <div className="app-surface studio-backdrop min-h-screen">
+    <div className="app-surface flow-workspace studio-backdrop min-h-screen">
       <UserNavbar
         name={name}
         email={user.email}
@@ -97,7 +97,7 @@ export default async function AccountPage() {
           {myEvents.length > 0 ? (
             <div className="class-event-grid">
               {myEvents.map((event) => (
-                <EventClassCard event={event} joined key={event.id} />
+                <EventClassCard flow event={event} joined key={event.id} />
               ))}
             </div>
           ) : (
@@ -111,7 +111,7 @@ export default async function AccountPage() {
             </div>
           )}
         </section>
-        {publishedEvents.some((event) => !registeredIds.has(event.id)) && <section className="studio-section" aria-labelledby="discover-events"><div className="studio-section-heading"><div><p className="section-kicker">A LITTLE DISCOVERY</p><h2 id="discover-events">Untuk momen berikutnya.</h2></div><Link href="/events" className="studio-text-link">Jelajahi <ArrowUpRight size={14}/></Link></div><div className="class-event-grid">{publishedEvents.filter(event => !registeredIds.has(event.id)).slice(0, 3).map(event => <EventClassCard event={event} key={event.id}/>)}</div></section>}
+        {publishedEvents.some((event) => !registeredIds.has(event.id)) && <section className="studio-section" aria-labelledby="discover-events"><div className="studio-section-heading"><div><p className="section-kicker">A LITTLE DISCOVERY</p><h2 id="discover-events">Untuk momen berikutnya.</h2></div><Link href="/events" className="studio-text-link">Jelajahi <ArrowUpRight size={14}/></Link></div><div className="class-event-grid">{publishedEvents.filter(event => !registeredIds.has(event.id)).slice(0, 3).map(event => <EventClassCard flow event={event} key={event.id}/>)}</div></section>}
       </main>
     </div>
   );

@@ -5,7 +5,7 @@ import { UserNavbar } from "@/components/user-navbar";
 import { KineticText } from "@/components/magicui/kinetic-text";
 import { TextAnimate } from "@/components/magicui/text-animate";
 import { EventCollection } from "@/components/event-collection";
-import { FolderArtwork, Sticker } from "@/components/brand-art";
+import { FolderArtwork, Sticker } from "@/components/flow-brand-art";
 
 export const metadata = { title: "Event | PassFlow" };
 
@@ -37,7 +37,7 @@ export default async function EventsPage() {
   );
 
   return (
-    <div className="app-surface studio-backdrop min-h-screen">
+    <div className="app-surface flow-workspace studio-backdrop min-h-screen">
       <UserNavbar
         name={name}
         email={user.email}

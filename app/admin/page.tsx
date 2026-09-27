@@ -12,7 +12,7 @@ import { NumberTicker } from "@/components/magicui/number-ticker";
 import { ShinyButton } from "@/components/magicui/shiny-button";
 import { AnimatedList } from "@/components/magicui/animated-list";
 import { EventCollection } from "@/components/event-collection";
-import { FolderArtwork, Sticker } from "@/components/brand-art";
+import { FolderArtwork, Sticker } from "@/components/flow-brand-art";
 
 export default async function AdminDashboardPage() {
   const { supabase, user } = await requireOrganizer();
@@ -70,7 +70,7 @@ export default async function AdminDashboardPage() {
   ] as const;
 
   return (
-    <div className="app-surface studio-backdrop min-h-screen">
+    <div className="app-surface flow-workspace studio-backdrop min-h-screen">
       <UserNavbar
         name={name}
         email={user.email}
@@ -83,11 +83,11 @@ export default async function AdminDashboardPage() {
           <div className="workspace-welcome-copy">
             <span className="section-kicker">Organizer workspace</span>
             <KineticText
-              text="Ruang untuk ide besar."
+              text={`Halo, ${name}.`}
               className="studio-page-title"
             />
             <TextAnimate className="studio-page-subtitle" delay={0.05}>
-              Dari rencana kecil sampai momen yang berkesan. Mulai dan kelola event kamu di sini.
+              Semua yang terjadi di event kamu, dalam satu tempat.
             </TextAnimate>
           <ShinyButton href="/admin/events/new"><Plus size={15}/>Buat event</ShinyButton>
           </div>

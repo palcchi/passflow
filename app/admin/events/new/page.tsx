@@ -6,7 +6,7 @@ import { DateTimeField, FormattedNumberInput } from "@/components/form-fields";
 import { requireOrganizer } from "@/lib/auth/session";
 import { UserNavbar } from "@/components/user-navbar";
 import { eventAdminProfile } from "@/components/event-admin-chrome";
-import { FolderArtwork, Sticker } from "@/components/brand-art";
+import { FolderArtwork, Sticker } from "@/components/flow-brand-art";
 import { AuthSubmit } from "@/components/auth-submit";
 
 export default async function NewEventPage({
@@ -17,7 +17,7 @@ export default async function NewEventPage({
   const params = await searchParams;
   const { user } = await requireOrganizer();
   return (
-    <div className="app-surface min-h-screen">
+    <div className="app-surface flow-workspace min-h-screen">
       <UserNavbar {...eventAdminProfile(user)} organizer/>
       <main className="create-event-layout">
         <Link href="/admin" className="auth-back"><ArrowLeft size={16} /> Kembali ke organizer</Link>

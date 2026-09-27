@@ -28,6 +28,7 @@ export function AssetUploadCard({
   const inputId = useId();
   const inputRef = useRef<HTMLInputElement>(null);
   const objectUrlRef = useRef<string | null>(null);
+  const savedUrlRef = useRef(currentUrl ?? null);
   const [preview, setPreview] = useState<string | null>(currentUrl ?? null);
   const [fileName, setFileName] = useState("");
   const [hasFile, setHasFile] = useState(false);
@@ -68,8 +69,8 @@ export function AssetUploadCard({
   function clearSelection() {
     if (objectUrlRef.current) URL.revokeObjectURL(objectUrlRef.current);
     objectUrlRef.current = null;
-    setPreview(currentUrl ?? null);
-    onPreview?.(currentUrl ?? null);
+    setPreview(savedUrlRef.current);
+    onPreview?.(savedUrlRef.current);
     setFileName("");
     setHasFile(false);
     setMessage(null);
@@ -88,6 +89,7 @@ export function AssetUploadCard({
         setMessage(result.message);
         setSuccess(result.ok);
         if (result.ok && result.publicUrl) {
+          savedUrlRef.current = result.publicUrl;
           setPreview(result.publicUrl);
           onPreview?.(result.publicUrl);
           onUploaded?.(result.publicUrl);
@@ -120,6 +122,7 @@ export function AssetUploadCard({
           name="file"
           accept="image/jpeg,image/png,image/webp"
           required
+          disabled={pending}
           onChange={(event) => selectFile(event.target.files?.[0])}
         />
         <span className="asset-upload-icon">
@@ -141,7 +144,7 @@ export function AssetUploadCard({
           {pending ? "Uploading..." : "Upload"}
         </button>
         {fileName && (
-          <button className="button button-ghost" type="button" onClick={clearSelection}>
+          <button className="button button-ghost" type="button" disabled={pending} onClick={clearSelection}>
             <X size={15} /> Batal
           </button>
         )}

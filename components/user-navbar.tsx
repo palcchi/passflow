@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { signOut } from "@/app/auth/actions";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { FlowMark, FlowShapes } from "@/components/flow-art";
 
 type UserNavbarProps = {
   name: string;
@@ -57,6 +58,7 @@ export function UserNavbar({
     ...(organizer
       ? [{ href: "/admin", label: "Organizer", icon: Sparkles }]
       : []),
+    { href: "/profile", label: "Profile", icon: UserRound },
   ];
 
   function active(href: string) {
@@ -66,16 +68,16 @@ export function UserNavbar({
   }
 
   return (
-    <nav ref={rootRef} className="user-nav-shell">
+    <nav ref={rootRef} className="user-nav-shell flow-sidebar" aria-label="Navigasi workspace">
       <div className="user-nav user-nav-flat">
         <div className="user-nav-left">
           <Link href="/account" className="user-nav-brand" aria-label="PassFlow dashboard">
-            <span className="brand-mark user-nav-brand-mark">P</span>
+            <FlowMark/>
             <span>PassFlow</span>
           </Link>
 
           <div className="user-nav-links">
-            {navItems.map(({ href, label }) => (
+            {navItems.map(({ href, label, icon: Icon }) => (
               <Link
                 href={href}
                 key={href}
@@ -84,11 +86,13 @@ export function UserNavbar({
                 aria-current={active(href) ? "page" : undefined}
                 onClick={() => setOpenMenu(null)}
               >
-                {label}
+                <Icon size={16}/>{label}
               </Link>
             ))}
           </div>
         </div>
+
+        <div className="flow-sidebar-note"><FlowShapes/><strong>Make events flow.</strong><span>Satu ruang untuk setiap momen.</span></div>
 
         <div className="user-nav-actions">
           <ThemeToggle />
@@ -190,10 +194,6 @@ export function UserNavbar({
                 {label}
               </Link>
             ))}
-            <Link href="/profile" onClick={() => setOpenMenu(null)}>
-              <UserRound size={16} />
-              Profile
-            </Link>
             <form action={signOut}>
               <button type="submit">
                 <LogOut size={16} />

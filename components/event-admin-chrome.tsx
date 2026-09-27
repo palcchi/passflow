@@ -1,7 +1,7 @@
 import type { CSSProperties, ReactNode } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { EventCoverArtwork } from "@/components/brand-art";
+import { EventCoverArtwork } from "@/components/flow-brand-art";
 import { ArrowLeft } from "lucide-react";
 import type { PassFlowEvent } from "@/lib/events";
 import { UserNavbar } from "@/components/user-navbar";
@@ -44,7 +44,7 @@ export function EventAdminChrome({
 
   return (
     <div
-      className="app-surface studio-backdrop event-admin-context min-h-screen"
+      className="app-surface flow-workspace studio-backdrop event-admin-context min-h-screen"
       style={eventStyle}
     >
       <UserNavbar
