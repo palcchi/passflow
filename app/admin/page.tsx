@@ -11,7 +11,6 @@ import { TextAnimate } from "@/components/magicui/text-animate";
 import { NumberTicker } from "@/components/magicui/number-ticker";
 import { ShinyButton } from "@/components/magicui/shiny-button";
 import { AnimatedList } from "@/components/magicui/animated-list";
-import { AvatarCircles } from "@/components/magicui/avatar-circles";
 import { EventCollection } from "@/components/event-collection";
 import { FolderArtwork, Sticker } from "@/components/flow-brand-art";
 
@@ -20,7 +19,7 @@ export default async function AdminDashboardPage() {
   const events = await getManagedEvents();
   const eventIds = events.map((event) => event.id);
 
-  const [qrResult, stationResult, attendeePreviewResult] = eventIds.length
+  const [qrResult, stationResult] = eventIds.length
     ? await Promise.all([
         supabase
           .from("qr_credentials")
@@ -32,14 +31,8 @@ export default async function AdminDashboardPage() {
           .select("id,name,is_active,event_id")
           .in("event_id", eventIds)
           .order("name"),
-        supabase
-          .from("attendees")
-          .select("name")
-          .in("event_id", eventIds)
-          .order("created_at", { ascending: false })
-          .limit(3),
       ])
-    : [{ count: 0 }, { data: [] }, { data: [] }];
+    : [{ count: 0 }, { data: [] }];
 
   const username =
     typeof user.user_metadata.username === "string"
@@ -109,13 +102,6 @@ export default async function AdminDashboardPage() {
               <span>{label}</span>
               <strong><NumberTicker value={Number(value)} /></strong>
               <small>{note}</small>
-              {label === "Registered" && Number(value) > 0 && (
-                <AvatarCircles
-                  className="metric-avatar-circles"
-                  people={(attendeePreviewResult.data ?? []).map((attendee) => ({ name: attendee.name }))}
-                  extra={Math.max(0, totalRegistered - 3)}
-                />
-              )}
             </div>
           ))}
         </section>

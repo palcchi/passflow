@@ -1,21 +1,14 @@
 "use client";
 
 import type { ReactNode } from "react";
-import {
-  LayoutGroup,
-  motion,
-  useAnimationControls,
-  useReducedMotion,
-} from "motion/react";
+import { LayoutGroup, useReducedMotion } from "motion/react";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef } from "react";
-
-const routeEase = [0.22, 1, 0.36, 1] as const;
 
 export function RouteTransition({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const reduceMotion = useReducedMotion();
-  const controls = useAnimationControls();
+  const stageRef = useRef<HTMLDivElement>(null);
   const firstRender = useRef(true);
 
   useEffect(() => {
@@ -23,28 +16,31 @@ export function RouteTransition({ children }: { children: ReactNode }) {
       firstRender.current = false;
       return;
     }
+    if (reduceMotion || "startViewTransition" in document) return;
 
-    if (reduceMotion) {
-      controls.set({ x: 0 });
-      return;
-    }
+    const stage = stageRef.current;
+    const target =
+      stage?.querySelector<HTMLElement>(".event-admin-page-content") ??
+      stage?.querySelector<HTMLElement>("main");
 
-    controls.set({ x: 12 });
-    void controls.start({
-      x: 0,
-      transition: { duration: 0.26, ease: routeEase },
-    });
-  }, [pathname, reduceMotion, controls]);
+    target?.animate(
+      [
+        { opacity: 0.72, transform: "translateY(12px)" },
+        { opacity: 1, transform: "translateY(0)" },
+      ],
+      {
+        duration: 280,
+        easing: "cubic-bezier(0.22, 1, 0.36, 1)",
+        fill: "both",
+      },
+    );
+  }, [pathname, reduceMotion]);
 
   return (
     <LayoutGroup id="passflow-route-layout">
-      <motion.div
-        className="pf-route-stage"
-        initial={false}
-        animate={controls}
-      >
+      <div ref={stageRef} className="pf-route-stage">
         {children}
-      </motion.div>
+      </div>
     </LayoutGroup>
   );
 }

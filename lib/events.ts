@@ -50,6 +50,11 @@ export type EventTheme = {
   headerStyle?: "minimal" | "editorial" | "split";
 };
 
+export type ParticipantPreview = {
+  name: string;
+  imageUrl?: string | null;
+};
+
 export type PassFlowEvent = {
   id: string;
   name: string;
@@ -69,6 +74,7 @@ export type PassFlowEvent = {
   heroImageUrl: string | null;
   logoUrl: string | null;
   posterUrl: string | null;
+  participantPreview?: ParticipantPreview[];
 };
 
 export const demoEvents: PassFlowEvent[] = [
@@ -135,6 +141,7 @@ function mapEvent(
   row: EventRow,
   attendeeCount = 0,
   checkedInCount = 0,
+  participantPreview: ParticipantPreview[] = [],
 ): PassFlowEvent {
   const theme =
     row.theme && typeof row.theme === "object" && !Array.isArray(row.theme)
@@ -228,6 +235,7 @@ function mapEvent(
     heroImageUrl: row.hero_image_url,
     logoUrl: row.logo_url,
     posterUrl: row.poster_url,
+    participantPreview,
   };
 }
 
@@ -277,7 +285,7 @@ export async function getManagedEvents(): Promise<PassFlowEvent[]> {
 
   return Promise.all(
     (data ?? []).map(async (row) => {
-      const [attendees, checked] = await Promise.all([
+      const [attendees, checked, previewResult] = await Promise.all([
         supabase
           .from("attendees")
           .select("id", { count: "exact", head: true })
@@ -287,8 +295,55 @@ export async function getManagedEvents(): Promise<PassFlowEvent[]> {
           .select("id", { count: "exact", head: true })
           .eq("event_id", row.id)
           .not("checked_in_at", "is", null),
+        supabase
+          .from("attendees")
+          .select("id,name")
+          .eq("event_id", row.id)
+          .order("created_at", { ascending: false })
+          .limit(3),
       ]);
-      return mapEvent(row, attendees.count ?? 0, checked.count ?? 0);
+
+      const previewAttendees = previewResult.data ?? [];
+      const previewIds = previewAttendees.map((attendee) => attendee.id);
+      const { data: profileRows } = previewIds.length
+        ? await supabase
+            .from("attendee_profiles")
+            .select("attendee_id,photo_storage_path")
+            .in("attendee_id", previewIds)
+        : { data: [] };
+
+      const paths = (profileRows ?? [])
+        .map((profile) => profile.photo_storage_path)
+        .filter((path): path is string => Boolean(path));
+      const { data: signedRows } = paths.length
+        ? await supabase.storage.from("attendee-photos").createSignedUrls(paths, 300)
+        : { data: [] };
+
+      const urlByPath = new Map(
+        (signedRows ?? [])
+          .filter((item) => item.signedUrl)
+          .map((item) => [item.path, item.signedUrl]),
+      );
+      const pathByAttendee = new Map(
+        (profileRows ?? []).map((profile) => [
+          profile.attendee_id,
+          profile.photo_storage_path,
+        ]),
+      );
+      const participantPreview = previewAttendees.map((attendee) => {
+        const path = pathByAttendee.get(attendee.id);
+        return {
+          name: attendee.name,
+          imageUrl: path ? urlByPath.get(path) ?? null : null,
+        };
+      });
+
+      return mapEvent(
+        row,
+        attendees.count ?? 0,
+        checked.count ?? 0,
+        participantPreview,
+      );
     }),
   );
 }
