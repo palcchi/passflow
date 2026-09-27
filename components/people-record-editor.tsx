@@ -42,7 +42,7 @@ export function PeopleRecordEditor({ eventId, kind, record, tickets = [] }: {
             <label>Pass category<SmartSelect name="ticketTypeId" value={record.ticket_type_id ?? ""} options={[{ value: "", label: "No category" }, ...tickets.map(ticket => ({ value: ticket.id, label: ticket.name }))]}/></label>
           </> : <>
             <label>Deskripsi<textarea name="description" defaultValue={record.description ?? ""} maxLength={500}/></label>
-            <label>Kapasitas (kosong = tanpa batas)<FormattedNumberInput name="capacity" defaultValue={record.capacity ?? undefined} min={0}/></label>
+            <label>Capacity (leave blank for unlimited)<FormattedNumberInput name="capacity" defaultValue={record.capacity ?? undefined} min={0}/></label>
             <label>Price<input name="price" inputMode="decimal" defaultValue={(record.price ?? 0).toLocaleString("id-ID", { maximumFractionDigits: 2 })} required onBlur={event => {
               const value = event.target.value.trim();
               if (/^(?:\d+|\d{1,3}(?:\.\d{3})+)(?:,\d{1,2})?$/.test(value)) event.target.value = Number(value.replace(/\./g, "").replace(",", ".")).toLocaleString("id-ID", { maximumFractionDigits: 2 });
