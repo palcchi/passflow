@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 import Link from "next/link";
-import { ArrowUpRight } from "lucide-react";
+import { ArrowUpRight, FolderOpen, Plus } from "lucide-react";
 import { requireOrganizer } from "@/lib/auth/session";
 import { UserNavbar } from "@/components/user-navbar";
 import { getManagedEvents } from "@/lib/events";
@@ -11,7 +11,8 @@ import { TextAnimate } from "@/components/magicui/text-animate";
 import { NumberTicker } from "@/components/magicui/number-ticker";
 import { ShinyButton } from "@/components/magicui/shiny-button";
 import { AnimatedList } from "@/components/magicui/animated-list";
-import { EventClassCard } from "@/components/event-class-card";
+import { EventCollection } from "@/components/event-collection";
+import { FolderArtwork, Sticker } from "@/components/brand-art";
 
 export default async function AdminDashboardPage() {
   const { supabase, user } = await requireOrganizer();
@@ -78,20 +79,22 @@ export default async function AdminDashboardPage() {
       />
 
       <main className="studio-page-shell">
-        <header className="studio-page-hero organizer-studio-hero">
-          <div>
+        <header className="studio-page-hero workspace-welcome">
+          <div className="workspace-welcome-copy">
             <span className="section-kicker">Organizer workspace</span>
             <KineticText
-              text="Manage the flow, not the clutter."
+              text="Ruang untuk ide besar."
               className="studio-page-title"
             />
             <TextAnimate className="studio-page-subtitle" delay={0.05}>
-              Event, attendee, credential, scanner, dan design tersusun sebagai satu alur kerja.
+              Dari rencana kecil sampai momen yang berkesan. Mulai dan kelola event kamu di sini.
             </TextAnimate>
+          <ShinyButton href="/admin/events/new"><Plus size={15}/>Buat event</ShinyButton>
           </div>
-
-          <ShinyButton href="/admin/events/new">Buat event</ShinyButton>
+          <div className="workspace-art"><span className="workspace-art-label">For your next big thing ↗</span><FolderArtwork color="lavender" label="Made by you"/><Sticker kind="arrow"/></div>
         </header>
+
+        {events[0] && <Link className="recent-project" href={`/admin/events/${events[0].id}`}><span className="recent-project-icon"><FolderOpen size={21}/></span><span className="recent-project-copy"><span>PROJECT EVENT TERBARU · LANJUTKAN MENGELOLA</span><strong>{events[0].name}</strong></span><ArrowUpRight size={19}/></Link>}
 
         <section className="studio-metric-strip" aria-label="Organizer metrics">
           {stats.map(([label, value, note]) => (
@@ -114,26 +117,14 @@ export default async function AdminDashboardPage() {
             </Link>
           </div>
 
-          {events.length > 0 ? (
-            <div className="class-event-grid organizer-event-grid">
-              {events.map((event) => {
-                return <EventClassCard event={event} manage key={event.id} />;
-              })}
-            </div>
-          ) : (
-            <div className="studio-empty-state">
-              <h3>Belum ada event.</h3>
-              <p>Buat event pertama untuk memulai attendee dan access flow.</p>
-              <ShinyButton href="/admin/events/new">Buat event pertama</ShinyButton>
-            </div>
-          )}
+          <EventCollection events={events} manage/>
         </section>
 
         <section className="studio-section" aria-labelledby="scanner-stations">
           <div className="studio-section-heading">
             <div>
               <p className="section-kicker">Scanner network</p>
-              <h2 id="scanner-stations">Access stations</h2>
+              <h2 id="scanner-stations">Pintu masuk event.</h2>
             </div>
             <span className="studio-soft-label">{activeStations} active</span>
           </div>

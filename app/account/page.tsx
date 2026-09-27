@@ -7,6 +7,7 @@ import { UserNavbar } from "@/components/user-navbar";
 import { KineticText } from "@/components/magicui/kinetic-text";
 import { TextAnimate } from "@/components/magicui/text-animate";
 import { EventClassCard } from "@/components/event-class-card";
+import { FolderArtwork, Sticker } from "@/components/brand-art";
 
 export const metadata = { title: "Dashboard | PassFlow" };
 export const dynamic = "force-dynamic";
@@ -59,19 +60,21 @@ export default async function AccountPage() {
       />
 
       <main className="studio-page-shell">
-        <header className="studio-page-hero dashboard-studio-hero">
-          <div>
-            <span className="section-kicker">Personal workspace</span>
+        <header className="studio-page-hero workspace-welcome">
+          <div className="workspace-welcome-copy">
+            <span className="section-kicker">YOUR LITTLE CORNER OF PASSFLOW</span>
             <KineticText text={`Halo, ${name}.`} className="studio-page-title" />
             <TextAnimate className="studio-page-subtitle" delay={0.05}>
-              Pass, event, dan akses yang terhubung ke akunmu berada di satu tempat.
+              Ada momen baru menunggu. Semua event dan pass kamu ada di sini.
             </TextAnimate>
-          </div>
-
-          <Link href="/events" className="studio-icon-action" aria-label="Tambah event">
+          <Link href="/events" className="magic-shiny-button">
+            <span>
             <Plus size={17} />
-            <span>Tambah event</span>
+            Jelajahi event
+            </span>
           </Link>
+          </div>
+          <div className="workspace-art"><span className="workspace-art-label">↗ {myEvents.length} event tersimpan</span><FolderArtwork color="blue" label="Your next moment"/><Sticker kind="smile"/></div>
         </header>
 
         {unavailable && (
@@ -99,15 +102,16 @@ export default async function AccountPage() {
             </div>
           ) : (
             <div className="studio-empty-state">
-              <span className="section-kicker">No event yet</span>
-              <h3>Belum ada event yang terhubung.</h3>
-              <p>Pilih event yang tersedia lalu registrasi dengan akun ini.</p>
+              <FolderArtwork color="lavender" label="Room for more"/>
+              <h3>Pass pertama kamu menunggu.</h3>
+              <p>Daftar ke event yang kamu suka. Pass digitalnya akan tersimpan di sini.</p>
               <Link href="/events" className="button button-dark">
                 Jelajahi event
               </Link>
             </div>
           )}
         </section>
+        {publishedEvents.some((event) => !registeredIds.has(event.id)) && <section className="studio-section" aria-labelledby="discover-events"><div className="studio-section-heading"><div><p className="section-kicker">A LITTLE DISCOVERY</p><h2 id="discover-events">Untuk momen berikutnya.</h2></div><Link href="/events" className="studio-text-link">Jelajahi <ArrowUpRight size={14}/></Link></div><div className="class-event-grid">{publishedEvents.filter(event => !registeredIds.has(event.id)).slice(0, 3).map(event => <EventClassCard event={event} key={event.id}/>)}</div></section>}
       </main>
     </div>
   );

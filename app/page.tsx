@@ -1,120 +1,45 @@
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { KineticText } from "@/components/magicui/kinetic-text";
-import { TextAnimate } from "@/components/magicui/text-animate";
 import { VelocityScroll } from "@/components/magicui/scroll-based-velocity";
 import { ShinyButton } from "@/components/magicui/shiny-button";
-import { TypingAnimation } from "@/components/magicui/typing-animation";
-import { Text3DFlip } from "@/components/magicui/text-3d-flip";
-import { SmoothCursor } from "@/components/magicui/smooth-cursor";
+import { CollectionArtwork, FolderArtwork, Sticker } from "@/components/brand-art";
+import { EventClassCard } from "@/components/event-class-card";
 import { getAuthContext } from "@/lib/auth/session";
-
-const capabilities = [
-  ["01", "Register", "Satu identitas attendee untuk seluruh event flow."],
-  ["02", "Assign", "QR otomatis atau claim wristband, dipilih per event."],
-  ["03", "Scan", "Validasi akses, checkpoint, dan benefit dari kamera."],
-  ["04", "Design", "Pass dan ID card tetap sinkron dengan data attendee."],
-];
+import { getRecentPublishedEvents } from "@/lib/events";
 
 export default async function HomePage() {
-  const session = await getAuthContext();
-  return (
-    <main className="landing-shell studio-backdrop">
-      <SmoothCursor />
-
-      <nav className="topbar studio-nav">
-        <Link href="/" className="brand-lockup">
-          <span className="brand-mark">P</span>
-          <span>PassFlow</span>
-        </Link>
-
-        <div className="topbar-actions">
-          <ThemeToggle />
-          <Link href="/login" className="text-link">
-            Masuk
-          </Link>
-          <ShinyButton href="/register" className="landing-nav-cta">
-            Mulai
-          </ShinyButton>
-        </div>
-      </nav>
-
-      <section className="studio-hero">
-        <div className="studio-hero-copy">
-          <span className="studio-eyebrow">
-            <TypingAnimation duration={28}>Event access, without the friction.</TypingAnimation>
-          </span>
-
-          <KineticText
-            text="One pass. Every event moment."
-            className="studio-hero-title"
-          />
-
-          <TextAnimate className="studio-hero-description" by="word" delay={0.08}>
-            Registrasi, credential, ID card, wristband, scanner, dan event experience bergerak dari satu sumber data yang sama.
-          </TextAnimate>
-
-          <div className="studio-hero-actions">
-            <ShinyButton href={session ? "/account" : "/register"}>
-              {session ? "Buka dashboard" : "Buat workspace"} <ArrowUpRight size={15} />
-            </ShinyButton>
-            <Link href="/e/adorne-nails-exhibition" className="button button-ghost">
-              Lihat event demo
-            </Link>
-          </div>
-        </div>
-
-        <div className="studio-flow-panel">
-          <div className="studio-flow-head">
-            <span>Live flow</span>
-            <small>PassFlow system</small>
-          </div>
-          {capabilities.map(([number, title, copy]) => (
-            <div className="studio-flow-item" key={number}>
-              <span>{number}</span>
-              <div>
-                <strong>{title}</strong>
-                <small>{copy}</small>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <div className="studio-velocity-band" aria-hidden="true">
-        <VelocityScroll defaultVelocity={0.45}>
-          REGISTER · ASSIGN · CLAIM · SCAN · VALIDATE · DESIGN ·
-        </VelocityScroll>
+  const [session, recent] = await Promise.all([
+    getAuthContext(),
+    getRecentPublishedEvents().then(events => ({ events, unavailable: false })).catch(() => ({ events: [], unavailable: true })),
+  ]);
+  return <main className="editorial-landing">
+    <nav className="editorial-nav" aria-label="Navigasi utama">
+      <Link href="/" className="brand-lockup"><span className="brand-mark">P</span>PassFlow<span className="brand-dot"/></Link>
+      <div className="editorial-nav-links"><a href="#events">Discover</a><a href="#organizer">For organizers</a></div>
+      <div className="editorial-nav-actions"><ThemeToggle/>{!session && <Link href="/login">Masuk</Link>}<Link href={session ? "/account" : "/register"} className="button button-dark">{session ? "Dashboard" : "Mulai di sini"}<ArrowUpRight size={15}/></Link></div>
+    </nav>
+    <section className="editorial-canvas">
+      <span className="editorial-eyebrow"><span/> ONE SPACE. SO MANY POSSIBILITIES.</span>
+      <h1>Good people.<span>Great <em>moments.</em></span></h1>
+      <p className="editorial-hero-description">Temukan event, kumpulkan pengalaman, dan simpan setiap pass. Satu tempat untuk momen berikutnya.</p>
+      <div className="editorial-hero-actions"><ShinyButton href={session ? "/account" : "/register"}>{session ? "Buka dashboard" : "Temukan momenmu"}<ArrowUpRight size={16}/></ShinyButton><a href="#events">Lihat event ↓</a></div>
+      <CollectionArtwork/>
+      <div className="hero-corner-note"><span>↗</span>Less hassle.<br/>More memories.</div>
+    </section>
+    <div className="editorial-marquee" aria-hidden="true"><VelocityScroll defaultVelocity={0.35}>GOOD PEOPLE · NEW IDEAS · LIVE MOMENTS · YOUR NEXT EVENT · </VelocityScroll></div>
+    <section className="editorial-section" id="events" aria-labelledby="recent-events">
+      <div className="editorial-section-heading"><div><span className="section-kicker">FRESH FROM THE COMMUNITY</span><h2 id="recent-events">Baru ditambahkan.<br/><span>Mungkin, momen kamu.</span></h2></div><Link className="studio-text-link" href="/events">Semua event<ArrowUpRight size={15}/></Link></div>
+      {recent.events.length ? <div className="class-event-grid">{recent.events.map(event => <EventClassCard event={event} key={event.id}/>)}</div> : <div className="landing-empty"><FolderArtwork color="blue" label="Coming together"/><div><h3>{recent.unavailable ? "Koleksi sedang tidak tersedia." : "Ada ruang untuk cerita baru."}</h3><p>{recent.unavailable ? "Coba buka koleksi event kembali sebentar lagi." : "Event terbaru akan hadir di sini. Buat akun dan siapkan momen pertamamu."}</p></div></div>}
+    </section>
+    <section className="editorial-section organizer-invitation" id="organizer" aria-labelledby="organizer-title">
+      <div><span className="section-kicker">FOR THE ONES WHO BRING US TOGETHER</span><h2 id="organizer-title">Punya ide besar?<br/><span>Kasih ruang.</span></h2><p>Dari undangan pertama sampai check-in terakhir, kelola event dengan caramu sendiri.</p><ShinyButton href={session ? "/account" : "/register"}>{session ? "Buka dashboard" : "Buat akun PassFlow"}<ArrowUpRight size={15}/></ShinyButton></div>
+      <div className="invitation-list">
+        <div><Sticker kind="arrow"/><div><h3>Your event, your identity.</h3><p>Atur halaman, warna, dan desain pass sesuai karaktermu.</p></div></div>
+        <div><Sticker kind="smile"/><div><h3>A little more together.</h3><p>Kelola peserta dan ajak crew untuk bantu jalannya event.</p></div></div>
+        <div><Sticker kind="check"/><div><h3>One pass. You’re in.</h3><p>QR personal dan check-in kamera, semuanya terhubung.</p></div></div>
       </div>
-
-      <section className="studio-capabilities">
-        <div className="studio-section-copy">
-          <span className="section-kicker">Designed around flow</span>
-          <Text3DFlip className="studio-flip-heading">
-            Less dashboard. More control.
-          </Text3DFlip>
-          <p>
-            Informasi penting tetap dekat. Halaman tidak perlu diisi kartu hanya karena manusia
-            menemukan border-radius.
-          </p>
-        </div>
-
-        <div className="studio-capability-list">
-          {capabilities.map(([number, title, copy]) => (
-            <article key={number}>
-              <span>{number}</span>
-              <h2>{title}</h2>
-              <p>{copy}</p>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      <footer className="site-footer studio-footer">
-        <span>PassFlow</span>
-        <span>Event identity → credential → access.</span>
-      </footer>
-    </main>
-  );
+    </section>
+    <footer className="editorial-footer"><Link href="/" className="brand-lockup">PassFlow<span className="brand-dot"/></Link><span>Make it a moment. © PassFlow</span><Link href={session ? "/profile" : "/login"}>{session ? "Akun kamu" : "Masuk"} ↗</Link></footer>
+  </main>;
 }

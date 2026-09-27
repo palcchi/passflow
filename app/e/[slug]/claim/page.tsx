@@ -5,6 +5,8 @@ import { ArrowLeft, Check, QrCode } from "lucide-react";
 import { getPublishedEvent } from "@/lib/events";
 import { requireUser } from "@/lib/auth/session";
 import { registerForEvent, claimQr, replaceQr, uploadAttendeePhoto } from "@/app/events-actions";
+import { SmartSelect } from "@/components/form-fields";
+import { eventInk } from "@/lib/event-colors";
 import { WristbandInput } from "@/components/wristband-input";
 import { readTemplate, type FigmaElement } from "@/lib/design-template";
 import { qrSvgDataUri } from "@/lib/qr-svg";
@@ -54,15 +56,15 @@ export default async function ClaimPage({ params, searchParams }: ClaimPageProps
   const values: Record<string, string> = { name: attendee?.name ?? "", category: ticketName, code: credential?.display_code ?? attendee?.attendee_code ?? "", event_name: event.name, event_date: event.dateLabel, venue: event.venue };
   const themeStyle = { "--event-primary": event.theme.primary, "--event-bg": event.theme.background, "--event-fg": event.theme.foreground } as CSSProperties;
 
-  const passStyle = { ...themeStyle, "--pass-brand": event.theme.primary, "--pass-secondary": event.theme.secondary, "--pass-surface": event.theme.surface } as CSSProperties;
+  const passStyle = { ...themeStyle, "--pass-brand": event.theme.primary, "--pass-brand-ink": eventInk(event.theme.primary), "--pass-secondary": event.theme.secondary, "--pass-surface": event.theme.surface } as CSSProperties;
   return <main className="center-page pass-digital-shell" style={passStyle}><div className="center-page-inner">
-    <Link href={`/e/${event.slug}`} className="back-link"><ArrowLeft size={16}/> Kembali ke event</Link>
+    <Link href={`/e/${event.slug}?view=details`} className="back-link"><ArrowLeft size={16}/> Kembali ke event</Link>
     <div className="page-intro"><span className="section-kicker">{event.name}</span><h1>{credential ? "Your event pass." : attendee ? event.qrConfig.claimMode === "claim" ? "Connect your wristband." : "Your QR is assigned automatically." : "Reserve your event pass."}</h1><p>{credential ? "QR pass digitalmu siap dipakai di event." : attendee && event.qrConfig.claimMode === "claim" ? "Scan credential fisik setelah registrasi untuk menghubungkannya ke identitasmu." : "Saat registrasi selesai, PassFlow menyiapkan credential yang terhubung ke identitasmu."}</p></div>
     {error && <p role="alert" className="mb-5 rounded-md border border-destructive/30 p-3 text-sm text-destructive">{error}</p>}
     {query.registered && <p role="status" className="mb-5 rounded-md bg-muted p-3 text-sm">{event.qrConfig.claimMode === "claim" ? "Pendaftaran berhasil. Sekarang hubungkan QR wristband." : "Pendaftaran berhasil. QR credential dibuat otomatis untuk pass kamu."}</p>}
     {query.photo === "1" && <p role="status" className="mb-5 rounded-md bg-muted p-3 text-sm">Foto profil pass berhasil diperbarui.</p>}
     {query.photo === "failed" && <p role="alert" className="mb-5 rounded-md border border-destructive/30 p-3 text-sm text-destructive">Foto belum berhasil disimpan. Coba lagi dengan JPG, PNG, atau WebP maksimal 5 MB.</p>}
-    {!attendee ? <form action={registerForEvent} className="claim-card space-y-4"><input type="hidden" name="event_slug" value={slug}/><h2>Daftar ke {event.name}</h2><input required minLength={2} name="name" placeholder="Nama lengkap" className="min-h-12 w-full rounded-md border border-border px-3"/><input name="phone" placeholder="Nomor WhatsApp (opsional)" className="min-h-12 w-full rounded-md border border-border px-3"/><select name="ticket_code" className="min-h-12 w-full rounded-md border border-border px-3">{tickets.map((ticket) => <option key={ticket.code} value={ticket.code}>{ticket.name} · {ticket.price > 0 ? `${ticket.currency} ${Number(ticket.price).toLocaleString("id-ID")}` : "Gratis"}</option>)}</select><button className="button button-dark w-full" type="submit" disabled={!tickets.length}>Daftar sekarang</button></form>
+    {!attendee ? <form action={registerForEvent} className="claim-card space-y-4"><input type="hidden" name="event_slug" value={slug}/><h2>Daftar ke {event.name}</h2><label className="auth-field">Nama lengkap<input required minLength={2} name="name" autoComplete="name" placeholder="Nama lengkap" className="min-h-12 w-full rounded-xl border border-border px-3"/></label><label className="auth-field">Nomor WhatsApp <small>Opsional</small><input name="phone" type="tel" inputMode="tel" autoComplete="tel" placeholder="08…" className="min-h-12 w-full rounded-xl border border-border px-3"/></label><div className="auth-field"><span>Pilih pass</span><SmartSelect name="ticket_code" value={tickets[0]?.code ?? ""} options={tickets.map(ticket => ({ value: ticket.code, label: ticket.name, description: ticket.price > 0 ? `${ticket.currency} ${Number(ticket.price).toLocaleString("id-ID")}` : "Gratis" }))}/></div><button className="button button-dark w-full" type="submit" disabled={!tickets.length}>Daftar sekarang</button></form>
     : credential ? <section className="claim-card"><div className="claim-card-top"><span className="section-kicker">{event.name}</span><span className="claim-status claimed">Active</span></div>
       {template && passDesign?.preview_url ? <div className="claim-figma-pass" style={{ aspectRatio: `${template.frame.width} / ${template.frame.height}` }}>
         <Image src={passDesign.preview_url} alt={`Desain pass ${event.name}`} fill unoptimized sizes="(max-width: 600px) 90vw, 520px" className="claim-figma-background"/>

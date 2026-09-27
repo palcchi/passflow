@@ -10,4 +10,4 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 ## PassFlow user preferences
 - Do not deploy automatically or push branches that trigger Vercel preview builds. Work and verify locally, batch changes, then obtain explicit approval for deployment.
-- Visual direction: rounded Classroom-style event cards with colorful banners, Apple system typography, restrained color combinations, kinetic event headings and moving homepage taglines.
+- Visual direction: clean monochrome white/gray surfaces, Apple system typography with large bold/light editorial headings, rounded event cards, and small colorful folder/ticket/sticker artwork. Keep kinetic event headings and a restrained moving homepage tagline. Apply this consistently to auth, profile, dashboards, and event management; preserve organizer-selected public event and digital pass colors.

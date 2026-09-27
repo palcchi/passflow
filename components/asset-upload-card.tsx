@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useId, useRef, useState, useTransition } from "react";
+import { type CSSProperties, FormEvent, useEffect, useId, useRef, useState, useTransition } from "react";
 import { CheckCircle2, ImagePlus, LoaderCircle, UploadCloud, X } from "lucide-react";
 import { uploadEventAsset } from "@/app/admin/actions";
 
@@ -46,11 +46,13 @@ export function AssetUploadCard({
     setSuccess(false);
     if (!file) return;
     if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+      clearSelection();
       setMessage("Format harus JPG, PNG, atau WEBP.");
       if (inputRef.current) inputRef.current.value = "";
       return;
     }
     if (file.size > 5 * 1024 * 1024) {
+      clearSelection();
       setMessage("Ukuran file maksimal 5 MB.");
       if (inputRef.current) inputRef.current.value = "";
       return;
@@ -109,7 +111,7 @@ export function AssetUploadCard({
       <label
         htmlFor={inputId}
         className={`asset-upload-card ${preview ? "has-preview" : ""}`}
-        style={preview ? { backgroundImage: `linear-gradient(rgba(10,10,10,.12), rgba(10,10,10,.42)), url("${preview}")` } : undefined}
+        style={preview ? { "--asset-preview": `url("${preview}")` } as CSSProperties : undefined}
       >
         <input
           ref={inputRef}
@@ -146,7 +148,7 @@ export function AssetUploadCard({
       </div>
 
       {message && (
-        <p className={success ? "asset-upload-status is-success" : "asset-upload-status is-error"}>
+        <p role={success ? "status" : "alert"} className={success ? "asset-upload-status is-success" : "asset-upload-status is-error"}>
           {success && <CheckCircle2 size={14} />}
           {message}
         </p>

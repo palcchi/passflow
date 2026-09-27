@@ -1,5 +1,7 @@
 import type { CSSProperties, ReactNode } from "react";
 import Link from "next/link";
+import Image from "next/image";
+import { EventCoverArtwork } from "@/components/brand-art";
 import { ArrowLeft } from "lucide-react";
 import type { PassFlowEvent } from "@/lib/events";
 import { UserNavbar } from "@/components/user-navbar";
@@ -54,11 +56,6 @@ export function EventAdminChrome({
 
       <main className="event-admin-shell mx-auto max-w-7xl px-5 pb-24 pt-8 sm:px-8 sm:pt-10">
         <header className="event-admin-hero studio-event-hero">
-          <div
-            className="event-admin-hero-art"
-            aria-hidden="true"
-            style={event.heroImageUrl ? { backgroundImage: `linear-gradient(90deg, color-mix(in srgb, ${event.theme.background} 84%, transparent), color-mix(in srgb, ${event.theme.background} 32%, transparent)), url(\"${event.heroImageUrl}\")` } : { background: `radial-gradient(circle at 82% 24%, color-mix(in srgb, ${event.theme.secondary} 76%, transparent), transparent 52%), linear-gradient(120deg, color-mix(in srgb, ${event.theme.primary} 14%, transparent), transparent 68%)` }}
-          />
           <div className="event-admin-hero-main">
             <Link href="/admin" className="event-admin-back">
               <ArrowLeft size={14} /> Organizer
@@ -75,6 +72,8 @@ export function EventAdminChrome({
             </TextAnimate>
           </div>
 
+          <div className="event-admin-cover" aria-hidden="true">{event.heroImageUrl || event.posterUrl ? <Image src={(event.heroImageUrl || event.posterUrl)!} fill unoptimized sizes="210px" alt=""/> : <EventCoverArtwork name={event.name} color={event.theme.primary}/>}</div>
+
           <div className="event-admin-hero-actions">
             <Link
               className="button button-ghost"
@@ -89,7 +88,7 @@ export function EventAdminChrome({
               Design
             </Link>
             <ShinyButton
-              href={`/e/${event.slug}`}
+              href={`/e/${event.slug}?view=details`}
               className="event-admin-public-cta"
             >
               Public page

@@ -9,3 +9,15 @@ test('Only trusted organizer roles manage the dashboard', () => {
   for (const role of ['owner','admin']) assert.equal(canManage(role),true);
   for (const role of ['staff','visitor','ADMIN','', 'administrator']) assert.equal(canManage(role),false);
 });
+test('crew invitations survive login without permitting arbitrary redirect queries', () => {
+  const token = 'Ab12_-'.repeat(5) + 'Z9';
+  const invitation = `/crew/join?token=${token}`;
+  assert.equal(safeNext(invitation), invitation);
+  for (const path of [
+    '/crew/join?token=short',
+    `${invitation}&next=https://evil.test`,
+    `${invitation}#redirect`,
+    `${invitation}\n`,
+    '/crew/join?token=%2f%2fevil.test',
+  ]) assert.equal(safeNext(path), '/account');
+});

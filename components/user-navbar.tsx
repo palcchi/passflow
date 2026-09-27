@@ -81,6 +81,8 @@ export function UserNavbar({
                 key={href}
                 className="user-nav-link"
                 data-active={active(href)}
+                aria-current={active(href) ? "page" : undefined}
+                onClick={() => setOpenMenu(null)}
               >
                 {label}
               </Link>
@@ -92,10 +94,10 @@ export function UserNavbar({
           <ThemeToggle />
 
           <Link
-            href="/events"
+            href={organizer ? "/admin/events/new" : "/events"}
             className="user-nav-icon-button"
-            aria-label="Tambah event"
-            title="Tambah event"
+            aria-label={organizer ? "Buat event" : "Jelajahi event"}
+            title={organizer ? "Buat event" : "Jelajahi event"}
           >
             <Plus size={18} />
           </Link>
@@ -104,6 +106,7 @@ export function UserNavbar({
             type="button"
             className="user-profile-trigger"
             aria-expanded={openMenu === "profile"}
+            aria-label="Menu akun"
             onClick={() => setOpenMenu(openMenu === "profile" ? null : "profile")}
           >
             <span
@@ -180,6 +183,7 @@ export function UserNavbar({
                 href={href}
                 key={href}
                 data-active={active(href)}
+                aria-current={active(href) ? "page" : undefined}
                 onClick={() => setOpenMenu(null)}
               >
                 <Icon size={16} />
