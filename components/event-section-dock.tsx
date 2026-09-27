@@ -49,7 +49,7 @@ export function EventSectionDock() {
   }, []);
 
   return (
-    <nav className="event-section-dock liquid-nav" aria-label="Navigasi event">
+    <nav className="event-section-dock liquid-nav" aria-label="Event sections">
       <div className="event-section-dock-scroll">
         {items.map(({ id, label, icon: Icon }) => (
           <motion.a
@@ -61,8 +61,15 @@ export function EventSectionDock() {
             whileTap={reduceMotion ? undefined : { scale: 0.97 }}
             onClick={() => setActive(id)}
           >
+            {active === id && (
+              <motion.span
+                className="event-dock-active-pill"
+                layoutId="passflow-event-section-pill"
+                transition={reduceMotion ? { duration: 0 } : { type: "spring", stiffness: 430, damping: 38, mass: 0.7 }}
+              />
+            )}
             <span className="event-dock-icon"><Icon size={15} /></span>
-            <span>{label}</span>
+            <span className="event-dock-label">{label}</span>
           </motion.a>
         ))}
       </div>

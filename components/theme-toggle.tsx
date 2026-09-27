@@ -92,7 +92,7 @@ export function ThemeToggle() {
   ];
 
   return (
-    <div className="theme-toggle" aria-label="Tema tampilan">
+    <div className="theme-toggle" aria-label="Appearance theme">
       {options.map(({ value, label, Icon }) => (
         <button
           key={value}

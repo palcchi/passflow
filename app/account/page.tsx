@@ -63,7 +63,7 @@ export default async function AccountPage() {
         <header className="studio-page-hero workspace-welcome">
           <div className="workspace-welcome-copy">
             <span className="section-kicker">YOUR LITTLE CORNER OF PASSFLOW</span>
-            <KineticText text={`Halo, ${name}.`} className="studio-page-title" />
+            <KineticText text={`Welcome, ${name}.`} className="studio-page-title" />
             <TextAnimate className="studio-page-subtitle" delay={0.05}>
               Your events and digital passes are organized here, ready when you need them.
             </TextAnimate>

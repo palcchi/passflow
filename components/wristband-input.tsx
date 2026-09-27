@@ -40,7 +40,7 @@ export function WristbandInput() {
     {active && <div id={id} className="min-h-64 overflow-hidden rounded-md" />}
     {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
     <label className="block text-sm">Wristband QR credential
-      <input name="code" required maxLength={256} value={code} onChange={e=>setCode(e.target.value)} placeholder="Paste or scan a PF1 credential code" className="mt-2 min-h-12 w-full rounded-md border border-border px-3" />
+      <input name="code" required maxLength={256} value={code} onChange={e=>setCode(e.target.value)} placeholder="Scan or paste the PF1 credential code" className="mt-2 min-h-12 w-full rounded-md border border-border px-3" />
     </label>
     <p className="text-xs text-muted-foreground">Scan or paste the QR credential content, not the WR label number. Review it before confirming.</p>
   </div>;

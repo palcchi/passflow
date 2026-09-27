@@ -83,7 +83,7 @@ export default async function AdminDashboardPage() {
           <div className="workspace-welcome-copy">
             <span className="section-kicker">Organizer workspace</span>
             <KineticText
-              text={`Halo, ${name}.`}
+              text={`Welcome, ${name}.`}
               className="studio-page-title"
             />
             <TextAnimate className="studio-page-subtitle" delay={0.05}>

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { motion, useReducedMotion } from "motion/react";
 
 const items = [
   { key: "overview", label: "Overview", suffix: "" },
@@ -15,6 +16,7 @@ const items = [
 
 export function EventAdminNav({ eventId }: { eventId: string }) {
   const pathname = usePathname();
+  const reduceMotion = useReducedMotion();
   const base = `/admin/events/${eventId}`;
 
   return (
@@ -33,7 +35,14 @@ export function EventAdminNav({ eventId }: { eventId: string }) {
               data-active={active}
               aria-current={active ? "page" : undefined}
             >
-              {label}
+              {active && (
+                <motion.span
+                  className="event-nav-active-pill"
+                  layoutId={`passflow-event-nav-pill-${eventId}`}
+                  transition={reduceMotion ? { duration: 0 } : { type: "spring", stiffness: 430, damping: 38, mass: 0.7 }}
+                />
+              )}
+              <span className="event-dock-label">{label}</span>
             </Link>
           );
         })}

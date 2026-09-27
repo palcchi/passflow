@@ -116,7 +116,7 @@ export function QrCodeGenerator({ eventId }: { eventId: string }) {
               setPrefix(normalizedPrefix(event.target.value));
               invalidatePreview();
             }}
-            placeholder="e.g. VIP"
+            placeholder="VIP"
           />
           <small>Letters, numbers, and hyphens only.</small>
         </label>
