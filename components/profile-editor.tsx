@@ -92,7 +92,7 @@ export function ProfileEditor({
             </span>
             <span>
               <strong>{fileName || "Choose a new photo"}</strong>
-              <small>JPG, PNG, WEBP · maksimal 2 MB</small>
+              <small>JPG, PNG, or WEBP · max 2 MB</small>
             </span>
           </label>
           <div className="profile-avatar-actions">
