@@ -16,7 +16,7 @@ export function AvatarCircles({
 }) {
   return (
     <div className={cn("avatar-circles", className)} aria-label="Attendees">
-      {people.slice(0, 5).map((person, index) => (
+      {people.slice(0, 3).map((person, index) => (
         <span
           className="avatar-circle"
           key={`${person.name}-${index}`}
@@ -30,7 +30,7 @@ export function AvatarCircles({
           {!person.imageUrl && person.name.trim().charAt(0).toUpperCase()}
         </span>
       ))}
-      {extra > 0 && <span className="avatar-circle avatar-circle-extra">+{extra}</span>}
+      {extra > 0 && <span className="avatar-circle avatar-circle-extra">+{Math.min(extra, 99)}</span>}
     </div>
   );
 }

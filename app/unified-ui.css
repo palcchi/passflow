@@ -1052,3 +1052,31 @@
   .flow-public-event .event-public-hero { gap:24px!important; padding:20px!important; }
 }
 }
+
+
+/* Keep the desktop workspace navigation pinned while long pages scroll. */
+@media (min-width: 1024px) {
+  .flow-sidebar.user-nav-shell {
+    position: fixed !important;
+    inset: 0 auto 0 0 !important;
+    height: 100dvh !important;
+    max-height: 100dvh !important;
+    overflow-y: auto !important;
+    overscroll-behavior: contain;
+  }
+
+  .flow-workspace {
+    padding-left: 218px !important;
+  }
+}
+
+/* Participant presence, based on the Magic UI avatar-circle pattern. */
+.metric-avatar-circles {
+  margin-top: 8px;
+}
+
+.metric-avatar-circles .avatar-circle {
+  width: 30px;
+  height: 30px;
+  font-size: 9px;
+}

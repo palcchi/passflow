@@ -25,16 +25,14 @@ export function RouteTransition({ children }: { children: ReactNode }) {
     }
 
     if (reduceMotion) {
-      controls.set({ opacity: 1, y: 0, scale: 1 });
+      controls.set({ x: 0 });
       return;
     }
 
-    controls.set({ opacity: 0.965, y: 8, scale: 0.998 });
+    controls.set({ x: 12 });
     void controls.start({
-      opacity: 1,
-      y: 0,
-      scale: 1,
-      transition: { duration: 0.28, ease: routeEase },
+      x: 0,
+      transition: { duration: 0.26, ease: routeEase },
     });
   }, [pathname, reduceMotion, controls]);
 
