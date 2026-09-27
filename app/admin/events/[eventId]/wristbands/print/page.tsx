@@ -25,7 +25,7 @@ export default async function WristbandPrintPage({ params }: { params: Promise<{
   const height = physical ? config.heightMm : 54;
 
   return <main className="qr-export-page">
-    <header className="qr-export-toolbar print:hidden"><Link href={`/admin/events/${eventId}/access`} className="back-link"><ArrowLeft size={16}/> Kembali ke event</Link><div className="flex items-center gap-2"><span className="soft-badge">{labels[config.mode]}</span><a className="button button-ghost" href={`/admin/events/${eventId}/export/figma`}>Download SVG untuk Figma</a><PrintButton /></div></header>
+    <header className="qr-export-toolbar print:hidden"><Link href={`/admin/events/${eventId}/access`} className="back-link"><ArrowLeft size={16}/> Back to event</Link><div className="flex items-center gap-2"><span className="soft-badge">{labels[config.mode]}</span><a className="button button-ghost" href={`/admin/events/${eventId}/export/figma`}>Download SVG for Figma</a><PrintButton /></div></header>
     <div className={`qr-export-sheet qr-export-${config.mode}`}>
       <div className="qr-export-heading print:hidden"><p className="section-kicker">PassFlow export</p><h1>{event.name}</h1><p>{labels[config.mode]} · {qrCodes.length} QR credential</p></div>
       <div className="qr-export-grid">{qrCodes.map((qr) => { const attendee = Array.isArray(qr.attendees) ? qr.attendees[0] : qr.attendees; return <article className="qr-export-card" key={qr.id} style={{ width: `${width}mm`, minHeight: `${height}mm` }}>
