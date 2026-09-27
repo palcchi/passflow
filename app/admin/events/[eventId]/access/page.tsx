@@ -226,13 +226,13 @@ export default async function EventAccessPage({ params }: Props) {
               <input
                 className={inputClass()}
                 name="name"
-                placeholder="e.g. VIP Lounge"
+                placeholder="VIP Lounge"
                 required
               />
               <input
                 className={inputClass()}
                 name="code"
-                placeholder="e.g. VIP_LOUNGE"
+                placeholder="VIP_LOUNGE"
               />
               <button className="button button-ghost" type="submit">
                 Add zone
@@ -347,13 +347,13 @@ export default async function EventAccessPage({ params }: Props) {
               <input
                 className={inputClass()}
                 name="name"
-                placeholder="e.g. Main Entrance"
+                placeholder="Main Entrance"
                 required
               />
               <input
                 className={inputClass()}
                 name="slug"
-                placeholder="e.g. main-entrance"
+                placeholder="main-entrance"
               />
               <SmartSelect
                 name="mode"
@@ -379,12 +379,12 @@ export default async function EventAccessPage({ params }: Props) {
               <input
                 className={inputClass()}
                 name="activityCode"
-                placeholder="e.g. WORKSHOP_A (optional)"
+                placeholder="WORKSHOP_A (optional)"
               />
               <input
                 className={inputClass()}
                 name="benefitCode"
-                placeholder="e.g. MERCH_PACK (optional)"
+                placeholder="MERCH_PACK (optional)"
               />
               <button className="button button-dark" type="submit">
                 Create station
