@@ -24,7 +24,7 @@ export default async function EventSettingsPage({ params }: Props) {
           <div>
             <span className="section-kicker">Settings</span>
             <h2>Basics & lifecycle</h2>
-            <p>Informasi inti event, jadwal, kapasitas, dan status publikasi.</p>
+            <p>Core event information, schedule, capacity, and publication status.</p>
           </div>
         </div>
 
@@ -70,7 +70,7 @@ export default async function EventSettingsPage({ params }: Props) {
         <div className="event-admin-status-row">
           <div>
             <strong>Event status</strong>
-            <span>Atur lifecycle event dari Draft, Published, atau Archived.</span>
+            <span>Manage the event lifecycle across Draft, Published, and Archived states.</span>
           </div>
           <div className="event-admin-status-actions">
             {(["draft", "published", "archived"] as const).map((status) => (
@@ -94,7 +94,7 @@ export default async function EventSettingsPage({ params }: Props) {
           <div>
             <strong>Delete event</strong>
             <p>
-              Ketik slug <code>{event.slug}</code> untuk menghapus event beserta attendee,
+              Type the slug <code>{event.slug}</code> to permanently delete the event and its attendees,
               QR, station, dan log terkait.
             </p>
           </div>

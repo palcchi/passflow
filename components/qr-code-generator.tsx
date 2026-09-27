@@ -116,13 +116,13 @@ export function QrCodeGenerator({ eventId }: { eventId: string }) {
               setPrefix(normalizedPrefix(event.target.value));
               invalidatePreview();
             }}
-            placeholder="VIP"
+            placeholder="e.g. VIP"
           />
-          <small>Huruf, angka, dan tanda hubung.</small>
+          <small>Letters, numbers, and hyphens only.</small>
         </label>
 
         <label className="event-admin-field">
-          <span>Jumlah</span>
+          <span>Quantity</span>
           <input
             className="event-admin-input"
             type="number"
@@ -134,11 +134,11 @@ export function QrCodeGenerator({ eventId }: { eventId: string }) {
               invalidatePreview();
             }}
           />
-          <small>Maksimal 250 per batch.</small>
+          <small>Maximum 250 credentials per batch.</small>
         </label>
 
         <div className="event-admin-field">
-          <span>Nomor awal</span>
+          <span>Starting number</span>
           <div className="qr-mode-toggle">
             <button
               type="button"
@@ -161,7 +161,7 @@ export function QrCodeGenerator({ eventId }: { eventId: string }) {
               Custom
             </button>
           </div>
-          <small>{mode === "auto" ? "Mencari range kosong pertama." : "Tentukan nomor awal sendiri."}</small>
+          <small>{mode === "auto" ? "Find the first available range automatically." : "Set the starting number manually."}</small>
         </div>
 
         {mode === "custom" && (
@@ -177,7 +177,7 @@ export function QrCodeGenerator({ eventId }: { eventId: string }) {
                 invalidatePreview();
               }}
             />
-            <small>Contoh 100 menghasilkan PREFIX-0100.</small>
+            <small>For example, 100 generates PREFIX-0100.</small>
           </label>
         )}
       </div>
@@ -185,7 +185,7 @@ export function QrCodeGenerator({ eventId }: { eventId: string }) {
       <div className="qr-generator-actions">
         <button className="button button-ghost" type="button" onClick={check} disabled={checking || generating}>
           {checking ? <LoaderCircle className="animate-spin" size={15} /> : <Search size={15} />}
-          Cari kode tersedia
+          Check availability
         </button>
         <button className="button button-dark" type="button" onClick={generate} disabled={checking || generating}>
           {generating ? <LoaderCircle className="animate-spin" size={15} /> : <Sparkles size={15} />}
@@ -199,16 +199,16 @@ export function QrCodeGenerator({ eventId }: { eventId: string }) {
           <div>
             <strong>
               {preview.requestedAvailable
-                ? "Range tersedia"
-                : "Range pilihan bentrok, ini saran berikutnya"}
+                ? "Range available"
+                : "The selected range conflicts; here is the next available option"}
             </strong>
             <p>{preview.firstCode} → {preview.lastCode}</p>
             <small>
               {preview.mode === "auto"
-                ? `${preview.usedCount} kode dengan prefix ini sudah pernah dibuat.`
+                ? `${preview.usedCount} codes with this prefix have already been created.`
                 : preview.requestedAvailable
-                  ? "Range custom ini dapat digunakan."
-                  : "Kode yang pernah dibuat, termasuk revoked, tidak dipakai ulang."}
+                  ? "This custom range is available."
+                  : "Previously created codes, including revoked credentials, are never reused."}
             </small>
           </div>
         </div>

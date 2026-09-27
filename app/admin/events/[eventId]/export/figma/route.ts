@@ -48,17 +48,17 @@ export async function GET(request: Request, { params }: { params: Promise<{ even
   const { eventId } = await params;
   const url = new URL(request.url), designId = url.searchParams.get("designId");
   const event = await getManagedEvent(eventId);
-  if (!event || !designId) return new NextResponse("Desain tidak ditemukan", { status: 404 });
+  if (!event || !designId) return new NextResponse("Design not found", { status: 404 });
   const { supabase } = await requireOrganizerMembership(`/admin/events/${eventId}/design`);
   const [{ data: design }, { data: credentials }] = await Promise.all([
     supabase.from("event_designs").select("id,name,kind,preview_url,template,ticket_type_id").eq("id", designId).eq("event_id", eventId).maybeSingle(),
     supabase.from("qr_credentials").select("id,code,display_code,status,attendee_id").eq("event_id", eventId).eq("status", "active").order("display_code"),
   ]);
-  if (!design) return new NextResponse("Desain tidak ditemukan", { status: 404 });
+  if (!design) return new NextResponse("Design not found", { status: 404 });
   const template = readTemplate(design.template), frame = template.frame;
-  if (!template.elements.length) return new NextResponse("Belum ada elemen PassFlow. Tambahkan marker di Figma lalu Sync ulang.", { status: 422 });
+  if (!template.elements.length) return new NextResponse("No PassFlow elements were detected. Add markers in Figma, then sync again.", { status: 422 });
   const qr = template.elements.find((element) => element.field === "qr");
-  if (qr && qrContrast(template.qrStyle.foreground, template.qrStyle.background) < 4.5) return new NextResponse("Kontras warna QR terlalu rendah. Pilih warna gelap dan latar terang agar dapat dipindai.", { status: 422 });
+  if (qr && qrContrast(template.qrStyle.foreground, template.qrStyle.background) < 4.5) return new NextResponse("QR contrast is too low. Use a dark foreground on a light background for reliable scanning.", { status: 422 });
   const background = await dataImage(design.preview_url);
   const attendeeIds = [...new Set((credentials ?? []).flatMap((item) => item.attendee_id ? [item.attendee_id] : []))];
   const [{ data: attendees }, { data: profiles }] = attendeeIds.length ? await Promise.all([
@@ -67,7 +67,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ even
   ]) : [{ data: [] }, { data: [] }];
   const attendeeMap = new Map((attendees ?? []).map((item) => [item.id, item]));
   const activeCredentials = (credentials ?? []).filter((item) => !design.ticket_type_id || (item.attendee_id && attendeeMap.get(item.attendee_id)?.ticket_type_id === design.ticket_type_id));
-  if (!activeCredentials.length) return new NextResponse("Belum ada peserta dengan QR aktif untuk kategori desain ini.", { status: 422 });
+  if (!activeCredentials.length) return new NextResponse("No attendees with active QR credentials are available for this design category.", { status: 422 });
   const profileMap = new Map((profiles ?? []).flatMap((item) => item.photo_storage_path ? [[item.attendee_id, item.photo_storage_path] as const] : []));
   const photos = new Map<string, string>();
   await Promise.all([...profileMap.entries()].map(async ([attendeeId, path]) => {
@@ -90,7 +90,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ even
     const values: Record<string, string> = {
       name: attendee?.name ?? "Guest", category, code: attendee?.attendee_code ?? credential.display_code ?? credential.id,
       event_name: event.name, event_date: event.dateLabel ?? "", venue: event.venue ?? "",
-      cta: "Open pass", register: "Daftar", claim: "Klaim pass",
+      cta: "Open pass", register: "Register", claim: "Claim pass",
     };
     const pieces = template.elements.flatMap((element) => {
       if (element.field === "qr") return qr ? [qrSvgMarkup(`PF1:${credential.code}`, x + qr.x, y + qr.y, qr.width, qr.height, template.qrStyle.foreground, template.qrStyle.background, template.qrStyle.modules)] : [];

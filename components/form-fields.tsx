@@ -45,7 +45,7 @@ function useExclusivePopover(open: boolean, setOpen: (value: boolean) => void) {
 
 function formatInteger(value: string | number | null | undefined) {
   const digits = String(value ?? "").replace(/[^0-9]/g, "");
-  return digits ? Number(digits).toLocaleString("id-ID") : "";
+  return digits ? Number(digits).toLocaleString("en-US") : "";
 }
 
 export function FormattedNumberInput({
@@ -69,7 +69,7 @@ export function FormattedNumberInput({
       name={name}
       value={value}
       inputMode="numeric"
-      pattern="[0-9.]*"
+      pattern="[0-9,]*"
       type="text"
       placeholder={placeholder}
       className={className}
@@ -170,7 +170,7 @@ export function SmartSelect({
 export function DateTimeField({
   name,
   defaultValue,
-  label = "Tanggal dan waktu",
+  label = "Date and time",
 }: {
   name: string;
   defaultValue?: string | null;
@@ -213,12 +213,12 @@ export function DateTimeField({
     },
   );
   const dateLabel = date
-    ? new Intl.DateTimeFormat("id-ID", {
+    ? new Intl.DateTimeFormat("en-US", {
         day: "2-digit",
         month: "short",
         year: "numeric",
       }).format(new Date(`${date}T00:00:00`))
-    : "Pilih tanggal";
+    : "Select a date";
   const timeOptions = Array.from({ length: 48 }, (_, index) => {
     const hours = String(Math.floor(index / 2)).padStart(2, "0");
     return `${hours}:${index % 2 ? "30" : "00"}`;
@@ -235,7 +235,7 @@ export function DateTimeField({
       <span className="field-label">{label}</span>
       <div className="date-time-grid">
         <div className="date-picker-wrap" ref={rootRef}>
-          <span>Tanggal</span>
+          <span>Date</span>
           <button
             type="button"
             className="date-picker-trigger"
@@ -263,27 +263,27 @@ export function DateTimeField({
                 <div className="date-picker-head">
                   <button
                     type="button"
-                    aria-label="Bulan sebelumnya"
+                    aria-label="Previous month"
                     onClick={() => setMonth(new Date(year, monthIndex - 1, 1))}
                   >
                     <ChevronLeft size={16} />
                   </button>
                   <strong>
-                    {new Intl.DateTimeFormat("id-ID", {
+                    {new Intl.DateTimeFormat("en-US", {
                       month: "long",
                       year: "numeric",
                     }).format(month)}
                   </strong>
                   <button
                     type="button"
-                    aria-label="Bulan berikutnya"
+                    aria-label="Next month"
                     onClick={() => setMonth(new Date(year, monthIndex + 1, 1))}
                   >
                     <ChevronRight size={16} />
                   </button>
                 </div>
                 <div className="calendar-weekdays">
-                  {["Mg", "Sn", "Sl", "Rb", "Km", "Jm", "Sb"].map((day) => (
+                  {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
                     <span key={day}>{day}</span>
                   ))}
                 </div>
@@ -313,7 +313,7 @@ export function DateTimeField({
           </AnimatePresence>
         </div>
         <div className="time-picker-wrap">
-          <span>Jam</span>
+          <span>Time</span>
           <SmartSelect
             name={`${name}_time`}
             value={time}

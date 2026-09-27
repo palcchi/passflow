@@ -22,37 +22,37 @@ export function PeopleRecordEditor({ eventId, kind, record, tickets = [] }: {
         const result = await managePersonRecord(form);
         if (result.error) setMessage(result.error);
         else { setOpen(false); router.refresh(); }
-      } catch { setMessage("Perubahan belum tersimpan. Periksa koneksi dan coba lagi."); }
+      } catch { setMessage("Changes could not be saved. Check your connection and try again."); }
     });
   }
   return <Dialog.Root open={open} onOpenChange={value => { if (!pending) { setOpen(value); setDeleting(false); setMessage(""); } }}>
-    <Dialog.Trigger className="record-edit-button">Kelola</Dialog.Trigger>
+    <Dialog.Trigger className="record-edit-button">Manage</Dialog.Trigger>
     <Dialog.Portal><Dialog.Overlay className="record-overlay"/><Dialog.Content className="record-dialog">
-      <Dialog.Title>{deleting ? "Hapus data ini?" : kind === "attendee" ? "Edit peserta" : "Edit kategori tiket"}</Dialog.Title>
-      <Dialog.Description>{deleting ? kind === "attendee" ? "Peserta akan dihapus beserta data aktivitas dan klaim benefit terkait. QR-nya dicabut. Tindakan ini tidak dapat dibatalkan." : "Kategori hanya dapat dihapus jika tidak digunakan peserta, aturan akses, atau desain." : record.name}</Dialog.Description>
-      <Dialog.Close className="record-close" disabled={pending} aria-label="Tutup"><X size={20}/></Dialog.Close>
+      <Dialog.Title>{deleting ? "Delete this record?" : kind === "attendee" ? "Edit attendee" : "Edit pass category"}</Dialog.Title>
+      <Dialog.Description>{deleting ? kind === "attendee" ? "The attendee, related activity data, and benefit claims will be deleted. Their QR credential will be revoked. This action cannot be undone." : "A category can only be deleted when it is not used by attendees, access rules, or designs." : record.name}</Dialog.Description>
+      <Dialog.Close className="record-close" disabled={pending} aria-label="Close"><X size={20}/></Dialog.Close>
       <form action={submit}>
         <input type="hidden" name="eventId" value={eventId}/><input type="hidden" name="id" value={record.id}/>
         <input type="hidden" name="kind" value={kind}/><input type="hidden" name="operation" value={deleting ? "delete" : "update"}/>
-        {deleting ? <label className="record-confirm"><input type="checkbox" required name="confirmation" value="yes"/> Saya memahami dan ingin menghapus {record.name}.</label> : <>
-          <label>Nama<input name="name" defaultValue={record.name} required maxLength={100}/></label>
+        {deleting ? <label className="record-confirm"><input type="checkbox" required name="confirmation" value="yes"/> I understand and want to delete {record.name}.</label> : <>
+          <label>Name<input name="name" defaultValue={record.name} required maxLength={100}/></label>
           {kind === "attendee" ? <>
             <label>Email<input name="email" type="email" defaultValue={record.email ?? ""}/></label>
-            <label>Telepon<input name="phone" type="tel" inputMode="tel" defaultValue={record.phone ?? ""} maxLength={40}/></label>
-            <label>Kategori pass<SmartSelect name="ticketTypeId" value={record.ticket_type_id ?? ""} options={[{ value: "", label: "Tanpa kategori" }, ...tickets.map(ticket => ({ value: ticket.id, label: ticket.name }))]}/></label>
+            <label>Phone<input name="phone" type="tel" inputMode="tel" defaultValue={record.phone ?? ""} maxLength={40}/></label>
+            <label>Pass category<SmartSelect name="ticketTypeId" value={record.ticket_type_id ?? ""} options={[{ value: "", label: "No category" }, ...tickets.map(ticket => ({ value: ticket.id, label: ticket.name }))]}/></label>
           </> : <>
-            <label>Deskripsi<textarea name="description" defaultValue={record.description ?? ""} maxLength={500}/></label>
-            <label>Kapasitas (kosong = tanpa batas)<FormattedNumberInput name="capacity" defaultValue={record.capacity ?? undefined} min={0}/></label>
-            <label>Harga<input name="price" inputMode="decimal" defaultValue={(record.price ?? 0).toLocaleString("id-ID", { maximumFractionDigits: 2 })} required onBlur={event => {
+            <label>Description<textarea name="description" defaultValue={record.description ?? ""} maxLength={500}/></label>
+            <label>Capacity (leave blank for unlimited)<FormattedNumberInput name="capacity" defaultValue={record.capacity ?? undefined} min={0}/></label>
+            <label>Price<input name="price" inputMode="decimal" defaultValue={(record.price ?? 0).toLocaleString("en-US", { maximumFractionDigits: 2 })} required onBlur={event => {
               const value = event.target.value.trim();
-              if (/^(?:\d+|\d{1,3}(?:\.\d{3})+)(?:,\d{1,2})?$/.test(value)) event.target.value = Number(value.replace(/\./g, "").replace(",", ".")).toLocaleString("id-ID", { maximumFractionDigits: 2 });
+              if (/^(?:\d+|\d{1,3}(?:,\d{3})+)(?:\.\d{1,2})?$/.test(value)) event.target.value = Number(value.replace(/,/g, "")).toLocaleString("en-US", { maximumFractionDigits: 2 });
             }}/></label>
           </>}
         </>}
         {message && <p role="alert" className="camera-feedback">{message}</p>}
         <div className="record-actions">
-          <button type="button" disabled={pending} onClick={() => { setDeleting(!deleting); setMessage(""); }}>{deleting ? "Kembali" : "Hapus data"}</button>
-          <button type="submit" disabled={pending}>{pending ? "Memproses…" : deleting ? "Ya, hapus" : "Simpan perubahan"}</button>
+          <button type="button" disabled={pending} onClick={() => { setDeleting(!deleting); setMessage(""); }}>{deleting ? "Back" : "Delete record"}</button>
+          <button type="submit" disabled={pending}>{pending ? "Processing…" : deleting ? "Yes, delete" : "Save changes"}</button>
         </div>
       </form>
     </Dialog.Content></Dialog.Portal>

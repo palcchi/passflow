@@ -96,7 +96,7 @@ async function resolveQrBatch(input: QrBatchInput) {
     .like("display_code", `${prefix}-%`);
 
   if (error) {
-    return { ok: false as const, message: "Kode QR belum dapat diperiksa." };
+    return { ok: false as const, message: "The QR code could not be validated." };
   }
 
   const used = new Set<number>();
@@ -330,7 +330,7 @@ export async function generateQrBatch(input: QrBatchInput) {
     return {
       ok: false as const,
       conflict: true as const,
-      message: `Range yang dipilih sudah terpakai. Range tersedia berikutnya: ${resolved.firstCode} – ${resolved.lastCode}.`,
+      message: `The selected range is already in use. The next available range is ${resolved.firstCode} – ${resolved.lastCode}.`,
       firstCode: resolved.firstCode,
       lastCode: resolved.lastCode,
       start: resolved.start,
@@ -353,15 +353,15 @@ export async function generateQrBatch(input: QrBatchInput) {
       conflict: true as const,
       message:
         retry.ok
-          ? `Kode berubah saat proses generate. Coba range ${retry.firstCode} – ${retry.lastCode}.`
-          : "QR belum berhasil dibuat. Coba periksa ketersediaan lagi.",
+          ? `The range changed during generation. Try ${retry.firstCode} – ${retry.lastCode}.`
+          : "The QR batch could not be created. Check availability again.",
     };
   }
 
   revalidateEvent(resolved.eventId);
   return {
     ok: true as const,
-    message: `${resolved.amount} QR berhasil dibuat.`,
+    message: `${resolved.amount} QR credentials created successfully.`,
     prefix: resolved.prefix,
     start: resolved.start,
     end: resolved.end,
@@ -498,12 +498,12 @@ export async function saveEventTheme(formData: FormData) {
     headerStyle: ["minimal", "editorial", "split"].includes(text(formData, "headerStyle", 20)) ? text(formData, "headerStyle", 20) : defaultEventTheme.headerStyle,
   };
   if ([theme.primary, theme.secondary, theme.background, theme.foreground, theme.surface].some(value => !/^#[0-9a-f]{6}$/i.test(value))) {
-    return { ok: false, message: "Kode warna tidak valid. Gunakan HEX 6 digit." };
+    return { ok: false, message: "Invalid color value. Use a 6-digit HEX code." };
   }
   const { data, error } = await supabase.from("events").update({ theme, updated_at: new Date().toISOString() }).eq("id", eventId).select("slug").single();
-  if (error || !data) return { ok: false, message: "Tampilan belum tersimpan. Coba lagi." };
+  if (error || !data) return { ok: false, message: "Appearance settings could not be saved. Please try again." };
   revalidateEvent(eventId, data?.slug);
-  return { ok: true, message: "Tampilan event berhasil disimpan." };
+  return { ok: true, message: "Event appearance saved successfully." };
 }
 
 export async function saveEventQrConfig(formData: FormData) {
@@ -517,7 +517,7 @@ export async function saveEventQrConfig(formData: FormData) {
     return Number.isFinite(value) ? Math.min(max, Math.max(min, value)) : fallback;
   };
   const { data: current, error: readError } = await supabase.from("events").select("qr_config,slug").eq("id", eventId).single();
-  if (readError || !current) return { ok: false, message: "Konfigurasi pass belum dapat dimuat. Coba lagi." };
+  if (readError || !current) return { ok: false, message: "Pass configuration could not be loaded. Please try again." };
   const existing = current?.qr_config && typeof current.qr_config === "object" && !Array.isArray(current.qr_config) ? current.qr_config as Record<string, unknown> : {};
   const { data: updated, error } = await supabase.from("events").update({
     qr_config: {
@@ -537,9 +537,9 @@ export async function saveEventQrConfig(formData: FormData) {
     },
     updated_at: new Date().toISOString(),
   }).eq("id", eventId).select("id").single();
-  if (error || !updated) return { ok: false, message: "Pengaturan QR belum tersimpan. Coba lagi." };
+  if (error || !updated) return { ok: false, message: "QR settings could not be saved. Please try again." };
   revalidateEvent(eventId, current?.slug);
-  return { ok: true, message: "Pengaturan pass dan QR berhasil disimpan." };
+  return { ok: true, message: "Pass and QR settings saved successfully." };
 }
 
 export async function saveClaimMode(formData: FormData) {
@@ -625,16 +625,16 @@ export async function uploadEventAsset(formData: FormData) {
   const file = formData.get("file");
 
   if (!eventId || !["logo", "hero", "poster", "qr_template"].includes(assetType)) {
-    return { ok: false, message: "Asset atau event tidak valid." };
+    return { ok: false, message: "The asset or event is invalid." };
   }
   if (!(file instanceof File) || file.size === 0) {
-    return { ok: false, message: "Pilih file gambar terlebih dahulu." };
+    return { ok: false, message: "Choose an image file before uploading." };
   }
   if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
-    return { ok: false, message: "Format harus JPG, PNG, atau WEBP." };
+    return { ok: false, message: "Use a JPG, PNG, or WEBP image." };
   }
   if (file.size > 5 * 1024 * 1024) {
-    return { ok: false, message: "Ukuran file maksimal 5 MB." };
+    return { ok: false, message: "The maximum file size is 5 MB." };
   }
 
   const { supabase } = await managedContext(eventId);
@@ -648,7 +648,7 @@ export async function uploadEventAsset(formData: FormData) {
     cacheControl: "3600",
   });
   if (uploadError) {
-    return { ok: false, message: `Upload gagal: ${uploadError.message}` };
+    return { ok: false, message: `Upload failed: ${uploadError.message}` };
   }
 
   const { data: publicData } = supabase.storage.from("event-assets").getPublicUrl(path);
@@ -663,7 +663,7 @@ export async function uploadEventAsset(formData: FormData) {
 
   if (assetError) {
     await supabase.storage.from("event-assets").remove([path]).catch(() => undefined);
-    return { ok: false, message: "File terunggah, tetapi metadata asset gagal disimpan." };
+    return { ok: false, message: "The file was uploaded, but its asset metadata could not be saved." };
   }
 
   if (assetType === "qr_template") {
@@ -685,10 +685,10 @@ export async function uploadEventAsset(formData: FormData) {
       .eq("id", eventId);
 
     if (updateError) {
-      return { ok: false, message: "Template terunggah, tetapi event belum berhasil diperbarui." };
+      return { ok: false, message: "The template was uploaded, but the event could not be updated." };
     }
     revalidateEvent(eventId, current?.slug);
-    return { ok: true, message: "Template QR berhasil diperbarui.", publicUrl };
+    return { ok: true, message: "QR template updated successfully.", publicUrl };
   }
 
   const column =
@@ -709,7 +709,7 @@ export async function uploadEventAsset(formData: FormData) {
     .single();
 
   if (eventError) {
-    return { ok: false, message: "Asset terunggah, tetapi event belum berhasil diperbarui." };
+    return { ok: false, message: "The asset was uploaded, but the event could not be updated." };
   }
 
   revalidateEvent(eventId, data?.slug);
@@ -717,10 +717,10 @@ export async function uploadEventAsset(formData: FormData) {
     ok: true,
     message:
       assetType === "hero"
-        ? "Hero image berhasil diperbarui."
+        ? "Event banner updated successfully."
         : assetType === "logo"
-          ? "Logo berhasil diperbarui."
-          : "Poster berhasil diperbarui.",
+          ? "Logo updated successfully."
+          : "Poster updated successfully.",
     publicUrl,
   };
 }
@@ -776,7 +776,7 @@ export async function syncFigmaDesign(formData: FormData) {
     }
     const parsed = parseFigmaUrl(figmaUrl);
     const nodeId = parsed.nodeId?.replace(/-/g, ":") ?? null;
-    if (!nodeId) throw new Error("Pilih frame dan gunakan URL selection dari Figma.");
+    if (!nodeId) throw new Error("Select a frame and use its Figma selection URL.");
     const query = `?ids=${encodeURIComponent(nodeId)}&depth=10`;
     type FigmaColor = { r?: number; g?: number; b?: number; a?: number };
     type FigmaNode = { id?: string; name?: string; type?: string; absoluteBoundingBox?: { x?: number; y?: number; width?: number; height?: number }; fills?: { type?: string; color?: FigmaColor; opacity?: number }[]; style?: { fontSize?: number; fontFamily?: string; fontWeight?: number; textAlignHorizontal?: string }; cornerRadius?: number; children?: FigmaNode[] };
@@ -784,7 +784,7 @@ export async function syncFigmaDesign(formData: FormData) {
     const find = (root: FigmaNode | undefined, predicate: (node: FigmaNode) => boolean): FigmaNode | null => { if (!root) return null; if (predicate(root)) return root; for (const child of root.children ?? []) { const match = find(child, predicate); if (match) return match; } return null; };
     const frameNode = find(file.document, (node) => node.id === nodeId) ?? file.document;
     const bounds = frameNode?.absoluteBoundingBox;
-    if (!bounds?.width || !bounds.height) throw new Error("Ukuran frame Figma tidak terbaca.");
+    if (!bounds?.width || !bounds.height) throw new Error("The Figma frame dimensions could not be read.");
     const marker = optionalText(formData, "qrMarker", 80) || "PASSFLOW_QR";
     const markerName = (node: FigmaNode): DynamicMarker | null => {
       const name = (node.name ?? "").trim().toUpperCase();

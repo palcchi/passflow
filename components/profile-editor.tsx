@@ -16,7 +16,7 @@ function SubmitButton({
   return (
     <button className={className} type="submit" disabled={pending}>
       {pending ? <span className="loading-dot" /> : null}
-      {pending ? "Menyimpan..." : children}
+      {pending ? "Saving..." : children}
     </button>
   );
 }
@@ -49,7 +49,7 @@ export function ProfileEditor({
     const file = event.target.files?.[0];
     if (!file) return;
     if (!["image/jpeg", "image/png", "image/webp"].includes(file.type) || file.size > 2 * 1024 * 1024) {
-      setFileError("Pilih JPG, PNG, atau WEBP maksimal 2 MB.");
+      setFileError("Choose a JPG, PNG, or WEBP image up to 2 MB.");
       event.target.value = "";
       setFileName("");
       return;
@@ -91,13 +91,13 @@ export function ProfileEditor({
               <Camera size={17} />
             </span>
             <span>
-              <strong>{fileName || "Pilih foto baru"}</strong>
-              <small>JPG, PNG, WEBP · maksimal 2 MB</small>
+              <strong>{fileName || "Choose a new photo"}</strong>
+              <small>JPG, PNG, or WEBP · max 2 MB</small>
             </span>
           </label>
           <div className="profile-avatar-actions">
             <SubmitButton className="button button-dark">
-              <ImagePlus size={15} /> Simpan foto
+              <ImagePlus size={15} /> Save photo
             </SubmitButton>
           </div>
         </form>
@@ -106,7 +106,7 @@ export function ProfileEditor({
         {avatarUrl && (
           <form action={removeAvatar} className="profile-remove-avatar">
             <SubmitButton className="button button-ghost">
-              <Trash2 size={15} /> Hapus foto
+              <Trash2 size={15} /> Remove photo
             </SubmitButton>
           </form>
         )}
@@ -116,14 +116,14 @@ export function ProfileEditor({
         <div className="profile-section-heading">
           <div>
             <span className="section-kicker">Identity</span>
-            <h2>Informasi profil</h2>
+            <h2>Profile information</h2>
           </div>
           <span className="profile-role-pill">{organizer ? "Organizer" : "Attendee"}</span>
         </div>
 
         <form action={saveProfile} className="profile-details-form">
           <label>
-            <span>Nama tampilan</span>
+            <span>Display name</span>
             <input
               name="fullName"
               required
@@ -131,7 +131,7 @@ export function ProfileEditor({
               maxLength={60}
               defaultValue={fullName}
               autoComplete="name"
-              placeholder="Nama lengkap"
+              placeholder="Enter your full name"
             />
           </label>
           <label>
@@ -146,20 +146,20 @@ export function ProfileEditor({
                 pattern="[a-zA-Z0-9_]{3,24}"
                 autoComplete="username"
                 defaultValue={username}
-                placeholder="username"
+                placeholder="e.g. vallian"
               />
             </div>
           </label>
           <label>
             <span>Email</span>
             <input value={email} readOnly disabled />
-            <small>Email mengikuti akun autentikasi PassFlow.</small>
+            <small>Email is managed through your PassFlow authentication account.</small>
           </label>
           <div className="profile-save-row">
             <span className="profile-save-note">
-              <Check size={14} /> Perubahan tampil di dashboard dan navbar.
+              <Check size={14} /> Changes appear across your dashboard and navigation.
             </span>
-            <SubmitButton className="button button-dark">Simpan profil</SubmitButton>
+            <SubmitButton className="button button-dark">Save profile</SubmitButton>
           </div>
         </form>
       </section>

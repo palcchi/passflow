@@ -76,11 +76,11 @@ export default async function EventOverviewPage({ params }: Props) {
 
   const metrics = [
     { label: "Registered", value: event.attendeeCount, note: "attendee" },
-    { label: "Checked in", value: event.checkedInCount, note: "sudah masuk" },
+    { label: "Checked in", value: event.checkedInCount, note: "checked in" },
     {
       label: "QR active",
       value: activeQr,
-      note: `${unclaimedQr} belum terhubung`,
+      note: `${unclaimedQr} unlinked`,
     },
     { label: "Denied", value: denied, note: "recent scans" },
   ];
@@ -121,7 +121,7 @@ export default async function EventOverviewPage({ params }: Props) {
             <div>
               <span className="section-kicker">Quick access</span>
               <h2>Manage the event</h2>
-              <p>Pilih area kerja tanpa memuat ulang shell event.</p>
+              <p>Choose a workspace section without reloading the event shell.</p>
             </div>
           </div>
           <div className="event-overview-actions">
@@ -142,7 +142,7 @@ export default async function EventOverviewPage({ params }: Props) {
             <div>
               <span className="section-kicker">Scanner network</span>
               <h2>{activeStations} active</h2>
-              <p>{stations.length} station terhubung ke event ini.</p>
+              <p>{stations.length} stations connected to this event.</p>
             </div>
           </div>
           <div className="event-admin-stack">
@@ -161,7 +161,7 @@ export default async function EventOverviewPage({ params }: Props) {
             ))}
             {!stations.length && (
               <div className="event-admin-table-empty">
-                Belum ada scanner station.
+                No scanner stations have been configured yet.
               </div>
             )}
           </div>
@@ -207,7 +207,7 @@ export default async function EventOverviewPage({ params }: Props) {
             </div>
           ))}
           {!scans.length && (
-            <div className="event-admin-table-empty">Belum ada scan log.</div>
+            <div className="event-admin-table-empty">No scan activity has been recorded yet.</div>
           )}
         </AnimatedList>
       </section>

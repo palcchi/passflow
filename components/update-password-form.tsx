@@ -23,22 +23,22 @@ export function UpdatePasswordForm() {
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const password = String(new FormData(event.currentTarget).get("password") ?? "");
-    if (password.length < 8) { setError("Password minimal 8 karakter."); return; }
+    if (password.length < 8) { setError("Password must be at least 8 characters."); return; }
     setSaving(true); setError("");
     try {
       const { error: updateError } = await createBrowserSupabaseClient().auth.updateUser({ password });
-      if (updateError) { setError("Password belum berhasil diubah. Buka kembali tautan reset dari email."); return; }
+      if (updateError) { setError("The password could not be updated. Reopen the reset link from your email."); return; }
       router.push("/account?notice=password-updated"); router.refresh();
     } catch {
-      setError("Koneksi terputus. Silakan coba menyimpan password lagi.");
+      setError("The connection was interrupted. Please try saving your password again.");
     } finally {
       setSaving(false);
     }
   }
   return <form onSubmit={submit} className="auth-form">
     {error && <p role="alert" className="rounded-md border border-destructive/30 p-3 text-sm text-destructive">{error}</p>}
-    <div className="auth-field"><span aria-hidden="true">Password baru</span><PasswordField autoComplete="new-password" placeholder="Minimal 8 karakter"/></div>
-    <AuthSubmit disabled={!ready || saving}>{saving ? "Menyimpan…" : "Simpan password"}</AuthSubmit>
-    {!ready && <p className="text-xs text-muted-foreground">Tautan reset belum aktif atau sudah kedaluwarsa.</p>}
+    <div className="auth-field"><span aria-hidden="true">New password</span><PasswordField autoComplete="new-password" placeholder="At least 8 characters"/></div>
+    <AuthSubmit disabled={!ready || saving}>{saving ? "Saving…" : "Save password"}</AuthSubmit>
+    {!ready && <p className="text-xs text-muted-foreground">The reset link is not active or has expired.</p>}
   </form>;
 }

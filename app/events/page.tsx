@@ -15,7 +15,7 @@ export default async function EventsPage() {
     typeof user.user_metadata.full_name === "string" &&
     user.user_metadata.full_name.trim()
       ? user.user_metadata.full_name.trim()
-      : user.email?.split("@")[0] || "Pengunjung";
+      : user.email?.split("@")[0] || "Attendee";
   const avatarUrl =
     typeof user.user_metadata.avatar_url === "string"
       ? user.user_metadata.avatar_url
@@ -51,7 +51,7 @@ export default async function EventsPage() {
             <span className="section-kicker">Explore</span>
             <KineticText text="Find your people." className="studio-page-title" />
             <TextAnimate className="studio-page-subtitle">
-              Pilih event yang terasa seperti kamu. Daftar, simpan pass, dan sampai ketemu di sana.
+              Find an event that fits you. Register, save your pass, and you are ready to go.
             </TextAnimate>
           </div>
           <div className="workspace-art"><FolderArtwork color="orange" label="Good things ahead"/><Sticker kind="spark"/></div>

@@ -68,7 +68,7 @@ export function EventAdminChrome({
               className="event-admin-kinetic-title"
             />
             <TextAnimate className="event-admin-meta-line" delay={0.03}>
-              {`${event.dateLabel} · ${event.venue || "Venue belum ditentukan"}`}
+              {`${event.dateLabel} · ${event.venue || "Venue not specified"}`}
             </TextAnimate>
           </div>
 

@@ -10,18 +10,18 @@ import { resendSignupConfirmation, signInWithEmail, signInWithGoogle } from "@/a
 import { safeNext } from "@/lib/auth/redirect";
 import { getAppOrigin, getSupabaseConfig } from "@/lib/supabase/config";
 
-export const metadata = { title: "Masuk" };
+export const metadata = { title: "Sign in" };
 export const dynamic = "force-dynamic";
 const errors: Record<string, string> = {
-  unavailable: "Login belum tersedia. Silakan coba lagi nanti.",
-  provider: "Permintaan belum bisa diproses. Silakan coba lagi.",
-  invalid: "Email atau password tidak cocok.",
-  unverified: "Email belum diverifikasi. Kirim ulang tautan verifikasi di bawah.",
-  expired: "Sesi sudah berakhir. Silakan masuk lagi.",
-  "figma-session": "Sesi PassFlow tidak terbaca setelah kembali dari Figma. Masuk di browser yang sama, lalu ulangi koneksi dari Profil.",
-  callback: "Tautan konfirmasi tidak valid atau sudah kedaluwarsa.",
-  signout: "Belum berhasil keluar. Silakan coba lagi.",
-  reset: "Password baru sudah disimpan.",
+  unavailable: "Sign-in is temporarily unavailable. Please try again later.",
+  provider: "We could not process the request. Please try again.",
+  invalid: "The email or password is incorrect.",
+  unverified: "Your email has not been verified. Request a new verification email below.",
+  expired: "Your session has expired. Please sign in again.",
+  "figma-session": "Your PassFlow session could not be restored after returning from Figma. Sign in using the same browser, then reconnect from Profile.",
+  callback: "The confirmation link is invalid or has expired.",
+  signout: "We could not sign you out. Please try again.",
+  reset: "Your new password has been saved.",
 };
 export default async function LoginPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const params = await searchParams;
@@ -29,20 +29,20 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
   if (await getAuthContext()) redirect(next);
   const ready = !!getSupabaseConfig() && !!getAppOrigin();
   const message = typeof params.error === "string" ? errors[params.error] : null;
-  return <AuthShell title="Welcome back." description="Masuk untuk melanjutkan cerita, event, dan pass kamu." kicker="MAKE YOURSELF AT HOME">
+  return <AuthShell title="Welcome back." description="Sign in to manage your events, passes, and account." kicker="MAKE YOURSELF AT HOME">
     {message && <p role={params.error === "reset" ? "status" : "alert"} className="auth-notice">{message}</p>}
-    {params.notice === "signed-out" && <p role="status" className="auth-notice">Kamu sudah keluar.</p>}
-    {params.notice === "verification-sent" && <p role="status" className="auth-notice">Tautan verifikasi baru sudah dikirim.</p>}
-    {params.notice === "reset-sent" && <p role="status" className="auth-notice">Jika email terdaftar, tautan reset sudah dikirim.</p>}
+    {params.notice === "signed-out" && <p role="status" className="auth-notice">You have been signed out.</p>}
+    {params.notice === "verification-sent" && <p role="status" className="auth-notice">A new verification link has been sent.</p>}
+    {params.notice === "reset-sent" && <p role="status" className="auth-notice">If the email is registered, a reset link has been sent.</p>}
     <form action={signInWithEmail} className="auth-form">
       <input type="hidden" name="next" value={next}/>
-      <label className="auth-field" htmlFor="login-email">Email<div className="auth-input"><Mail size={17} aria-hidden="true"/><input id="login-email" required name="email" type="email" autoComplete="email" inputMode="email" placeholder="nama@email.com"/></div></label>
+      <label className="auth-field" htmlFor="login-email">Email<div className="auth-input"><Mail size={17} aria-hidden="true"/><input id="login-email" required name="email" type="email" autoComplete="email" inputMode="email" placeholder="name@company.com"/></div></label>
       <div className="auth-field"><span aria-hidden="true">Password</span><PasswordField autoComplete="current-password"/></div>
-      <AuthSubmit disabled={!ready}>Masuk ke PassFlow ↗</AuthSubmit>
+      <AuthSubmit disabled={!ready}>Sign in to PassFlow ↗</AuthSubmit>
     </form>
-    <div className="auth-divider">atau</div>
-    <form action={signInWithGoogle}><input type="hidden" name="next" value={next}/><AuthSubmit disabled={!ready} variant="outline"><GoogleIcon className="size-4"/>Lanjut dengan Google</AuthSubmit></form>
-    <div className="auth-form-links"><Link href={"/register?next=" + encodeURIComponent(next)}>Buat akun baru</Link><Link href="/reset-password">Lupa password?</Link></div>
-    {params.error === "unverified" && <form action={resendSignupConfirmation} className="auth-form auth-resend"><input type="hidden" name="next" value={next}/><label className="auth-field">Email untuk verifikasi<div className="auth-input"><Mail size={17} aria-hidden="true"/><input required name="email" type="email" autoComplete="email" placeholder="nama@email.com"/></div></label><AuthSubmit disabled={!ready} variant="outline">Kirim ulang verifikasi</AuthSubmit></form>}
+    <div className="auth-divider">or</div>
+    <form action={signInWithGoogle}><input type="hidden" name="next" value={next}/><AuthSubmit disabled={!ready} variant="outline"><GoogleIcon className="size-4"/>Continue with Google</AuthSubmit></form>
+    <div className="auth-form-links"><Link href={"/register?next=" + encodeURIComponent(next)}>Create an account</Link><Link href="/reset-password">Forgot password?</Link></div>
+    {params.error === "unverified" && <form action={resendSignupConfirmation} className="auth-form auth-resend"><input type="hidden" name="next" value={next}/><label className="auth-field">Verification email<div className="auth-input"><Mail size={17} aria-hidden="true"/><input required name="email" type="email" autoComplete="email" placeholder="name@company.com"/></div></label><AuthSubmit disabled={!ready} variant="outline">Resend verification email</AuthSubmit></form>}
   </AuthShell>;
 }

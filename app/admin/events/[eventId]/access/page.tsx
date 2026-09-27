@@ -83,8 +83,8 @@ export default async function EventAccessPage({ params }: Props) {
             <span className="section-kicker">Credential assignment</span>
             <h2>How attendees receive their QR</h2>
             <p>
-              Pilih apakah QR langsung dibuat saat registrasi atau harus
-              dihubungkan setelah attendee terdaftar.
+              Choose whether QR credentials are created automatically at registration or
+              linked after an attendee has registered.
             </p>
           </div>
           <span className="event-admin-section-count">
@@ -103,8 +103,8 @@ export default async function EventAccessPage({ params }: Props) {
           >
             <strong>Automatic on registration</strong>
             <span>
-              Attendee langsung mendapat QR credential. Ideal untuk digital
-              pass dan ID card yang sudah memakai nama peserta.
+              Attendees receive a QR credential immediately. Ideal for digital
+              passes and ID cards that already display attendee names.
             </span>
           </button>
           <button
@@ -116,8 +116,8 @@ export default async function EventAccessPage({ params }: Props) {
           >
             <strong>Claim after registration</strong>
             <span>
-              Attendee daftar dulu, lalu scan QR fisik untuk menghubungkan
-              wristband atau credential yang sudah dicetak.
+              Attendees register first, then scan a physical QR code to link
+              wristbands or credentials that have already been printed.
             </span>
           </button>
         </form>
@@ -130,8 +130,8 @@ export default async function EventAccessPage({ params }: Props) {
             <h2>Codes</h2>
             <p>
               {claimMode === "claim"
-                ? "Generate batch untuk wristband atau credential fisik yang akan diklaim attendee."
-                : "Batch tetap opsional. Jika tersedia, registrasi baru dapat memakai code batch; jika tidak, PassFlow membuat credential otomatis."}
+                ? "Generate a batch for wristbands or physical credentials that attendees will claim."
+                : "Batches remain optional. When available, new registrations can use a batch code; otherwise, PassFlow creates credentials automatically."}
             </p>
           </div>
           <div className="event-admin-head-actions">
@@ -180,10 +180,10 @@ export default async function EventAccessPage({ params }: Props) {
           ))}
           {!credentials.length && (
             <div className="event-admin-empty-card">
-              <strong>Belum ada QR credential</strong>
+              <strong>No QR credentials yet</strong>
               <span>
-                Generate batch jika memakai credential fisik, atau biarkan
-                Automatic membuat credential saat registrasi.
+                Generate a batch when using physical credentials, or leave it
+                Automatic mode creates a credential during registration.
               </span>
             </div>
           )}
@@ -196,7 +196,7 @@ export default async function EventAccessPage({ params }: Props) {
             <span className="section-kicker">Access control</span>
             <h2>Zones, rules & scanner stations</h2>
             <p>
-              Atur area akses dan scanner tanpa elemen dekoratif yang tidak
+              Configure access zones and scanner stations without unnecessary
               membantu pekerjaan.
             </p>
           </div>
@@ -226,13 +226,13 @@ export default async function EventAccessPage({ params }: Props) {
               <input
                 className={inputClass()}
                 name="name"
-                placeholder="VIP Lounge"
+                placeholder="e.g. VIP Lounge"
                 required
               />
               <input
                 className={inputClass()}
                 name="code"
-                placeholder="VIP_LOUNGE"
+                placeholder="e.g. VIP_LOUNGE"
               />
               <button className="button button-ghost" type="submit">
                 Add zone
@@ -347,13 +347,13 @@ export default async function EventAccessPage({ params }: Props) {
               <input
                 className={inputClass()}
                 name="name"
-                placeholder="Main Entrance"
+                placeholder="e.g. Main Entrance"
                 required
               />
               <input
                 className={inputClass()}
                 name="slug"
-                placeholder="main-entrance"
+                placeholder="e.g. main-entrance"
               />
               <SmartSelect
                 name="mode"
@@ -379,12 +379,12 @@ export default async function EventAccessPage({ params }: Props) {
               <input
                 className={inputClass()}
                 name="activityCode"
-                placeholder="Activity code, optional"
+                placeholder="e.g. WORKSHOP_A (optional)"
               />
               <input
                 className={inputClass()}
                 name="benefitCode"
-                placeholder="Benefit code, optional"
+                placeholder="e.g. MERCH_PACK (optional)"
               />
               <button className="button button-dark" type="submit">
                 Create station

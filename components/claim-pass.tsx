@@ -36,7 +36,7 @@ export function ClaimPass({ eventName }: ClaimPassProps) {
             </span>
             <div>
               <strong>WR-0192 connected</strong>
-              <small>QR ini sama dengan QR pada wristband.</small>
+              <small>This QR code matches the credential on the wristband.</small>
             </div>
           </div>
         </>
@@ -45,7 +45,7 @@ export function ClaimPass({ eventName }: ClaimPassProps) {
           <ScanLine size={42} />
           <strong>No wristband connected</strong>
           <p>
-            Pada implementasi berikutnya tombol ini akan membuka kamera dan membaca QR wristband.
+            This action opens the camera to read a wristband QR credential.
           </p>
           <button
             className="button button-primary full-button"
@@ -53,7 +53,7 @@ export function ClaimPass({ eventName }: ClaimPassProps) {
             onClick={() => setClaimed(true)}
           >
             <ScanLine size={17} />
-            Demo claim wristband
+            Claim wristband
           </button>
         </div>
       )}

@@ -25,7 +25,7 @@ export function WristbandInput() {
         }, () => {});
         if (disposed) await scanner.stop().catch(() => {});
       } catch {
-        if (!disposed) setError("Kamera tidak tersedia. Izinkan kamera atau tempel isi QR secara manual.");
+        if (!disposed) setError("Camera access is unavailable. Allow camera access or paste the QR credential manually.");
       }
     }
     void start();
@@ -36,12 +36,12 @@ export function WristbandInput() {
     };
   }, [active, id]);
   return <div className="space-y-3">
-    <button className="button button-ghost w-full" type="button" onClick={() => {setError("");setActive(!active);}}>{active ? "Tutup kamera" : "Scan QR wristband"}</button>
+    <button className="button button-ghost w-full" type="button" onClick={() => {setError("");setActive(!active);}}>{active ? "Close camera" : "Scan wristband QR"}</button>
     {active && <div id={id} className="min-h-64 overflow-hidden rounded-md" />}
     {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
-    <label className="block text-sm">Isi QR wristband
-      <input name="code" required maxLength={256} value={code} onChange={e=>setCode(e.target.value)} placeholder="PF1:…" className="mt-2 min-h-12 w-full rounded-md border border-border px-3" />
+    <label className="block text-sm">Wristband QR credential
+      <input name="code" required maxLength={256} value={code} onChange={e=>setCode(e.target.value)} placeholder="Paste or scan a PF1 credential code" className="mt-2 min-h-12 w-full rounded-md border border-border px-3" />
     </label>
-    <p className="text-xs text-muted-foreground">Scan atau tempel isi QR, bukan nomor label WR. Periksa lalu tekan tombol konfirmasi.</p>
+    <p className="text-xs text-muted-foreground">Scan or paste the QR credential content, not the WR label number. Review it before confirming.</p>
   </div>;
 }

@@ -87,14 +87,14 @@ export default async function AdminDashboardPage() {
               className="studio-page-title"
             />
             <TextAnimate className="studio-page-subtitle" delay={0.05}>
-              Semua yang terjadi di event kamu, dalam satu tempat.
+              Everything happening across your events, in one workspace.
             </TextAnimate>
-          <ShinyButton href="/admin/events/new"><Plus size={15}/>Buat event</ShinyButton>
+          <ShinyButton href="/admin/events/new"><Plus size={15}/>Create event</ShinyButton>
           </div>
           <div className="workspace-art"><span className="workspace-art-label">For your next big thing ↗</span><FolderArtwork color="lavender" label="Made by you"/><Sticker kind="arrow"/></div>
         </header>
 
-        {events[0] && <Link className="recent-project" href={`/admin/events/${events[0].id}`}><span className="recent-project-icon"><FolderOpen size={21}/></span><span className="recent-project-copy"><span>PROJECT EVENT TERBARU · LANJUTKAN MENGELOLA</span><strong>{events[0].name}</strong></span><ArrowUpRight size={19}/></Link>}
+        {events[0] && <Link className="recent-project" href={`/admin/events/${events[0].id}`}><span className="recent-project-icon"><FolderOpen size={21}/></span><span className="recent-project-copy"><span>LATEST EVENT · CONTINUE MANAGING</span><strong>{events[0].name}</strong></span><ArrowUpRight size={19}/></Link>}
 
         <section className="studio-metric-strip" aria-label="Organizer metrics">
           {stats.map(([label, value, note]) => (
@@ -110,10 +110,10 @@ export default async function AdminDashboardPage() {
           <div className="studio-section-heading">
             <div>
               <p className="section-kicker">Managed events</p>
-              <h2 id="managed-events">Event kamu</h2>
+              <h2 id="managed-events">Your events</h2>
             </div>
             <Link href="/admin/events/new" className="studio-text-link">
-              Tambah <ArrowUpRight size={14} />
+              Add event <ArrowUpRight size={14} />
             </Link>
           </div>
 
@@ -124,7 +124,7 @@ export default async function AdminDashboardPage() {
           <div className="studio-section-heading">
             <div>
               <p className="section-kicker">Scanner network</p>
-              <h2 id="scanner-stations">Pintu masuk event.</h2>
+              <h2 id="scanner-stations">Event entry points.</h2>
             </div>
             <span className="studio-soft-label">{activeStations} active</span>
           </div>
@@ -141,7 +141,7 @@ export default async function AdminDashboardPage() {
           </AnimatedList>
 
           {!(stationResult.data ?? []).length && (
-            <div className="studio-empty-line">Belum ada scanner station.</div>
+            <div className="studio-empty-line">No scanner stations have been configured yet.</div>
           )}
         </section>
       </main>

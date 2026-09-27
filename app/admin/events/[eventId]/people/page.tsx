@@ -69,7 +69,7 @@ export default async function EventPeoplePage({ params, searchParams }: Props) {
           <div>
             <span className="section-kicker">People</span>
             <h2>Tickets & pass categories</h2>
-            <p>Atur tipe pass yang digunakan attendee di event ini.</p>
+            <p>Configure the pass categories available to attendees for this event.</p>
           </div>
           <span className="event-admin-section-count">{tickets.length} types</span>
         </div>
@@ -82,31 +82,31 @@ export default async function EventPeoplePage({ params, searchParams }: Props) {
               </div>
               <h3>{ticket.name}</h3>
               <PeopleRecordEditor eventId={eventId} kind="ticket" record={ticket}/>
-              <p>{ticket.description || "Tanpa deskripsi."}</p>
+              <p>{ticket.description || "No description provided."}</p>
               <div className="event-admin-mini-meta">
                 <span>{ticket.capacity ?? "∞"} capacity</span>
                 <strong>
                   {ticket.price > 0
-                    ? `${ticket.currency} ${Number(ticket.price).toLocaleString("id-ID")}`
-                    : "Gratis"}
+                    ? `${ticket.currency} ${Number(ticket.price).toLocaleString("en-US")}`
+                    : "Free"}
                 </strong>
               </div>
             </div>
           ))}
           {!tickets.length && (
             <div className="event-admin-empty-card">
-              <strong>Belum ada pass category</strong>
-              <span>Tambahkan kategori tiket pertama dari form di bawah.</span>
+              <strong>No pass categories yet</strong>
+              <span>Create the first pass category using the form below.</span>
             </div>
           )}
         </div>
 
         <form action={createTicketType} className="event-admin-inline-form event-admin-inline-form-3">
           <input type="hidden" name="eventId" value={eventId} />
-          <input className={inputClass()} name="name" placeholder="VIP Pass" required />
-          <input className={inputClass()} name="code" placeholder="VIP" />
-          <FormattedNumberInput name="capacity" min={0} className={inputClass()} placeholder="Capacity" />
-          <FormattedNumberInput name="price" min={0} className={inputClass()} placeholder="Harga" />
+          <input className={inputClass()} name="name" placeholder="e.g. VIP Pass" required />
+          <input className={inputClass()} name="code" placeholder="e.g. VIP" />
+          <FormattedNumberInput name="capacity" min={0} className={inputClass()} placeholder="e.g. 250" />
+          <FormattedNumberInput name="price" min={0} className={inputClass()} placeholder="e.g. 150,000" />
           <SmartSelect
             name="currency"
             value="IDR"
@@ -116,7 +116,7 @@ export default async function EventPeoplePage({ params, searchParams }: Props) {
               { value: "SGD", label: "SGD · Singapore Dollar" },
             ]}
           />
-          <input className={inputClass()} name="description" placeholder="Description" />
+          <input className={inputClass()} name="description" placeholder="Optional description" />
           <button className="button button-dark event-admin-inline-submit" type="submit">
             Add ticket type
           </button>
@@ -128,7 +128,7 @@ export default async function EventPeoplePage({ params, searchParams }: Props) {
           <div>
             <span className="section-kicker">Attendees</span>
             <h2>Registration list</h2>
-            <p>{attendees.length} attendee ditampilkan dari hasil saat ini.</p>
+            <p>{attendees.length} attendees shown in the current results.</p>
           </div>
           <div className="event-admin-head-actions">
             <AvatarCircles
@@ -140,7 +140,7 @@ export default async function EventPeoplePage({ params, searchParams }: Props) {
             </a>
             <form className="event-admin-search" method="get">
               <Search size={15} />
-              <input name="q" defaultValue={search} placeholder="Search attendee" />
+              <input name="q" defaultValue={search} placeholder="Search by name, email, or phone" />
               <button type="submit">Search</button>
             </form>
           </div>
@@ -155,7 +155,7 @@ export default async function EventPeoplePage({ params, searchParams }: Props) {
                 <th>Email</th>
                 <th>Pass</th>
                 <th>Check-in</th>
-                <th>Kelola</th>
+                <th>Manage</th>
               </tr>
             </thead>
             <tbody>
@@ -175,14 +175,14 @@ export default async function EventPeoplePage({ params, searchParams }: Props) {
               ))}
             </tbody>
           </table>
-          {!attendees.length && <div className="event-admin-table-empty">Belum ada attendee.</div>}
+          {!attendees.length && <div className="event-admin-table-empty">No attendees have registered yet.</div>}
         </div>
 
         <form action={createAttendee} className="event-admin-inline-form event-admin-inline-form-4">
           <input type="hidden" name="eventId" value={eventId} />
-          <input className={inputClass()} name="name" placeholder="Full name" required />
-          <input className={inputClass()} name="email" type="email" placeholder="Email" />
-          <input className={inputClass()} name="phone" placeholder="Phone" />
+          <input className={inputClass()} name="name" placeholder="Attendee full name" required />
+          <input className={inputClass()} name="email" type="email" placeholder="name@company.com" />
+          <input className={inputClass()} name="phone" placeholder="e.g. +62 812 3456 7890" />
           <SmartSelect
             name="ticketTypeId"
             value=""
@@ -204,7 +204,7 @@ export default async function EventPeoplePage({ params, searchParams }: Props) {
           <div>
             <span className="section-kicker">Crew</span>
             <h2>Event team</h2>
-            <p>Buat akses terbatas untuk orang yang bekerja pada event ini.</p>
+            <p>Create limited event access for crew members and staff.</p>
           </div>
           <span className="event-admin-section-count">
             {crew.filter((member) => member.status === "active").length} active
@@ -214,11 +214,11 @@ export default async function EventPeoplePage({ params, searchParams }: Props) {
         {typeof query.invite === "string" && (
           <div className="event-admin-invite-banner">
             <div>
-              <strong>Link undangan berhasil dibuat</strong>
+              <strong>Invitation link created</strong>
               <code>
                 {`${process.env.NEXT_PUBLIC_APP_URL ?? "https://passflow.my.id"}/crew/join?token=${query.invite}`}
               </code>
-              <span>Link berlaku 7 hari.</span>
+              <span>This invitation link is valid for 7 days.</span>
             </div>
           </div>
         )}
@@ -241,15 +241,15 @@ export default async function EventPeoplePage({ params, searchParams }: Props) {
           ))}
           {!crew.length && (
             <div className="event-admin-empty-card">
-              <strong>Belum ada crew</strong>
-              <span>Buat link undangan untuk menambahkan anggota tim.</span>
+              <strong>No crew members yet</strong>
+              <span>Create an invitation link to add a team member.</span>
             </div>
           )}
         </div>
 
         <form action={createCrewInvitation} className="event-admin-inline-form event-admin-inline-form-4">
           <input type="hidden" name="eventId" value={eventId} />
-          <input className={inputClass()} name="jobTitle" placeholder="Gate Crew" required />
+          <input className={inputClass()} name="jobTitle" placeholder="e.g. Gate Operations" required />
           <SmartSelect
             name="accessRole"
             value="crew"
@@ -259,8 +259,8 @@ export default async function EventPeoplePage({ params, searchParams }: Props) {
               { value: "scanner", label: "Scanner" },
             ]}
           />
-          <input className={inputClass()} name="email" type="email" placeholder="Email (opsional)" />
-          <button className="button button-dark event-admin-inline-submit" type="submit">Buat link crew</button>
+          <input className={inputClass()} name="email" type="email" placeholder="Crew email (optional)" />
+          <button className="button button-dark event-admin-inline-submit" type="submit">Create crew invitation</button>
         </form>
       </section>
     </>

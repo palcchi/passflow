@@ -28,7 +28,7 @@ export default async function AccountPage() {
       : typeof user.user_metadata.picture === "string"
         ? user.user_metadata.picture
         : null;
-  const name = fullName || username || user.email?.split("@")[0] || "Pengunjung";
+  const name = fullName || username || user.email?.split("@")[0] || "Attendee";
 
   const [
     { memberships, unavailable },
@@ -65,21 +65,21 @@ export default async function AccountPage() {
             <span className="section-kicker">YOUR LITTLE CORNER OF PASSFLOW</span>
             <KineticText text={`Halo, ${name}.`} className="studio-page-title" />
             <TextAnimate className="studio-page-subtitle" delay={0.05}>
-              Ada momen baru menunggu. Semua event dan pass kamu ada di sini.
+              Your events and digital passes are organized here, ready when you need them.
             </TextAnimate>
           <Link href="/events" className="magic-shiny-button">
             <span>
             <Plus size={17} />
-            Jelajahi event
+            Explore events
             </span>
           </Link>
           </div>
-          <div className="workspace-art"><span className="workspace-art-label">↗ {myEvents.length} event tersimpan</span><FolderArtwork color="blue" label="Your next moment"/><Sticker kind="smile"/></div>
+          <div className="workspace-art"><span className="workspace-art-label">↗ {myEvents.length} saved events</span><FolderArtwork color="blue" label="Your next moment"/><Sticker kind="smile"/></div>
         </header>
 
         {unavailable && (
           <p role="alert" className="studio-status is-error">
-            Hak akses akun belum dapat dimuat.
+            We could not load your account permissions.
           </p>
         )}
 
@@ -87,10 +87,10 @@ export default async function AccountPage() {
           <div className="studio-section-heading">
             <div>
               <p className="section-kicker">My events</p>
-              <h2 id="my-events">Event kamu</h2>
+              <h2 id="my-events">Your events</h2>
             </div>
             <Link href="/events" className="studio-text-link">
-              Lihat semua <ArrowUpRight size={14} />
+              View all <ArrowUpRight size={14} />
             </Link>
           </div>
 
@@ -103,15 +103,15 @@ export default async function AccountPage() {
           ) : (
             <div className="studio-empty-state">
               <FolderArtwork color="lavender" label="Room for more"/>
-              <h3>Pass pertama kamu menunggu.</h3>
-              <p>Daftar ke event yang kamu suka. Pass digitalnya akan tersimpan di sini.</p>
+              <h3>Your first pass starts with an event.</h3>
+              <p>Register for an event and your digital pass will be saved here automatically.</p>
               <Link href="/events" className="button button-dark">
-                Jelajahi event
+                Explore events
               </Link>
             </div>
           )}
         </section>
-        {publishedEvents.some((event) => !registeredIds.has(event.id)) && <section className="studio-section" aria-labelledby="discover-events"><div className="studio-section-heading"><div><p className="section-kicker">A LITTLE DISCOVERY</p><h2 id="discover-events">Untuk momen berikutnya.</h2></div><Link href="/events" className="studio-text-link">Jelajahi <ArrowUpRight size={14}/></Link></div><div className="class-event-grid">{publishedEvents.filter(event => !registeredIds.has(event.id)).slice(0, 3).map(event => <EventClassCard flow event={event} key={event.id}/>)}</div></section>}
+        {publishedEvents.some((event) => !registeredIds.has(event.id)) && <section className="studio-section" aria-labelledby="discover-events"><div className="studio-section-heading"><div><p className="section-kicker">A LITTLE DISCOVERY</p><h2 id="discover-events">For your next event.</h2></div><Link href="/events" className="studio-text-link">Explore <ArrowUpRight size={14}/></Link></div><div className="class-event-grid">{publishedEvents.filter(event => !registeredIds.has(event.id)).slice(0, 3).map(event => <EventClassCard flow event={event} key={event.id}/>)}</div></section>}
       </main>
     </div>
   );

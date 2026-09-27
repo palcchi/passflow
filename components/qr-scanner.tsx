@@ -28,9 +28,9 @@ export function QrScanner({ stationId, stationName, eventName, venue }: {
       const available = await Html5Qrcode.getCameras();
       setDevices(available);
       setSelected(available.find(device => /back|rear|environment|belakang/i.test(device.label))?.id ?? available[0]?.id ?? "");
-      if (!available.length) setError("Tidak ada kamera terdeteksi. Sambungkan kamera lalu coba lagi.");
+      if (!available.length) setError("No camera was detected. Connect a camera and try again.");
     } catch {
-      setError("Kamera belum dapat diakses. Izinkan akses kamera di pengaturan browser, lalu coba lagi.");
+      setError("Camera access is blocked. Allow camera access in your browser settings, then try again.");
     } finally { setDiscovering(false); }
   }
 
@@ -67,19 +67,19 @@ export function QrScanner({ stationId, stationName, eventName, venue }: {
             if (disposed) return;
             setResult({
               status: response.ok ? data?.decision ?? (data?.ok ? "granted" : "invalid") : "invalid",
-              message: response.status === 401 ? "Sesi berakhir. Silakan masuk kembali." : data?.message ?? "Validasi selesai.",
+              message: response.status === 401 ? "Your session has expired. Please sign in again." : data?.message ?? "Validation complete.",
               name: data?.attendee_name,
             });
           } catch {
             if (disposed) return;
-            setResult({ status: "invalid", message: "Koneksi terputus atau terlalu lama. Silakan scan ulang." });
+            setResult({ status: "invalid", message: "The connection was interrupted or timed out. Scan the QR code again." });
           }
           if (disposed) return;
           timer = setTimeout(() => { setResult(null); locked = false; }, 3000);
         }, () => {});
         if (!disposed) setReady(true);
       } catch {
-        if (!disposed) setError("Kamera tidak dapat dinyalakan. Kamera mungkin sedang dipakai aplikasi lain. Pilih ulang kamera untuk mencoba lagi.");
+        if (!disposed) setError("The camera could not start. It may be in use by another application. Select the camera again to retry.");
       }
     })();
     return () => {
@@ -95,46 +95,46 @@ export function QrScanner({ stationId, stationName, eventName, venue }: {
   }, [active, readerId, stationId]);
 
   const success = result?.status === "granted";
-  const titles: Record<string, string> = { granted: "Akses diterima.", denied: "Akses ditolak.", already_checked_in: "Sudah check-in.", already_claimed: "Sudah diklaim.", invalid: "Pass tidak valid." };
+  const titles: Record<string, string> = { granted: "Access granted.", denied: "Access denied.", already_checked_in: "Already checked in.", already_claimed: "Already claimed.", invalid: "Invalid pass." };
 
   if (!active) return <main className="camera-setup">
-    <Link href="/account" className="camera-back"><ArrowLeft size={18}/> Kembali</Link>
+    <Link href="/account" className="camera-back"><ArrowLeft size={18}/> Back</Link>
     <section className="camera-setup-panel">
       <span className="camera-eyebrow">PassFlow Scanner</span>
       <h1>{eventName}</h1>
-      <p className="camera-place">{venue || "Lokasi belum ditentukan"}<span>{stationName}</span></p>
+      <p className="camera-place">{venue || "Venue not specified"}<span>{stationName}</span></p>
       <div className="camera-setup-divider"/>
-      <h2>Pilih kamera.<br/><span>Siap menerima tamu.</span></h2>
-      <p>Pilih kamera perangkat ini sebelum mulai memindai QR.</p>
+      <h2>Select a camera.<br/><span>Ready for check-in.</span></h2>
+      <p>Select the camera on this device before scanning attendee QR codes.</p>
       <button className="camera-discover" onClick={discover} disabled={discovering}>
         {discovering ? <LoaderCircle className="animate-spin" size={18}/> : <Camera size={18}/>}
-        {discovering ? "Mendeteksi kamera…" : devices.length ? "Deteksi ulang kamera" : "Izinkan & deteksi kamera"}
+        {discovering ? "Detecting cameras…" : devices.length ? "Detect cameras again" : "Allow & detect cameras"}
       </button>
-      {!!devices.length && <fieldset className="camera-device-list"><legend>Kamera terdeteksi</legend>
+      {!!devices.length && <fieldset className="camera-device-list"><legend>Detected cameras</legend>
         {devices.map((device, index) => <label key={device.id} data-selected={selected === device.id}>
-          <Camera size={20}/><span>{device.label || `Kamera ${index + 1}`}</span>
+          <Camera size={20}/><span>{device.label || `Camera ${index + 1}`}</span>
           <input type="radio" name="camera" value={device.id} checked={selected === device.id} onChange={() => setSelected(device.id)}/>
         </label>)}
       </fieldset>}
       {error && <p role="alert" className="camera-feedback">{error}</p>}
-      <button className="camera-start" disabled={!selected || discovering} onClick={() => { setError(""); setReady(false); setResult(null); setActive(selected); }}>Mulai scan <ArrowLeft className="rotate-180" size={18}/></button>
+      <button className="camera-start" disabled={!selected || discovering} onClick={() => { setError(""); setReady(false); setResult(null); setActive(selected); }}>Start scanning <ArrowLeft className="rotate-180" size={18}/></button>
     </section>
   </main>;
 
   return <main className="camera-live">
     <div id={readerId} className="camera-live-reader"/>
     <header className="camera-live-header">
-      <button onClick={() => { setActive(""); setResult(null); setReady(false); setError(""); }} aria-label="Kembali ke pilihan kamera"><SwitchCamera size={20}/></button>
+      <button onClick={() => { setActive(""); setResult(null); setReady(false); setError(""); }} aria-label="Return to camera selection"><SwitchCamera size={20}/></button>
       <div><span>PassFlow · {stationName}</span><h1>{eventName}</h1><p>{venue || stationName}</p></div>
       <span className="camera-live-status">{ready && !error ? "LIVE" : "…"}</span>
     </header>
-    {!ready && !error && <div className="camera-live-loading" role="status"><LoaderCircle className="animate-spin"/> Menyalakan kamera…</div>}
-    {error && <div className="camera-verdict" role="alert"><ShieldAlert size={42}/><h2>Kamera belum siap.</h2><p>{error}</p><button onClick={() => { setActive(""); setError(""); }}>Pilih kamera lagi</button></div>}
+    {!ready && !error && <div className="camera-live-loading" role="status"><LoaderCircle className="animate-spin"/> Starting camera…</div>}
+    {error && <div className="camera-verdict" role="alert"><ShieldAlert size={42}/><h2>Camera not ready.</h2><p>{error}</p><button onClick={() => { setActive(""); setError(""); }}>Choose another camera</button></div>}
     {result && <div className="camera-verdict" data-success={success} role="status" aria-live="polite">
       {success ? <Check size={48}/> : <ShieldAlert size={48}/>}
-      <h2>{titles[result.status] ?? "Periksa pass."}</h2>
-      {result.name && <strong>{result.name}</strong>}<p>{result.message}</p><small>Siap scan berikutnya dalam 3 detik</small>
+      <h2>{titles[result.status] ?? "Check this pass."}</h2>
+      {result.name && <strong>{result.name}</strong>}<p>{result.message}</p><small>Ready for the next scan in 3 seconds</small>
     </div>}
-    {!result && !error && <footer className="camera-live-footer"><strong>{ready ? "Arahkan QR ke kamera." : "Tunggu sebentar."}</strong><span>Digital pass · ID card · Wristband</span></footer>}
+    {!result && !error && <footer className="camera-live-footer"><strong>{ready ? "Hold the QR code in front of the camera." : "Please wait."}</strong><span>Digital pass · ID card · Wristband</span></footer>}
   </main>;
 }

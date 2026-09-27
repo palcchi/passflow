@@ -8,7 +8,7 @@ import { KineticText } from "@/components/magicui/kinetic-text";
 import { TextAnimate } from "@/components/magicui/text-animate";
 import { Sticker } from "@/components/brand-art";
 
-export const metadata = { title: "Profil | PassFlow" };
+export const metadata = { title: "Profile | PassFlow" };
 export const dynamic = "force-dynamic";
 
 export default async function ProfilePage({
@@ -35,7 +35,7 @@ export default async function ProfilePage({
   const fullName =
     typeof user.user_metadata.full_name === "string" && user.user_metadata.full_name.trim()
       ? user.user_metadata.full_name.trim()
-      : username || "Pengunjung";
+      : username || "Attendee";
   const avatarUrl =
     typeof user.user_metadata.avatar_url === "string"
       ? user.user_metadata.avatar_url
@@ -47,30 +47,30 @@ export default async function ProfilePage({
   const figma = typeof query.figma === "string" ? query.figma : "";
 
   const statusMessages: Record<string, { tone: "success" | "error" | "neutral"; text: string }> = {
-    saved: { tone: "success", text: "Profil berhasil diperbarui." },
-    "avatar-saved": { tone: "success", text: "Foto profil berhasil diperbarui." },
-    "avatar-removed": { tone: "neutral", text: "Foto profil dihapus." },
+    saved: { tone: "success", text: "Profile updated successfully." },
+    "avatar-saved": { tone: "success", text: "Profile photo updated successfully." },
+    "avatar-removed": { tone: "neutral", text: "Profile photo removed." },
     "invalid-username": {
       tone: "error",
-      text: "Username harus 3–24 karakter dan hanya berisi huruf, angka, atau garis bawah.",
+      text: "Username must be 3–24 characters and contain only letters, numbers, or underscores.",
     },
-    "invalid-name": { tone: "error", text: "Nama tampilan harus 2–60 karakter." },
-    "avatar-missing": { tone: "error", text: "Pilih foto sebelum menyimpan." },
-    "avatar-format": { tone: "error", text: "Foto harus berformat JPG, PNG, atau WEBP." },
-    "avatar-size": { tone: "error", text: "Ukuran foto maksimal 2 MB." },
-    "avatar-error": { tone: "error", text: "Foto profil belum berhasil disimpan." },
-    error: { tone: "error", text: "Profil belum berhasil disimpan." },
+    "invalid-name": { tone: "error", text: "Display name must be between 2 and 60 characters." },
+    "avatar-missing": { tone: "error", text: "Choose a photo before saving." },
+    "avatar-format": { tone: "error", text: "Use a JPG, PNG, or WEBP image." },
+    "avatar-size": { tone: "error", text: "The maximum photo size is 2 MB." },
+    "avatar-error": { tone: "error", text: "The profile photo could not be saved." },
+    error: { tone: "error", text: "The profile could not be saved." },
   };
 
   const figmaErrors: Record<string, string> = {
-    "not-configured": "Konfigurasi Figma di server belum lengkap.",
-    "invalid-state": "Sesi koneksi Figma berubah. Coba hubungkan ulang.",
-    "missing-code": "Figma belum mengirim kode akses.",
-    cancelled: "Permintaan akses Figma dibatalkan.",
-    "token-error": "Kode akses Figma ditolak atau kedaluwarsa.",
-    "profile-error": "PassFlow belum bisa membaca akun Figma.",
-    "database-error": "Koneksi diterima, tetapi belum tersimpan.",
-    error: "Koneksi Figma belum berhasil.",
+    "not-configured": "The Figma server configuration is incomplete.",
+    "invalid-state": "The Figma connection session changed. Please reconnect.",
+    "missing-code": "Figma did not return an access code.",
+    cancelled: "Figma access was cancelled.",
+    "token-error": "The Figma access code was rejected or has expired.",
+    "profile-error": "PassFlow could not read the connected Figma account.",
+    "database-error": "The connection was accepted but could not be saved.",
+    error: "The Figma connection could not be completed.",
   };
 
   const profileStatus = statusMessages[status];
@@ -88,9 +88,9 @@ export default async function ProfilePage({
         <header className="profile-page-heading studio-page-hero">
           <div>
             <span className="section-kicker">Account settings</span>
-            <KineticText text="Profil kamu." className="studio-page-title" />
+            <KineticText text="Your profile." className="studio-page-title" />
             <TextAnimate className="studio-page-subtitle">
-              Atur identitas, foto profil, dan koneksi desain dari satu tempat.
+              Manage your identity, profile photo, and design connections in one place.
             </TextAnimate>
           </div>
           <Sticker kind="smile"/>
@@ -106,7 +106,7 @@ export default async function ProfilePage({
         )}
         {figma === "connected" && (
           <div role="status" className="profile-status-message is-success">
-            Akun Figma berhasil dihubungkan.
+            Figma account connected successfully.
           </div>
         )}
         {figma === "disconnected" && (
@@ -135,23 +135,23 @@ export default async function ProfilePage({
                 <h2>Figma account</h2>
                 <p>
                   {connection
-                    ? connection.handle ?? connection.email ?? "Akun terhubung"
-                    : "Belum terhubung"}
+                    ? connection.handle ?? connection.email ?? "Connected account"
+                    : "Not connected"}
                 </p>
               </div>
             </div>
 
             <div className="profile-integration-body">
               <p>
-                PassFlow membaca identitas akun, metadata, preview, dan struktur file yang kamu
-                izinkan. File desain tetap milik akun Figma organizer.
+                PassFlow reads the account identity, metadata, previews, and file structure you
+                authorize. Your design files remain in the connected Figma account.
               </p>
               <div className="profile-integration-security">
-                Token Figma disimpan terenkripsi di server.
+                Figma tokens are stored encrypted on the server.
               </div>
               {connectionError && (
                 <p role="alert" className="text-sm text-red-700">
-                  Status Figma belum dapat dimuat. Coba muat ulang halaman.
+                  The Figma connection status could not be loaded. Refresh the page and try again.
                 </p>
               )}
             </div>
@@ -163,7 +163,7 @@ export default async function ProfilePage({
                     href="/api/figma/connect"
                     className="button button-ghost"
                   >
-                    Hubungkan ulang
+                    Reconnect
                   </a>
                   <form action="/api/figma/disconnect" method="post">
                     <button type="submit" className="button button-ghost text-red-700">
@@ -176,12 +176,12 @@ export default async function ProfilePage({
                   href="/api/figma/connect"
                   className="button button-dark"
                 >
-                  Hubungkan Figma
+                  Connect Figma
                 </a>
-              ) : <button type="button" className="button button-dark" disabled title="Koneksi Figma belum tersedia di lingkungan ini">Figma belum tersedia</button>}
+              ) : <button type="button" className="button button-dark" disabled title="Figma integration is not available in this environment">Figma unavailable</button>}
               {organizer && (
                 <Link href="/admin" className="button button-ghost">
-                  Kelola event
+                  Manage events
                 </Link>
               )}
             </div>

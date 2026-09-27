@@ -66,7 +66,7 @@ export default async function EventExperiencePage({ params }: Props) {
             <div>
               <span className="section-kicker">Activities</span>
               <h2>Checkpoints</h2>
-              <p>Catat keikutsertaan attendee pada aktivitas di dalam event.</p>
+              <p>Track attendee participation across activities within the event.</p>
             </div>
           </div>
 
@@ -80,7 +80,7 @@ export default async function EventExperiencePage({ params }: Props) {
             ))}
             {!activities.length && (
               <div className="event-admin-table-empty">
-                Belum ada activity checkpoint.
+                No activity checkpoints have been configured yet.
               </div>
             )}
           </div>
@@ -93,18 +93,18 @@ export default async function EventExperiencePage({ params }: Props) {
             <input
               className={inputClass()}
               name="name"
-              placeholder="Workshop A"
+              placeholder="e.g. Workshop A"
               required
             />
             <input
               className={inputClass()}
               name="code"
-              placeholder="WORKSHOP_A"
+              placeholder="e.g. WORKSHOP_A"
             />
             <input
               className={inputClass()}
               name="description"
-              placeholder="Description"
+              placeholder="Optional description"
             />
             <button className="button button-ghost" type="submit">
               Add activity
@@ -117,7 +117,7 @@ export default async function EventExperiencePage({ params }: Props) {
             <div>
               <span className="section-kicker">Benefits</span>
               <h2>One-time claims</h2>
-              <p>Kelola benefit yang hanya boleh diklaim satu kali.</p>
+              <p>Manage benefits that can only be claimed once per attendee.</p>
             </div>
           </div>
 
@@ -130,7 +130,7 @@ export default async function EventExperiencePage({ params }: Props) {
               </div>
             ))}
             {!benefits.length && (
-              <div className="event-admin-table-empty">Belum ada benefit.</div>
+              <div className="event-admin-table-empty">No benefits have been configured yet.</div>
             )}
           </div>
 
@@ -142,18 +142,18 @@ export default async function EventExperiencePage({ params }: Props) {
             <input
               className={inputClass()}
               name="name"
-              placeholder="Merch Pack"
+              placeholder="e.g. Merchandise Pack"
               required
             />
             <input
               className={inputClass()}
               name="code"
-              placeholder="MERCH_PACK"
+              placeholder="e.g. MERCH_PACK"
             />
             <input
               className={inputClass()}
               name="description"
-              placeholder="Description"
+              placeholder="Optional description"
             />
             <button className="button button-ghost" type="submit">
               Add benefit
