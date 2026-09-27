@@ -27,22 +27,22 @@ export default async function NewEventPage({
 
         <form action={createEvent} className="create-event-form grid gap-5 sm:grid-cols-2">
           <label className="block text-sm font-medium sm:col-span-2">Event name
-            <input name="name" required maxLength={120} className="mt-2 min-h-12 w-full rounded-md border border-input bg-background px-3" placeholder="e.g. PassFlow Summit 2026" />
+            <input name="name" required maxLength={120} className="mt-2 min-h-12 w-full rounded-md border border-input bg-background px-3" placeholder="PassFlow Summit 2026" />
           </label>
           <label className="block text-sm font-medium">Slug
-            <input name="slug" maxLength={100} className="mt-2 min-h-12 w-full rounded-md border border-input bg-background px-3" placeholder="e.g. passflow-summit-2026" />
+            <input name="slug" maxLength={100} className="mt-2 min-h-12 w-full rounded-md border border-input bg-background px-3" placeholder="passflow-summit-2026" />
             <small className="mt-2 block text-xs font-normal text-muted-foreground">Public event URL. Leave blank to generate it automatically.</small>
           </label>
           <label className="block text-sm font-medium">Venue
-            <input name="venue" maxLength={160} className="mt-2 min-h-12 w-full rounded-md border border-input bg-background px-3" placeholder="e.g. Jakarta Convention Center" />
+            <input name="venue" maxLength={160} className="mt-2 min-h-12 w-full rounded-md border border-input bg-background px-3" placeholder="Jakarta Convention Center" />
           </label>
           <DateTimeField name="startsAt" label="Start date & time" />
-          <DateTimeField name="endsAt" label="Selesai" />
+          <DateTimeField name="endsAt" label="End date & time" />
           <label className="block text-sm font-medium">Attendee capacity
-            <FormattedNumberInput name="capacity" min={0} className="mt-2 min-h-12 w-full rounded-md border border-input bg-background px-3" placeholder="e.g. 500" />
+            <FormattedNumberInput name="capacity" min={0} className="mt-2 min-h-12 w-full rounded-md border border-input bg-background px-3" placeholder="500" />
           </label>
-          <label className="block text-sm font-medium sm:col-span-2">Tentang event
-            <textarea name="description" maxLength={1200} rows={5} className="mt-2 w-full rounded-md border border-input bg-background p-3" />
+          <label className="block text-sm font-medium sm:col-span-2">About the event
+            <textarea name="description" maxLength={1200} rows={5} className="mt-2 w-full rounded-md border border-input bg-background p-3" placeholder="Add a concise description of the event experience, audience, and key details." />
           </label>
           <div className="sm:col-span-2"><AuthSubmit>Create draft event ↗</AuthSubmit></div>
         </form>
