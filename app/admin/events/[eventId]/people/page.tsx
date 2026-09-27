@@ -86,6 +86,12 @@ export default async function EventPeoplePage({ params, searchParams }: Props) {
       profile.photo_storage_path,
     ]),
   );
+  const attendeePhoto = new Map(
+    attendees.map((attendee) => {
+      const path = photoPathByAttendee.get(attendee.id);
+      return [attendee.id, path ? signedUrlByPath.get(path) ?? null : null];
+    }),
+  );
 
   return (
     <>
@@ -157,7 +163,10 @@ export default async function EventPeoplePage({ params, searchParams }: Props) {
           </div>
           <div className="event-admin-head-actions">
             <AvatarCircles
-              people={attendees.slice(0, 3).map((attendee) => ({ name: attendee.name }))}
+              people={attendees.slice(0, 3).map((attendee) => ({
+                name: attendee.name,
+                imageUrl: attendeePhoto.get(attendee.id) ?? null,
+              }))}
               extra={Math.max(0, attendees.length - 3)}
             />
             <a className="button button-ghost" href={`/admin/events/${eventId}/export/attendees`}>

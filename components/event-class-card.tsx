@@ -28,7 +28,7 @@ export function EventClassCard({ event, joined = false, manage = false, flow = f
     <div className="class-event-footer">
       <span>{manage ? "Manage event" : joined ? "Open digital pass" : "View details"}</span>
       <span className="class-event-footer-right">
-        {manage && event.attendeeCount > 0 && (
+        {event.attendeeCount > 0 && (
           <AvatarCircles
             className="event-card-avatar-circles"
             people={event.participantPreview ?? []}

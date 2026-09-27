@@ -25,11 +25,11 @@ export function RouteTransition({ children }: { children: ReactNode }) {
 
     target?.animate(
       [
-        { opacity: 0.72, transform: "translateY(12px)" },
+        { opacity: 0.92, transform: "translateY(10px)" },
         { opacity: 1, transform: "translateY(0)" },
       ],
       {
-        duration: 280,
+        duration: 260,
         easing: "cubic-bezier(0.22, 1, 0.36, 1)",
         fill: "both",
       },
