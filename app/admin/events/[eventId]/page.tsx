@@ -142,7 +142,7 @@ export default async function EventOverviewPage({ params }: Props) {
             <div>
               <span className="section-kicker">Scanner network</span>
               <h2>{activeStations} active</h2>
-              <p>{stations.length} station terhubung ke event ini.</p>
+              <p>{stations.length} stations connected to this event.</p>
             </div>
           </div>
           <div className="event-admin-stack">
