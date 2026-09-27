@@ -340,7 +340,12 @@
     height: 58px;
     min-height: 58px;
     margin: 8px 0 14px;
+    padding: 0 8px;
     border-radius: 17px;
+  }
+
+  .editorial-nav-actions {
+    gap: 10px !important;
   }
 
   .editorial-canvas,
