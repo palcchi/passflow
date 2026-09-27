@@ -32,7 +32,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
   return <AuthShell title="Welcome back." description="Sign in to manage your events, passes, and account." kicker="MAKE YOURSELF AT HOME">
     {message && <p role={params.error === "reset" ? "status" : "alert"} className="auth-notice">{message}</p>}
     {params.notice === "signed-out" && <p role="status" className="auth-notice">You have been signed out.</p>}
-    {params.notice === "verification-sent" && <p role="status" className="auth-notice">Tautan verifikasi baru sudah dikirim.</p>}
+    {params.notice === "verification-sent" && <p role="status" className="auth-notice">A new verification link has been sent.</p>}
     {params.notice === "reset-sent" && <p role="status" className="auth-notice">If the email is registered, a reset link has been sent.</p>}
     <form action={signInWithEmail} className="auth-form">
       <input type="hidden" name="next" value={next}/>
