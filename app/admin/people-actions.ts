@@ -26,7 +26,7 @@ export async function managePersonRecord(form: FormData): Promise<{ error?: stri
       const phone = String(form.get("phone") ?? "").trim();
       const ticket = String(form.get("ticketTypeId") ?? "");
       if (email && (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254)) return { error: "Enter a valid email address." };
-      if (phone.length > 40) return { error: "Nomor telepon terlalu panjang." };
+      if (phone.length > 40) return { error: "Phone number is too long." };
       if (ticket) {
         const { data } = await supabase.from("ticket_types").select("id").eq("event_id", eventId).eq("id", ticket).maybeSingle();
         if (!data) return { error: "This pass category is not available for the event." };

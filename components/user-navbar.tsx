@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { motion, useReducedMotion } from "motion/react";
 import {
   CalendarDays,
   ChevronDown,
@@ -33,6 +34,7 @@ export function UserNavbar({
   organizer = false,
 }: UserNavbarProps) {
   const pathname = usePathname();
+  const reduceMotion = useReducedMotion();
   const [openMenu, setOpenMenu] = useState<"profile" | "mobile" | null>(null);
   const rootRef = useRef<HTMLElement>(null);
   const initial = (name || email || "P").trim().charAt(0).toUpperCase() || "P";
@@ -54,7 +56,7 @@ export function UserNavbar({
 
   const navItems = [
     { href: "/account", label: "Dashboard", icon: LayoutDashboard },
-    { href: "/events", label: "Event", icon: CalendarDays },
+    { href: "/events", label: "Events", icon: CalendarDays },
     ...(organizer
       ? [{ href: "/admin", label: "Organizer", icon: Sparkles }]
       : []),
@@ -68,7 +70,7 @@ export function UserNavbar({
   }
 
   return (
-    <nav ref={rootRef} className="user-nav-shell flow-sidebar" aria-label="Navigasi workspace">
+    <nav ref={rootRef} className="user-nav-shell flow-sidebar" aria-label="Workspace navigation">
       <div className="user-nav user-nav-flat">
         <div className="user-nav-left">
           <Link href="/account" className="user-nav-brand" aria-label="PassFlow dashboard">
@@ -77,18 +79,28 @@ export function UserNavbar({
           </Link>
 
           <div className="user-nav-links">
-            {navItems.map(({ href, label, icon: Icon }) => (
-              <Link
-                href={href}
-                key={href}
-                className="user-nav-link"
-                data-active={active(href)}
-                aria-current={active(href) ? "page" : undefined}
-                onClick={() => setOpenMenu(null)}
-              >
-                <Icon size={16}/>{label}
-              </Link>
-            ))}
+            {navItems.map(({ href, label, icon: Icon }) => {
+              const isActive = active(href);
+              return (
+                <Link
+                  href={href}
+                  key={href}
+                  className="user-nav-link"
+                  data-active={isActive}
+                  aria-current={isActive ? "page" : undefined}
+                  onClick={() => setOpenMenu(null)}
+                >
+                  {isActive && (
+                    <motion.span
+                      className="user-nav-active-pill"
+                      layoutId="passflow-global-nav-pill"
+                      transition={reduceMotion ? { duration: 0 } : { type: "spring", stiffness: 420, damping: 36, mass: 0.72 }}
+                    />
+                  )}
+                  <span className="user-nav-link-content"><Icon size={16}/>{label}</span>
+                </Link>
+              );
+            })}
           </div>
         </div>
 
@@ -132,7 +144,7 @@ export function UserNavbar({
           <button
             type="button"
             className="user-mobile-menu-button"
-            aria-label={openMenu === "mobile" ? "Tutup menu" : "Buka menu"}
+            aria-label={openMenu === "mobile" ? "Close menu" : "Open menu"}
             aria-expanded={openMenu === "mobile"}
             onClick={() => setOpenMenu(openMenu === "mobile" ? null : "mobile")}
           >

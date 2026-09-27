@@ -287,7 +287,7 @@ export default async function EventDesignPage({
 
               <label>
                 Design name
-                <input name="name" required placeholder="e.g. VIP ID Card" />
+                <input name="name" required placeholder="VIP Credential" />
               </label>
 
               <label>
@@ -311,7 +311,7 @@ export default async function EventDesignPage({
                 <input
                   name="figmaUrl"
                   required
-                  placeholder="Paste a Figma frame or selection URL"
+                  placeholder="Paste a Figma frame or selection link"
                 />
                 <small>
                   Select a frame in Figma, then copy its selection link. Sync reads every marker

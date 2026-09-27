@@ -37,7 +37,7 @@ export function UpdatePasswordForm() {
   }
   return <form onSubmit={submit} className="auth-form">
     {error && <p role="alert" className="rounded-md border border-destructive/30 p-3 text-sm text-destructive">{error}</p>}
-    <div className="auth-field"><span aria-hidden="true">New password</span><PasswordField autoComplete="new-password" placeholder="At least 8 characters"/></div>
+    <div className="auth-field"><span aria-hidden="true">New password</span><PasswordField autoComplete="new-password" placeholder="Use at least 8 characters"/></div>
     <AuthSubmit disabled={!ready || saving}>{saving ? "Saving…" : "Save password"}</AuthSubmit>
     {!ready && <p className="text-xs text-muted-foreground">The reset link is not active or has expired.</p>}
   </form>;

@@ -131,7 +131,7 @@ export function ProfileEditor({
               maxLength={60}
               defaultValue={fullName}
               autoComplete="name"
-              placeholder="Enter your full name"
+              placeholder="Your full name"
             />
           </label>
           <label>
@@ -146,7 +146,7 @@ export function ProfileEditor({
                 pattern="[a-zA-Z0-9_]{3,24}"
                 autoComplete="username"
                 defaultValue={username}
-                placeholder="e.g. vallian"
+                placeholder="your_username"
               />
             </div>
           </label>

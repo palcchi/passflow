@@ -57,7 +57,7 @@ export function decryptFigmaToken(value: string) {
 
 export async function exchangeFigmaCode(code: string) {
   const current = config();
-  if (!current) throw new Error("Figma OAuth belum dikonfigurasi di Vercel.");
+  if (!current) throw new Error("Figma OAuth is not configured in Vercel.");
   const response = await fetch("https://api.figma.com/v1/oauth/token", { method: "POST", headers: { "content-type": "application/x-www-form-urlencoded", Authorization: `Basic ${Buffer.from(`${current.clientId}:${current.clientSecret}`).toString("base64")}` }, body: new URLSearchParams({ redirect_uri: current.redirectUri, code, grant_type: "authorization_code" }), cache: "no-store" });
   if (!response.ok) throw new Error("Figma menolak pertukaran OAuth code.");
   return response.json() as Promise<{ access_token: string; refresh_token: string; expires_in: number; user_id_string?: string; scope?: string }>;
@@ -65,14 +65,14 @@ export async function exchangeFigmaCode(code: string) {
 
 export async function refreshFigmaToken(refreshToken: string) {
   const current = config();
-  if (!current) throw new Error("Figma OAuth belum dikonfigurasi.");
+  if (!current) throw new Error("Figma OAuth is not configured.");
   const response = await fetch("https://api.figma.com/v1/oauth/token", {
     method: "POST",
     headers: { "content-type": "application/x-www-form-urlencoded", Authorization: `Basic ${Buffer.from(`${current.clientId}:${current.clientSecret}`).toString("base64")}` },
     body: new URLSearchParams({ grant_type: "refresh_token", refresh_token: refreshToken }),
     cache: "no-store",
   });
-  if (!response.ok) throw new Error("Koneksi Figma sudah kedaluwarsa. Hubungkan ulang.");
+  if (!response.ok) throw new Error("The Figma connection has expired. Reconnect your account.");
   return response.json() as Promise<{ access_token: string; expires_in: number }>;
 }
 
@@ -86,6 +86,6 @@ export function parseFigmaUrl(value: string) {
   const url = new URL(value);
   if (url.protocol !== "https:" || !["figma.com", "www.figma.com"].includes(url.hostname)) throw new Error("Gunakan URL https://www.figma.com yang valid.");
   const match = url.pathname.match(/(?:file|design|proto|board)\/([a-zA-Z0-9]+)(?:\/|$)/);
-  if (!match) throw new Error("Masukkan URL file atau design Figma yang valid.");
+  if (!match) throw new Error("Enter a valid Figma file or design URL.");
   return { fileKey: match[1], nodeId: url.searchParams.get("node-id") };
 }
