@@ -82,12 +82,12 @@ export default async function EventPeoplePage({ params, searchParams }: Props) {
               </div>
               <h3>{ticket.name}</h3>
               <PeopleRecordEditor eventId={eventId} kind="ticket" record={ticket}/>
-              <p>{ticket.description || "Tanpa deskripsi."}</p>
+              <p>{ticket.description || "No description provided."}</p>
               <div className="event-admin-mini-meta">
                 <span>{ticket.capacity ?? "∞"} capacity</span>
                 <strong>
                   {ticket.price > 0
-                    ? `${ticket.currency} ${Number(ticket.price).toLocaleString("id-ID")}`
+                    ? `${ticket.currency} ${Number(ticket.price).toLocaleString("en-US")}`
                     : "Free"}
                 </strong>
               </div>
@@ -218,7 +218,7 @@ export default async function EventPeoplePage({ params, searchParams }: Props) {
               <code>
                 {`${process.env.NEXT_PUBLIC_APP_URL ?? "https://passflow.my.id"}/crew/join?token=${query.invite}`}
               </code>
-              <span>Link berlaku 7 hari.</span>
+              <span>This invitation link is valid for 7 days.</span>
             </div>
           </div>
         )}
