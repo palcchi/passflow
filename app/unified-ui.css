@@ -1052,3 +1052,283 @@
   .flow-public-event .event-public-hero { gap:24px!important; padding:20px!important; }
 }
 }
+
+
+/* Profile identity polish */
+.flow-workspace .user-avatar,
+.flow-workspace .profile-avatar-xl {
+  overflow: hidden !important;
+  aspect-ratio: 1 / 1;
+  border-radius: 999px !important;
+  background-position: center !important;
+  background-size: cover !important;
+}
+
+.flow-workspace .profile-avatar-xl {
+  width: 84px !important;
+  height: 84px !important;
+  flex: 0 0 84px !important;
+}
+
+.profile-integration-card.profile-integration-simple {
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  padding: 18px 20px !important;
+  gap: 18px !important;
+}
+
+.profile-integration-simple .profile-integration-main {
+  gap: 12px;
+}
+
+.profile-integration-status-dot {
+  width: 11px;
+  height: 11px;
+  flex: 0 0 11px;
+  border-radius: 999px;
+  background: var(--muted-foreground);
+  box-shadow: 0 0 0 5px color-mix(in srgb, var(--muted-foreground) 10%, transparent);
+}
+
+.profile-integration-status-dot.is-connected {
+  background: #48a868;
+  box-shadow: 0 0 0 5px color-mix(in srgb, #48a868 13%, transparent);
+}
+
+.profile-integration-simple h2 {
+  margin: 2px 0 1px !important;
+  font-size: 17px !important;
+  letter-spacing: -.02em;
+}
+
+.profile-integration-simple .profile-integration-status {
+  margin: 0 !important;
+  color: var(--foreground) !important;
+  font-size: 12px !important;
+  font-weight: 650;
+}
+
+.profile-integration-simple small {
+  display: block;
+  margin-top: 2px;
+  color: var(--muted-foreground);
+  font-size: 10px;
+}
+
+.profile-integration-simple .profile-integration-actions {
+  align-items: center;
+}
+
+.profile-integration-error {
+  grid-column: 1 / -1;
+  margin: -4px 0 0;
+  color: #b44e4e;
+  font-size: 11px;
+}
+
+/* Magic UI-style people directory */
+.person-profile-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+}
+
+.person-profile-card {
+  min-width: 0;
+  padding: 17px;
+  border: 1px solid var(--border) !important;
+  border-radius: 18px !important;
+  background: var(--card) !important;
+  box-shadow: none !important;
+  transition:
+    transform 180ms cubic-bezier(.22, 1, .36, 1),
+    border-color 180ms ease,
+    background-color 180ms ease;
+}
+
+.person-profile-card:hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--foreground) 20%, var(--border)) !important;
+}
+
+.person-profile-top {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-width: 0;
+}
+
+.person-profile-avatar {
+  width: 48px;
+  height: 48px;
+  flex: 0 0 48px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at 30% 25%, color-mix(in srgb, var(--flow-violet) 22%, transparent), transparent 55%),
+    var(--muted);
+  color: var(--foreground);
+  font-size: 12px;
+  font-weight: 750;
+  letter-spacing: -.02em;
+}
+
+.person-profile-heading {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+  margin-right: auto;
+}
+
+.person-profile-heading strong {
+  overflow: hidden;
+  color: var(--foreground);
+  font-size: 14px;
+  font-weight: 650;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.person-profile-heading span {
+  overflow: hidden;
+  color: var(--muted-foreground);
+  font-size: 10px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.person-profile-linked {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex: 0 0 auto;
+  padding: 5px 7px;
+  border-radius: 999px;
+  background: color-mix(in srgb, #48a868 10%, var(--card));
+  color: #3d8957;
+  font-size: 9px;
+  font-weight: 650;
+}
+
+.person-profile-details {
+  display: grid;
+  gap: 7px;
+  margin-top: 15px;
+  padding: 12px 0;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.person-profile-details > div {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted-foreground);
+  font-size: 11px;
+}
+
+.person-profile-details svg {
+  flex: 0 0 auto;
+  opacity: .8;
+}
+
+.person-profile-details span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.person-profile-tags {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: 12px;
+}
+
+.person-profile-code,
+.person-profile-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 26px;
+  padding: 5px 8px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--background);
+  color: var(--muted-foreground);
+  font-size: 9px;
+  font-weight: 650;
+}
+
+.person-profile-code {
+  font-family: var(--font-geist-mono), monospace;
+}
+
+.person-profile-state.is-checked {
+  border-color: color-mix(in srgb, #48a868 24%, var(--border));
+  background: color-mix(in srgb, #48a868 8%, var(--background));
+  color: #3d8957;
+}
+
+.person-profile-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.person-profile-footer > span {
+  color: var(--muted-foreground);
+  font-size: 9px;
+}
+
+.person-profile-footer .record-edit-button {
+  min-height: 32px;
+  padding: 7px 11px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--foreground);
+  color: var(--background);
+  font-size: 10px;
+  font-weight: 650;
+}
+
+.person-profile-empty {
+  grid-column: 1 / -1;
+  min-height: 150px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 5px;
+  text-align: center;
+}
+
+@media (max-width: 680px) {
+  .profile-integration-card.profile-integration-simple {
+    grid-template-columns: 1fr !important;
+  }
+
+  .profile-integration-simple .profile-integration-actions,
+  .profile-integration-simple .profile-integration-actions form,
+  .profile-integration-simple .profile-integration-actions .button {
+    width: 100%;
+  }
+
+  .person-profile-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .person-profile-card {
+    padding: 15px;
+  }
+
+  .person-profile-linked {
+    padding-inline: 6px;
+  }
+}

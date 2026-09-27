@@ -6,8 +6,10 @@ import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth/session";
 
 function refreshProfile() {
+  revalidatePath("/", "layout");
   revalidatePath("/account");
   revalidatePath("/profile");
+  revalidatePath("/events");
   revalidatePath("/admin");
 }
 
@@ -23,14 +25,25 @@ export async function saveProfile(formData: FormData) {
   }
 
   const { supabase } = await requireUser("/profile");
-  const { error } = await supabase.auth.updateUser({
+  const { data, error } = await supabase.auth.updateUser({
     data: {
       username,
       full_name: fullName,
     },
   });
 
-  if (error) redirect("/profile?status=error");
+  if (
+    error ||
+    !data.user ||
+    data.user.user_metadata.username !== username ||
+    data.user.user_metadata.full_name !== fullName
+  ) {
+    redirect("/profile?status=error");
+  }
+
+  // Refresh the auth session cookie immediately so server-rendered navigation
+  // and profile pages receive the new identity on the next request.
+  await supabase.auth.refreshSession();
   refreshProfile();
   redirect("/profile?status=saved");
 }
@@ -70,6 +83,7 @@ export async function uploadAvatar(formData: FormData) {
   });
 
   if (profileError) redirect("/profile?status=avatar-error");
+  await supabase.auth.refreshSession();
   refreshProfile();
   redirect("/profile?status=avatar-saved");
 }
@@ -78,6 +92,7 @@ export async function removeAvatar() {
   const { supabase } = await requireUser("/profile");
   const { error } = await supabase.auth.updateUser({ data: { avatar_url: null } });
   if (error) redirect("/profile?status=avatar-error");
+  await supabase.auth.refreshSession();
   refreshProfile();
   redirect("/profile?status=avatar-removed");
 }
