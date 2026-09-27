@@ -182,7 +182,7 @@ export default async function EventAccessPage({ params }: Props) {
             <div className="event-admin-empty-card">
               <strong>No QR credentials yet</strong>
               <span>
-                Generate batch jika memakai credential fisik, atau biarkan
+                Generate a batch when using physical credentials, or leave it
                 Automatic mode creates a credential during registration.
               </span>
             </div>
