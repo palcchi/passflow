@@ -270,7 +270,7 @@ export default async function EventDesignPage({
             <form action={syncFigmaDesign} className="design-form design-form-refined">
               <div className="design-form-section-label">
                 <span className="section-kicker">Add design</span>
-                <strong>Hubungkan frame baru</strong>
+                <strong>Connect a new frame</strong>
               </div>
 
               <label>
