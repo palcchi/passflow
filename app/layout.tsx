@@ -5,6 +5,7 @@ import "./apple-workspace.css";
 import "./editorial.css";
 import "./flow.css";
 import "./unified-ui.css";
+import LanguagePolish from "./language-polish";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -52,7 +53,10 @@ export default function RootLayout({
       <head>
         <script id="passflow-theme-init" dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
-      <body>{children}</body>
+      <body>
+        <LanguagePolish />
+        {children}
+      </body>
     </html>
   );
 }
