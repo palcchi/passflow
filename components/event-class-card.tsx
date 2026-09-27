@@ -23,7 +23,7 @@ export function EventClassCard({ event, joined = false, manage = false, flow = f
       <p><CalendarDays size={15}/>{event.dateLabel}</p>
       <p><MapPin size={15}/>{event.venue || "Venue to be announced"}</p>
     </div>
-    {manage && <div className="flow-event-progress"><span><b>{event.checkedInCount.toLocaleString("id-ID")}</b> / {event.attendeeCount.toLocaleString("id-ID")}</span><progress value={event.checkedInCount} max={Math.max(event.attendeeCount, event.checkedInCount, 1)} aria-label={`${event.name}: ${event.checkedInCount} of ${event.attendeeCount} attendees checked in`}/><small>checked in</small></div>}
+    {manage && <div className="flow-event-progress"><span><b>{event.checkedInCount.toLocaleString("en-US")}</b> / {event.attendeeCount.toLocaleString("en-US")}</span><progress value={event.checkedInCount} max={Math.max(event.attendeeCount, event.checkedInCount, 1)} aria-label={`${event.name}: ${event.checkedInCount} of ${event.attendeeCount} attendees checked in`}/><small>checked in</small></div>}
     <div className="class-event-footer"><span>{manage ? "Manage event" : joined ? "Open digital pass" : "View details"}</span><ArrowUpRight size={19}/></div>
   </Link>;
 }
