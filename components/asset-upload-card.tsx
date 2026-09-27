@@ -48,13 +48,13 @@ export function AssetUploadCard({
     if (!file) return;
     if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
       clearSelection();
-      setMessage("Format harus JPG, PNG, atau WEBP.");
+      setMessage("Use a JPG, PNG, or WEBP image.");
       if (inputRef.current) inputRef.current.value = "";
       return;
     }
     if (file.size > 5 * 1024 * 1024) {
       clearSelection();
-      setMessage("Ukuran file maksimal 5 MB.");
+      setMessage("The maximum file size is 5 MB.");
       if (inputRef.current) inputRef.current.value = "";
       return;
     }
