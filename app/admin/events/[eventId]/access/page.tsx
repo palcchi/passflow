@@ -103,7 +103,7 @@ export default async function EventAccessPage({ params }: Props) {
           >
             <strong>Automatic on registration</strong>
             <span>
-              Attendee langsung mendapat QR credential. Ideal untuk digital
+              Attendees receive a QR credential immediately. Ideal for digital
               passes and ID cards that already display attendee names.
             </span>
           </button>
@@ -117,7 +117,7 @@ export default async function EventAccessPage({ params }: Props) {
             <strong>Claim after registration</strong>
             <span>
               Attendees register first, then scan a physical QR code to link
-              wristband atau credential yang sudah dicetak.
+              wristbands or credentials that have already been printed.
             </span>
           </button>
         </form>
