@@ -4,7 +4,7 @@ import { ArrowLeft } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { FlowMark, FlowPass } from "@/components/flow-art";
 
-export function AuthShell({ title, description, children, backHref = "/", backLabel = "Kembali", kicker = "YOUR NEXT MOMENT STARTS HERE" }: {
+export function AuthShell({ title, description, children, backHref = "/", backLabel = "Back", kicker = "YOUR NEXT MOMENT STARTS HERE" }: {
   title: string; description: string; children: ReactNode;
   backHref?: string; backLabel?: string; kicker?: string;
 }) {
