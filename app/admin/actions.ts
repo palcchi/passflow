@@ -625,7 +625,7 @@ export async function uploadEventAsset(formData: FormData) {
   const file = formData.get("file");
 
   if (!eventId || !["logo", "hero", "poster", "qr_template"].includes(assetType)) {
-    return { ok: false, message: "Asset atau event tidak valid." };
+    return { ok: false, message: "The asset or event is invalid." };
   }
   if (!(file instanceof File) || file.size === 0) {
     return { ok: false, message: "Choose an image file before uploading." };
