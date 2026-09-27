@@ -81,7 +81,7 @@ export default async function EventDesignPage({
               <span className="section-kicker">Figma account</span>
               <h2>Connect your Figma</h2>
               <p>
-                PassFlow membaca nama layer, ukuran, posisi, dan preview frame yang kamu
+                PassFlow reads the layer names, dimensions, positions, and frame preview you
                 izinkan.
               </p>
             </div>
@@ -102,10 +102,10 @@ export default async function EventDesignPage({
             <div>
               <span className="section-kicker">Connected</span>
               <h2>{connection.handle ?? connection.email ?? "Figma account"}</h2>
-              <p>{connection.email ?? "Akun Figma terhubung ke akun ini."}</p>
+              <p>{connection.email ?? "A Figma account is connected."}</p>
             </div>
             <Link className="button button-ghost" href="/profile">
-              Kelola koneksi
+              Manage connection
             </Link>
           </section>
         )}
@@ -117,18 +117,18 @@ export default async function EventDesignPage({
         (query.figma && query.figma !== "connected")) && (
         <p role="alert" className="design-alert">
           {error === "invalid_ticket_type"
-            ? "Kategori tiket tidak cocok dengan event ini."
-            : "Figma belum berhasil diproses. Periksa koneksi akun dan akses file, lalu coba lagi."}
+            ? "The selected ticket category does not belong to this event."
+            : "The Figma file could not be processed. Check the account connection and file permissions, then try again."}
         </p>
       )}
       {query.figma === "connected" && (
         <p role="status" className="design-success">
-          Akun Figma terhubung. Sekarang kamu bisa menyinkronkan desain.
+          Figma is connected. You can now sync design frames.
         </p>
       )}
       {query.synced && (
         <p role="status" className="design-success">
-          Frame disinkronkan. Semua marker yang ditemukan sudah tersimpan.
+          Frame synced successfully. All detected markers have been saved.
         </p>
       )}
 
@@ -163,7 +163,7 @@ export default async function EventDesignPage({
                     ) : (
                       <div className="design-preview-empty">
                         <Figma size={26} />
-                        <span>Preview belum tersedia</span>
+                        <span>Preview unavailable</span>
                       </div>
                     )}
                     <div className="design-card-body">
@@ -191,7 +191,7 @@ export default async function EventDesignPage({
                           ))
                         ) : (
                           <span className="text-xs text-muted-foreground">
-                            Belum ada marker yang dikenali
+                            No recognized markers
                           </span>
                         )}
                       </div>
@@ -258,9 +258,9 @@ export default async function EventDesignPage({
           ) : (
             <div className="design-empty-state">
               <Figma size={24} />
-              <strong>Belum ada desain tersinkron.</strong>
+              <strong>No synced designs yet.</strong>
               <span>
-                Tambahkan frame Figma di bawah. Setelah sync, preview dan marker akan muncul
+                Add a Figma frame below. After syncing, its preview and markers will appear
                 di sini.
               </span>
             </div>
@@ -286,8 +286,8 @@ export default async function EventDesignPage({
               </label>
 
               <label>
-                Nama desain
-                <input name="name" required placeholder="VIP ID Card" />
+                Design name
+                <input name="name" required placeholder="e.g. VIP ID Card" />
               </label>
 
               <label>
@@ -296,14 +296,14 @@ export default async function EventDesignPage({
                   name="ticketTypeId"
                   value=""
                   options={[
-                    { value: "", label: "Semua kategori" },
+                    { value: "", label: "All categories" },
                     ...(tickets ?? []).map((ticket) => ({
                       value: ticket.id,
                       label: ticket.name,
                     })),
                   ]}
                 />
-                <small>Kosongkan jika desain berlaku untuk semua attendee.</small>
+                <small>Leave this unselected to apply the design to all attendees.</small>
               </label>
 
               <label className="design-form-url">
@@ -311,16 +311,16 @@ export default async function EventDesignPage({
                 <input
                   name="figmaUrl"
                   required
-                  placeholder="https://www.figma.com/design/...node-id=..."
+                  placeholder="Paste a Figma frame or selection URL"
                 />
                 <small>
-                  Pilih frame di Figma lalu salin link selection. Sync membaca semua marker
+                  Select a frame in Figma, then copy its selection link. Sync reads every marker
                   di frame itu.
                 </small>
               </label>
 
               <label>
-                Warna QR
+                QR color
                 <span className="design-color-input">
                   <input
                     type="color"
@@ -352,7 +352,7 @@ export default async function EventDesignPage({
                     {
                       value: "square",
                       label: "Kotak",
-                      description: "Paling andal untuk scanning",
+                      description: "Recommended for reliable scanning",
                     },
                     { value: "rounded", label: "Rounded" },
                     { value: "dots", label: "Dots" },
@@ -364,8 +364,8 @@ export default async function EventDesignPage({
                 <strong>Marker yang didukung</strong>
                 <p>{markerHelp}</p>
                 <p>
-                  Plugin PassFlow Design bisa menyisipkan marker ini otomatis. Nama layer
-                  harus sama persis. Data peserta, foto opsional, tiket, dan QR tetap diambil
+                  The PassFlow Design plugin can insert these markers automatically. Layer names
+                  must match exactly. Attendee data, optional photos, tickets, and QR codes are still sourced
                   dari PassFlow.
                 </p>
               </div>
@@ -375,7 +375,7 @@ export default async function EventDesignPage({
                   Sync design
                 </button>
                 <p>
-                  Desain asli tetap aman. Save as membuat ekspor terpisah dan tidak mengedit
+                  Your original design remains unchanged. Save as creates a separate export and does not edit
                   file Figma.
                 </p>
               </div>
@@ -388,8 +388,8 @@ export default async function EventDesignPage({
         <section className="figma-howto liquid-panel">
           <strong>PassFlow Design workflow</strong>
           <span>
-            Tambahkan marker di Figma → Sync → cek marker yang ditemukan → Save as untuk
-            membuat hasil peserta. Asset halaman event tetap memakai sistem registrasi dan QR
+            Add markers in Figma → Sync → review detected markers → Save as to
+            generate attendee output. Event page assets continue to use the registration and QR system
             milik PassFlow.
           </span>
         </section>
