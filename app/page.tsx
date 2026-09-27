@@ -15,7 +15,7 @@ export default async function HomePage() {
     getRecentPublishedEvents().then(events => ({ events, unavailable: false })).catch(() => ({ events: [], unavailable: true })),
   ]);
   return <main className="editorial-landing">
-    <nav className="editorial-nav" aria-label="Navigasi utama">
+    <nav className="editorial-nav" aria-label="Main navigation">
       <Link href="/" className="brand-lockup"><FlowMark/>PassFlow</Link>
       <div className="editorial-nav-links"><a href="#events">Discover</a><a href="#organizer">For organizers</a></div>
       <div className="editorial-nav-actions"><ThemeToggle/>{!session && <Link href="/login">Sign in</Link>}<Link href={session ? "/account" : "/register"} className="button button-dark">{session ? "Dashboard" : "Get started"}<ArrowUpRight size={15}/></Link></div>
