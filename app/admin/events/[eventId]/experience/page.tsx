@@ -66,7 +66,7 @@ export default async function EventExperiencePage({ params }: Props) {
             <div>
               <span className="section-kicker">Activities</span>
               <h2>Checkpoints</h2>
-              <p>Catat keikutsertaan attendee pada aktivitas di dalam event.</p>
+              <p>Track attendee participation across activities within the event.</p>
             </div>
           </div>
 
