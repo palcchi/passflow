@@ -40,7 +40,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
       <div className="auth-field"><span aria-hidden="true">Password</span><PasswordField autoComplete="current-password"/></div>
       <AuthSubmit disabled={!ready}>Sign in to PassFlow ↗</AuthSubmit>
     </form>
-    <div className="auth-divider">atau</div>
+    <div className="auth-divider">or</div>
     <form action={signInWithGoogle}><input type="hidden" name="next" value={next}/><AuthSubmit disabled={!ready} variant="outline"><GoogleIcon className="size-4"/>Continue with Google</AuthSubmit></form>
     <div className="auth-form-links"><Link href={"/register?next=" + encodeURIComponent(next)}>Create an account</Link><Link href="/reset-password">Forgot password?</Link></div>
     {params.error === "unverified" && <form action={resendSignupConfirmation} className="auth-form auth-resend"><input type="hidden" name="next" value={next}/><label className="auth-field">Verification email<div className="auth-input"><Mail size={17} aria-hidden="true"/><input required name="email" type="email" autoComplete="email" placeholder="name@company.com"/></div></label><AuthSubmit disabled={!ready} variant="outline">Resend verification email</AuthSubmit></form>}
