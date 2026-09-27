@@ -7,13 +7,15 @@ import {
   ArrowRight,
   CalendarDays,
   MapPin,
-  QrCode,
   ShieldCheck,
 } from "lucide-react";
 import { getPublishedEvent } from "@/lib/events";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { getSupabaseConfig } from "@/lib/supabase/config";
 import { readTemplate } from "@/lib/design-template";
+import { CollectionArtwork, Sticker } from "@/components/brand-art";
+import { KineticText } from "@/components/magicui/kinetic-text";
+import { eventInk } from "@/lib/event-colors";
 
 type EventPageProps = {
   params: Promise<{ slug: string }>;
@@ -33,6 +35,7 @@ export default async function PublicEventPage({ params, searchParams }: EventPag
 
   const themeStyle = {
     "--event-primary": event.theme.primary,
+    "--event-primary-ink": eventInk(event.theme.primary),
     "--event-secondary": event.theme.secondary,
     "--event-bg": event.theme.background,
     "--event-fg": event.theme.foreground,
@@ -61,7 +64,7 @@ export default async function PublicEventPage({ params, searchParams }: EventPag
     <main className="event-public-shell" style={themeStyle}>
       <nav className="event-public-nav">
         <Link href="/" className="event-wordmark">
-          PASSFLOW / {event.name.toUpperCase()}
+          <span className="brand-mark">P</span> PassFlow
         </Link>
         <Link href={`/e/${event.slug}/claim`} className="event-nav-link">
           My pass
@@ -72,7 +75,7 @@ export default async function PublicEventPage({ params, searchParams }: EventPag
         <div className="event-public-copy">
           {event.logoUrl && <Image src={event.logoUrl} alt={event.name} width={120} height={80} unoptimized className="mb-5 object-contain" />}
           <span className="event-kicker">{event.eyebrow}</span>
-          <h1>{event.name}</h1>
+          <KineticText text={event.name}/>
           <p>{event.description}</p>
           <div className="event-meta-row">
             <span>
@@ -84,7 +87,7 @@ export default async function PublicEventPage({ params, searchParams }: EventPag
           </div>
           <div className="event-cta-row">
             <Link href={`/e/${event.slug}/claim`} className="event-primary-button">
-              Open event pass
+              Daftar / buka pass
               <ArrowRight size={17} />
             </Link>
             <span className="event-helper">
@@ -94,32 +97,22 @@ export default async function PublicEventPage({ params, searchParams }: EventPag
           </div>
         </div>
 
-        {event.heroImageUrl || event.posterUrl ? <Image src={(event.heroImageUrl || event.posterUrl)!} alt={event.name} width={720} height={900} unoptimized className="w-full rounded-xl object-cover" /> : <div className="event-poster">
-          <div className="poster-topline">
-            <span>{event.eyebrow}</span>
-            <span>2026</span>
-          </div>
-          <strong>{event.name}</strong>
-          <div className="poster-qr">
-            <QrCode size={72} strokeWidth={1.4} />
-          </div>
-          <small>ONE PASS · MULTIPLE ACCESS POINTS</small>
-        </div>}
+        {event.heroImageUrl || event.posterUrl ? <Image src={(event.heroImageUrl || event.posterUrl)!} alt={event.name} width={720} height={900} unoptimized className="event-public-cover" /> : <div className="event-public-art"><span className="section-kicker">SAVE THE DATE. MAKE A MEMORY.</span><CollectionArtwork compact/></div>}
       </section>
 
       <section className="event-info-grid">
         <article>
-          <span>01</span>
+          <Sticker kind="arrow"/>
           <h2>{event.qrConfig.mode === "digital" ? "Get your digital pass" : "Claim your event pass"}</h2>
           <p>{event.qrConfig.mode === "digital" ? "Setelah mendaftar, QR digital otomatis tersedia di akunmu tanpa wristband fisik." : "Gunakan QR pada ID card atau wristband yang ditentukan organizer."}</p>
         </article>
         <article>
-          <span>02</span>
+          <Sticker kind="check"/>
           <h2>Use either format</h2>
           <p>{event.qrConfig.mode === "digital" ? "QR digital dapat ditampilkan langsung dari HP dan dipakai di seluruh titik akses." : "QR yang sama dapat dipakai dari format fisik dan Digital Event Pass di HP."}</p>
         </article>
         <article>
-          <span>03</span>
+          <Sticker kind="smile"/>
           <h2>Move through the event</h2>
           <p>Scanner otomatis membaca identitas, akses, aktivitas, dan benefit yang tersedia.</p>
         </article>

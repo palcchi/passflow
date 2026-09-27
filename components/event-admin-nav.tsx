@@ -8,6 +8,8 @@ const items = [
   { key: "people", label: "People", suffix: "/people" },
   { key: "access", label: "Access", suffix: "/access" },
   { key: "experience", label: "Experience", suffix: "/experience" },
+  { key: "appearance", label: "Appearance", suffix: "/appearance" },
+  { key: "design", label: "Design", suffix: "/design" },
   { key: "settings", label: "Settings", suffix: "/settings" },
 ] as const;
 
@@ -29,6 +31,7 @@ export function EventAdminNav({ eventId }: { eventId: string }) {
               href={href}
               className="event-dock-item"
               data-active={active}
+              aria-current={active ? "page" : undefined}
             >
               {label}
             </Link>

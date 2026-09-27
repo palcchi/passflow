@@ -36,6 +36,7 @@ export function ProfileEditor({
 }) {
   const [preview, setPreview] = useState<string | null>(avatarUrl ?? null);
   const [fileName, setFileName] = useState("");
+  const [fileError, setFileError] = useState("");
   const objectUrl = useRef<string | null>(null);
 
   useEffect(() => {
@@ -47,6 +48,13 @@ export function ProfileEditor({
   function selectAvatar(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     if (!file) return;
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type) || file.size > 2 * 1024 * 1024) {
+      setFileError("Pilih JPG, PNG, atau WEBP maksimal 2 MB.");
+      event.target.value = "";
+      setFileName("");
+      return;
+    }
+    setFileError("");
     if (objectUrl.current) URL.revokeObjectURL(objectUrl.current);
     objectUrl.current = URL.createObjectURL(file);
     setPreview(objectUrl.current);
@@ -93,6 +101,7 @@ export function ProfileEditor({
             </SubmitButton>
           </div>
         </form>
+        {fileError && <p role="alert" className="auth-notice">{fileError}</p>}
 
         {avatarUrl && (
           <form action={removeAvatar} className="profile-remove-avatar">

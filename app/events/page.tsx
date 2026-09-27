@@ -4,7 +4,8 @@ import { getPublishedEvents } from "@/lib/events";
 import { UserNavbar } from "@/components/user-navbar";
 import { KineticText } from "@/components/magicui/kinetic-text";
 import { TextAnimate } from "@/components/magicui/text-animate";
-import { EventClassCard } from "@/components/event-class-card";
+import { EventCollection } from "@/components/event-collection";
+import { FolderArtwork, Sticker } from "@/components/brand-art";
 
 export const metadata = { title: "Event | PassFlow" };
 
@@ -45,31 +46,17 @@ export default async function EventsPage() {
       />
 
       <main className="studio-page-shell">
-        <header className="studio-page-hero">
-          <div>
+        <header className="studio-page-hero workspace-welcome">
+          <div className="workspace-welcome-copy">
             <span className="section-kicker">Explore</span>
-            <KineticText text="Find your next event." className="studio-page-title" />
+            <KineticText text="Find your people." className="studio-page-title" />
             <TextAnimate className="studio-page-subtitle">
-              Buka event, registrasi, lalu gunakan credential yang terhubung ke akunmu.
+              Pilih event yang terasa seperti kamu. Daftar, simpan pass, dan sampai ketemu di sana.
             </TextAnimate>
           </div>
+          <div className="workspace-art"><FolderArtwork color="orange" label="Good things ahead"/><Sticker kind="spark"/></div>
         </header>
-
-        <section className="class-event-grid">
-          {events.map((event) => {
-            const joined = registeredIds.has(event.id);
-            return (
-              <EventClassCard event={event} joined={joined} key={event.id} />
-            );
-          })}
-        </section>
-
-        {events.length === 0 && (
-          <div className="studio-empty-state">
-            <h3>Belum ada event yang dipublikasikan.</h3>
-            <p>Daftar event akan muncul di sini saat organizer mempublikasikannya.</p>
-          </div>
-        )}
+        <EventCollection events={events} registeredIds={Array.from(registeredIds)}/>
       </main>
     </div>
   );

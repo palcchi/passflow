@@ -17,7 +17,7 @@ export function AuthSubmit({
 
   return (
     <Button
-      className="w-full"
+      className="auth-submit w-full"
       variant={variant}
       size="lg"
       type="submit"

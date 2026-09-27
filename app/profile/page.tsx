@@ -6,6 +6,7 @@ import { UserNavbar } from "@/components/user-navbar";
 import { ProfileEditor } from "@/components/profile-editor";
 import { KineticText } from "@/components/magicui/kinetic-text";
 import { TextAnimate } from "@/components/magicui/text-animate";
+import { Sticker } from "@/components/brand-art";
 
 export const metadata = { title: "Profil | PassFlow" };
 export const dynamic = "force-dynamic";
@@ -92,6 +93,7 @@ export default async function ProfilePage({
               Atur identitas, foto profil, dan koneksi desain dari satu tempat.
             </TextAnimate>
           </div>
+          <Sticker kind="smile"/>
         </header>
 
         {profileStatus && (
@@ -169,15 +171,14 @@ export default async function ProfilePage({
                     </button>
                   </form>
                 </>
-              ) : (
+              ) : figmaConfigured() ? (
                 <a
                   href="/api/figma/connect"
-                  aria-disabled={!figmaConfigured()}
                   className="button button-dark"
                 >
                   Hubungkan Figma
                 </a>
-              )}
+              ) : <button type="button" className="button button-dark" disabled title="Koneksi Figma belum tersedia di lingkungan ini">Figma belum tersedia</button>}
               {organizer && (
                 <Link href="/admin" className="button button-ghost">
                   Kelola event

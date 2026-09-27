@@ -20,7 +20,7 @@ export function PasswordField({
   const [visible, setVisible] = useState(false);
 
   return (
-    <div className="flex min-h-12 items-center gap-3 rounded-xl border border-border bg-background px-3 transition focus-within:border-foreground/30 focus-within:ring-2 focus-within:ring-ring/15">
+    <div className="auth-input password-input flex min-h-12 items-center gap-3 rounded-xl border border-border bg-background px-3 transition focus-within:border-foreground/30 focus-within:ring-2 focus-within:ring-ring/15">
       <KeyRound size={17} className="shrink-0 text-muted-foreground" aria-hidden="true" />
       <label htmlFor={id} className="sr-only">Password</label>
       <input

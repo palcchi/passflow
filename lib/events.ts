@@ -305,6 +305,21 @@ export async function getPublishedEvents(): Promise<PassFlowEvent[]> {
   return (data ?? []).map((row) => mapEvent(row));
 }
 
+/** Only real, published events appear in the public homepage collection. */
+export async function getRecentPublishedEvents(): Promise<PassFlowEvent[]> {
+  if (!getSupabaseConfig()) return [];
+  const supabase = await createServerSupabaseClient();
+  const { data, error } = await supabase
+    .from("events")
+    .select("*")
+    .eq("status", "published")
+    .order("created_at", { ascending: false })
+    .order("id", { ascending: false })
+    .limit(3);
+  if (error) throw new Error("Recent events are temporarily unavailable.");
+  return (data ?? []).map((row) => mapEvent(row));
+}
+
 export async function getPublishedEvent(
   slug: string,
 ): Promise<PassFlowEvent | undefined> {

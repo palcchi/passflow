@@ -2,6 +2,7 @@
 
 import { useMemo, useState, useTransition } from "react";
 import Image from "next/image";
+import { Check, QrCode } from "lucide-react";
 import type { PassFlowEvent, QrDeliveryMode } from "@/lib/events";
 import { saveEventQrConfig } from "@/app/admin/actions";
 import { AssetUploadCard } from "@/components/asset-upload-card";
@@ -94,14 +95,15 @@ export function QrDeliveryEditor({ event }: { event: PassFlowEvent }) {
             key={item.value}
             className="qr-mode-card"
             data-active={item.value === mode}
+            aria-pressed={item.value === mode}
             onClick={() => setMode(item.value)}
           >
-            <span className="qr-mode-preview" style={{ aspectRatio: item.ratio }} />
+            <span className="qr-mode-stage" aria-hidden="true"><span className={`qr-mode-preview qr-mode-${item.value}`} style={{ aspectRatio: item.ratio }}><QrCode size={23}/><i/><i/></span></span>
             <span className="qr-mode-copy">
               <strong>{item.label}</strong>
               <small>{item.description}</small>
             </span>
-            {item.value === mode && <span className="qr-mode-check">Selected</span>}
+            {item.value === mode && <span className="qr-mode-check" aria-hidden="true"><Check size={12}/></span>}
           </button>
         ))}
       </div>
@@ -114,6 +116,7 @@ export function QrDeliveryEditor({ event }: { event: PassFlowEvent }) {
               <div className="number-unit-field">
                 <input
                   type="number"
+                  inputMode="decimal"
                   min="20"
                   max="500"
                   step="0.1"
@@ -128,6 +131,7 @@ export function QrDeliveryEditor({ event }: { event: PassFlowEvent }) {
               <div className="number-unit-field">
                 <input
                   type="number"
+                  inputMode="decimal"
                   min="20"
                   max="500"
                   step="0.1"
