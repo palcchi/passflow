@@ -37,7 +37,7 @@ export function PasswordField({
         type="button"
         onClick={() => setVisible((value) => !value)}
         className="grid size-9 shrink-0 place-items-center rounded-lg text-muted-foreground transition hover:bg-muted hover:text-foreground"
-        aria-label={visible ? "Sembunyikan password" : "Tampilkan password"}
+        aria-label={visible ? "Hide password" : "Show password"}
         aria-pressed={visible}
       >
         {visible ? <EyeOff size={17} /> : <Eye size={17} />}
