@@ -22,9 +22,9 @@ export default async function RegisterPage({ searchParams }: { searchParams: Pro
     {params.notice === "check-email" && <p role="status" className="auth-notice">Check your email to complete account verification.</p>}
     <form action={signUpWithEmail} className="auth-form">
       <input type="hidden" name="next" value={next}/>
-      <label className="auth-field" htmlFor="register-username">Username<div className="auth-input"><UserRound size={17} aria-hidden="true"/><input id="register-username" required name="username" minLength={3} maxLength={24} pattern="[a-zA-Z0-9_]{3,24}" autoComplete="username" placeholder="e.g. vallian" aria-describedby="username-help"/></div><small id="username-help">Use 3–24 letters, numbers, or underscores.</small></label>
-      <label className="auth-field" htmlFor="register-email">Email<div className="auth-input"><Mail size={17} aria-hidden="true"/><input id="register-email" required name="email" type="email" autoComplete="email" inputMode="email" placeholder="name@company.com"/></div></label>
-      <div className="auth-field"><span aria-hidden="true">Password</span><PasswordField autoComplete="new-password" placeholder="At least 8 characters"/></div>
+      <label className="auth-field" htmlFor="register-username">Username<div className="auth-input"><UserRound size={17} aria-hidden="true"/><input id="register-username" required name="username" minLength={3} maxLength={24} pattern="[a-zA-Z0-9_]{3,24}" autoComplete="username" placeholder="your_username" aria-describedby="username-help"/></div><small id="username-help">Use 3–24 letters, numbers, or underscores.</small></label>
+      <label className="auth-field" htmlFor="register-email">Email<div className="auth-input"><Mail size={17} aria-hidden="true"/><input id="register-email" required name="email" type="email" autoComplete="email" inputMode="email" placeholder="you@company.com"/></div></label>
+      <div className="auth-field"><span aria-hidden="true">Password</span><PasswordField autoComplete="new-password" placeholder="Use at least 8 characters"/></div>
       <AuthSubmit disabled={!ready}>Create account ↗</AuthSubmit>
     </form>
     <div className="auth-divider">or</div>
