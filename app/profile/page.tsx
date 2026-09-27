@@ -144,7 +144,7 @@ export default async function ProfilePage({
             <div className="profile-integration-body">
               <p>
                 PassFlow reads the account identity, metadata, previews, and file structure you
-                authorize. Your design files remain owned by the organizer's Figma account.
+                authorize. Your design files remain in the connected Figma account.
               </p>
               <div className="profile-integration-security">
                 Figma tokens are stored encrypted on the server.
