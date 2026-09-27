@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion, useReducedMotion } from "motion/react";
+import { useEffect, useState } from "react";
 
 const items = [
   { key: "overview", label: "Overview", suffix: "" },
@@ -17,23 +18,31 @@ const items = [
 export function EventAdminNav({ eventId }: { eventId: string }) {
   const pathname = usePathname();
   const reduceMotion = useReducedMotion();
+  const [pendingHref, setPendingHref] = useState<string | null>(null);
   const base = `/admin/events/${eventId}`;
+
+  useEffect(() => {
+    setPendingHref(null);
+  }, [pathname]);
 
   return (
     <nav className="event-section-dock" aria-label="Event management">
       <div className="event-section-dock-scroll">
         {items.map(({ key, label, suffix }) => {
           const href = base + suffix;
-          const active = suffix
+          const routeIsActive = suffix
             ? pathname === href || pathname.startsWith(href + "/")
             : pathname === base;
+          const active = pendingHref ? pendingHref === href : routeIsActive;
           return (
             <Link
               key={key}
               href={href}
+              prefetch={true}
               className="event-dock-item"
               data-active={active}
               aria-current={active ? "page" : undefined}
+              onClick={() => setPendingHref(href)}
             >
               {active && (
                 <motion.span

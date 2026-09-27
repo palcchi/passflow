@@ -164,3 +164,53 @@ body {
     will-change: auto;
   }
 }
+
+
+/* Native view transitions keep shared chrome visually stable while the
+   server-rendered route tree swaps underneath it. */
+@supports (view-transition-name: passflow-route-content) {
+  .pf-route-stage {
+    view-transition-name: passflow-route-content;
+  }
+
+  .user-nav-shell {
+    view-transition-name: passflow-workspace-nav;
+  }
+
+  .flow-workspace.event-admin-context .event-section-dock {
+    view-transition-name: passflow-event-nav;
+  }
+
+  ::view-transition-group(passflow-workspace-nav),
+  ::view-transition-group(passflow-event-nav) {
+    animation-duration: 260ms;
+    animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  ::view-transition-old(passflow-route-content) {
+    animation: pf-route-out 150ms cubic-bezier(0.4, 0, 1, 1) both;
+  }
+
+  ::view-transition-new(passflow-route-content) {
+    animation: pf-route-in 280ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+}
+
+@keyframes pf-route-out {
+  to {
+    opacity: 0.94;
+    transform: translateY(-3px) scale(0.999);
+  }
+}
+
+@keyframes pf-route-in {
+  from {
+    opacity: 0.94;
+    transform: translateY(7px) scale(0.998);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
