@@ -6,6 +6,7 @@ import { getPublishedEvents } from "@/lib/events";
 import { UserNavbar } from "@/components/user-navbar";
 import { KineticText } from "@/components/magicui/kinetic-text";
 import { TextAnimate } from "@/components/magicui/text-animate";
+import { EventClassCard } from "@/components/event-class-card";
 
 export const metadata = { title: "Dashboard | PassFlow" };
 export const dynamic = "force-dynamic";
@@ -91,25 +92,9 @@ export default async function AccountPage() {
           </div>
 
           {myEvents.length > 0 ? (
-            <div className="studio-event-list">
+            <div className="class-event-grid">
               {myEvents.map((event) => (
-                <Link
-                  href={`/e/${event.slug}`}
-                  className="studio-event-row"
-                  key={event.id}
-                  style={{ "--row-accent": event.theme.primary } as React.CSSProperties}
-                >
-                  <span className="studio-event-accent" />
-                  <div className="studio-event-main">
-                    <span>{event.dateLabel}</span>
-                    <h3>{event.name}</h3>
-                    <p>{event.venue || "Venue belum diumumkan"}</p>
-                  </div>
-                  <div className="studio-event-open">
-                    <span>Open pass</span>
-                    <ArrowUpRight size={15} />
-                  </div>
-                </Link>
+                <EventClassCard event={event} joined key={event.id} />
               ))}
             </div>
           ) : (

@@ -38,6 +38,9 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
+    "/",
+    "/e/:slug",
+    "/api/scan",
     "/admin/:path*",
     "/account/:path*",
     "/profile",

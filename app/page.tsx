@@ -8,6 +8,7 @@ import { ShinyButton } from "@/components/magicui/shiny-button";
 import { TypingAnimation } from "@/components/magicui/typing-animation";
 import { Text3DFlip } from "@/components/magicui/text-3d-flip";
 import { SmoothCursor } from "@/components/magicui/smooth-cursor";
+import { getAuthContext } from "@/lib/auth/session";
 
 const capabilities = [
   ["01", "Register", "Satu identitas attendee untuk seluruh event flow."],
@@ -16,7 +17,8 @@ const capabilities = [
   ["04", "Design", "Pass dan ID card tetap sinkron dengan data attendee."],
 ];
 
-export default function HomePage() {
+export default async function HomePage() {
+  const session = await getAuthContext();
   return (
     <main className="landing-shell studio-backdrop">
       <SmoothCursor />
@@ -54,8 +56,8 @@ export default function HomePage() {
           </TextAnimate>
 
           <div className="studio-hero-actions">
-            <ShinyButton href="/register">
-              Buat workspace <ArrowUpRight size={15} />
+            <ShinyButton href={session ? "/account" : "/register"}>
+              {session ? "Buka dashboard" : "Buat workspace"} <ArrowUpRight size={15} />
             </ShinyButton>
             <Link href="/e/adorne-nails-exhibition" className="button button-ghost">
               Lihat event demo

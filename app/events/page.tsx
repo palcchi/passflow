@@ -1,11 +1,10 @@
-import Link from "next/link";
-import { ArrowUpRight } from "lucide-react";
 import { requireUser, getMemberships } from "@/lib/auth/session";
 import { canManage } from "@/lib/auth/redirect";
 import { getPublishedEvents } from "@/lib/events";
 import { UserNavbar } from "@/components/user-navbar";
 import { KineticText } from "@/components/magicui/kinetic-text";
 import { TextAnimate } from "@/components/magicui/text-animate";
+import { EventClassCard } from "@/components/event-class-card";
 
 export const metadata = { title: "Event | PassFlow" };
 
@@ -56,30 +55,11 @@ export default async function EventsPage() {
           </div>
         </header>
 
-        <section className="studio-event-list studio-discovery-list">
+        <section className="class-event-grid">
           {events.map((event) => {
             const joined = registeredIds.has(event.id);
             return (
-              <Link
-                href={`/e/${event.slug}`}
-                key={event.id}
-                className="studio-event-row studio-discovery-row"
-                style={{ "--row-accent": event.theme.primary } as React.CSSProperties}
-              >
-                <span className="studio-event-accent" />
-                <div className="studio-event-main">
-                  <span>{joined ? "Added to your account" : event.dateLabel}</span>
-                  <h2>{event.name}</h2>
-                  <p>
-                    {event.venue || "Venue belum diumumkan"} ·{" "}
-                    {joined ? "Open pass" : "Registration open"}
-                  </p>
-                </div>
-                <div className="studio-event-open">
-                  <span>{joined ? "Open" : "View"}</span>
-                  <ArrowUpRight size={15} />
-                </div>
-              </Link>
+              <EventClassCard event={event} joined={joined} key={event.id} />
             );
           })}
         </section>

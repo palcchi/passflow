@@ -53,6 +53,7 @@ export function QrScanner({ stationId, stationName, eventName, venue }: {
         await scanner.start({ deviceId: { exact: active } }, {
           fps: 10,
           qrbox: (width, height) => { const size = Math.floor(Math.min(width, height) * .68); return { width: size, height: size }; },
+          disableFlip: true,
         }, async code => {
           if (locked || disposed) return;
           locked = true;

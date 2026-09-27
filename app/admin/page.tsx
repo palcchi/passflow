@@ -11,6 +11,7 @@ import { TextAnimate } from "@/components/magicui/text-animate";
 import { NumberTicker } from "@/components/magicui/number-ticker";
 import { ShinyButton } from "@/components/magicui/shiny-button";
 import { AnimatedList } from "@/components/magicui/animated-list";
+import { EventClassCard } from "@/components/event-class-card";
 
 export default async function AdminDashboardPage() {
   const { supabase, user } = await requireOrganizer();
@@ -114,40 +115,9 @@ export default async function AdminDashboardPage() {
           </div>
 
           {events.length > 0 ? (
-            <div className="studio-managed-list">
+            <div className="class-event-grid organizer-event-grid">
               {events.map((event) => {
-                const percentage = Math.round(
-                  event.attendeeCount
-                    ? (event.checkedInCount / event.attendeeCount) * 100
-                    : 0,
-                );
-
-                return (
-                  <Link
-                    href={`/admin/events/${event.id}`}
-                    className="studio-managed-row"
-                    key={event.id}
-                    style={{ "--row-accent": event.theme.primary } as React.CSSProperties}
-                  >
-                    <span
-                      className="studio-managed-visual"
-                      aria-hidden="true"
-                      style={event.heroImageUrl ? { backgroundImage: `linear-gradient(135deg, color-mix(in srgb, ${event.theme.primary} 48%, transparent), rgba(20,20,18,.16)), url(\"${event.heroImageUrl}\")` } : { background: `linear-gradient(135deg, ${event.theme.primary}, color-mix(in srgb, ${event.theme.secondary} 62%, white))` }}
-                    />
-                    <span className="studio-event-accent" />
-                    <div className="studio-managed-main">
-                      <span>{event.status} · {event.dateLabel}</span>
-                      <h3>{event.name}</h3>
-                      <p>{event.venue || "Venue belum ditentukan"}</p>
-                    </div>
-                    <div className="studio-managed-progress">
-                      <strong>{percentage}%</strong>
-                      <span>{event.checkedInCount}/{event.attendeeCount} check-in</span>
-                      <div><i style={{ width: `${percentage}%` }} /></div>
-                    </div>
-                    <ArrowUpRight size={15} />
-                  </Link>
-                );
+                return <EventClassCard event={event} manage key={event.id} />;
               })}
             </div>
           ) : (

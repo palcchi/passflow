@@ -1,7 +1,8 @@
 import type { CSSProperties } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
+import { getAuthContext } from "@/lib/auth/session";
 import {
   ArrowRight,
   CalendarDays,
@@ -16,13 +17,19 @@ import { readTemplate } from "@/lib/design-template";
 
 type EventPageProps = {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{ view?: string }>;
 };
 
-export default async function PublicEventPage({ params }: EventPageProps) {
+export default async function PublicEventPage({ params, searchParams }: EventPageProps) {
   const { slug } = await params;
   const event = await getPublishedEvent(slug);
 
   if (!event) notFound();
+  const context = await getAuthContext();
+  if (context && (await searchParams).view !== "details") {
+    const { data: registration } = await context.supabase.from("attendees").select("id").eq("user_id", context.user.id).eq("event_id", event.id).limit(1).maybeSingle();
+    if (registration) redirect(`/e/${event.slug}/claim`);
+  }
 
   const themeStyle = {
     "--event-primary": event.theme.primary,
