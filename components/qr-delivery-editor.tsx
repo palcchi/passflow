@@ -78,7 +78,7 @@ export function QrDeliveryEditor({ event }: { event: PassFlowEvent }) {
       try {
         const result = await saveEventQrConfig(data);
         setSuccess(result.ok); setMessage(result.message);
-      } catch { setSuccess(false); setMessage("Belum berhasil menyimpan. Periksa koneksi lalu coba lagi."); }
+      } catch { setSuccess(false); setMessage("Changes could not be saved. Check your connection and try again."); }
     });
   }
 
@@ -89,8 +89,8 @@ export function QrDeliveryEditor({ event }: { event: PassFlowEvent }) {
           <span className="section-kicker">QR delivery</span>
           <h2>Satu pass, banyak kemungkinan.</h2>
           <p>
-            Bentuk pass dan posisi QR diatur di sini. Cara credential diberikan ke attendee
-            diatur terpisah dari menu Access.
+            Pass layout and QR placement are configured here. Credential delivery to attendees
+            is configured separately in Access.
           </p>
         </div>
         <div className="qr-editor-header-actions">
@@ -199,7 +199,7 @@ export function QrDeliveryEditor({ event }: { event: PassFlowEvent }) {
             {!validDimensions && <p role="alert" className="customize-feedback is-error">Ukuran template harus 20 sampai 500 mm.</p>}
             {validDimensions && !qrFits && <p role="alert" className="customize-feedback is-error">QR melewati tepi pass. Sesuaikan posisi atau ukurannya.</p>}
             <button className="button button-dark" type="button" disabled={pending || !validDimensions || !qrFits} onClick={save}>
-              {pending ? "Menyimpan..." : message && success ? "Tersimpan" : "Simpan QR"}
+              {pending ? "Saving..." : message && success ? "Saved" : "Save QR settings"}
             </button>
           </div>
         </fieldset>
@@ -237,8 +237,8 @@ export function QrDeliveryEditor({ event }: { event: PassFlowEvent }) {
           <div className="figma-export-note">
             <strong>Figma-ready</strong>
             <span>
-              Nama event, warna tema, template, teks, dan posisi QR tetap terpisah agar mudah
-              disesuaikan sebelum final print.
+              Event name, theme colors, template, text, and QR placement remain independent so they are easy
+              to refine before final printing.
             </span>
           </div>
         </div>
