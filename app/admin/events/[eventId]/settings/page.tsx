@@ -24,7 +24,7 @@ export default async function EventSettingsPage({ params }: Props) {
           <div>
             <span className="section-kicker">Settings</span>
             <h2>Basics & lifecycle</h2>
-            <p>Informasi inti event, jadwal, kapasitas, dan status publikasi.</p>
+            <p>Core event information, schedule, capacity, and publication status.</p>
           </div>
         </div>
 
