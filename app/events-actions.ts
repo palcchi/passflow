@@ -1,5 +1,6 @@
 "use server";
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth/session";
 function resultReason(value: unknown) { const result = value as { reason?: unknown } | null; return result && typeof result === "object" && "reason" in result ? String(result.reason) : "unknown"; }
 function rpcResult(value: unknown) { return value as { ok?: boolean; reason?: unknown } | null; }
@@ -8,6 +9,9 @@ export async function registerForEvent(formData: FormData) {
   const context=await requireUser(`/e/${slug}/claim`);
   const { data, error }=await context.supabase.rpc("register_for_event",{p_event_slug:slug,p_name:name,p_phone:phone||undefined,p_ticket_code:ticket||undefined});
   if(error || !rpcResult(data)?.ok) redirect(`/e/${encodeURIComponent(slug)}/claim?error=${encodeURIComponent(resultReason(rpcResult(data)))}`);
+  revalidatePath("/account");
+  revalidatePath("/events");
+  revalidatePath(`/e/${slug}`, "layout");
   redirect(`/e/${encodeURIComponent(slug)}/claim?registered=1`);
 }
 export async function claimQr(formData: FormData) {

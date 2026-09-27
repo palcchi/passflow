@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { getAuthContext } from "@/lib/auth/session";
 import { ArrowLeft, Mail } from "lucide-react";
 import { AuthSubmit } from "@/components/auth-submit";
 import { GoogleIcon } from "@/components/google-icon";
@@ -30,6 +32,7 @@ export default async function LoginPage({
 }) {
   const params = await searchParams;
   const next = safeNext(params.next);
+  if (await getAuthContext()) redirect(next);
   const ready = !!getSupabaseConfig() && !!getAppOrigin();
   const message = typeof params.error === "string" ? errors[params.error] : null;
 

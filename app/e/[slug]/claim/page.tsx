@@ -54,7 +54,8 @@ export default async function ClaimPage({ params, searchParams }: ClaimPageProps
   const values: Record<string, string> = { name: attendee?.name ?? "", category: ticketName, code: credential?.display_code ?? attendee?.attendee_code ?? "", event_name: event.name, event_date: event.dateLabel, venue: event.venue };
   const themeStyle = { "--event-primary": event.theme.primary, "--event-bg": event.theme.background, "--event-fg": event.theme.foreground } as CSSProperties;
 
-  return <main className="center-page" style={themeStyle}><div className="center-page-inner">
+  const passStyle = { ...themeStyle, "--pass-brand": event.theme.primary, "--pass-secondary": event.theme.secondary, "--pass-surface": event.theme.surface } as CSSProperties;
+  return <main className="center-page pass-digital-shell" style={passStyle}><div className="center-page-inner">
     <Link href={`/e/${event.slug}`} className="back-link"><ArrowLeft size={16}/> Kembali ke event</Link>
     <div className="page-intro"><span className="section-kicker">{event.name}</span><h1>{credential ? "Your event pass." : attendee ? event.qrConfig.claimMode === "claim" ? "Connect your wristband." : "Your QR is assigned automatically." : "Reserve your event pass."}</h1><p>{credential ? "QR pass digitalmu siap dipakai di event." : attendee && event.qrConfig.claimMode === "claim" ? "Scan credential fisik setelah registrasi untuk menghubungkannya ke identitasmu." : "Saat registrasi selesai, PassFlow menyiapkan credential yang terhubung ke identitasmu."}</p></div>
     {error && <p role="alert" className="mb-5 rounded-md border border-destructive/30 p-3 text-sm text-destructive">{error}</p>}
