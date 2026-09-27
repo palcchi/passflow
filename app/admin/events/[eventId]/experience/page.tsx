@@ -93,18 +93,18 @@ export default async function EventExperiencePage({ params }: Props) {
             <input
               className={inputClass()}
               name="name"
-              placeholder="e.g. Workshop A"
+              placeholder="Workshop A"
               required
             />
             <input
               className={inputClass()}
               name="code"
-              placeholder="e.g. WORKSHOP_A"
+              placeholder="WORKSHOP_A"
             />
             <input
               className={inputClass()}
               name="description"
-              placeholder="Optional description"
+              placeholder="Add a short description (optional)"
             />
             <button className="button button-ghost" type="submit">
               Add activity
@@ -142,18 +142,18 @@ export default async function EventExperiencePage({ params }: Props) {
             <input
               className={inputClass()}
               name="name"
-              placeholder="e.g. Merchandise Pack"
+              placeholder="Merchandise Pack"
               required
             />
             <input
               className={inputClass()}
               name="code"
-              placeholder="e.g. MERCH_PACK"
+              placeholder="MERCH_PACK"
             />
             <input
               className={inputClass()}
               name="description"
-              placeholder="Optional description"
+              placeholder="Add a short description (optional)"
             />
             <button className="button button-ghost" type="submit">
               Add benefit
