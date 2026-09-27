@@ -9,5 +9,5 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 <!-- END:nextjs-agent-rules -->
 
 ## PassFlow user preferences
-- Do not deploy automatically or push branches that trigger Vercel preview builds. Work and verify locally, batch changes, then obtain explicit approval for deployment.
+- Work and verify locally, then batch changes into one production release. The user confirmed on 27 September 2026 that a positive response to a completed result (for example, "bagus", "oke", or "lanjut") authorizes pushing and deploying that result without asking again. Apply this when the positive response is visible in the conversation; do not infer approval from silence or unavailable feedback. Avoid unnecessary Vercel preview builds and respect repository checks and branch protection.
 - Visual direction: clean monochrome white/gray surfaces, Apple system typography with large bold/light editorial headings, rounded event cards, and small colorful folder/ticket/sticker artwork. Keep kinetic event headings and a restrained moving homepage tagline. Apply this consistently to auth, profile, dashboards, and event management; preserve organizer-selected public event and digital pass colors.

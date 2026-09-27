@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
+import { FlowMark } from "@/components/flow-art";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { VelocityScroll } from "@/components/magicui/scroll-based-velocity";
 import { ShinyButton } from "@/components/magicui/shiny-button";
@@ -15,7 +16,7 @@ export default async function HomePage() {
   ]);
   return <main className="editorial-landing">
     <nav className="editorial-nav" aria-label="Navigasi utama">
-      <Link href="/" className="brand-lockup"><span className="brand-mark">P</span>PassFlow<span className="brand-dot"/></Link>
+      <Link href="/" className="brand-lockup"><FlowMark/>PassFlow</Link>
       <div className="editorial-nav-links"><a href="#events">Discover</a><a href="#organizer">For organizers</a></div>
       <div className="editorial-nav-actions"><ThemeToggle/>{!session && <Link href="/login">Masuk</Link>}<Link href={session ? "/account" : "/register"} className="button button-dark">{session ? "Dashboard" : "Mulai di sini"}<ArrowUpRight size={15}/></Link></div>
     </nav>
@@ -30,7 +31,7 @@ export default async function HomePage() {
     <div className="editorial-marquee" aria-hidden="true"><VelocityScroll defaultVelocity={0.35}>GOOD PEOPLE · NEW IDEAS · LIVE MOMENTS · YOUR NEXT EVENT · </VelocityScroll></div>
     <section className="editorial-section" id="events" aria-labelledby="recent-events">
       <div className="editorial-section-heading"><div><span className="section-kicker">FRESH FROM THE COMMUNITY</span><h2 id="recent-events">Baru ditambahkan.<br/><span>Mungkin, momen kamu.</span></h2></div><Link className="studio-text-link" href="/events">Semua event<ArrowUpRight size={15}/></Link></div>
-      {recent.events.length ? <div className="class-event-grid">{recent.events.map(event => <EventClassCard event={event} key={event.id}/>)}</div> : <div className="landing-empty"><FolderArtwork color="blue" label="Coming together"/><div><h3>{recent.unavailable ? "Koleksi sedang tidak tersedia." : "Ada ruang untuk cerita baru."}</h3><p>{recent.unavailable ? "Coba buka koleksi event kembali sebentar lagi." : "Event terbaru akan hadir di sini. Buat akun dan siapkan momen pertamamu."}</p></div></div>}
+      {recent.events.length ? <div className="class-event-grid">{recent.events.map(event => <EventClassCard event={event} key={event.id} flow/>)}</div> : <div className="landing-empty"><FolderArtwork color="blue" label="Coming together"/><div><h3>{recent.unavailable ? "Koleksi sedang tidak tersedia." : "Ada ruang untuk cerita baru."}</h3><p>{recent.unavailable ? "Coba buka koleksi event kembali sebentar lagi." : "Event terbaru akan hadir di sini. Buat akun dan siapkan momen pertamamu."}</p></div></div>}
     </section>
     <section className="editorial-section organizer-invitation" id="organizer" aria-labelledby="organizer-title">
       <div><span className="section-kicker">FOR THE ONES WHO BRING US TOGETHER</span><h2 id="organizer-title">Punya ide besar?<br/><span>Kasih ruang.</span></h2><p>Dari undangan pertama sampai check-in terakhir, kelola event dengan caramu sendiri.</p><ShinyButton href={session ? "/account" : "/register"}>{session ? "Buka dashboard" : "Buat akun PassFlow"}<ArrowUpRight size={15}/></ShinyButton></div>

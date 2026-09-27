@@ -37,3 +37,14 @@ The user approved one combined push and production deployment on 27 September 20
 Ship this together with the reference UI as one production release.
 
 The protected main branch requires a pull request. Vercel previews are disabled only for `ui/flow-reference-release`; merging the verified PR triggers the single production deployment.
+
+## Rounded UI follow-up
+
+Based on `673a7f4`, unify the existing homepage and workspace without changing application actions or scanner behavior:
+
+- Move unified important declarations into the existing `passflow-ui` layer so legacy important styles no longer defeat the rounded cards and floating event dock. Keep ordinary declarations unlayered.
+- Align sidebar/tablet breakpoints at 1024 px, preserve space under mobile navigation, simplify workspace backgrounds and headers, and share the brand mark and event-card artwork.
+- Promote the existing banner uploader and use wide 16:9 artwork in public layouts and previews, including Minimal. Keep organizer colors isolated from the dashboard dark theme.
+- Validation: lint, TypeScript and production build pass. Twenty browser route/viewport checks at 320, 390, 820, 1000 and 1440 px pass, including actual scroll positions for the sticky dock, rounded hero styles, banner selection/layout/reset, and no page overflow or uncaught errors. Production CSS and dark palette checks pass. Temporary local review route removed and verified as 404.
+- No dependency, database, authentication or scanner changes.
+- User approved this release and asked to record that a positive response to a completed result authorizes push and deployment. Recorded in AGENTS.md. The release branch disables previews so merging the PR produces one production deployment.
