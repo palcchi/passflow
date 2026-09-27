@@ -47,11 +47,24 @@ export function QrDeliveryEditor({ event }: { event: PassFlowEvent }) {
   const [qrSize, setQrSize] = useState(event.qrConfig.qrSize);
   const [widthMm, setWidthMm] = useState(event.qrConfig.widthMm);
   const [heightMm, setHeightMm] = useState(event.qrConfig.heightMm);
+  const [success, setSuccess] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const selected = useMemo(() => modes.find((item) => item.value === mode) ?? modes[0], [mode]);
 
+  const validDimensions = widthMm >= 20 && widthMm <= 500 && heightMm >= 20 && heightMm <= 500;
+  const ratio = validDimensions ? widthMm / heightMm : Number(selected.ratio);
+  const qrHalfHeight = qrSize * ratio / 2;
+  const qrFits = qrX >= qrSize / 2 && qrX <= 100 - qrSize / 2 && qrY >= qrHalfHeight && qrY <= 100 - qrHalfHeight;
+  function changeMode(value: QrDeliveryMode) {
+    setMode(value);
+    const sizes = { digital: [85.6, 54], id_card_portrait: [54, 85.6], id_card_landscape: [85.6, 54], wristband: [240, 25] };
+    setWidthMm(sizes[value][0]); setHeightMm(sizes[value][1]);
+    setQrSize(value === "wristband" ? 8 : 22); setQrX(value === "wristband" ? 85 : 68); setQrY(50);
+    setMessage(null); setSuccess(false);
+  }
   function save() {
+    if (!validDimensions || !qrFits || pending) return;
     const data = new FormData();
     data.set("eventId", event.id);
     data.set("mode", mode);
@@ -62,17 +75,19 @@ export function QrDeliveryEditor({ event }: { event: PassFlowEvent }) {
     data.set("qrSize", String(qrSize));
     setMessage(null);
     startTransition(async () => {
-      await saveEventQrConfig(data);
-      setMessage("QR delivery tersimpan.");
+      try {
+        const result = await saveEventQrConfig(data);
+        setSuccess(result.ok); setMessage(result.message);
+      } catch { setSuccess(false); setMessage("Belum berhasil menyimpan. Periksa koneksi lalu coba lagi."); }
     });
   }
 
   return (
-    <section className="qr-editor-section liquid-panel">
+    <section className="qr-editor-section liquid-panel" onChangeCapture={() => {setMessage(null); setSuccess(false);}}>
       <div className="qr-editor-header">
         <div>
           <span className="section-kicker">QR delivery</span>
-          <h2>Pilih bentuk pass yang paling sesuai.</h2>
+          <h2>Satu pass, banyak kemungkinan.</h2>
           <p>
             Bentuk pass dan posisi QR diatur di sini. Cara credential diberikan ke attendee
             diatur terpisah dari menu Access.
@@ -96,7 +111,8 @@ export function QrDeliveryEditor({ event }: { event: PassFlowEvent }) {
             className="qr-mode-card"
             data-active={item.value === mode}
             aria-pressed={item.value === mode}
-            onClick={() => setMode(item.value)}
+            disabled={pending}
+            onClick={() => changeMode(item.value)}
           >
             <span className="qr-mode-stage" aria-hidden="true"><span className={`qr-mode-preview qr-mode-${item.value}`} style={{ aspectRatio: item.ratio }}><QrCode size={23}/><i/><i/></span></span>
             <span className="qr-mode-copy">
@@ -109,7 +125,7 @@ export function QrDeliveryEditor({ event }: { event: PassFlowEvent }) {
       </div>
 
       <div className="qr-editor-workspace">
-        <div className="qr-control-panel">
+        <fieldset className="qr-control-panel" disabled={pending}><legend className="sr-only">Ukuran dan posisi QR</legend>
           <div className="qr-dimension-grid">
             <label>
               <span>Lebar template</span>
@@ -179,12 +195,14 @@ export function QrDeliveryEditor({ event }: { event: PassFlowEvent }) {
           </div>
 
           <div className="qr-save-row">
-            {message && <span className="editor-inline-success">{message}</span>}
-            <button className="button button-dark" type="button" disabled={pending} onClick={save}>
-              {pending ? "Menyimpan..." : message ? "Tersimpan" : "Simpan QR"}
+            {message && <span role={success ? "status" : "alert"} className={`customize-feedback ${success ? "is-success" : "is-error"}`}>{message}</span>}
+            {!validDimensions && <p role="alert" className="customize-feedback is-error">Ukuran template harus 20 sampai 500 mm.</p>}
+            {validDimensions && !qrFits && <p role="alert" className="customize-feedback is-error">QR melewati tepi pass. Sesuaikan posisi atau ukurannya.</p>}
+            <button className="button button-dark" type="button" disabled={pending || !validDimensions || !qrFits} onClick={save}>
+              {pending ? "Menyimpan..." : message && success ? "Tersimpan" : "Simpan QR"}
             </button>
           </div>
-        </div>
+        </fieldset>
 
         <div className="qr-preview-panel">
           <div className="preview-toolbar">
@@ -193,7 +211,7 @@ export function QrDeliveryEditor({ event }: { event: PassFlowEvent }) {
           </div>
           <div
             className="qr-config-preview"
-            style={{ aspectRatio: selected.ratio }}
+            style={{ aspectRatio: ratio, maxWidth: ratio * 440 }}
           >
             {templateUrl && (
               <Image
@@ -212,9 +230,10 @@ export function QrDeliveryEditor({ event }: { event: PassFlowEvent }) {
                 width: `${qrSize}%`,
               }}
             >
-              QR
+              <QrCode aria-hidden="true"/><span className="sr-only">Posisi QR contoh</span>
             </div>
           </div>
+          <p className="customize-preview-note">{widthMm} × {heightMm} mm · QR contoh, bukan credential aktif.</p>
           <div className="figma-export-note">
             <strong>Figma-ready</strong>
             <span>

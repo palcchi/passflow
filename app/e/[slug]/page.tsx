@@ -13,7 +13,7 @@ import { getPublishedEvent } from "@/lib/events";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { getSupabaseConfig } from "@/lib/supabase/config";
 import { readTemplate } from "@/lib/design-template";
-import { CollectionArtwork, Sticker } from "@/components/brand-art";
+import { CollectionArtwork, Sticker } from "@/components/flow-brand-art";
 import { KineticText } from "@/components/magicui/kinetic-text";
 import { eventInk } from "@/lib/event-colors";
 
@@ -61,7 +61,7 @@ export default async function PublicEventPage({ params, searchParams }: EventPag
   }
 
   return (
-    <main className="event-public-shell" style={themeStyle}>
+    <main className="event-public-shell flow-public-event" style={themeStyle}>
       <nav className="event-public-nav">
         <Link href="/" className="event-wordmark">
           <span className="brand-mark">P</span> PassFlow

@@ -497,8 +497,13 @@ export async function saveEventTheme(formData: FormData) {
     surface: text(formData, "surface", 20) || defaultEventTheme.surface,
     headerStyle: ["minimal", "editorial", "split"].includes(text(formData, "headerStyle", 20)) ? text(formData, "headerStyle", 20) : defaultEventTheme.headerStyle,
   };
-  const { data } = await supabase.from("events").update({ theme, updated_at: new Date().toISOString() }).eq("id", eventId).select("slug").single();
+  if ([theme.primary, theme.secondary, theme.background, theme.foreground, theme.surface].some(value => !/^#[0-9a-f]{6}$/i.test(value))) {
+    return { ok: false, message: "Kode warna tidak valid. Gunakan HEX 6 digit." };
+  }
+  const { data, error } = await supabase.from("events").update({ theme, updated_at: new Date().toISOString() }).eq("id", eventId).select("slug").single();
+  if (error || !data) return { ok: false, message: "Tampilan belum tersimpan. Coba lagi." };
   revalidateEvent(eventId, data?.slug);
+  return { ok: true, message: "Tampilan event berhasil disimpan." };
 }
 
 export async function saveEventQrConfig(formData: FormData) {
@@ -511,9 +516,10 @@ export async function saveEventQrConfig(formData: FormData) {
     const value = Number(text(formData, key, 20).replace(/[^0-9.-]/g, ""));
     return Number.isFinite(value) ? Math.min(max, Math.max(min, value)) : fallback;
   };
-  const { data: current } = await supabase.from("events").select("qr_config,slug").eq("id", eventId).single();
+  const { data: current, error: readError } = await supabase.from("events").select("qr_config,slug").eq("id", eventId).single();
+  if (readError || !current) return { ok: false, message: "Konfigurasi pass belum dapat dimuat. Coba lagi." };
   const existing = current?.qr_config && typeof current.qr_config === "object" && !Array.isArray(current.qr_config) ? current.qr_config as Record<string, unknown> : {};
-  await supabase.from("events").update({
+  const { data: updated, error } = await supabase.from("events").update({
     qr_config: {
       mode,
       claim_mode:
@@ -530,8 +536,10 @@ export async function saveEventQrConfig(formData: FormData) {
       qr_size: clamp("qrSize", 22, 5, 80),
     },
     updated_at: new Date().toISOString(),
-  }).eq("id", eventId);
+  }).eq("id", eventId).select("id").single();
+  if (error || !updated) return { ok: false, message: "Pengaturan QR belum tersimpan. Coba lagi." };
   revalidateEvent(eventId, current?.slug);
+  return { ok: true, message: "Pengaturan pass dan QR berhasil disimpan." };
 }
 
 export async function saveClaimMode(formData: FormData) {

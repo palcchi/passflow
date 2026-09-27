@@ -1,6 +1,5 @@
 import { notFound } from "next/navigation";
-import { EventThemeEditor } from "@/components/event-theme-editor";
-import { QrDeliveryEditor } from "@/components/qr-delivery-editor";
+import { EventCustomizer } from "@/components/event-customizer";
 import { getManagedEvent } from "@/lib/events";
 
 type AppearancePageProps = {
@@ -18,15 +17,13 @@ export default async function EventAppearancePage({
     <div className="event-admin-editor-page">
       <header className="event-admin-local-heading">
         <span className="section-kicker">Customize</span>
-        <h2>Visual & pass delivery</h2>
+        <h2>Make it yours.</h2>
         <p>
-          Atur warna event, asset publik, bentuk pass, dan posisi QR tanpa
-          memuat ulang shell event.
+          Beri event kamu karakter. Pilih tampilan, lihat hasilnya, lalu simpan.
         </p>
       </header>
 
-      <EventThemeEditor event={event} />
-      <QrDeliveryEditor event={event} />
+      <EventCustomizer event={event} />
     </div>
   );
 }
