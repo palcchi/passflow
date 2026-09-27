@@ -28,7 +28,7 @@ export default async function AccountPage() {
       : typeof user.user_metadata.picture === "string"
         ? user.user_metadata.picture
         : null;
-  const name = fullName || username || user.email?.split("@")[0] || "Pengunjung";
+  const name = fullName || username || user.email?.split("@")[0] || "Attendee";
 
   const [
     { memberships, unavailable },
