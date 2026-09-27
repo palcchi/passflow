@@ -6,6 +6,7 @@ import type { PassFlowEvent } from "@/lib/events";
 import { eventInk } from "@/lib/event-colors";
 import { EventCoverArtwork as FlowCoverArtwork } from "@/components/flow-brand-art";
 import { EventCoverArtwork } from "@/components/brand-art";
+import { AvatarCircles } from "@/components/magicui/avatar-circles";
 
 export function EventClassCard({ event, joined = false, manage = false, flow = false }: {
   event: PassFlowEvent; joined?: boolean; manage?: boolean; flow?: boolean;
@@ -24,6 +25,18 @@ export function EventClassCard({ event, joined = false, manage = false, flow = f
       <p><MapPin size={15}/>{event.venue || "Venue to be announced"}</p>
     </div>
     {manage && <div className="flow-event-progress"><span><b>{event.checkedInCount.toLocaleString("en-US")}</b> / {event.attendeeCount.toLocaleString("en-US")}</span><progress value={event.checkedInCount} max={Math.max(event.attendeeCount, event.checkedInCount, 1)} aria-label={`${event.name}: ${event.checkedInCount} of ${event.attendeeCount} attendees checked in`}/><small>checked in</small></div>}
-    <div className="class-event-footer"><span>{manage ? "Manage event" : joined ? "Open digital pass" : "View details"}</span><ArrowUpRight size={19}/></div>
+    <div className="class-event-footer">
+      <span>{manage ? "Manage event" : joined ? "Open digital pass" : "View details"}</span>
+      <span className="class-event-footer-right">
+        {manage && event.attendeeCount > 0 && (
+          <AvatarCircles
+            className="event-card-avatar-circles"
+            people={event.participantPreview ?? []}
+            extra={Math.max(0, event.attendeeCount - (event.participantPreview?.length ?? 0))}
+          />
+        )}
+        <ArrowUpRight size={19}/>
+      </span>
+    </div>
   </Link>;
 }

@@ -32,7 +32,7 @@ export default async function EventPeoplePage({ params, searchParams }: Props) {
 
   let attendeeQuery = supabase
     .from("attendees")
-    .select("id, attendee_code, name, email, phone, checked_in_at, ticket_type_id")
+    .select("id, attendee_code, name, email, phone, checked_in_at, ticket_type_id, user_id")
     .eq("event_id", eventId)
     .order("created_at", { ascending: false })
     .limit(100);
@@ -61,6 +61,31 @@ export default async function EventPeoplePage({ params, searchParams }: Props) {
   const attendees = attendeesResult.data ?? [];
   const crew = crewResult.data ?? [];
   const ticketName = new Map(tickets.map((ticket) => [ticket.id, ticket.name]));
+
+  const attendeeIds = attendees.map((attendee) => attendee.id);
+  const { data: attendeeProfileRows } = attendeeIds.length
+    ? await supabase
+        .from("attendee_profiles")
+        .select("attendee_id,photo_storage_path")
+        .in("attendee_id", attendeeIds)
+    : { data: [] };
+  const photoPaths = (attendeeProfileRows ?? [])
+    .map((profile) => profile.photo_storage_path)
+    .filter((path): path is string => Boolean(path));
+  const { data: signedPhotoRows } = photoPaths.length
+    ? await supabase.storage.from("attendee-photos").createSignedUrls(photoPaths, 300)
+    : { data: [] };
+  const signedUrlByPath = new Map(
+    (signedPhotoRows ?? [])
+      .filter((item) => item.signedUrl)
+      .map((item) => [item.path, item.signedUrl]),
+  );
+  const photoPathByAttendee = new Map(
+    (attendeeProfileRows ?? []).map((profile) => [
+      profile.attendee_id,
+      profile.photo_storage_path,
+    ]),
+  );
 
   return (
     <>
@@ -162,7 +187,27 @@ export default async function EventPeoplePage({ params, searchParams }: Props) {
               {attendees.map((attendee) => (
                 <tr key={attendee.id}>
                   <td><code>{attendee.attendee_code}</code></td>
-                  <td><strong>{attendee.name}</strong></td>
+                  <td>
+                    <div className="people-identity">
+                      <span
+                        className="people-avatar"
+                        style={
+                          photoPathByAttendee.get(attendee.id) &&
+                          signedUrlByPath.get(photoPathByAttendee.get(attendee.id)!)
+                            ? {
+                                backgroundImage: `url("${signedUrlByPath.get(photoPathByAttendee.get(attendee.id)!)}")`,
+                              }
+                            : undefined
+                        }
+                      >
+                        {!(
+                          photoPathByAttendee.get(attendee.id) &&
+                          signedUrlByPath.get(photoPathByAttendee.get(attendee.id)!)
+                        ) && attendee.name.trim().charAt(0).toUpperCase()}
+                      </span>
+                      <strong>{attendee.name}</strong>
+                    </div>
+                  </td>
                   <td>{attendee.email ?? "-"}</td>
                   <td>{attendee.ticket_type_id ? ticketName.get(attendee.ticket_type_id) ?? "-" : "-"}</td>
                   <td>

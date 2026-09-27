@@ -4,7 +4,6 @@ import { ArrowUpRight } from "lucide-react";
 import { getManagedEvent } from "@/lib/events";
 import { NumberTicker } from "@/components/magicui/number-ticker";
 import { AnimatedList } from "@/components/magicui/animated-list";
-import { AvatarCircles } from "@/components/magicui/avatar-circles";
 import { requireOrganizerMembership } from "@/lib/auth/session";
 
 type Props = { params: Promise<{ eventId: string }> };
@@ -24,7 +23,6 @@ export default async function EventOverviewPage({ params }: Props) {
     scansResult,
     activityCountResult,
     benefitCountResult,
-    attendeePreviewResult,
   ] = await Promise.all([
     supabase
       .from("qr_credentials")
@@ -49,12 +47,6 @@ export default async function EventOverviewPage({ params }: Props) {
       .from("benefit_claims")
       .select("id", { count: "exact", head: true })
       .eq("event_id", eventId),
-    supabase
-      .from("attendees")
-      .select("name")
-      .eq("event_id", eventId)
-      .order("created_at", { ascending: false })
-      .limit(3),
   ]);
 
   const credentials = credentialsResult.data ?? [];
@@ -119,13 +111,6 @@ export default async function EventOverviewPage({ params }: Props) {
             <span>{label}</span>
             <strong><NumberTicker value={Number(value)} /></strong>
             <small>{note}</small>
-            {label === "Registered" && Number(value) > 0 && (
-              <AvatarCircles
-                className="metric-avatar-circles"
-                people={(attendeePreviewResult.data ?? []).map((attendee) => ({ name: attendee.name }))}
-                extra={Math.max(0, event.attendeeCount - 3)}
-              />
-            )}
           </div>
         ))}
       </section>
