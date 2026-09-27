@@ -118,11 +118,11 @@ export function QrCodeGenerator({ eventId }: { eventId: string }) {
             }}
             placeholder="e.g. VIP"
           />
-          <small>Huruf, angka, dan tanda hubung.</small>
+          <small>Letters, numbers, and hyphens only.</small>
         </label>
 
         <label className="event-admin-field">
-          <span>Jumlah</span>
+          <span>Quantity</span>
           <input
             className="event-admin-input"
             type="number"
@@ -138,7 +138,7 @@ export function QrCodeGenerator({ eventId }: { eventId: string }) {
         </label>
 
         <div className="event-admin-field">
-          <span>Nomor awal</span>
+          <span>Starting number</span>
           <div className="qr-mode-toggle">
             <button
               type="button"
@@ -177,7 +177,7 @@ export function QrCodeGenerator({ eventId }: { eventId: string }) {
                 invalidatePreview();
               }}
             />
-            <small>Contoh 100 menghasilkan PREFIX-0100.</small>
+            <small>For example, 100 generates PREFIX-0100.</small>
           </label>
         )}
       </div>
