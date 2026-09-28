@@ -3,38 +3,65 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import ts from 'typescript';
+
 const require = createRequire(import.meta.url);
-const source = ts.transpileModule(readFileSync(new URL('../app/admin/actions.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
-function setup(responses) {
-  const writes = [], paths = [], filters = [];
-  const supabase = { rpc: async () => ({ data: true, error: null }), from: () => {
-    const q = { update: v => { writes.push(v); return q; }, select: () => q, eq: (key, value) => { filters.push([key,value]); return q; }, single: async () => responses.shift() };
-    return q;
-  }};
+const source = ts.transpileModule(readFileSync(new URL('../app/admin/actions.ts', import.meta.url), 'utf8'), {
+  compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
+}).outputText;
+
+function setup(readResponses = [], rpcResponse = { data: { draft: true }, error: null }) {
+  const writes = [], paths = [];
+  const supabase = {
+    rpc: async (name, args) => {
+      if (name === 'is_event_manager') return { data: true, error: null };
+      writes.push({ name, args }); return rpcResponse;
+    },
+    from: () => {
+      const query = { select: () => query, eq: () => query,
+        single: async () => readResponses.shift(), maybeSingle: async () => readResponses.shift() };
+      return query;
+    },
+  };
   const exports = {};
-  const mockedRequire = name => name === 'crypto' ? require(name) : name === 'next/cache' ? { revalidatePath: p => paths.push(p) } : name === 'next/navigation' ? { redirect: p => { throw new Error(p); } } : name === '@/lib/auth/session' ? { requireOrganizerMembership: async () => ({ supabase }) } : name === '@/lib/events' ? { defaultEventTheme: { primary:'#333333',secondary:'#eeeeee',background:'#ffffff',foreground:'#111111',surface:'#ffffff',headerStyle:'editorial' } } : {};
+  const mockedRequire = name => name === 'crypto' ? require(name)
+    : name === 'next/cache' ? { revalidatePath: path => paths.push(path) }
+    : name === 'next/navigation' ? { redirect: path => { throw new Error(path); } }
+    : name === '@/lib/auth/session' ? { requireOrganizerMembership: async () => ({ supabase }) }
+    : name === '@/lib/events' ? { defaultEventTheme: { primary:'#333333',secondary:'#eeeeee',background:'#ffffff',foreground:'#111111',surface:'#ffffff',headerStyle:'editorial' } }
+    : {};
   new Function('require','exports',source)(mockedRequire,exports);
-  return { actions: exports, writes, paths, filters };
+  return { actions: exports, writes, paths };
 }
-function form(values={}) { const f=new FormData();Object.entries({eventId:'evt_owned',...values}).forEach(([k,v])=>f.set(k,v));return f; }
-test('theme save reports database rejection and does not revalidate a failed write', async () => {
-  const s=setup([{data:null,error:{message:'write rejected'}}]);
-  assert.equal((await s.actions.saveEventTheme(form())).ok,false);assert.deepEqual(s.paths,[]);assert.deepEqual(s.filters,[['id','evt_owned']]);
+function form(values={}) { const data=new FormData();Object.entries({eventId:'evt_owned',...values}).forEach(([key,value])=>data.set(key,value));return data; }
+
+test('theme save stages draft and does not revalidate a failed RPC', async () => {
+  const failed=setup([], { data:null,error:{message:'write rejected'} });
+  assert.equal((await failed.actions.saveEventTheme(form())).ok,false);
+  assert.deepEqual(failed.paths,[]);
+  assert.equal(failed.writes[0].name,'stage_event_config');
+  const saved=setup();
+  assert.equal((await saved.actions.saveEventTheme(form())).ok,true);
+  assert.equal(saved.writes[0].args.p_patch.theme.primary,'#333333');
+  assert.ok(saved.paths.includes('/admin/events/evt_owned'));
+  const invalid=setup();
+  assert.equal((await invalid.actions.saveEventTheme(form({primary:'invalid'}))).ok,false);
+  assert.equal(invalid.writes.length,0);
 });
-test('theme save succeeds only when an updated event was returned', async () => {
-  for(const response of [{data:null,error:null},{data:{slug:'owned-event'},error:null}]) {
-    const s=setup([response]);const result=await s.actions.saveEventTheme(form());assert.equal(result.ok,!!response.data);
-    assert.equal(s.paths.includes('/e/owned-event'),!!response.data);
-  }
-  const s=setup([]);assert.equal((await s.actions.saveEventTheme(form({primary:'not-a-color'}))).ok,false);assert.equal(s.writes.length,0);
-});
-test('QR save stops when existing config cannot be loaded', async () => {
-  const s=setup([{data:null,error:{message:'read rejected'}}]);assert.equal((await s.actions.saveEventQrConfig(form())).ok,false);assert.equal(s.writes.length,0);
-});
-test('QR update retains claim mode and uploaded template, and reports write failure', async () => {
-  for(const fail of [false,true]) {
-    const s=setup([{data:{slug:'owned-event',qr_config:{claim_mode:'claim',template_url:'https://example.test/pass.png'}},error:null},{data:fail?null:{id:'evt_owned'},error:fail?{message:'rejected'}:null}]);
-    const result=await s.actions.saveEventQrConfig(form({mode:'wristband',widthMm:'240',heightMm:'25',qrX:'85',qrY:'50',qrSize:'8'}));
-    assert.equal(result.ok,!fail);assert.equal(s.writes[0].qr_config.claim_mode,'claim');assert.equal(s.writes[0].qr_config.template_url,'https://example.test/pass.png');assert.equal(s.writes[0].qr_config.width_mm,240);assert.equal(s.paths.length>0,!fail);
-  }
+
+test('QR save requires current config and retains the draft claim mode and template', async () => {
+  const missing=setup([{data:null,error:{message:'read rejected'}},{data:null,error:null}]);
+  assert.equal((await missing.actions.saveEventQrConfig(form())).ok,false);
+  assert.equal(missing.writes.length,0);
+  const current={data:{slug:'owned-event',qr_config:{claim_mode:'automatic'}},error:null};
+  const draft={data:{config:{qr_config:{claim_mode:'claim',template_url:'https://example.test/pass.png'}}},error:null};
+  const saved=setup([current,draft]);
+  const input=form({mode:'wristband',widthMm:'240',heightMm:'25',qrX:'85',qrY:'50',qrSize:'8'});
+  assert.equal((await saved.actions.saveEventQrConfig(input)).ok,true);
+  const patch=saved.writes[0].args.p_patch.qr_config;
+  assert.equal(patch.claim_mode,'claim');
+  assert.equal(patch.template_url,'https://example.test/pass.png');
+  assert.equal(patch.width_mm,240);
+  const failed=setup([current,draft],{data:null,error:{message:'rejected'}});
+  assert.equal((await failed.actions.saveEventQrConfig(input)).ok,false);
+  assert.deepEqual(failed.paths,[]);
 });

@@ -12,6 +12,6 @@ export default async function ScannerPage({ params }: ScannerPageProps) {
   const { data: event } = await supabase.from("events").select("name,venue").eq("id", station.event_id).maybeSingle();
 
   return (
-    <QrScanner stationId={station.id} stationName={station.name} eventName={event?.name ?? station.name} venue={event?.venue ?? ""} />
+    <QrScanner stationId={station.id} stationName={station.name} eventName={event?.name ?? station.name} venue={event?.venue ?? ""} mode={station.mode} />
   );
 }

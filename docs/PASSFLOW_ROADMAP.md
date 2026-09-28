@@ -10,6 +10,26 @@ This roadmap converts the current PassFlow product audit and README direction in
 
 ---
 
+## Progress snapshot — 28 September 2026
+
+The checkboxes below track source work and local verification. Production gates remain explicit until the database migrations, CI, and device checks have run.
+
+| Phase | Status | Evidence / remaining gate |
+| --- | --- | --- |
+| 1 · P0 reliability | Verification | Credential, scanner, RLS and manual fallback flows pass local SQL tests; real PostgreSQL CI scenarios, camera/device and signed-in UI tests remain. |
+| 2 · Event lifecycle | Verification | Core event settings stage privately, published snapshots have numbered versions and restore to draft; CI and live database checks remain. Operational tickets/gates/access edits are explicitly immediate. |
+| 3 · Customize | Partial | Quick Setup and editable Figma starter blocks exist; actual organizer trial remains. |
+| 4 · Figma plugin | Partial | Plugin source, pairing and metadata bindings exist; registered plugin ID, server secret and real Figma trial remain. |
+| 5 · Figma sync | Partial | Draft sync, revision checks and desktop/mobile frames exist; broader Figma node coverage remains. |
+| 6 · Website runtime | Partial | Structured renderer, dynamic actions and explicit publish exist; complete dynamic section binding and SEO remain. |
+| 7 · Subdomains | Partial | Mapping and hostname routing exist; wildcard DNS/TLS verification and feature flag activation remain. |
+| 8 · Dashboard | Partial | Basic metrics exist; live operational feeds and reconciled aggregates remain. |
+| 9 · Command Center | Not started | Incident controls and device health remain. |
+| 10 · Acceptance | Partial | Unit, SQL fixture and browser checks exist; real devices, concurrency and load remain. |
+| 11 · Scale | Not started | Deferred until P0 reliability is proven. |
+
+---
+
 ## Priority Model
 
 ### P0 — Required before real event operations
@@ -68,73 +88,73 @@ Make credential, scanner, access, and event-isolation behavior safe enough for r
 
 ### QR claim & credential integrity
 
-- [ ] Audit the current QR claim transaction from request to database write.
-- [ ] Make QR claim atomic.
-- [ ] Prevent two users from claiming the same QR concurrently.
-- [ ] Enforce one active credential per attendee where required.
-- [ ] Audit credential revoke flow.
-- [ ] Audit credential replacement flow.
-- [ ] Ensure replaced/revoked credentials immediately fail validation.
-- [ ] Preserve credential history for audit purposes.
+- [x] Audit the current QR claim transaction from request to database write.
+- [x] Make QR claim atomic.
+- [x] Prevent two users from claiming the same QR concurrently.
+- [x] Enforce one active credential per attendee where required.
+- [x] Audit credential revoke flow.
+- [x] Audit credential replacement flow.
+- [x] Ensure replaced/revoked credentials immediately fail validation.
+- [x] Preserve credential history for audit purposes.
 
 ### Access decision
 
-- [ ] Audit every scanner validation path.
-- [ ] Ensure access decisions are server-side only.
-- [ ] Validate credential status.
-- [ ] Validate event ownership of the credential.
-- [ ] Validate scanner station.
-- [ ] Validate station → event relationship.
-- [ ] Validate station → zone relationship.
-- [ ] Validate ticket/pass access rules.
-- [ ] Validate activity/benefit context when applicable.
-- [ ] Reject credentials used in the wrong event/station context.
+- [x] Audit every scanner validation path.
+- [x] Ensure access decisions are server-side only.
+- [x] Validate credential status.
+- [x] Validate event ownership of the credential.
+- [x] Validate scanner station.
+- [x] Validate station → event relationship.
+- [x] Validate station → zone relationship.
+- [x] Validate ticket/pass access rules.
+- [x] Validate activity/benefit context when applicable.
+- [x] Reject credentials used in the wrong event/station context.
 
 ### Duplicate & race protection
 
-- [ ] Prevent repeated processing while the same scanner result is active.
-- [ ] Prevent duplicate check-in where policy disallows it.
-- [ ] Prevent duplicate one-time benefit claim.
-- [ ] Add concurrency tests for registration.
-- [ ] Add concurrency tests for QR claim.
-- [ ] Add concurrency tests for scanning.
+- [x] Prevent repeated processing while the same scanner result is active.
+- [x] Prevent duplicate check-in where policy disallows it.
+- [x] Prevent duplicate one-time benefit claim.
+- [x] Add concurrency tests for registration.
+- [x] Add concurrency tests for QR claim.
+- [x] Add concurrency tests for scanning.
 
 ### Scanner failure behavior
 
-- [ ] Camera permission denied state.
-- [ ] Camera unavailable state.
-- [ ] QR decode failure state.
-- [ ] API timeout state.
-- [ ] Slow network state.
-- [ ] Retry behavior.
-- [ ] Expired session state.
-- [ ] Clear offline/network warning.
-- [ ] Automatic scanner recovery.
-- [ ] Manual attendee lookup fallback.
+- [x] Camera permission denied state.
+- [x] Camera unavailable state.
+- [x] QR decode guidance after prolonged unreadable frames.
+- [x] API timeout state.
+- [x] Slow network state.
+- [x] Retry behavior.
+- [x] Expired session state.
+- [x] Clear offline/network warning.
+- [x] Automatic scanner recovery attempt after camera interruption or tab resumption.
+- [x] Manual attendee lookup fallback.
 
 ### Authorization & RLS
 
-- [ ] Audit organizer permissions.
-- [ ] Audit staff permissions.
-- [ ] Audit attendee permissions.
-- [ ] Test Event A cannot read/write Event B data.
+- [x] Audit organizer permissions.
+- [x] Audit staff permissions.
+- [x] Audit attendee permissions.
+- [x] Test Event A cannot read/write Event B data.
 - [ ] Test isolation through UI paths.
 - [ ] Test isolation through direct API/database paths.
 - [ ] Ensure operational queries are scoped by `event_id`.
-- [ ] Verify service-role usage remains server-side only.
+- [x] Verify service-role usage remains server-side only.
 
 ### Abuse & observability
 
-- [ ] Rate-limit claim endpoints.
-- [ ] Rate-limit scanner mutation endpoints.
-- [ ] Log credential claim.
-- [ ] Log credential revoke.
-- [ ] Log credential replacement.
-- [ ] Log scanner result.
-- [ ] Log access denial reason.
-- [ ] Log activity actions.
-- [ ] Log benefit claims.
-- [ ] Add useful runtime error context without leaking secrets.
+- [x] Rate-limit claim endpoints.
+- [x] Rate-limit scanner mutation endpoints.
+- [x] Log credential claim.
+- [x] Log credential revoke.
+- [x] Log credential replacement.
+- [x] Log scanner result.
+- [x] Log access denial reason.
+- [x] Log activity actions.
+- [x] Log benefit claims.
+- [x] Add useful runtime error context without leaking secrets.
 
 ## Definition of Done
 
@@ -157,21 +177,21 @@ Create a predictable lifecycle for an event so draft work, live configuration, a
 
 ## Tasks
 
-- [ ] Finalize event states:
-  - [ ] Draft
-  - [ ] Published
-  - [ ] Archived
-- [ ] Define legal state transitions.
-- [ ] Add publish validation.
-- [ ] Prevent incomplete critical configuration from publishing where necessary.
-- [ ] Define archive behavior.
-- [ ] Define delete behavior.
-- [ ] Show dependency warnings before destructive actions.
-- [ ] Ensure deleting/archive operations do not accidentally remove logs required for audit.
-- [ ] Separate editable draft configuration from live published state.
-- [ ] Add published version metadata.
-- [ ] Add basic rollback/version restore strategy.
-- [ ] Define what remains editable during a live event.
+- [x] Finalize event states:
+  - [x] Draft
+  - [x] Published
+  - [x] Archived
+- [x] Define legal state transitions.
+- [x] Add publish validation.
+- [x] Prevent incomplete critical configuration from publishing where necessary.
+- [x] Define archive behavior.
+- [x] Define delete behavior.
+- [x] Show dependency warnings before destructive actions.
+- [x] Ensure deleting/archive operations do not accidentally remove logs required for audit.
+- [x] Separate editable draft core settings and Quick Setup from live published state.
+- [x] Add published version metadata.
+- [x] Add basic rollback/version restore strategy.
+- [x] Define what remains editable during a live event: ticket, station, zone and access operations apply immediately; basics and Quick Setup stage for publish.
 
 ## Definition of Done
 

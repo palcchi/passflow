@@ -21,6 +21,8 @@ jobs:
       - run: npm run lint
       - run: node --experimental-strip-types --test scripts/auth-unit.test.mjs scripts/customize-actions.test.mjs scripts/studio-model.test.mjs
       - run: node scripts/management-lifecycle.test.mjs
+      - run: node scripts/phase1-credential.test.mjs
+      - run: node scripts/event-lifecycle.test.mjs
       - run: npm run typecheck
       - run: npm run build
       - run: npx playwright install --with-deps chromium
@@ -67,3 +69,5 @@ jobs:
           psql -v ON_ERROR_STOP=1 -f supabase/migrations/0001_initial_schema.sql
           psql -v ON_ERROR_STOP=1 -f supabase/migrations/0002_auth_read_policies.sql
           psql -v ON_ERROR_STOP=1 -f supabase/tests/auth-rls.sql
+      - run: psql -v ON_ERROR_STOP=1 -f supabase/tests/phase1-concurrency-setup.sql
+      - run: bash scripts/verify-phase1-concurrency.sh

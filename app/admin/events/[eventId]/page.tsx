@@ -65,7 +65,7 @@ export default async function EventOverviewPage({ params }: Props) {
     ...new Set(scans.map((scan) => scan.attendee_id).filter(Boolean)),
   ] as string[];
   const attendeeResult = attendeeIds.length
-    ? await supabase.from("attendees").select("id,name").in("id", attendeeIds)
+    ? await supabase.from("attendees").select("id,name").eq("event_id", eventId).in("id", attendeeIds)
     : { data: [] };
   const attendeeName = new Map(
     (attendeeResult.data ?? []).map((item) => [item.id, item.name]),

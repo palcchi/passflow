@@ -68,6 +68,9 @@ export type PassFlowEvent = {
   theme: EventTheme;
   qrConfig: QrConfig;
   status?: string;
+  publishedVersion?: number | null;
+  hasDraftChanges?: boolean;
+  liveSlug?: string;
   capacity?: number;
   startsAt?: string | null;
   endsAt?: string | null;
@@ -156,6 +159,7 @@ async function loadPublishedParticipantPreview(
   const { data: profiles } = await supabase
     .from("attendee_profiles")
     .select("attendee_id,photo_storage_path")
+    .eq("event_id", eventId)
     .in("attendee_id", rows.map((attendee) => attendee.id));
 
   const pathByAttendee = new Map(
@@ -268,6 +272,7 @@ function mapEvent(
     description: row.description ?? "",
     venue: row.venue ?? "",
     status: row.status,
+    publishedVersion: row.published_version,
     capacity: row.capacity ?? undefined,
     startsAt: row.starts_at,
     endsAt: row.ends_at,
@@ -297,7 +302,7 @@ export const getManagedEvent = cache(
     });
     if (!allowed) return undefined;
 
-    const [{ data, error }, registered, checked] = await Promise.all([
+    const [{ data, error }, registered, checked, draft] = await Promise.all([
       supabase.from("events").select("*").eq("id", id).maybeSingle(),
       supabase
         .from("attendees")
@@ -308,11 +313,14 @@ export const getManagedEvent = cache(
         .select("id", { count: "exact", head: true })
         .eq("event_id", id)
         .not("checked_in_at", "is", null),
+      supabase.from("event_config_drafts").select("config").eq("event_id", id).maybeSingle(),
     ]);
 
     if (error) throw new Error("Event could not be loaded.");
     return data
-      ? mapEvent(data, registered.count ?? 0, checked.count ?? 0)
+      ? { ...mapEvent(draft.data?.config && typeof draft.data.config === "object" && !Array.isArray(draft.data.config)
+          ? { ...data, ...draft.data.config } as EventRow : data, registered.count ?? 0, checked.count ?? 0),
+          status: data.status, publishedVersion: data.published_version, hasDraftChanges: Boolean(draft.data), liveSlug: data.slug }
       : undefined;
   },
 );
@@ -358,6 +366,7 @@ export async function getManagedEvents(): Promise<PassFlowEvent[]> {
         ? await supabase
             .from("attendee_profiles")
             .select("attendee_id,photo_storage_path")
+            .eq("event_id", row.id)
             .in("attendee_id", previewIds)
         : { data: [] };
 

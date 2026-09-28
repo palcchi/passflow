@@ -14,6 +14,18 @@ export type Database = {
   }
   public: {
     Tables: {
+      event_config_drafts: {
+        Row: { event_id: string; config: Json; revision: number; updated_at: string }
+        Insert: never
+        Update: never
+        Relationships: []
+      }
+      event_publications: {
+        Row: { id: string; event_id: string; version: number; config: Json; published_at: string; published_by: string | null }
+        Insert: never
+        Update: never
+        Relationships: []
+      }
       event_subdomains: {Row:{event_id:string;label:string;updated_at:string};Insert:never;Update:never;Relationships:[]}
       figma_plugin_links: {
         Row: {id:string;event_id:string;document_id:string;file_name:string;file_key:string|null;draft_id:string|null;created_at:string;expires_at:string;revoked_at:string|null;last_synced_at:string|null;external_change_at:string|null}
@@ -416,6 +428,8 @@ export type Database = {
       }
       events: {
         Row: {
+          published_version: number | null
+          published_at: string | null
           capacity: number | null
           created_at: string
           created_by: string | null
@@ -436,6 +450,8 @@ export type Database = {
           venue: string | null
         }
         Insert: {
+          published_version?: number | null
+          published_at?: string | null
           capacity?: number | null
           created_at?: string
           created_by?: string | null
@@ -456,6 +472,8 @@ export type Database = {
           venue?: string | null
         }
         Update: {
+          published_version?: number | null
+          published_at?: string | null
           capacity?: number | null
           created_at?: string
           created_by?: string | null
@@ -764,6 +782,8 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      stage_event_config: { Args: { p_event_id: string; p_patch: Json }; Returns: Json }
+      transition_event: { Args: { p_event_id: string; p_action: string; p_version?: number | null }; Returns: Json }
       mark_figma_external_change: {Args:{p_file_key:string;p_at:string};Returns:undefined}
       check_event_subdomain: {Args:{p_event_id:string;p_label:string};Returns:boolean}
       save_event_subdomain: {Args:{p_event_id:string;p_label:string};Returns:undefined}
@@ -804,6 +824,14 @@ export type Database = {
       }
       validate_scan: {
         Args: { p_code: string; p_station_id: string }
+        Returns: Json
+      }
+      lookup_station_attendees: {
+        Args: { p_station_id: string; p_query: string }
+        Returns: Json
+      }
+      manual_station_check_in: {
+        Args: { p_station_id: string; p_attendee_id: string; p_reason: string }
         Returns: Json
       }
     }
