@@ -1,3 +1,6 @@
+import QRCode from "qrcode";
+import { PassRenderer } from "@/components/studio-renderer";
+import { selectStudioDesign } from "@/lib/studio/select";
 import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
@@ -34,8 +37,11 @@ export default async function ClaimPage({ params, searchParams }: ClaimPageProps
     supabase.from("ticket_types").select("code,name,price,currency").eq("event_id", event.id).order("created_at"),
     attendee ? supabase.from("qr_credentials").select("code,display_code,status").eq("event_id", event.id).eq("attendee_id", attendee.id).eq("status", "active").maybeSingle() : Promise.resolve({ data: null, error: null }),
     attendee ? supabase.from("attendee_profiles").select("photo_storage_path").eq("attendee_id", attendee.id).maybeSingle() : Promise.resolve({ data: null, error: null }),
-    supabase.from("event_designs").select("id,kind,name,preview_url,template,ticket_type_id").eq("event_id", event.id).in("kind", ["id_card", "ticket"]).order("updated_at", { ascending: false }),
+    supabase.from("event_designs").select("id,kind,name,preview_url,template,ticket_type_id").eq("event_id", event.id).eq("status", "published").in("kind", ["id_card", "ticket"]).order("updated_at", { ascending: false }),
   ]);
+  const {data:studioDesigns} = await supabase.from('event_studio_documents').select('kind,ticket_type_id,document').eq('event_id',event.id).eq('status','published');
+  const studioDocument = selectStudioDesign(studioDesigns??[],['digital','id_card','wristband'],attendee?.ticket_type_id);
+  const studioQr = studioDocument && credentialsResult.data ? await QRCode.toDataURL(`PF1:${credentialsResult.data.code}`,{margin:4,width:600,errorCorrectionLevel:'M'}) : null;
   const tickets = ticketsResult.data ?? [];
   const credential = credentialsResult.data;
   const profile = profileResult.data;
@@ -66,7 +72,7 @@ export default async function ClaimPage({ params, searchParams }: ClaimPageProps
     {query.photo === "failed" && <p role="alert" className="mb-5 rounded-md border border-destructive/30 p-3 text-sm text-destructive">The photo could not be saved. Use a JPG, PNG, or WebP file up to 5 MB.</p>}
     {!attendee ? <form action={registerForEvent} className="claim-card space-y-4"><input type="hidden" name="event_slug" value={slug}/><h2>Register for {event.name}</h2><label className="auth-field">Full name<input required minLength={2} name="name" autoComplete="name" placeholder="Your full name" className="min-h-12 w-full rounded-xl border border-border px-3"/></label><label className="auth-field">WhatsApp number <small>Optional</small><input name="phone" type="tel" inputMode="tel" autoComplete="tel" placeholder="+62 812 3456 7890" className="min-h-12 w-full rounded-xl border border-border px-3"/></label><div className="auth-field"><span>Choose a pass</span><SmartSelect name="ticket_code" value={tickets[0]?.code ?? ""} options={tickets.map(ticket => ({ value: ticket.code, label: ticket.name, description: ticket.price > 0 ? `${ticket.currency} ${Number(ticket.price).toLocaleString("en-US")}` : "Free" }))}/></div><button className="button button-dark w-full" type="submit" disabled={!tickets.length}>Register now</button></form>
     : credential ? <section className="claim-card"><div className="claim-card-top"><span className="section-kicker">{event.name}</span><span className="claim-status claimed">Active</span></div>
-      {template && passDesign?.preview_url ? <div className="claim-figma-pass" style={{ aspectRatio: `${template.frame.width} / ${template.frame.height}` }}>
+      {studioDocument && studioQr ? <PassRenderer document={studioDocument} data={{...values,photo:photoUrl?.signedUrl??'',logo:event.logoUrl??''}} qr={studioQr}/> : template && passDesign?.preview_url ? <div className="claim-figma-pass" style={{ aspectRatio: `${template.frame.width} / ${template.frame.height}` }}>
         <Image src={passDesign.preview_url} alt={`Desain pass ${event.name}`} fill unoptimized sizes="(max-width: 600px) 90vw, 520px" className="claim-figma-background"/>
         {template.elements.map((element) => {
           if (element.field === "qr") return qrData ? <Image key={element.nodeId} src={qrData} alt="QR event pass" width={420} height={420} unoptimized style={{ ...boxStyle(element, template.frame.width, template.frame.height), objectFit: "contain", background: safeBackground }} /> : null;
@@ -77,7 +83,7 @@ export default async function ClaimPage({ params, searchParams }: ClaimPageProps
         })}
       </div> : null}
       <div className="claim-identity"><span>ATTENDEE</span><h2>{attendee.name}</h2><p>{ticketName} · {attendee.attendee_code}</p></div>
-      {(!template || !qrElement) && qrData && <Image src={qrData} alt="QR digital event pass" width={220} height={220} unoptimized className="mx-auto rounded-md"/>}
+      {!studioDocument && (!template || !qrElement) && qrData && <Image src={qrData} alt="QR digital event pass" width={220} height={220} unoptimized className="mx-auto rounded-md"/>}
       <div className="claim-success"><span className="success-icon"><Check size={17}/></span><div><strong>{credential.display_code ?? credential.code}</strong><small>The same credential works for both the digital pass and physical QR format.</small></div></div>
       {event.qrConfig.claimMode === "claim" && <form action={replaceQr} className="mt-6"><input type="hidden" name="event_slug" value={slug}/><WristbandInput/><button className="button button-ghost mt-3 w-full" type="submit">Ganti wristband</button></form>}
     </section> : event.qrConfig.claimMode === "claim" ? <form action={claimQr} className="claim-card space-y-4"><div className="claim-empty"><QrCode size={34}/><strong>Wristband not linked</strong><p>Scan the wristband QR code you received, then confirm the claim.</p></div><input type="hidden" name="event_slug" value={slug}/><WristbandInput/><button className="button button-primary w-full" type="submit">Link wristband</button></form> : <section className="claim-card"><div className="claim-empty"><strong>Credential unavailable</strong><p>This event uses automatic credentials. A credential is created at registration; for older registrations, the organizer can save Automatic mode again from Access.</p></div></section>}

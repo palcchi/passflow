@@ -1,3 +1,5 @@
+import { ActionFeedbackForm } from "@/components/action-feedback-form";
+import { ResourceManager } from "@/components/resource-manager";
 import { requireOrganizerMembership } from "@/lib/auth/session";
 import { createActivity, createBenefit } from "@/app/admin/actions";
 
@@ -21,7 +23,7 @@ export default async function EventExperiencePage({ params }: Props) {
   ] = await Promise.all([
     supabase
       .from("activities")
-      .select("id,name,code,description")
+      .select("id,name,code,description,is_active")
       .eq("event_id", eventId)
       .order("created_at"),
     supabase
@@ -71,21 +73,10 @@ export default async function EventExperiencePage({ params }: Props) {
           </div>
 
           <div className="event-admin-stack">
-            {activities.map((activity) => (
-              <div className="event-admin-row-card" key={activity.id}>
-                <strong>{activity.name}</strong>
-                <span>{activity.code}</span>
-                {activity.description && <small>{activity.description}</small>}
-              </div>
-            ))}
-            {!activities.length && (
-              <div className="event-admin-table-empty">
-                No activity checkpoints have been configured yet.
-              </div>
-            )}
+            <ResourceManager eventId={eventId} kind="activity" records={activities} />
           </div>
 
-          <form
+          <ActionFeedbackForm
             action={createActivity}
             className="event-admin-stack event-admin-subform"
           >
@@ -109,7 +100,7 @@ export default async function EventExperiencePage({ params }: Props) {
             <button className="button button-ghost" type="submit">
               Add activity
             </button>
-          </form>
+          </ActionFeedbackForm>
         </div>
 
         <div className="event-admin-section">
@@ -122,19 +113,10 @@ export default async function EventExperiencePage({ params }: Props) {
           </div>
 
           <div className="event-admin-stack">
-            {benefits.map((benefit) => (
-              <div className="event-admin-row-card" key={benefit.id}>
-                <strong>{benefit.name}</strong>
-                <span>{benefit.code}</span>
-                {benefit.description && <small>{benefit.description}</small>}
-              </div>
-            ))}
-            {!benefits.length && (
-              <div className="event-admin-table-empty">No benefits have been configured yet.</div>
-            )}
+            <ResourceManager eventId={eventId} kind="benefit" records={benefits} />
           </div>
 
-          <form
+          <ActionFeedbackForm
             action={createBenefit}
             className="event-admin-stack event-admin-subform"
           >
@@ -158,7 +140,7 @@ export default async function EventExperiencePage({ params }: Props) {
             <button className="button button-ghost" type="submit">
               Add benefit
             </button>
-          </form>
+          </ActionFeedbackForm>
         </div>
       </section>
     </>

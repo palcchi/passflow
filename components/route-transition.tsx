@@ -5,6 +5,8 @@ import { LayoutGroup, useReducedMotion } from "motion/react";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef } from "react";
 
+// Keep the layout tree mounted so navigation retains editor and scanner state.
+// Active navigation pills still animate within the shared layout group.
 export function RouteTransition({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const reduceMotion = useReducedMotion();

@@ -1,3 +1,5 @@
+import { ActionFeedbackForm } from "@/components/action-feedback-form";
+import { ResourceManager, DeleteAccessRule } from "@/components/resource-manager";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getManagedEvent } from "@/lib/events";
@@ -10,7 +12,6 @@ import {
   createZone,
   revokeCredential,
   saveClaimMode,
-  toggleStation,
 } from "@/app/admin/actions";
 
 type Props = { params: Promise<{ eventId: string }> };
@@ -48,7 +49,7 @@ export default async function EventAccessPage({ params }: Props) {
       .order("created_at"),
     supabase
       .from("access_zones")
-      .select("id,name,code,description")
+      .select("id,name,code,description,is_active")
       .eq("event_id", eventId)
       .order("created_at"),
     supabase
@@ -211,14 +212,9 @@ export default async function EventAccessPage({ params }: Props) {
               </div>
             </div>
             <div className="event-admin-stack">
-              {zones.map((zone) => (
-                <div className="event-admin-row-card" key={zone.id}>
-                  <strong>{zone.name}</strong>
-                  <span>{zone.code}</span>
-                </div>
-              ))}
+              <ResourceManager eventId={eventId} kind="zone" records={zones} />
             </div>
-            <form
+            <ActionFeedbackForm
               action={createZone}
               className="event-admin-stack event-admin-subform"
             >
@@ -237,7 +233,7 @@ export default async function EventAccessPage({ params }: Props) {
               <button className="button button-ghost" type="submit">
                 Add zone
               </button>
-            </form>
+            </ActionFeedbackForm>
           </div>
 
           <div className="event-admin-subpanel">
@@ -258,10 +254,11 @@ export default async function EventAccessPage({ params }: Props) {
                     {ticketName.get(rule.ticket_type_id) ?? "Pass"} ·{" "}
                     {rule.allowed ? "ALLOW" : "DENY"}
                   </span>
+                  <DeleteAccessRule eventId={eventId} id={rule.id}/>
                 </div>
               ))}
             </div>
-            <form
+            <ActionFeedbackForm
               action={createAccessRule}
               className="event-admin-stack event-admin-subform"
             >
@@ -299,7 +296,7 @@ export default async function EventAccessPage({ params }: Props) {
               <button className="button button-ghost" type="submit">
                 Save rule
               </button>
-            </form>
+            </ActionFeedbackForm>
           </div>
 
           <div className="event-admin-subpanel">
@@ -310,36 +307,9 @@ export default async function EventAccessPage({ params }: Props) {
               </div>
             </div>
             <div className="event-admin-stack">
-              {stations.map((station) => (
-                <div
-                  className="event-admin-row-card event-admin-station-row"
-                  key={station.id}
-                >
-                  <Link href={`/scan/${station.id}`}>{station.name}</Link>
-                  <span>{station.mode}</span>
-                  <form action={toggleStation}>
-                    <input type="hidden" name="eventId" value={eventId} />
-                    <input
-                      type="hidden"
-                      name="stationId"
-                      value={station.id}
-                    />
-                    <input
-                      type="hidden"
-                      name="isActive"
-                      value={station.is_active ? "false" : "true"}
-                    />
-                    <button
-                      className="event-admin-text-action"
-                      type="submit"
-                    >
-                      {station.is_active ? "Set standby" : "Activate"}
-                    </button>
-                  </form>
-                </div>
-              ))}
+              <ResourceManager eventId={eventId} kind="station" records={stations} zones={zones} />
             </div>
-            <form
+            <ActionFeedbackForm
               action={createStation}
               className="event-admin-stack event-admin-subform"
             >
@@ -389,7 +359,7 @@ export default async function EventAccessPage({ params }: Props) {
               <button className="button button-dark" type="submit">
                 Create station
               </button>
-            </form>
+            </ActionFeedbackForm>
           </div>
         </div>
       </section>

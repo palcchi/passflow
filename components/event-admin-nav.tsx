@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion, useReducedMotion } from "motion/react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 const items = [
   { key: "overview", label: "Overview", suffix: "" },
@@ -21,9 +21,11 @@ export function EventAdminNav({ eventId }: { eventId: string }) {
   const [pendingHref, setPendingHref] = useState<string | null>(null);
   const base = `/admin/events/${eventId}`;
 
-  useEffect(() => {
+  const [previousPath, setPreviousPath] = useState(pathname);
+  if (previousPath !== pathname) {
+    setPreviousPath(pathname);
     setPendingHref(null);
-  }, [pathname]);
+  }
 
   return (
     <nav className="event-section-dock" aria-label="Event management">

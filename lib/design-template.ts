@@ -56,7 +56,7 @@ export function readTemplate(value: unknown): FigmaTemplate {
     const b = box(e, { x: 0, y: 0, width: 1, height: 1 });
     return [{ ...b, nodeId: e.nodeId, name: typeof e.name === "string" ? e.name.slice(0, 120) : marker,
       marker, field: dynamicMarkers[marker], nodeType: typeof e.nodeType === "string" ? e.nodeType : "UNKNOWN",
-      fill: color(e.fill, "#ffffff"), fontSize: e.fontSize === null ? null : Math.max(1, number(e.fontSize, 16)),
+      fill: e.fill == null ? null : color(e.fill, "#ffffff"), fontSize: e.fontSize === null ? null : Math.max(1, number(e.fontSize, 16)),
       fontColor: color(e.fontColor, "#111111"), fontFamily: typeof e.fontFamily === "string" ? e.fontFamily.slice(0, 80) : null,
       fontWeight: e.fontWeight === null ? null : Math.max(100, Math.min(900, number(e.fontWeight, 400))),
       textAlign: typeof e.textAlign === "string" ? e.textAlign : null,

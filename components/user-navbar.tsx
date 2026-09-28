@@ -55,9 +55,11 @@ export function UserNavbar({
     };
   }, []);
 
-  useEffect(() => {
+  const [previousPath, setPreviousPath] = useState(pathname);
+  if (previousPath !== pathname) {
+    setPreviousPath(pathname);
     setPendingHref(null);
-  }, [pathname]);
+  }
 
   const navItems = [
     { href: "/account", label: "Dashboard", icon: LayoutDashboard },

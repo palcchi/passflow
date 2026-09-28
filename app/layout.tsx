@@ -6,7 +6,7 @@ import "./editorial.css";
 import "./flow.css";
 import "./unified-ui.css";
 import "./transitions.css";
-import LanguagePolish from "./language-polish";
+import "./management-design.css";
 import { RouteTransition } from "@/components/route-transition";
 import { AppNavigationController } from "@/components/app-navigation-controller";
 
@@ -57,7 +57,6 @@ export default function RootLayout({
         <script id="passflow-theme-init" dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
       <body>
-        <LanguagePolish />
         <AppNavigationController />
         <RouteTransition>{children}</RouteTransition>
       </body>
