@@ -4,6 +4,12 @@ set -euo pipefail
 phase1_tmp_dir=$(mktemp -d)
 trap 'rm -rf "$phase1_tmp_dir"' EXIT
 
+count_exact() {
+  local expected=$1
+  shift
+  awk -v expected="$expected" '$0 == expected { count++ } END { print count+0 }' "$@"
+}
+
 run_registration() {
   local phase1_user_id=$1
   local phase1_output=$2
@@ -49,8 +55,8 @@ run_registration '40000000-0000-4000-8000-000000000003' "$phase1_tmp_dir/registe
 phase1_second=$!
 wait "$phase1_first"
 wait "$phase1_second"
-test "$(rg -xc 'true' "$phase1_tmp_dir"/register-* | awk -F: '{sum+=$NF} END {print sum+0}')" -eq 1
-test "$(rg -xc 'event_full' "$phase1_tmp_dir"/register-* | awk -F: '{sum+=$NF} END {print sum+0}')" -eq 1
+test "$(count_exact 'true' "$phase1_tmp_dir"/register-*)" -eq 1
+test "$(count_exact 'event_full' "$phase1_tmp_dir"/register-*)" -eq 1
 psql -XqAt -v ON_ERROR_STOP=1 -c "do \$\$ begin if (select count(*) from public.attendees where event_id='40000000-0000-4000-8000-000000000013') <> 1 then raise exception 'capacity overbooked'; end if; end \$\$;"
 
 run_claim '40000000-0000-4000-8000-000000000002' "$phase1_tmp_dir/claim-a" &
@@ -59,8 +65,8 @@ run_claim '40000000-0000-4000-8000-000000000003' "$phase1_tmp_dir/claim-b" &
 phase1_second=$!
 wait "$phase1_first"
 wait "$phase1_second"
-test "$(rg -xc 't' "$phase1_tmp_dir"/claim-* | awk -F: '{sum+=$NF} END {print sum+0}')" -eq 1
-test "$(rg -xc 'f' "$phase1_tmp_dir"/claim-* | awk -F: '{sum+=$NF} END {print sum+0}')" -eq 1
+test "$(count_exact 't' "$phase1_tmp_dir"/claim-*)" -eq 1
+test "$(count_exact 'f' "$phase1_tmp_dir"/claim-*)" -eq 1
 psql -XqAt -v ON_ERROR_STOP=1 -c "do \$\$ begin if (select count(*) from public.qr_credentials where code='RACE-QR' and status='active' and attendee_id is not null) <> 1 then raise exception 'duplicate claim'; end if; end \$\$;"
 
 run_scan "$phase1_tmp_dir/scan-a" &
@@ -69,8 +75,8 @@ run_scan "$phase1_tmp_dir/scan-b" &
 phase1_second=$!
 wait "$phase1_first"
 wait "$phase1_second"
-test "$(rg -xc 'granted' "$phase1_tmp_dir"/scan-* | awk -F: '{sum+=$NF} END {print sum+0}')" -eq 1
-test "$(rg -xc 'already_checked_in' "$phase1_tmp_dir"/scan-* | awk -F: '{sum+=$NF} END {print sum+0}')" -eq 1
+test "$(count_exact 'granted' "$phase1_tmp_dir"/scan-*)" -eq 1
+test "$(count_exact 'already_checked_in' "$phase1_tmp_dir"/scan-*)" -eq 1
 
 psql -XqAt -v ON_ERROR_STOP=1 <<SQL > "$phase1_tmp_dir/revoke" &
 begin;
@@ -89,5 +95,5 @@ done
 test -f "$phase1_tmp_dir/revocation-locked"
 run_scan "$phase1_tmp_dir/scan-after-revoke"
 wait "$phase1_revoke"
-rg -qx 'invalid' "$phase1_tmp_dir/scan-after-revoke"
+grep -qx 'invalid' "$phase1_tmp_dir/scan-after-revoke"
 echo 'PASS: concurrent registration, QR claim, check-in and revocation against PostgreSQL'

@@ -78,8 +78,6 @@ begin
   return new;
 end;
 $$;
-create trigger guard_event_lifecycle before update or delete on public.events
-for each row execute function public.guard_event_lifecycle();
 revoke all on function public.guard_event_lifecycle() from public, anon, authenticated;
 
 -- Existing published events receive a stable initial version without changing
@@ -87,6 +85,8 @@ revoke all on function public.guard_event_lifecycle() from public, anon, authent
 insert into public.event_publications(event_id,version,config)
 select id,1,public.event_config(e) from public.events e where status='published';
 update public.events set published_version=1,published_at=now() where status='published';
+create trigger guard_event_lifecycle before update or delete on public.events
+for each row execute function public.guard_event_lifecycle();
 
 create function public.stage_event_config(p_event_id uuid,p_patch jsonb) returns jsonb
 language plpgsql security definer set search_path = '' as $$
