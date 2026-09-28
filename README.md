@@ -1,412 +1,348 @@
 # PassFlow
 
-## Release checkpoint, 26 September 2026
+> **One event platform. One attendee identity. One QR across physical and digital experiences.**
 
-This checkpoint supersedes historical progress notes below. Status: **NOT YET ACCEPTED FOR LIVE OPERATIONS**.
+PassFlow adalah platform event berbasis web untuk organizer yang menggabungkan **event website, registration, attendee management, QR credential, digital pass, access control, scanner, activities, benefits, analytics, dan design workflow** dalam satu sistem multi-event.
 
-Implemented in this continuation:
-- Email registration remains the primary CTA; Google OAuth is optional.
-- Organizer dashboard uses scoped database events and counts, including drafts.
-- Event management, appearance, and wristband printing resolve real managed events.
-- Public pages load stored assets; configured deployments never fall back to demo events on a database error.
-- Registration choices come from actual ticket types.
-- Wristband claim/replacement supports camera input with explicit confirmation.
-- Scanner API accepts station UUIDs and slugs, rejects oversized/invalid input, and returns JSON for expired sessions.
-- Scanner displays already-claimed results correctly; loading and retry states are available.
-
-Verified live configuration:
-- Vercel production existed and was READY before this release.
-- Production login still displayed "Login sedang disiapkan": application Supabase environment configuration is missing or invalid.
-- Supabase contains Adorne Nails Exhibition and Adorne Nails Workshop, under Vallian Event Studio.
-- All public tables have RLS enabled.
-- There are zero organization memberships. The user must identify the first owner account; never infer or grant this role automatically.
-
-Remaining acceptance gates:
-- Configure Vercel public Supabase URL/key and app origin, redeploy.
-- User confirms first owner, then assign membership through a trusted admin workflow.
-- Test real email verification, Google consent, recovery, storage upload, and authenticated UI.
-- Audit concurrent registration capacity and simultaneous check-in before operational rollout.
-- Test camera permissions and QR decode on real Safari/iPhone/iPad devices.
-- Complete the full 20-step operational scenario below. Passing build/anonymous responsive tests alone does not satisfy it.
-
-Historical roadmap checkboxes below are not an assertion of completion.
-
-
-> **Satu QR, dua media, satu identitas pengunjung.**
-
-PassFlow adalah platform **multi-event berbasis web** untuk mengelola event, attendee, Claim-Based QR Wristband, Digital Event Pass, access control, activity tracking, merchandise claim, dan monitoring melalui QR Scanner Station.
-
-PassFlow adalah platform event untuk organizer yang mengelola akses, peserta, dan aktivitas secara terpusat.
+Repository: `palcchi/passflow`
 
 ---
 
-## 1. Gambaran Project
+## Status Project
 
-PassFlow bukan website untuk satu event saja. Satu deployment dapat memiliki banyak event, dan setiap event mempunyai:
+**Checkpoint: 28 September 2026**
 
-- halaman publik sendiri;
-- slug sendiri;
-- warna dan visual branding sendiri;
-- ticket/pass type sendiri;
-- attendee sendiri;
-- QR credential sendiri;
-- access zone sendiri;
-- Scanner Station sendiri;
-- scan log dan activity log sendiri.
+PassFlow sudah melewati tahap prototype awal dan sekarang mempunyai foundation aplikasi, database, authentication, organizer workspace, event management, participant management, QR/access system, scanner, experience tools, profile system, serta Figma integration awal.
 
-Contoh:
+Fokus berikutnya bukan menambah halaman sebanyak mungkin, tetapi membuat workflow event terasa seperti satu produk yang utuh, terutama:
+
+- menyederhanakan **Customize Event**;
+- menjadikan **Figma sebagai visual design source**;
+- membuat Figma integration benar-benar nyaman melalui plugin;
+- memisahkan **Draft / Preview / Publish**;
+- menambahkan event website berbasis **custom subdomain**;
+- memperkuat scanner, access rules, lifecycle credential, dan live event operation.
+
+### Deployment policy
+
+PassFlow **tidak boleh membuat Vercel preview atau production deployment secara otomatis sebagai bagian dari pekerjaan biasa**.
+
+Workflow yang digunakan:
 
 ```text
-passflow.my.id/e/adorne-nails-exhibition
-passflow.my.id/e/adorne-nails-workshop
-passflow.my.id/e/adorne-creator-day
+edit
+→ group changes
+→ review source
+→ explicit approval to deploy
+→ one intended deployment
 ```
 
-Semua halaman tersebut menggunakan source code yang sama. Data dan tema event dibaca secara dinamis dari database.
+Preview atau production deployment hanya dilakukan setelah ada instruksi eksplisit untuk deploy.
 
 ---
 
-## 2. Konsep Utama
+# 1. Product Model
 
-### Claim-Based QR Pass
+PassFlow adalah **multi-event platform**.
 
-Panitia tidak perlu mencetak wristband berdasarkan nama peserta satu per satu.
-
-Alurnya:
+Satu aplikasi dapat menangani banyak event:
 
 ```text
-REGISTER
-  ↓
-ATTENDEE CREATED
-  ↓
-RECEIVE ANY AVAILABLE WRISTBAND
-  ↓
-SCAN WRISTBAND QR FROM PHONE
-  ↓
-CLAIM QR
-  ↓
-QR BOUND TO ATTENDEE
-  ↓
-SAME QR APPEARS ON DIGITAL EVENT PASS
-  ↓
-WRISTBAND OR PHONE
-  ↓
-ACCESS SCANNER
-  ↓
-VALIDATE
-  ↓
-GRANTED / DENIED / INVALID
-  ↓
-WRITE LOG
+PassFlow
+├── Event A
+├── Event B
+├── Event C
+└── ...
 ```
 
-QR wristband awalnya memiliki status:
+Setiap event memiliki data dan konfigurasi sendiri:
 
-```text
-UNCLAIMED
-ACTIVE
-REVOKED
-REPLACED
-```
+- event identity;
+- attendee;
+- ticket/pass category;
+- QR credential;
+- access zone;
+- scanner station;
+- activity;
+- benefit;
+- visual appearance;
+- Figma design;
+- public event website;
+- logs dan analytics.
 
-Setelah pengunjung melakukan claim, QR yang sama dapat digunakan dari:
-
-1. **Physical QR Wristband**
-2. **Digital Event Pass pada HP**
-
-Keduanya merupakan **satu credential yang sama dalam dua media**, bukan dua identitas berbeda.
+Data antar event harus tetap terisolasi melalui `event_id`, authorization, dan Row Level Security.
 
 ---
 
-## 3. Tech Stack
+# 2. Current Technology
 
-### Application
+## Frontend
 
-- **Next.js 16**
-- **React 19**
-- **TypeScript**
-- **App Router**
-- **Server Components + Client Components sesuai kebutuhan**
-- **Native dynamic routes**
-- **Vercel deployment**
-
-### UI
-
-- Tailwind CSS
-- shadcn/ui
-- **Magic UI** dari [magicui.design](https://magicui.design)
+- Next.js 16
+- React 19.2
+- TypeScript
+- App Router
+- Server Components + Client Components
+- Tailwind CSS 4
+- shadcn-style component foundation
+- Motion
+- Magic UI adaptations
 - lucide-react
 
-### QR
+## Backend
 
-- `html5-qrcode` untuk camera-based QR scanning
-- `qrcode` untuk QR generation
+- Supabase PostgreSQL
+- Supabase Auth
+- Supabase Storage
+- Supabase Row Level Security
+- Server-side authorization
 
-### Backend
+## QR
 
-- **Supabase PostgreSQL**
-- **Supabase Auth**
-- **Supabase Storage**
-- Row Level Security
+- `html5-qrcode`
+- `qrcode`
 
-### Repository & Deployment
+## Hosting & Source
 
-- GitHub: `palcchi/passflow`
-- Production: Vercel
-- Secret disimpan sebagai Vercel Environment Variables
-- Database dan data user **tidak pernah disimpan di GitHub**
-
----
-
-## 4. Current Progress
-
-### Sudah dibuat
-
-- [x] Repository PassFlow
-- [x] Next.js App Router foundation
-- [x] TypeScript
-- [x] Landing page
-- [x] Admin dashboard prototype
-- [x] Multi-event dynamic public route
-- [x] Event theme system menggunakan CSS variables
-- [x] Event Appearance Editor prototype
-- [x] Digital Event Pass prototype
-- [x] Claim Wristband prototype
-- [x] Browser camera QR Scanner prototype
-- [x] Scanner auto-reset setelah result
-- [x] Supabase browser/server client scaffold
-- [x] Initial PostgreSQL migration
-- [x] Database structure sudah multi-event
-- [x] Environment variable template
-- [x] Git ignore untuk secrets
-
-### Tahap implementasi
-
-- [x] Supabase project sudah terhubung
-- [x] Database migration dan RLS sudah dijalankan ke Supabase
-- [x] Email/password authentication, verifikasi email, reset password, logout, dan opsi Google OAuth
-- [ ] Dashboard masih menggunakan demo data
-- [ ] Event page masih menggunakan demo data
-- [x] Registrasi event dan claim QR menulis ke database melalui RPC
-- [x] Scanner melakukan validasi server dan mencatat hasil
-- [ ] Event theme belum tersimpan ke database
-- [ ] Image upload belum tersimpan ke Storage
-- [ ] Access rules belum benar-benar dieksekusi
-- [ ] Activity dan claim log belum tersambung
-- [ ] Deployment production belum final
+- GitHub
+- Vercel
+- `passflow.my.id`
 
 ---
 
-## 5. Current Routes
+# 3. Current Product Structure
 
-### Public
+## Public
 
 ```text
 /
 ```
 
-Landing page PassFlow.
+Main PassFlow homepage.
 
 ```text
 /e/[slug]
 ```
 
-Halaman publik event.
-
-Contoh:
-
-```text
-/e/adorne-nails-exhibition
-```
+Published public event page.
 
 ```text
 /e/[slug]/claim
 ```
 
-Digital Event Pass dan Claim Wristband.
-
----
-
-### Admin
-
-```text
-/admin
-```
-
-Dashboard utama organizer.
-
-```text
-/admin/events/[eventId]/appearance
-```
-
-Custom event theme.
-
-Ruang pengembangan berikutnya:
-
-```text
-/admin/events
-/admin/events/new
-/admin/events/[eventId]
-/admin/events/[eventId]/attendees
-/admin/events/[eventId]/passes
-/admin/events/[eventId]/zones
-/admin/events/[eventId]/stations
-/admin/events/[eventId]/activities
-/admin/events/[eventId]/logs
-/admin/events/[eventId]/settings
-```
-
----
-
-### Scanner
+Attendee QR claim / digital pass flow.
 
 ```text
 /scan/[stationId]
 ```
 
-Contoh:
-
-```text
-/scan/main-entrance
-/scan/vip-lounge
-/scan/workshop-a
-/scan/merch-claim
-```
-
-Scanner harus dapat berjalan fullscreen/kiosk dan terus kembali ke kamera setelah hasil scan selesai ditampilkan.
+Operational QR scanner.
 
 ---
 
-## 6. Database Model
-
-Initial schema:
+## Account
 
 ```text
-organizations
-organization_members
-events
-ticket_types
-attendees
-qr_credentials
-access_zones
-access_rules
-scanner_stations
-scan_logs
-activities
-activity_logs
-benefit_claims
-event_assets
+/login
+/register
+/forgot-password
+/account
+/profile
 ```
 
-Relasi utama:
+Current account system includes:
 
-```text
-Organization
-    │
-    └── Event
-         │
-         ├── Ticket Types
-         ├── Attendees
-         │     │
-         │     └── QR Credentials
-         │
-         ├── Access Zones
-         │     └── Access Rules
-         │
-         ├── Scanner Stations
-         │
-         ├── Scan Logs
-         ├── Activities
-         │     └── Activity Logs
-         │
-         ├── Benefit Claims
-         └── Event Assets
-```
+- email/password authentication;
+- email verification flow;
+- password recovery;
+- optional Google OAuth support;
+- organizer role resolution from memberships;
+- profile name / username;
+- avatar upload;
+- Figma connection status.
 
-**Rule penting:** hampir seluruh data operasional harus memiliki `event_id`.
-
-Ini mencegah data attendee, scanner, zone, dan log dari event berbeda tercampur.
+User-facing application copy is intended to remain **English-first**.
 
 ---
 
-## 7. QR Credential Rules
-
-Tabel `qr_credentials` menjadi inti sistem wristband.
-
-Contoh:
+## Organizer Workspace
 
 ```text
-WR-0192
-
-event_id: EVT-001
-attendee_id: null
-status: UNCLAIMED
+/admin
+/admin/events/new
+/admin/events/[eventId]
 ```
 
-Setelah claim:
+Event management navigation currently uses:
 
 ```text
-WR-0192
-
-event_id: EVT-001
-attendee_id: ATT-0248
-status: ACTIVE
-claimed_at: ...
+Overview
+People
+Access
+Experience
+Appearance
+Design
+Settings
 ```
 
-Jika hilang:
+Desktop uses a persistent workspace navigation model. Event-level navigation uses a floating rounded dock with an animated active pill.
 
-```text
-WR-0192 → REVOKED
-WR-0421 → ACTIVE
-```
+Page navigation is designed to feel app-like:
 
-### Rules
-
-- Satu QR hanya dapat di-claim satu kali.
-- QR ACTIVE harus memiliki attendee.
-- Satu attendee hanya boleh memiliki satu QR ACTIVE.
-- QR REVOKED tidak boleh valid di Scanner Station.
-- QR lama tetap disimpan sebagai history.
-- Digital Event Pass menampilkan QR ACTIVE yang sama dengan wristband.
+- current content stays stable during navigation;
+- active navigation bubble reacts immediately;
+- incoming page content uses subtle slide-up + fade;
+- avoid full-page loading flashes.
 
 ---
 
-## 8. Access Validation
+# 4. Current Event Features
 
-Scanner tidak boleh sekadar membaca QR dan langsung menampilkan hijau.
+## Overview
 
-Flow production:
+Organizer can work with real managed events from Supabase.
+
+Event data includes:
+
+- name;
+- slug;
+- description;
+- venue;
+- start / end date;
+- status;
+- capacity;
+- attendee count;
+- checked-in count;
+- theme;
+- QR configuration;
+- logo;
+- hero image;
+- poster.
+
+Published events are separated from organizer-managed drafts.
+
+---
+
+## People
+
+Current People tools include:
+
+- ticket/pass categories;
+- attendee records;
+- attendee search;
+- attendee creation;
+- CSV import flow;
+- crew/event members;
+- participant photos;
+- attendee profile images from private storage.
+
+Participant avatars are also surfaced in organizer event cards as compact presence previews.
+
+Attendee photos use signed URLs from the private `attendee-photos` storage bucket rather than exposing private storage paths directly.
+
+---
+
+## Access
+
+PassFlow supports two credential assignment strategies:
+
+### Automatic
 
 ```text
-QR DETECTED
-   ↓
-LOCK SCANNER
-   ↓
-SEND TOKEN TO SERVER
-   ↓
-LOOKUP QR CREDENTIAL
-   ↓
-CHECK STATUS
-   ↓
-LOOKUP ATTENDEE
-   ↓
-LOOKUP SCANNER STATION
-   ↓
-CHECK TICKET TYPE
-   ↓
-CHECK ACCESS RULE / ACTIVITY / CLAIM
-   ↓
-WRITE SCAN LOG
-   ↓
-RETURN RESULT
-   ↓
-SHOW RESULT ~3 SECONDS
-   ↓
-RESET CAMERA
+Registration
+→ credential created/assigned
+→ digital credential available
 ```
 
-Possible result:
+Best for:
+
+- digital pass;
+- named ID card;
+- attendee-specific credential.
+
+### Claim
+
+```text
+Registration
+→ attendee receives physical credential
+→ attendee scans QR
+→ QR bound to attendee
+```
+
+Best for:
+
+- wristbands;
+- pre-printed QR credentials;
+- on-site credential distribution.
+
+Current Access workspace includes:
+
+- QR credential batches;
+- active / unclaimed / revoked states;
+- revoke flow;
+- printable QR batch route;
+- access zones;
+- ticket-based access rules;
+- scanner stations;
+- station activation / standby state.
+
+Scanner modes:
+
+```text
+CHECK_IN
+ZONE_ACCESS
+ACTIVITY
+CLAIM
+```
+
+---
+
+# 5. QR Identity Model
+
+PassFlow treats the QR as a credential, not merely a picture.
+
+Core principle:
+
+> **One credential can be represented physically and digitally without creating two attendee identities.**
+
+Example:
+
+```text
+ATTENDEE
+   │
+   └── ACTIVE QR CREDENTIAL
+          ├── physical wristband
+          └── digital pass
+```
+
+Important rules:
+
+- one QR must not have multiple active owners;
+- revoked QR must fail validation;
+- replaced credentials remain in history;
+- access decisions are validated server-side;
+- scanner must not trust frontend state;
+- duplicate processing must be prevented.
+
+---
+
+# 6. Scanner
+
+Operational flow:
+
+```text
+QR detected
+→ lock scanner
+→ validate credential
+→ resolve attendee
+→ resolve station
+→ evaluate station mode / access rule
+→ write log
+→ show result
+→ return to camera
+```
+
+Possible results include:
 
 ```text
 ACCESS GRANTED
@@ -417,604 +353,607 @@ ALREADY CLAIMED
 PASS REVOKED
 ```
 
-Scanner harus melakukan debounce/lock agar QR yang sama tidak diproses berkali-kali selama result screen muncul.
+Scanner UI must remain:
+
+- fast;
+- high contrast;
+- readable;
+- touch-friendly;
+- camera-first;
+- low-latency;
+- minimally decorative.
 
 ---
 
-## 9. Event Customization
+# 7. Experience
 
-Setiap event harus dapat mempunyai tampilan berbeda tanpa membuat source page baru.
+Current event Experience tools include:
 
-Minimum field:
+- activities;
+- activity checkpoints;
+- activity logs;
+- benefits;
+- one-time benefit claims;
+- scanner station linkage.
+
+Examples:
 
 ```text
-name
-slug
-description
-venue
-starts_at
-ends_at
-
-primary_color
-secondary_color
-background_color
-foreground_color
-surface_color
-
-logo_url
-hero_image_url
-poster_url
+Workshop check-in
+Merchandise claim
+VIP activation
+Booth checkpoint
+Session attendance
 ```
 
-Tema diterapkan melalui CSS variables:
-
-```css
---event-primary
---event-secondary
---event-background
---event-foreground
---event-surface
-```
-
-### Appearance Editor target
-
-Organizer dapat:
-
-- upload logo;
-- upload hero image;
-- upload poster;
-- memilih primary color;
-- memilih secondary color;
-- memilih background;
-- memilih text color;
-- melihat live preview;
-- save;
-- melihat halaman event langsung.
-
-File tidak disimpan ke GitHub. Upload disimpan ke **Supabase Storage**, database hanya menyimpan path/URL.
+The same attendee credential should work across access, activity, and benefit flows.
 
 ---
 
-## 10. Magic UI Design Direction
+# 8. Appearance
 
-PassFlow akan memakai komponen dan motion dari **Magic UI** supaya terasa interaktif, modern, dengan interaksi yang konsisten.
+Event Appearance remains responsible for basic PassFlow-level branding:
 
-Magic UI mengikuti workflow instalasi bergaya shadcn, jadi komponennya masuk ke project dan tetap bisa kita edit sendiri.
+- primary color;
+- secondary color;
+- background;
+- foreground;
+- surface;
+- header style;
+- logo;
+- hero image;
+- poster.
 
-### Komponen yang direncanakan
+This is **Quick Setup**, not a replacement for a full visual website builder.
 
-#### Landing Page
+PassFlow should not grow into another drag-and-drop page builder when Figma already exists for that job.
 
-- **Interactive Grid Pattern**
-  - background hero yang bereaksi dengan pointer;
-- **Blur Fade**
-  - entrance animation untuk headline dan section;
-- **Hyper Text**
-  - micro-interaction untuk label tertentu;
-- **Shimmer Button / Interactive Hover Button**
-  - CTA utama;
-- **Border Beam**
-  - highlight Digital Pass card;
-- **Animated Beam**
-  - visualisasi flow Wristband → Scanner → Database → Dashboard;
-- **Number Ticker**
-  - angka event, attendee, scan, dan activity;
-- **Magic Card**
-  - feature cards;
-- **Marquee**
-  - event / feature showcase bila diperlukan.
+---
 
-#### Admin Dashboard
+# 9. Figma Integration Today
 
-Gunakan motion lebih ringan:
+The repository already contains an initial Figma integration.
 
-- Number Ticker untuk statistik;
-- Magic Card untuk overview cards;
-- Blur Fade untuk page transition/section reveal;
-- Border Beam hanya untuk status penting;
-- Animated List untuk recent scan log bila cocok.
+Current implementation includes:
 
-#### Public Event Page
+- Figma OAuth connection;
+- encrypted Figma token storage;
+- connected account status in Profile;
+- event design library;
+- Figma frame/file URL sync;
+- frame preview;
+- design metadata;
+- PassFlow dynamic markers;
+- QR design options;
+- ticket-specific design assets;
+- Save As / export workflow.
 
-Theme Magic UI harus mengikuti warna event:
+Current manual flow is approximately:
 
 ```text
-Magic UI effect
-      ↓
-CSS variable event
-      ↓
-custom event identity
+Connect Figma
+→ paste Figma frame URL
+→ sync
+→ detect PassFlow markers
+→ save design
 ```
 
-Jangan hardcode seluruh Magic UI ke warna ungu PassFlow.
+This flow works as the **existing foundation**, but it is **not the final intended Customize workflow**.
 
-#### Scanner
+---
 
-Scanner adalah critical operational UI.
+# 10. Customize Event Direction
 
-**Jangan membuat scanner terlalu dekoratif.**
+## Product decision
 
-Boleh memakai animation untuk:
+Customize follows:
 
-- scan line;
-- result transition;
-- success/error feedback;
-- progress menuju reset.
+> **Template-first, freedom-second.**
 
-Hindari:
+The default experience should not throw a normal organizer into an empty canvas and politely abandon them there.
 
-- heavy background particles;
-- animation yang mengganggu kamera;
-- animation lambat;
-- efek yang memperburuk readability.
-
-Scanner harus memprioritaskan:
+### Default flow
 
 ```text
-FAST
-CLEAR
-HIGH CONTRAST
-LARGE TYPE
-LOW LATENCY
+Customize Event
+→ Start with PassFlow
+→ choose template/style
+→ open existing Figma file
+→ run PassFlow plugin
+→ install starter template
+→ edit
+→ auto-sync Draft
+→ Preview
+→ Publish
 ```
 
----
+### Advanced flow
 
-## 11. Magic UI Setup
-
-Magic UI menggunakan pola instalasi yang sama seperti shadcn/ui.
-
-Target setup saat UI phase:
-
-```bash
-npx shadcn@latest init
-```
-
-Lalu tambahkan komponen yang diperlukan, misalnya:
-
-```bash
-npx shadcn@latest add @magicui/interactive-grid-pattern
-npx shadcn@latest add @magicui/blur-fade
-npx shadcn@latest add @magicui/magic-card
-npx shadcn@latest add @magicui/number-ticker
-npx shadcn@latest add @magicui/border-beam
-npx shadcn@latest add @magicui/animated-beam
-npx shadcn@latest add @magicui/shimmer-button
-npx shadcn@latest add @magicui/hyper-text
-```
-
-Komponen harus disesuaikan dengan design system PassFlow, bukan ditempel mentah satu per satu.
-
----
-
-## 12. Design Principles
-
-UI PassFlow harus:
-
-- terasa native web app;
-- mobile responsive;
-- cepat;
-- tidak bergantung pada hover;
-- tetap bagus di iPhone/iPad;
-- usable dengan touch;
-- menggunakan spacing yang konsisten;
-- memakai typography yang kuat;
-- memiliki dark/light contrast yang jelas;
-- motion singkat dan memiliki fungsi;
-- menghindari gradient berlebihan;
-- menghindari glassmorphism berlebihan;
-- tidak memakai efek hanya karena efek tersebut tersedia.
-
-Magic UI dipakai sebagai **micro-interaction dan visual enhancement**, bukan sebagai alasan membuat semua benda bergerak.
-
----
-
-# ROADMAP SAMPAI FINAL
-
-## Phase 0, Foundation
-
-Status: **COMPLETE** (build + Chromium responsive baseline verified)
-
-- [x] Buat repository
-- [x] Setup Next.js + TypeScript
-- [x] Buat struktur App Router
-- [x] Buat landing prototype
-- [x] Buat dashboard prototype
-- [x] Buat event dynamic route
-- [x] Buat scanner prototype
-- [x] Buat claim prototype
-- [x] Buat database schema awal
-- [x] Konfigurasi Tailwind CSS v4 + shadcn (Button, cn, registry)
-- [x] Integrasikan Magic UI foundation (Blur Fade + Number Ticker)
-- [x] Buat design tokens PassFlow
-
-**Definition of Done:** app build tanpa error, semua prototype route dapat dibuka, responsive basic selesai.
-
----
-
-## Phase 1, Supabase Infrastructure
-
-- [ ] Buat Supabase project
-- [ ] Simpan URL dan keys di Vercel / local env
-- [ ] Jalankan `0001_initial_schema.sql`
-- [ ] Buat Storage bucket untuk event assets
-- [ ] Setup RLS
-- [ ] Setup policy organizer
-- [ ] Setup policy staff
-- [ ] Setup policy visitor
-- [ ] Buat seed development data
-
-**Definition of Done:** data event dapat dibuat dan dibaca dari Supabase tanpa mock data.
-
----
-
-## Phase 2, Authentication & Roles
-
-Status: **IMPLEMENTED, EXTERNAL SETUP PENDING**. Panduan: [authentication setup](docs/EMAIL_AUTH_SETUP.md).
-
-Roles:
+Experienced designers can choose:
 
 ```text
-ORGANIZER / ADMIN
-STAFF
-VISITOR
+Advanced Mode
+→ start blank
+→ create custom layout
+→ assign PassFlow elements manually
 ```
 
-Tasks:
-
-- [x] email sign in / automatic account registration (kode)
-- [x] Sign out perangkat saat ini (kode)
-- [x] Organizer protected routes
-- [x] Staff station membership guard
-- [x] Visitor account page
-- [ ] Visitor event pass terhubung database
-- [x] Session cookie + proxy refresh (kode)
-- [x] Unauthorized state
-- [x] Route protection
-- [ ] Konfigurasi email provider pada Supabase
-- [ ] Uji email authentication end-to-end dengan akun email nyata
-
-**Definition of Done:** user hanya dapat mengakses fungsi sesuai role.
-
 ---
 
-## Phase 3, Event Management
+# 11. PassFlow Starter Template
 
-- [ ] Event list
-- [ ] Create event
-- [ ] Edit event
-- [ ] Draft/publish/archive state
-- [ ] Event slug
-- [ ] Date & location
-- [ ] Capacity
-- [ ] Ticket type management
-- [ ] Delete/archive confirmation
-- [ ] Dashboard event metrics
-
-**Definition of Done:** organizer dapat membuat event baru tanpa mengubah source code.
-
----
-
-## Phase 4, Event Appearance & Assets
-
-- [ ] Event color customization
-- [ ] Logo upload
-- [ ] Hero image upload
-- [ ] Poster upload
-- [ ] Supabase Storage integration
-- [ ] Image validation
-- [ ] Image compression/resizing bila diperlukan
-- [ ] Live preview
-- [ ] Save theme
-- [ ] Public page membaca theme dari DB
-- [ ] Mobile preview
-
-**Definition of Done:** dua event dapat memiliki visual yang berbeda dari admin panel.
-
----
-
-## Phase 5, Attendees & Ticket Types
-
-- [ ] Attendee list
-- [ ] Search attendee
-- [ ] Create/import attendee
-- [ ] Ticket types
-- [ ] General / VIP / Crew examples
-- [ ] Registration status
-- [ ] Checked-in state
-- [ ] Attendee detail
-- [ ] Attendance metrics
-
-**Definition of Done:** satu event memiliki attendee dan kategori pass nyata di database.
-
----
-
-## Phase 6, QR Wristband Generation
-
-- [ ] Generate batch QR credential
-- [ ] Prefix / unique token strategy
-- [ ] UNCLAIMED state
-- [ ] QR printable layout
-- [ ] Batch print/download
-- [ ] QR status dashboard
-- [ ] Active / revoked / replaced filters
-- [ ] Manual revoke
-- [ ] Replacement flow
-
-**Important:** production token sebaiknya tidak hanya menggunakan urutan mudah ditebak seperti `WR-0001`. ID yang ditampilkan boleh sederhana, tetapi QR credential harus menggunakan token yang sulit ditebak.
-
-**Definition of Done:** organizer dapat menghasilkan batch wristband yang belum mempunyai pemilik.
-
----
-
-## Phase 7, Visitor Claim Flow
-
-- [ ] Visitor membuka Event Pass
-- [ ] Status awal Not Claimed
-- [ ] Open camera
-- [ ] Scan wristband
-- [ ] Validate UNCLAIMED
-- [ ] Confirm claim
-- [ ] Atomic database claim
-- [ ] Prevent double claim
-- [ ] Bind credential to attendee
-- [ ] Digital Pass menampilkan QR yang sama
-- [ ] Lost wristband flow
-- [ ] Replacement flow
-
-**Definition of Done:** dua akun tidak dapat claim QR yang sama, dan QR aktif langsung muncul di Digital Event Pass.
-
----
-
-## Phase 8, Access Zones & Scanner Stations
-
-- [ ] Create zone
-- [ ] Create access rule
-- [ ] Create Scanner Station
-- [ ] Assign station mode
-- [ ] Assign station to zone
-- [ ] Station active/inactive
-- [ ] Camera permission state
-- [ ] Loading state
-- [ ] QR decode
-- [ ] Server validation
-- [ ] Granted screen
-- [ ] Denied screen
-- [ ] Invalid screen
-- [ ] Auto reset
-- [ ] Duplicate scan protection
-- [ ] Write scan log
-
-Modes:
+A starter template should contain a useful event website structure:
 
 ```text
-CHECK_IN
-ZONE_ACCESS
-ACTIVITY
-CLAIM
+Hero
+About
+Tickets
+Schedule
+Speakers
+Sponsors
+Venue
+FAQ
+CTA
+Footer
 ```
 
-**Definition of Done:** scanner nyata dapat memutuskan akses berdasarkan attendee, ticket type, zone, dan station.
+The user can then:
+
+- move sections;
+- delete sections;
+- change typography;
+- change colors;
+- replace imagery;
+- redesign components;
+- create a radically different layout.
+
+The template exists to provide structure, not to lock creativity.
 
 ---
 
-## Phase 9, Activities & Benefits
+# 12. Figma Binding Model
 
-- [ ] Create activity
-- [ ] Workshop check-in
-- [ ] Activity checkpoint
-- [ ] Activity history
-- [ ] Benefit definition
-- [ ] Merchandise claim
-- [ ] Prevent duplicate claim
-- [ ] Already Claimed state
-- [ ] Visitor activity view
-
-**Definition of Done:** satu QR dapat dipakai untuk aktivitas dan benefit tanpa mengubah QR.
-
----
-
-## Phase 10, Dashboard & Analytics
-
-- [ ] Total registered
-- [ ] Total checked-in
-- [ ] QR claimed
-- [ ] QR unclaimed
-- [ ] Granted scans
-- [ ] Denied scans
-- [ ] Zone traffic
-- [ ] Activity participation
-- [ ] Benefit claims
-- [ ] Recent scan feed
-- [ ] Number Ticker animation
-- [ ] Simple charts
-- [ ] Filter by date/station/zone
-
-**Definition of Done:** organizer dapat memahami kondisi event dari dashboard tanpa membuka database.
-
----
-
-## Phase 11, UI Polish + Magic UI
-
-- [ ] Install Magic UI components yang dipilih
-- [ ] Landing motion
-- [ ] Dashboard micro-interactions
-- [ ] Event page transitions
-- [ ] Interactive Grid Pattern
-- [ ] Blur Fade
-- [ ] Number Ticker
-- [ ] Magic Card
-- [ ] Border Beam
-- [ ] Animated Beam untuk system flow
-- [ ] Button interactions
-- [ ] Loading skeleton
-- [ ] Empty states
-- [ ] Error states
-- [ ] Reduced-motion support
-- [ ] Touch/mobile testing
-
-**Definition of Done:** motion terasa deliberate, tidak mengganggu fungsi, dan tampilan konsisten di desktop, iPad, dan iPhone.
-
----
-
-## Phase 12, Security & Reliability
-
-- [ ] Review RLS
-- [ ] Service role hanya server-side
-- [ ] Validate all server inputs
-- [ ] Rate-limit sensitive endpoints bila diperlukan
-- [ ] Prevent client-side privilege decisions
-- [ ] Claim transaction server-side
-- [ ] Scanner validation server-side
-- [ ] QR revoke enforced server-side
-- [ ] File upload MIME/type/size validation
-- [ ] Graceful camera failure
-- [ ] Manual attendee lookup fallback
-- [ ] Error logging
-- [ ] No secrets in Git history
-
-**Definition of Done:** browser tidak dapat mengubah role, akses, claim, atau status hanya dengan memanipulasi frontend.
-
----
-
-## Phase 13, Testing
-
-### Functional
-
-- [ ] Create event
-- [ ] Customize event
-- [ ] Register attendee
-- [ ] Generate QR
-- [ ] Claim QR
-- [ ] Claim same QR twice
-- [ ] Scan valid QR
-- [ ] Scan invalid QR
-- [ ] Scan revoked QR
-- [ ] General enters VIP area
-- [ ] VIP enters VIP area
-- [ ] Duplicate check-in
-- [ ] Merchandise claim twice
-- [ ] Replace wristband
-- [ ] Digital Pass updates
-
-### Device
-
-- [ ] iPhone Safari
-- [ ] iPad Safari
-- [ ] Android Chrome jika tersedia
-- [ ] Desktop Chrome
-- [ ] Camera permission denied
-- [ ] Camera permission granted
-- [ ] Dark venue / low-light practical test
-
-### Responsive
-
-- [ ] 320px
-- [ ] 375px
-- [ ] 430px
-- [ ] tablet
-- [ ] desktop
-- [ ] kiosk landscape
-
----
-
-## Phase 14, Vercel Deployment
-
-- [ ] Connect GitHub repo to Vercel
-- [ ] Configure framework as Next.js
-- [ ] Add Supabase environment variables
-- [ ] Preview deployment
-- [ ] Run build verification
-- [ ] Fix runtime/build errors
-- [ ] Production deployment
-- [ ] Verify HTTPS camera access
-- [ ] Verify image uploads
-- [ ] Verify Supabase production policies
-- [ ] Verify scanner on deployed HTTPS domain
-
----
-
-## Phase 15, Final Demo Preparation
-
-Alur penerimaan operasional:
+Layer names may remain human-readable, for example:
 
 ```text
-1. Organizer opens dashboard
-2. Show multiple events
-3. Open one event
-4. Change event theme
-5. Show attendee list
-6. Generate / show available QR wristband
-7. Visitor opens Digital Event Pass
-8. Visitor claims wristband
-9. Same QR appears on phone
-10. Scan QR at Main Entrance
-11. Result: CHECKED IN / ACCESS GRANTED
-12. Scan General pass at VIP Lounge
-13. Result: ACCESS DENIED
-14. Scan VIP pass at VIP Lounge
-15. Result: ACCESS GRANTED
-16. Scan merchandise claim
-17. Claim succeeds
-18. Scan again
-19. Result: ALREADY CLAIMED
-20. Dashboard shows new logs
+PASSFLOW_EVENT_NAME
+PASSFLOW_REGISTER
+PASSFLOW_SCHEDULE
 ```
 
-Jika semua 20 langkah tersebut berjalan, core project dianggap final.
+But **layer names must not be the primary internal binding identity**.
+
+The intended system should use Figma plugin metadata / `pluginData`.
+
+Conceptually:
+
+```text
+Layer name:
+Register Button
+
+PassFlow metadata:
+role = register
+schema = passflow.website.v1
+binding = action.register
+```
+
+This allows users to rename layers without destroying PassFlow integration.
 
 ---
 
-## 13. Final Acceptance Criteria
+# 13. Figma Plugin Workflow
 
-Project dianggap selesai jika:
+The intended primary flow is:
 
-- [ ] satu deployment menangani beberapa event;
-- [ ] organizer dapat membuat event tanpa coding;
-- [ ] tiap event dapat memiliki theme dan asset berbeda;
-- [ ] attendee tersimpan per event;
-- [ ] QR batch dapat dibuat sebelum pemilik ditentukan;
-- [ ] visitor dapat claim QR;
-- [ ] satu QR muncul di wristband dan Digital Pass;
-- [ ] scanner kamera bekerja di deployed HTTPS;
-- [ ] scanner memvalidasi berdasarkan database;
-- [ ] access rule bekerja;
-- [ ] revoke/replacement bekerja;
-- [ ] activity tracking bekerja;
-- [ ] duplicate claim ditolak;
-- [ ] dashboard membaca data aktual;
-- [ ] upload image tersimpan di Storage;
-- [ ] role & RLS aman;
-- [ ] UI mobile responsive;
-- [ ] Magic UI terintegrasi tanpa mengganggu usability;
-- [ ] Vercel production build sukses;
-- [ ] demo scenario end-to-end sukses.
+```text
+Open Figma file
+→ PassFlow Plugin
+→ Pair Event
+→ Edit
+→ Auto-sync Draft
+→ Preview
+→ Publish
+```
+
+The old:
+
+```text
+copy link
+→ paste URL
+→ press sync
+```
+
+should remain only as fallback/manual import rather than the main UX.
 
 ---
 
-## 14. Environment Variables
+## Pairing
 
-Copy `.env.example` menjadi `.env.local`.
+Pairing should use a temporary code.
+
+Example:
+
+```text
+PassFlow:
+PF-82DK7
+
+Figma Plugin:
+Enter pairing code
+→ Connected to Festival of Ideas 2026
+```
+
+After pairing, the Figma file remembers the PassFlow event association through plugin metadata.
+
+No repeated copy-paste URL should be required.
+
+---
+
+# 14. Draft, Preview, Publish
+
+**Sync and Publish are different operations.**
+
+```text
+Figma changes
+→ PassFlow Draft
+→ Preview
+→ Publish
+→ Live website
+```
+
+Figma edits should never silently change a live event website.
+
+Recommended states:
+
+```text
+Synced
+Changes detected
+Syncing draft
+Draft ready
+Published
+```
+
+When the plugin is open, draft sync can use a short debounce after document changes.
+
+Figma webhook events can later be used for background change detection, but should not be treated as the only real-time synchronization mechanism.
+
+---
+
+# 15. Plugin Modes
+
+## Simple Mode
+
+For ordinary organizers:
+
+```text
+Festival of Ideas 2026
+Connected
+
+Draft synced
+
+Preview Website
+Publish
+Open PassFlow
+```
+
+No marker management required.
+
+## Advanced Mode
+
+For designers:
+
+```text
+Selected layer
+→ Assign as
+   Register
+   My Pass
+   Tickets
+   Schedule
+   Custom Link
+```
+
+---
+
+# 16. Insert PassFlow Block
+
+The Figma plugin should eventually provide reusable blocks:
+
+```text
+Hero
+Register CTA
+Ticket List
+Schedule
+Speaker Grid
+Sponsor Grid
+Venue
+FAQ
+Footer
+```
+
+This lets users add functional PassFlow components without rebuilding bindings manually.
+
+---
+
+# 17. Figma vs PassFlow Responsibilities
+
+## Figma controls
+
+- visual hierarchy;
+- layout;
+- typography;
+- graphics;
+- composition;
+- responsive frames;
+- design expression.
+
+## PassFlow controls
+
+- event data;
+- authentication;
+- registration;
+- ticket data;
+- attendee state;
+- QR credential;
+- My Pass state;
+- access control;
+- activities;
+- benefits;
+- analytics;
+- SEO;
+- publishing;
+- domain routing.
+
+Architecture:
+
+```text
+FIGMA
+visual/layout
+     ↓
+PASSFLOW DESIGN SCHEMA
+     ↓
+PASSFLOW ENGINE
+data/actions/state
+     ↓
+EVENT WEBSITE
+```
+
+The final integration should **not** degrade into:
+
+```text
+Figma
+→ PNG
+→ background image
+```
+
+The generated event website must remain functional and data-driven.
+
+---
+
+# 18. Responsive Website Design
+
+Recommended Figma frames:
+
+```text
+Desktop 1440
+Mobile 390
+```
+
+Tablet can be optional.
+
+If a dedicated mobile frame is unavailable, PassFlow may attempt a responsive fallback but should surface a warning rather than pretending every desktop layout magically understands mobile design.
+
+---
+
+# 19. Event Subdomains
+
+Long-term public event URLs should support:
+
+```text
+discoveries.passflow.my.id
+festival.passflow.my.id
+conference.passflow.my.id
+```
+
+This does **not** require purchasing a domain for every event.
+
+One owned domain:
+
+```text
+passflow.my.id
+```
+
+can use wildcard DNS:
+
+```text
+*.passflow.my.id
+```
+
+One PassFlow application can then resolve:
+
+```text
+hostname
+→ subdomain
+→ event
+→ published website
+```
+
+Example:
+
+```text
+discoveries.passflow.my.id
+→ subdomain: discoveries
+→ Event: Discoveries
+```
+
+Reserved subdomains should include names such as:
+
+```text
+www
+app
+admin
+api
+login
+register
+support
+help
+status
+mail
+```
+
+Current `/e/[slug]` routing remains valid until the subdomain routing layer is implemented.
+
+---
+
+# 20. Future Custom Domains
+
+A later paid/advanced capability can allow organizers to use their own domain:
+
+```text
+discoveriesfestival.com
+tickets.brand.com
+event.company.com
+```
+
+Proposed model:
+
+```text
+Default
+eventname.passflow.my.id
+
+Advanced / Pro
+custom organizer domain
+```
+
+This is not required for the initial wildcard-subdomain release.
+
+---
+
+# 21. Navigation & UI Direction
+
+PassFlow UI direction is:
+
+- minimalist;
+- editorial;
+- rounded;
+- monochrome base;
+- selective event color;
+- app-like navigation;
+- floating/sticky local navigation;
+- strong typography;
+- restrained motion;
+- responsive on desktop, iPad, and iPhone.
+
+Magic UI-style interactions are used selectively.
+
+Suitable examples:
+
+- kinetic text;
+- number ticker;
+- text animation;
+- animated list;
+- avatar circles;
+- marquee where meaningful;
+- subtle shiny/interactive buttons;
+- animated beam only when it communicates a system relationship.
+
+Avoid:
+
+- effects for decoration alone;
+- excessive glassmorphism;
+- excessive gradient;
+- distracting animation;
+- loading flashes between internal pages.
+
+---
+
+# 22. Event Theme Behavior
+
+Organizer workspace remains primarily PassFlow-branded.
+
+Inside event management, selected event identity may influence accents and previews, but readability must always win.
+
+Public event pages should reflect the event's own visual identity.
+
+Dark mode must preserve contrast and must not leave dark text on dark surfaces.
+
+---
+
+# 23. Data & Security Principles
+
+Important rules:
+
+1. Supabase is the application database.
+2. User data must never be committed to GitHub.
+3. Service-role credentials are server-only.
+4. Organizer permissions come from trusted memberships.
+5. RLS remains enabled for operational tables.
+6. Access decisions must be server-side.
+7. QR claim must be atomic.
+8. Private attendee images use protected storage.
+9. Sensitive actions must validate ownership/event scope.
+10. Figma OAuth tokens must remain encrypted server-side.
+
+---
+
+# 24. Important Data Areas
+
+The application currently works with data areas including:
+
+```text
+organizations
+organization_members
+events
+event_members
+ticket_types
+attendees
+attendee_profiles
+qr_credentials
+access_zones
+access_rules
+scanner_stations
+scan_logs
+activities
+activity_logs
+benefits
+benefit_claims
+event_assets
+figma_connections
+event_designs
+```
+
+Almost all operational event data should remain scoped by `event_id`.
+
+---
+
+# 25. Environment Variables
+
+See `.env.example`.
+
+Current application configuration includes:
 
 ```bash
 NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
+
+# Optional legacy fallback
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
-SUPABASE_SERVICE_ROLE_KEY=
+
 NEXT_PUBLIC_APP_URL=http://localhost:3000
+
+FIGMA_CLIENT_ID=
+FIGMA_CLIENT_SECRET=
+FIGMA_TOKEN_ENCRYPTION_KEY=
 ```
 
-### Rules
+Rules:
 
-- Jangan commit `.env.local`.
-- Jangan commit database password.
-- Jangan commit Supabase service role key.
-- Jangan prefix secret dengan `NEXT_PUBLIC_`.
-- Production secret disimpan di Vercel Environment Variables.
-- `SUPABASE_SERVICE_ROLE_KEY` hanya boleh dipakai di server.
+- never commit `.env.local`;
+- never expose service-role secrets through `NEXT_PUBLIC_*`;
+- Figma secret values remain server-side;
+- SMTP / Google OAuth secrets belong in their intended provider configuration.
 
 ---
 
-## 15. Local Development
+# 26. Local Development
 
 ```bash
 git clone https://github.com/palcchi/passflow.git
@@ -1023,139 +962,163 @@ npm install
 npm run dev
 ```
 
-Buka:
-
-```text
-http://localhost:3000
-```
-
-Untuk Codespaces:
+Or, for deterministic dependency installation:
 
 ```bash
-git pull origin main
-npm install
+npm ci
 npm run dev
 ```
 
-Lalu buka forwarded port Next.js.
+Useful checks:
 
----
-
-## 16. Important Project Decisions
-
-Jangan mengubah keputusan ini tanpa alasan yang jelas:
-
-1. Framework tetap **Next.js App Router + TypeScript**.
-2. Satu repository untuk seluruh platform.
-3. Sistem harus **multi-event**.
-4. Public event route menggunakan `/e/[slug]`.
-5. QR wristband dibuat sebelum pemilik ditentukan.
-6. Visitor melakukan **claim QR**.
-7. QR pada wristband dan HP adalah credential yang sama.
-8. Database berada di Supabase, bukan GitHub.
-9. Event assets berada di object storage, bukan repository.
-10. Scanner harus web-based dan menggunakan kamera browser.
-11. Scanner result harus otomatis kembali ke kamera.
-12. Access decision harus divalidasi server/database.
-13. Magic UI digunakan secara selektif.
-14. Project harus tetap nyaman digunakan di iPhone dan iPad.
-
----
-
-## 17. Handoff ke Chat Berikutnya
-
-Jika project dilanjutkan di percakapan baru, gunakan konteks berikut:
-
-```text
-Project: PassFlow
-Repo: palcchi/passflow
-
-Tujuan:
-Membangun platform multi-event berbasis Next.js untuk registrasi, attendee,
-Claim-Based QR Wristband, Digital Event Pass, access control, activity tracking,
-merchandise claim, scanner kamera, dan dashboard monitoring.
-
-Stack:
-Next.js 16 App Router
-React 19
-TypeScript
-Supabase PostgreSQL/Auth/Storage
-html5-qrcode
-Vercel
-Magic UI + shadcn untuk interactive UI
-
-Konsep QR:
-Panitia generate batch wristband QR dengan status UNCLAIMED.
-Visitor yang sudah terdaftar menerima wristband mana saja lalu scan melalui HP.
-QR di-claim dan di-bind ke Attendee ID.
-QR yang sama kemudian tampil sebagai Digital Event Pass.
-Wristband dan HP adalah dua media untuk satu credential.
-Scanner memvalidasi QR ke backend/database lalu mencatat scan log.
-
-Current status:
-Frontend prototype, admin dashboard, dynamic event page, claim prototype,
-scanner camera prototype, appearance editor, Supabase client scaffold,
-dan initial database migration sudah ada.
-Tailwind v4/PostCSS, shadcn Button, semantic design tokens, Magic UI Blur Fade
-dan Number Ticker sudah diintegrasikan. Reduced-motion dan SSR fallback tersedia.
-Build lokal terhalang akses npm; install, lint, typecheck, dan production build
-sudah lolos GitHub Actions. 35 route/viewport checks juga lolos pada 873b2eb.
-Workflow GitHub Actions juga memeriksa route responsive memakai Chromium.
-
-Next priority:
-1. provision Supabase,
-2. run migration + RLS,
-3. activate and verify email/password authentication plus optional Google OAuth using docs/EMAIL_AUTH_SETUP.md,
-4. replace mock data,
-5. implement real QR claim,
-6. implement scanner validation,
-7. storage upload,
-8. analytics,
-9. real-device camera + Safari verification,
-10. Vercel production deployment.
-
-Design:
-Modern, native, editorial SaaS feel.
-Interactive tetapi tidak norak.
-Use Magic UI selectively.
-Per-event public UI harus mengikuti custom event theme.
-Scanner harus minimal, cepat, high contrast, dan tidak penuh efek.
-Mobile/iPad support wajib.
+```bash
+npm run lint
+npm run typecheck
+npm run build
 ```
 
 ---
 
-## Foundation continuation, 25 September 2026
+# 27. Current Near-Term Priorities
 
-- Tailwind v4 menggunakan `postcss.config.mjs`; shadcn menggunakan `components.json`.
-- Token berada di `app/tokens.css`. CSS prototype berada dalam `@layer components` agar utility Tailwind tetap dapat mengoverride style.
-- Button diambil dari source resmi shadcn dan disesuaikan untuk target sentuh minimum 44px. Blur Fade dan Number Ticker diadaptasi dari Magic UI; lisensi tersimpan di `THIRD_PARTY_NOTICES.md`.
-- Landing memakai Blur Fade dan Button. Dashboard memakai Number Ticker, label data demo, dan tombol New event nonaktif sampai Phase 3.
-- Scanner tetap memakai UI operasional yang ada. Claim, scanner validation, appearance save, dan dashboard data masih prototype.
-- Phase 0 selesai: production build dan baseline responsive Chromium terverifikasi. Full UI polish masih Phase 11.
-- Validasi: `npm ci`, lint, typecheck, production build, dan 35 kombinasi route/viewport lolos pada commit `873b2eb` ([CI run](https://github.com/palcchi/passflow/actions/runs/36130913217)). Screenshot landing, dashboard, kedua tema event, claim, dan editor sudah diperiksa. Tidak terdeteksi horizontal overflow maupun page error pada 320, 375, 430, 820, dan 1440px. Perangkat iPhone/iPad dan kamera nyata tetap perlu uji manual.
-- `package-lock.json` berasal dari install CI yang berhasil, sudah disimpan di repo, dan CI menggunakan `npm ci`. Gunakan `npm ci` untuk setup yang konsisten.
-- Berikutnya: provision Supabase, lalu migration/RLS dan auth. Jangan aktifkan claim/scanner production sebelum validasi server siap.
+## A. Customize / Figma
+
+- replace URL-first Figma workflow with plugin-first pairing;
+- create PassFlow starter website template;
+- add plugin metadata bindings;
+- add temporary event pairing code;
+- build draft sync lifecycle;
+- separate Preview and Publish;
+- support Desktop + Mobile frames;
+- add Insert PassFlow Block;
+- retain blank Advanced Mode.
+
+## B. Event Website
+
+- introduce published design snapshot;
+- render functional Figma-derived layout safely;
+- add dynamic PassFlow bindings;
+- support custom subdomain routing;
+- add SEO/share configuration.
+
+## C. Operations
+
+- continue hardening scanner behavior;
+- improve access-rule lifecycle;
+- improve credential replacement/history;
+- expand live event monitoring;
+- improve scanner/device status visibility;
+- strengthen duplicate/fraud detection.
+
+## D. Platform
+
+Future candidates already considered:
+
+- Live Event Command Center;
+- Gate & Zone rules;
+- scanner/device monitoring;
+- background jobs;
+- scheduled event automation;
+- PostHog analytics/session replay/feature flags;
+- Cloudflare Turnstile;
+- Upstash rate limiting;
+- Resend transactional email;
+- Dynamic Pass lifecycle;
+- Wallet Pass;
+- offline scanner;
+- fraud detection.
 
 ---
 
-## Authentication continuation, 25 September 2026
+# 28. Product Decisions That Should Stay Stable
 
-- `/register` adalah CTA utama dari landing page untuk membuat akun email/password. `/login` dipakai untuk akun yang sudah ada; keduanya menawarkan Google sebagai opsi tambahan.
-- `/account` menampilkan user terverifikasi. Role organizer/staff hanya berasal dari `organization_members`, bukan metadata user.
-- `lib/supabase/server.ts` sekarang client SSR berbasis cookie dengan public key dan RLS, bukan service-role client.
-- `proxy.ts` refresh session; halaman privat memakai `getUser()`, validasi membership, dan response no-store. Callback hanya mengizinkan tujuan internal yang dikenal.
-- Migration `0002_auth_read_policies.sql` menambahkan read policies. Membership tidak dapat ditulis pengguna melalui browser. Writes operasional lainnya masih tertutup.
-- Halaman claim/scanner yang dilindungi tidak lagi menampilkan sukses simulasi. Backend transaksi QR belum diimplementasikan.
-- Aplikasi tidak menyimpan SMTP atau Google client secret. Ikuti [panduan setup](docs/EMAIL_AUTH_SETUP.md), termasuk pembuatan owner pertama via SQL tepercaya dan URL callback Google yang benar.
-- Pastikan `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, dan `NEXT_PUBLIC_APP_URL=https://passflow.my.id` tersedia di Vercel sebelum menguji login production. CI memeriksa route protection, callback failures, redirect validation, dan pengujian PostgreSQL RLS antar organisasi.
+Unless there is a strong reason to change them:
+
+1. PassFlow remains multi-event.
+2. Next.js App Router + TypeScript remains the application foundation.
+3. Supabase remains the primary database/auth/storage backend.
+4. QR wristband and digital pass represent one attendee credential.
+5. Scanner remains browser-based.
+6. Scanner decisions are validated server-side.
+7. Public event design is organizer-controlled.
+8. Customize is **template-first, freedom-second**.
+9. Figma is the main advanced visual editor.
+10. PassFlow does not build a competing full drag-and-drop website editor.
+11. Figma binding identity should use metadata, not only layer names.
+12. Sync updates Draft, not Live.
+13. Publish is explicit.
+14. Event websites should move toward wildcard subdomains.
+15. Custom organizer domains are a later capability.
+16. Mobile/iPad support is required.
+17. Motion must support usability rather than compete with it.
+18. Vercel deployment is explicit, not something to casually trigger after every edit.
 
 ---
 
-## Documentation References
+# 29. Handoff Summary
+
+```text
+Project:
+PassFlow
+
+Repository:
+palcchi/passflow
+
+Core:
+Multi-event event platform with registration, attendees,
+QR credentials, digital passes, access control, scanners,
+activities, benefits, event websites, and Figma-based design.
+
+Current stack:
+Next.js 16
+React 19.2
+TypeScript
+Supabase
+Tailwind CSS 4
+Motion
+Magic UI adaptations
+html5-qrcode
+qrcode
+Vercel
+
+Current organizer event sections:
+Overview
+People
+Access
+Experience
+Appearance
+Design
+Settings
+
+Customize direction:
+Template-first.
+PassFlow plugin inserts a starter template into an existing Figma file.
+Blank canvas remains Advanced Mode.
+Figma nodes use plugin metadata for PassFlow bindings.
+Pair event using a temporary pairing code.
+Plugin auto-syncs Draft.
+Preview before Publish.
+Publishing is explicit.
+
+Event website direction:
+Current /e/[slug] remains available.
+Target default URL:
+eventname.passflow.my.id
+
+Longer term:
+custom organizer domains.
+
+Deployment rule:
+Do not trigger preview or production deployments unless explicitly requested.
+```
+
+---
+
+## References
 
 - Next.js: https://nextjs.org/docs
 - Supabase: https://supabase.com/docs
 - Vercel: https://vercel.com/docs
-- Magic UI: https://magicui.design/docs
+- Figma Developers: https://developers.figma.com
+- Magic UI: https://magicui.design
 - shadcn/ui: https://ui.shadcn.com
