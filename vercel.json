@@ -1,9 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "git": {
-    "deploymentEnabled": {
-      "ui/flow-reference-release": false,
-      "ui/cohesive-rounded-release": false
-    }
+    "deploymentEnabled": false
   }
 }
