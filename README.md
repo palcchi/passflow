@@ -12,6 +12,8 @@ Repository: `palcchi/passflow`
 
 **Checkpoint: 28 September 2026**
 
+Full execution roadmap: [docs/PASSFLOW_ROADMAP.md](docs/PASSFLOW_ROADMAP.md)
+
 PassFlow sudah melewati tahap prototype awal dan sekarang mempunyai foundation aplikasi, database, authentication, organizer workspace, event management, participant management, QR/access system, scanner, experience tools, profile system, serta Figma integration awal.
 
 Fokus berikutnya bukan menambah halaman sebanyak mungkin, tetapi membuat workflow event terasa seperti satu produk yang utuh, terutama:
