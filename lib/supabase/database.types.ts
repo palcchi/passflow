@@ -14,6 +14,19 @@ export type Database = {
   }
   public: {
     Tables: {
+      event_subdomains: {Row:{event_id:string;label:string;updated_at:string};Insert:never;Update:never;Relationships:[]}
+      figma_plugin_links: {
+        Row: {id:string;event_id:string;document_id:string;file_name:string;file_key:string|null;draft_id:string|null;created_at:string;expires_at:string;revoked_at:string|null;last_synced_at:string|null;external_change_at:string|null}
+        Insert: never
+        Update: {revoked_at?:string|null}
+        Relationships: []
+      }
+      event_studio_documents: {
+        Row: { id: string; event_id: string; ticket_type_id: string | null; kind: string; name: string; status: string; revision: number; document: Json; created_by: string | null; created_at: string; updated_at: string }
+        Insert: { event_id: string; kind: string; name: string; document: Json; id?: string; ticket_type_id?: string | null; status?: string; revision?: number; created_by?: string | null; created_at?: string; updated_at?: string }
+        Update: { name?: string; document?: Json; status?: string; revision?: number }
+        Relationships: []
+      }
       access_rules: {
         Row: {
           allowed: boolean
@@ -62,6 +75,7 @@ export type Database = {
       }
       access_zones: {
         Row: {
+          is_active: boolean
           code: string
           created_at: string
           description: string | null
@@ -70,6 +84,7 @@ export type Database = {
           name: string
         }
         Insert: {
+          is_active?: boolean
           code: string
           created_at?: string
           description?: string | null
@@ -78,6 +93,7 @@ export type Database = {
           name: string
         }
         Update: {
+          is_active?: boolean
           code?: string
           created_at?: string
           description?: string | null
@@ -97,6 +113,7 @@ export type Database = {
       }
       activities: {
         Row: {
+          is_active: boolean
           code: string
           created_at: string
           description: string | null
@@ -105,6 +122,7 @@ export type Database = {
           name: string
         }
         Insert: {
+          is_active?: boolean
           code: string
           created_at?: string
           description?: string | null
@@ -113,6 +131,7 @@ export type Database = {
           name: string
         }
         Update: {
+          is_active?: boolean
           code?: string
           created_at?: string
           description?: string | null
@@ -384,15 +403,15 @@ export type Database = {
         Relationships: []
       }
       event_designs: {
-        Row: { id: string; event_id: string; created_by: string | null; kind: string; asset_type: string | null; name: string; figma_file_key: string; figma_node_id: string | null; figma_file_url: string; figma_url: string | null; figma_file_name: string | null; figma_version: string | null; preview_url: string | null; template: Json; ticket_type_id: string | null; metadata: Json; last_synced_at: string | null; created_at: string; updated_at: string }
-        Insert: { id?: string; event_id: string; created_by: string | null; kind: string; asset_type?: string | null; name: string; figma_file_key: string; figma_node_id?: string | null; figma_file_url: string; figma_url?: string | null; figma_file_name?: string | null; figma_version?: string | null; preview_url?: string | null; template?: Json; ticket_type_id?: string | null; metadata?: Json; last_synced_at?: string | null; created_at?: string; updated_at?: string }
-        Update: { id?: string; event_id?: string; created_by?: string | null; kind?: string; asset_type?: string | null; name?: string; figma_file_key?: string; figma_node_id?: string | null; figma_file_url?: string; figma_url?: string | null; figma_file_name?: string | null; figma_version?: string | null; preview_url?: string | null; template?: Json; ticket_type_id?: string | null; metadata?: Json; last_synced_at?: string | null; created_at?: string; updated_at?: string }
+        Row: { status: string; id: string; event_id: string; created_by: string | null; kind: string; asset_type: string | null; name: string; figma_file_key: string; figma_node_id: string | null; figma_file_url: string; figma_url: string | null; figma_file_name: string | null; figma_version: string | null; preview_url: string | null; template: Json; ticket_type_id: string | null; metadata: Json; last_synced_at: string | null; created_at: string; updated_at: string }
+        Insert: { status?: string; id?: string; event_id: string; created_by: string | null; kind: string; asset_type?: string | null; name: string; figma_file_key: string; figma_node_id?: string | null; figma_file_url: string; figma_url?: string | null; figma_file_name?: string | null; figma_version?: string | null; preview_url?: string | null; template?: Json; ticket_type_id?: string | null; metadata?: Json; last_synced_at?: string | null; created_at?: string; updated_at?: string }
+        Update: { status?: string; id?: string; event_id?: string; created_by?: string | null; kind?: string; asset_type?: string | null; name?: string; figma_file_key?: string; figma_node_id?: string | null; figma_file_url?: string; figma_url?: string | null; figma_file_name?: string | null; figma_version?: string | null; preview_url?: string | null; template?: Json; ticket_type_id?: string | null; metadata?: Json; last_synced_at?: string | null; created_at?: string; updated_at?: string }
         Relationships: []
       }
       figma_connections: {
-        Row: { user_id: string; figma_user_id: string; handle: string | null; email: string | null; avatar_url: string | null; figma_email: string | null; figma_name: string | null; access_token_encrypted: string; refresh_token_encrypted: string; expires_at: string; scopes: string[]; connected_at: string; updated_at: string }
-        Insert: { user_id: string; figma_user_id: string; handle?: string | null; email?: string | null; avatar_url?: string | null; figma_email?: string | null; figma_name?: string | null; access_token_encrypted: string; refresh_token_encrypted: string; expires_at: string; scopes?: string[]; connected_at?: string; updated_at?: string }
-        Update: { user_id?: string; figma_user_id?: string; handle?: string | null; email?: string | null; avatar_url?: string | null; figma_email?: string | null; figma_name?: string | null; access_token_encrypted?: string; refresh_token_encrypted?: string; expires_at?: string; scopes?: string[]; connected_at?: string; updated_at?: string }
+        Row: { status: string; user_id: string; figma_user_id: string; handle: string | null; email: string | null; avatar_url: string | null; figma_email: string | null; figma_name: string | null; access_token_encrypted: string; refresh_token_encrypted: string; expires_at: string; scopes: string[]; connected_at: string; updated_at: string }
+        Insert: { status?: string; user_id: string; figma_user_id: string; handle?: string | null; email?: string | null; avatar_url?: string | null; figma_email?: string | null; figma_name?: string | null; access_token_encrypted: string; refresh_token_encrypted: string; expires_at: string; scopes?: string[]; connected_at?: string; updated_at?: string }
+        Update: { status?: string; user_id?: string; figma_user_id?: string; handle?: string | null; email?: string | null; avatar_url?: string | null; figma_email?: string | null; figma_name?: string | null; access_token_encrypted?: string; refresh_token_encrypted?: string; expires_at?: string; scopes?: string[]; connected_at?: string; updated_at?: string }
         Relationships: []
       }
       events: {
@@ -745,6 +764,18 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      mark_figma_external_change: {Args:{p_file_key:string;p_at:string};Returns:undefined}
+      check_event_subdomain: {Args:{p_event_id:string;p_label:string};Returns:boolean}
+      save_event_subdomain: {Args:{p_event_id:string;p_label:string};Returns:undefined}
+      resolve_event_subdomain: {Args:{p_label:string};Returns:string|null}
+      create_figma_pairing_code: {Args:{p_event_id:string;p_code_hash:string};Returns:undefined}
+      exchange_figma_pairing_code: {Args:{p_code_hash:string;p_token_hash:string;p_document_id:string;p_file_name:string;p_file_key:string|null;p_bucket:string};Returns:Json}
+      figma_plugin_draft: {Args:{p_token_hash:string;p_document_id:string;p_revision:number;p_document:Json|null;p_payload_hash:string|null};Returns:Json}
+      retire_studio_document: { Args: {p_event_id:string;p_id:string;p_revision:number;p_delete:boolean}; Returns:undefined }
+      publish_figma_draft: { Args: {p_event_id:string;p_id:string}; Returns:undefined }
+      save_studio_document: { Args: { p_event_id: string; p_id: string | null; p_revision: number; p_kind: string; p_ticket_type_id: string | null; p_name: string; p_document: Json }; Returns: Json }
+      publish_studio_document: { Args: { p_event_id: string; p_id: string; p_revision: number }; Returns: undefined }
+      manage_event_resource: { Args: { p_event_id: string; p_id: string; p_kind: string; p_operation: string; p_values?: Json }; Returns: undefined }
       delete_event_person_record: {
         Args: { p_event_id: string; p_id: string; p_kind: string }
         Returns: undefined

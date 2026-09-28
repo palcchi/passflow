@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { EventCustomizer } from "@/components/event-customizer";
 import { getManagedEvent } from "@/lib/events";
@@ -16,13 +17,14 @@ export default async function EventAppearancePage({
   return (
     <div className="event-admin-editor-page">
       <header className="event-admin-local-heading">
-        <span className="section-kicker">Customize</span>
-        <h2>Make it yours.</h2>
+        <span className="section-kicker">Quick Setup</span>
+        <h2>Your event essentials.</h2>
         <p>
-          Define the event identity, preview the result, and publish a consistent visual experience.
+          Set basic colors, artwork and pass defaults. Use Figma for the full event website.
         </p>
       </header>
 
+      <section className="event-admin-section"><h3>Designed in Figma. Powered by PassFlow.</h3><p>Pair an existing file, insert a starter template, then sync a private draft. Published designs take priority over these basic settings.</p><Link className="button button-dark" href={`/admin/events/${eventId}/design`}>Connect Figma</Link> <Link className="button button-ghost" href={`/admin/events/${eventId}/design/studio`}>Pass layout tools</Link></section>
       <EventCustomizer event={event} />
     </div>
   );

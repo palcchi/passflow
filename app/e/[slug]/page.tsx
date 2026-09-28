@@ -1,3 +1,8 @@
+import { WebsiteRenderer } from "@/components/studio-renderer";
+import { readStudioDocument } from "@/lib/studio/model";
+import {readFigmaWebsite} from '@/lib/figma-website';
+import {FigmaWebsiteRenderer} from '@/components/figma-website-renderer';
+import {getAppOrigin} from '@/lib/supabase/config';
 import type { CSSProperties } from "react";
 import Link from "next/link";
 import Image from "next/image";
@@ -46,8 +51,16 @@ export default async function PublicEventPage({ params, searchParams }: EventPag
   } as CSSProperties;
 
   const supabase = getSupabaseConfig() ? await createServerSupabaseClient() : null;
+  const { data: website } = supabase ? await supabase.from("event_studio_documents").select("document").eq("event_id",event.id).eq("kind","website").eq("status","published").is("ticket_type_id",null).maybeSingle() : {data:null};
+  const websiteDocument = readStudioDocument(website?.document);
+  const figmaWebsite=readFigmaWebsite(website?.document);
+  if(figmaWebsite){
+    const {data:tickets}=supabase?await supabase.from('ticket_types').select('id,name,price,currency').eq('event_id',event.id):{data:[]};
+    return <main><FigmaWebsiteRenderer document={figmaWebsite} data={{name:event.name,description:event.description,date:event.dateLabel,venue:event.venue,claimUrl:`${getAppOrigin()??''}/e/${event.slug}/claim`,tickets:tickets??[]}}/></main>;
+  }
+  if(websiteDocument) return <main><WebsiteRenderer document={websiteDocument} data={{event_name:event.name,event_date:event.dateLabel,venue:event.venue,description:event.description,banner:event.heroImageUrl??'',logo:event.logoUrl??''}} claimUrl={`/e/${event.slug}/claim`}/></main>;
   const { data: eventDesign } = supabase ? await supabase.from("event_designs").select("name,preview_url,template")
-    .eq("event_id", event.id).eq("kind", "event_page").is("ticket_type_id", null).order("updated_at", { ascending: false }).limit(1).maybeSingle() : { data: null };
+    .eq("event_id", event.id).eq("status", "published").eq("kind", "event_page").is("ticket_type_id", null).order("updated_at", { ascending: false }).limit(1).maybeSingle() : { data: null };
   if (eventDesign?.preview_url) {
     const template = readTemplate(eventDesign.template);
     const frame = template.frame;

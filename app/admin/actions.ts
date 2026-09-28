@@ -397,13 +397,14 @@ export async function createZone(formData: FormData) {
   const { supabase } = await managedContext(eventId);
   const name = text(formData, "name", 100);
   const code = normalizeCode(text(formData, "code", 40) || name);
-  if (!name || !code) return;
-  await supabase.from("access_zones").insert({
+  if (!name || !code) return { error: "Name and a valid code are required." };
+  const { error } = await supabase.from("access_zones").insert({
     event_id: eventId,
     name,
     code,
     description: optionalText(formData, "description", 500),
   });
+  if (error) return { error: error.code === "23505" ? "This code already exists. Choose a unique code." : "The record could not be saved. Review the configuration and try again." };
   revalidateEvent(eventId);
 }
 
@@ -413,10 +414,16 @@ export async function createAccessRule(formData: FormData) {
   const ticketTypeId = text(formData, "ticketTypeId", 60);
   const allowed = text(formData, "allowed", 10) !== "false";
   const { supabase } = await managedContext(eventId);
-  await supabase.from("access_rules").upsert(
+  const [zone, ticket] = await Promise.all([
+    supabase.from("access_zones").select("id").eq("event_id",eventId).eq("id",zoneId).maybeSingle(),
+    supabase.from("ticket_types").select("id").eq("event_id",eventId).eq("id",ticketTypeId).maybeSingle(),
+  ]);
+  if (!zone.data || !ticket.data) return { error: "Select a zone and pass category belonging to this event." };
+  const { error } = await supabase.from("access_rules").upsert(
     { event_id: eventId, zone_id: zoneId, ticket_type_id: ticketTypeId, allowed },
     { onConflict: "zone_id,ticket_type_id" },
   );
+  if (error) return { error: error.code === "23505" ? "This code already exists. Choose a unique code." : "The record could not be saved. Review the configuration and try again." };
   revalidateEvent(eventId);
 }
 
@@ -426,7 +433,7 @@ export async function createStation(formData: FormData) {
   const name = text(formData, "name", 100);
   const slug = slugify(text(formData, "slug", 100) || name);
   const mode = text(formData, "mode", 30);
-  if (!name || !slug || !["check_in", "zone_access", "activity", "claim"].includes(mode)) return;
+  if (!name || !slug || !["check_in", "zone_access", "activity", "claim"].includes(mode)) return { error: "Choose a valid name and scanner mode." };
 
   const config: Record<string, string> = {};
   const activityCode = normalizeCode(text(formData, "activityCode", 40));
@@ -434,7 +441,21 @@ export async function createStation(formData: FormData) {
   if (activityCode) config.activity_code = activityCode;
   if (benefitCode) config.benefit_code = benefitCode;
 
-  await supabase.from("scanner_stations").insert({
+  const zoneId = optionalText(formData, "zoneId", 60);
+  if (zoneId) {
+    const { data } = await supabase.from("access_zones").select("id").eq("event_id", eventId).eq("id", zoneId).eq("is_active", true).maybeSingle();
+    if (!data) return { error: "Choose a zone belonging to this event." };
+  }
+  if (mode === "zone_access" && !zoneId) return { error: "Choose an access zone." };
+  if (mode === "activity") {
+    const { data } = await supabase.from("activities").select("id").eq("event_id", eventId).eq("code", activityCode).eq("is_active", true).maybeSingle();
+    if (!data) return { error: "Enter an existing activity code from this event." };
+  }
+  if (mode === "claim") {
+    const { data } = await supabase.from("benefits").select("id").eq("event_id", eventId).eq("code", benefitCode).eq("is_active", true).maybeSingle();
+    if (!data) return { error: "Enter an active benefit code from this event." };
+  }
+  const { error } = await supabase.from("scanner_stations").insert({
     event_id: eventId,
     zone_id: optionalText(formData, "zoneId", 60),
     name,
@@ -443,6 +464,7 @@ export async function createStation(formData: FormData) {
     config,
     is_active: true,
   });
+  if (error) return { error: error.code === "23505" ? "This code already exists. Choose a unique code." : "The record could not be saved. Review the configuration and try again." };
   revalidateEvent(eventId);
 }
 
@@ -460,13 +482,14 @@ export async function createActivity(formData: FormData) {
   const { supabase } = await managedContext(eventId);
   const name = text(formData, "name", 100);
   const code = normalizeCode(text(formData, "code", 40) || name);
-  if (!name || !code) return;
-  await supabase.from("activities").insert({
+  if (!name || !code) return { error: "Name and a valid code are required." };
+  const { error } = await supabase.from("activities").insert({
     event_id: eventId,
     name,
     code,
     description: optionalText(formData, "description", 500),
   });
+  if (error) return { error: error.code === "23505" ? "This code already exists. Choose a unique code." : "The record could not be saved. Review the configuration and try again." };
   revalidateEvent(eventId);
 }
 
@@ -475,14 +498,15 @@ export async function createBenefit(formData: FormData) {
   const { supabase } = await managedContext(eventId);
   const name = text(formData, "name", 100);
   const code = normalizeCode(text(formData, "code", 40) || name);
-  if (!name || !code) return;
-  await supabase.from("benefits").insert({
+  if (!name || !code) return { error: "Name and a valid code are required." };
+  const { error } = await supabase.from("benefits").insert({
     event_id: eventId,
     name,
     code,
     description: optionalText(formData, "description", 500),
     is_active: true,
   });
+  if (error) return { error: error.code === "23505" ? "This code already exists. Choose a unique code." : "The record could not be saved. Review the configuration and try again." };
   revalidateEvent(eventId);
 }
 
@@ -521,6 +545,7 @@ export async function saveEventQrConfig(formData: FormData) {
   const existing = current?.qr_config && typeof current.qr_config === "object" && !Array.isArray(current.qr_config) ? current.qr_config as Record<string, unknown> : {};
   const { data: updated, error } = await supabase.from("events").update({
     qr_config: {
+      ...existing,
       mode,
       claim_mode:
         existing.claim_mode === "claim" || existing.claim_mode === "automatic"
@@ -745,7 +770,6 @@ export async function revokeCrew(formData: FormData) {
 
 export async function syncFigmaDesign(formData: FormData) {
   const eventId = text(formData, "eventId", 60);
-  const designId = optionalText(formData, "designId", 60);
   const assetType = text(formData, "assetType", 30);
   const name = text(formData, "name", 120);
   const figmaUrl = text(formData, "figmaUrl", 500);
@@ -822,10 +846,8 @@ export async function syncFigmaDesign(formData: FormData) {
       const images = await figmaFetch<{ images?: Record<string, string> }>(token, `/images/${parsed.fileKey}?ids=${encodeURIComponent(nodeId)}&format=png&scale=1`);
       previewUrl = images.images?.[nodeId] ?? null;
     }
-    const payload = { event_id: eventId, created_by: user.id, kind: assetType, name, figma_file_key: parsed.fileKey, figma_node_id: nodeId, figma_file_url: figmaUrl, figma_file_name: file.name ?? null, figma_version: file.version ?? null, preview_url: previewUrl, template, ticket_type_id: ticketTypeId, metadata: { lastModified: file.lastModified ?? null, frame: template.frame, elements: template.elements, qrPlaceholder: template.qrPlaceholder, qrMarker: template.qrMarker }, last_synced_at: new Date().toISOString(), updated_at: new Date().toISOString() };
-    const result = designId
-      ? await supabase.from("event_designs").update(payload).eq("id", designId).eq("event_id", eventId).select("id").single()
-      : await supabase.from("event_designs").insert(payload).select("id").single();
+    const payload = { status: "draft", event_id: eventId, created_by: user.id, kind: assetType, name, figma_file_key: parsed.fileKey, figma_node_id: nodeId, figma_file_url: figmaUrl, figma_file_name: file.name ?? null, figma_version: file.version ?? null, preview_url: previewUrl, template, ticket_type_id: ticketTypeId, metadata: { lastModified: file.lastModified ?? null, frame: template.frame, elements: template.elements, qrPlaceholder: template.qrPlaceholder, qrMarker: template.qrMarker }, last_synced_at: new Date().toISOString(), updated_at: new Date().toISOString() };
+    const result = await supabase.from("event_designs").insert(payload).select("id").single();
     if (result.error || !result.data) throw result.error ?? new Error("Design was not saved");
   } catch {
     redirect(`/admin/events/${eventId}/design?error=figma_sync_failed`);
@@ -839,7 +861,7 @@ export async function deleteFigmaDesign(formData: FormData) {
   const designId = text(formData, "designId", 60);
   if (!eventId || !designId) return;
   const { supabase } = await managedContext(eventId);
-  const { error } = await supabase.from("event_designs").delete().eq("id", designId).eq("event_id", eventId);
+  const { error } = await supabase.from("event_designs").delete().eq("id", designId).eq("event_id", eventId).eq("status", "draft");
   if (error) redirect(`/admin/events/${eventId}/design?error=figma_sync_failed`);
   revalidatePath(`/admin/events/${eventId}/design`);
 }

@@ -17,7 +17,7 @@ export async function managePersonRecord(form: FormData): Promise<{ error?: stri
   if (operation === "delete") {
     if (form.get("confirmation") !== "yes") return { error: "Confirm deletion before continuing." };
     const { error } = await supabase.rpc("delete_event_person_record", { p_event_id: eventId, p_id: id, p_kind: kind });
-    if (error) return { error: error.message.includes("record_in_use") ? "This category is still used by attendees, access rules, or designs. Remove those references before deleting it." : "The record could not be deleted. Refresh the page and try again." };
+    if (error) return { error: error.message.includes("record_in_use") ? "This record has attendees, access rules, designs, or scan history. Preserve the record and revoke its credential or remove unused references first." : "The record could not be deleted. Refresh the page and try again." };
   } else {
     const name = String(form.get("name") ?? "").trim();
     if (!name || name.length > 100) return { error: "Name is required and must be 100 characters or fewer." };

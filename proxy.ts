@@ -1,8 +1,29 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { getSupabaseConfig } from "@/lib/supabase/config";
+import {createClient} from '@supabase/supabase-js';
+import {eventHostLabel,eventRootDomain} from '@/lib/event-host';
+import type {Database} from '@/lib/supabase/database.types';
 
 export async function proxy(request: NextRequest) {
+  const host=(request.headers.get('host')??'').toLowerCase();
+  if(host.endsWith('.'+eventRootDomain)&&host!=='www.'+eventRootDomain){
+    const label=eventHostLabel(host),config=getSupabaseConfig();
+    const unavailable=()=>new NextResponse('Event not found',{status:404,headers:{'Cache-Control':'no-store'}});
+    if(!label||!config||process.env.PASSFLOW_EVENT_SUBDOMAINS_ENABLED!=='true')return unavailable();
+    if(!['GET','HEAD'].includes(request.method))return new NextResponse('Use the main PassFlow domain for this action',{status:405,headers:{Allow:'GET, HEAD','Cache-Control':'no-store'}});
+    const publicClient=createClient<Database>(config.url,config.key,{auth:{persistSession:false,autoRefreshToken:false}});
+    const {data:slug,error}=await publicClient.rpc('resolve_event_subdomain',{p_label:label});
+    if(error||!slug||!/^[a-zA-Z0-9_-]+$/.test(slug))return unavailable();
+    if(request.nextUrl.pathname!=='/'){
+      const canonical=new URL('https://'+eventRootDomain);
+      canonical.pathname=request.nextUrl.pathname;canonical.search=request.nextUrl.search;
+      return NextResponse.redirect(canonical,307);
+    }
+    const url=request.nextUrl.clone();url.pathname='/e/'+slug;
+    const headers=new Headers(request.headers);headers.set('x-passflow-path',url.pathname);
+    const response=NextResponse.rewrite(url,{request:{headers}});response.headers.set('Cache-Control','private, no-store');return response;
+  }
   function nextResponse() {
     const headers = new Headers(request.headers);
     headers.set("x-passflow-path", request.nextUrl.pathname);
@@ -38,6 +59,7 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
+    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:png|jpg|jpeg|webp|svg|woff2|css|js|zip)$).*)',
     "/",
     "/e/:slug",
     "/api/scan",

@@ -19,7 +19,8 @@ jobs:
           node-version: 22
       - run: npm ci --no-audit --no-fund
       - run: npm run lint
-      - run: node --experimental-strip-types --test scripts/auth-unit.test.mjs scripts/customize-actions.test.mjs
+      - run: node --experimental-strip-types --test scripts/auth-unit.test.mjs scripts/customize-actions.test.mjs scripts/studio-model.test.mjs
+      - run: node scripts/management-lifecycle.test.mjs
       - run: npm run typecheck
       - run: npm run build
       - run: npx playwright install --with-deps chromium
