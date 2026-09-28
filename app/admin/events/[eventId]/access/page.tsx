@@ -14,13 +14,13 @@ import {
   saveClaimMode,
 } from "@/app/admin/actions";
 
-type Props = { params: Promise<{ eventId: string }> };
+type Props = { params: Promise<{ eventId: string }>; searchParams: Promise<{ error?: string }> };
 
 function inputClass() {
   return "event-admin-input";
 }
 
-export default async function EventAccessPage({ params }: Props) {
+export default async function EventAccessPage({ params, searchParams }: Props) {
   const { eventId } = await params;
   const event = await getManagedEvent(eventId);
   if (!event) notFound();
@@ -75,10 +75,12 @@ export default async function EventAccessPage({ params }: Props) {
   ).length;
   const revoked = credentials.filter((item) => item.status === "revoked").length;
   const claimMode = event.qrConfig.claimMode;
+  const { error } = await searchParams;
 
   return (
     <>
       <section className="event-admin-section event-claim-mode-section">
+        {error === "claim_mode_locked" && <p role="alert" className="camera-feedback">Claim mode cannot change after attendees have registered. Existing passes stay valid.</p>}
         <div className="event-admin-section-head">
           <div>
             <span className="section-kicker">Credential assignment</span>

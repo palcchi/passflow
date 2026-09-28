@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireOrganizerMembership } from "@/lib/auth/session";
 import { defaultEventTheme } from "@/lib/events";
+import type { Json } from "@/lib/supabase/database.types";
 import { decryptFigmaToken, encryptFigmaToken, figmaFetch, parseFigmaUrl, refreshFigmaToken } from "@/lib/figma";
 import { designKinds, dynamicMarkers, type DynamicMarker, type FigmaElement, type FigmaTemplate } from "@/lib/design-template";
 
@@ -148,6 +149,8 @@ async function managedContext(eventId?: string) {
 
 function revalidateEvent(eventId: string, slug?: string | null) {
   revalidatePath("/admin");
+  revalidatePath("/events");
+  revalidatePath("/");
   revalidatePath(`/admin/events/${eventId}`);
   revalidatePath(`/admin/events/${eventId}/people`);
   revalidatePath(`/admin/events/${eventId}/access`);
@@ -200,46 +203,46 @@ export async function updateEvent(formData: FormData) {
 
   const startsAt = optionalText(formData, "startsAt", 40);
   const endsAt = optionalText(formData, "endsAt", 40);
-  const { data } = await supabase
-    .from("events")
-    .update({
+  const { error } = await supabase.rpc("stage_event_config", { p_event_id: eventId, p_patch: {
       name,
       slug,
       description: optionalText(formData, "description", 1200),
       venue: optionalText(formData, "venue", 160),
-      starts_at: startsAt ? new Date(startsAt).toISOString() : null,
-      ends_at: endsAt ? new Date(endsAt).toISOString() : null,
+      starts_at: startsAt && !Number.isNaN(Date.parse(startsAt)) ? new Date(startsAt).toISOString() : null,
+      ends_at: endsAt && !Number.isNaN(Date.parse(endsAt)) ? new Date(endsAt).toISOString() : null,
       capacity: numberValue(formData, "capacity"),
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", eventId)
-    .select("slug")
-    .single();
-
-  revalidateEvent(eventId, data?.slug);
+    } });
+  if (error) redirect(`/admin/events/${eventId}/settings?error=save`);
+  revalidateEvent(eventId, slug);
 }
 
 export async function setEventStatus(formData: FormData) {
   const eventId = text(formData, "eventId", 60);
-  const status = text(formData, "status", 20);
-  if (!["draft", "published", "archived"].includes(status)) return;
+  const action = text(formData, "action", 20);
+  if (!["publish", "archive", "reopen", "restore"].includes(action)) return;
   const { supabase } = await managedContext(eventId);
-  const { data } = await supabase
-    .from("events")
-    .update({ status: status as "draft" | "published" | "archived", updated_at: new Date().toISOString() })
-    .eq("id", eventId)
-    .select("slug")
-    .single();
-  revalidateEvent(eventId, data?.slug);
+  const { data: current } = await supabase.from("events").select("slug").eq("id", eventId).single();
+  const version = Number(text(formData, "version", 12));
+  const { error } = await supabase.rpc("transition_event", {
+    p_event_id: eventId, p_action: action, p_version: action === "restore" && Number.isInteger(version) && version > 0 ? version : null,
+  });
+  if (error) {
+    const reason = ["incomplete_event_configuration", "ticket_required_to_publish", "capacity_below_registration", "claim_mode_locked_after_registration", "no_draft_changes", "version_not_found"].find(code => error.message.includes(code)) ?? "transition";
+    redirect(`/admin/events/${eventId}/settings?error=${reason}`);
+  }
+  revalidateEvent(eventId, current?.slug);
+  const { data: updated } = await supabase.from("events").select("slug").eq("id", eventId).single();
+  if (updated?.slug !== current?.slug) revalidateEvent(eventId, updated?.slug);
 }
 
 export async function deleteEvent(formData: FormData) {
   const eventId = text(formData, "eventId", 60);
   const confirmation = text(formData, "confirmation", 100);
   const { supabase } = await managedContext(eventId);
-  const { data: event } = await supabase.from("events").select("slug").eq("id", eventId).single();
+  const { data: event } = await supabase.from("events").select("slug,status").eq("id", eventId).single();
   if (!event || confirmation !== event.slug) return;
-  await supabase.from("events").delete().eq("id", eventId);
+  const { error } = await supabase.from("events").delete().eq("id", eventId);
+  if (error) redirect(`/admin/events/${eventId}/settings?error=delete`);
   revalidatePath("/admin");
   redirect("/admin");
 }
@@ -524,10 +527,10 @@ export async function saveEventTheme(formData: FormData) {
   if ([theme.primary, theme.secondary, theme.background, theme.foreground, theme.surface].some(value => !/^#[0-9a-f]{6}$/i.test(value))) {
     return { ok: false, message: "Invalid color value. Use a 6-digit HEX code." };
   }
-  const { data, error } = await supabase.from("events").update({ theme, updated_at: new Date().toISOString() }).eq("id", eventId).select("slug").single();
-  if (error || !data) return { ok: false, message: "Appearance settings could not be saved. Please try again." };
-  revalidateEvent(eventId, data?.slug);
-  return { ok: true, message: "Event appearance saved successfully." };
+  const { error } = await supabase.rpc("stage_event_config", { p_event_id: eventId, p_patch: { theme } });
+  if (error) return { ok: false, message: "Appearance settings could not be saved. Please try again." };
+  revalidateEvent(eventId);
+  return { ok: true, message: "Appearance saved to draft. Publish in Settings to update the live event." };
 }
 
 export async function saveEventQrConfig(formData: FormData) {
@@ -540,10 +543,14 @@ export async function saveEventQrConfig(formData: FormData) {
     const value = Number(text(formData, key, 20).replace(/[^0-9.-]/g, ""));
     return Number.isFinite(value) ? Math.min(max, Math.max(min, value)) : fallback;
   };
-  const { data: current, error: readError } = await supabase.from("events").select("qr_config,slug").eq("id", eventId).single();
+  const [{ data: current, error: readError }, { data: draft }] = await Promise.all([
+    supabase.from("events").select("qr_config,slug").eq("id", eventId).single(),
+    supabase.from("event_config_drafts").select("config").eq("event_id", eventId).maybeSingle(),
+  ]);
   if (readError || !current) return { ok: false, message: "Pass configuration could not be loaded. Please try again." };
-  const existing = current?.qr_config && typeof current.qr_config === "object" && !Array.isArray(current.qr_config) ? current.qr_config as Record<string, unknown> : {};
-  const { data: updated, error } = await supabase.from("events").update({
+  const effective = draft?.config && typeof draft.config === "object" && !Array.isArray(draft.config) ? draft.config.qr_config : current.qr_config;
+  const existing = effective && typeof effective === "object" && !Array.isArray(effective) ? effective as Record<string, unknown> : {};
+  const { error } = await supabase.rpc("stage_event_config", { p_event_id: eventId, p_patch: {
     qr_config: {
       ...existing,
       mode,
@@ -560,11 +567,10 @@ export async function saveEventQrConfig(formData: FormData) {
       qr_y: clamp("qrY", 50, 0, 100),
       qr_size: clamp("qrSize", 22, 5, 80),
     },
-    updated_at: new Date().toISOString(),
-  }).eq("id", eventId).select("id").single();
-  if (error || !updated) return { ok: false, message: "QR settings could not be saved. Please try again." };
+  } as Json });
+  if (error) return { ok: false, message: error.message.includes("claim_mode_locked") ? "Claim mode cannot change after attendees have registered." : "QR settings could not be saved. Please try again." };
   revalidateEvent(eventId, current?.slug);
-  return { ok: true, message: "Pass and QR settings saved successfully." };
+  return { ok: true, message: "Pass and QR settings saved to draft. Publish in Settings to update the live event." };
 }
 
 export async function saveClaimMode(formData: FormData) {
@@ -572,29 +578,23 @@ export async function saveClaimMode(formData: FormData) {
   const claimMode = text(formData, "claimMode", 20) === "claim" ? "claim" : "automatic";
   const { supabase } = await managedContext(eventId);
 
-  const { data: current } = await supabase
-    .from("events")
-    .select("qr_config,slug")
-    .eq("id", eventId)
-    .single();
+  const [{ data: current }, { data: draft }] = await Promise.all([
+    supabase.from("events").select("qr_config,slug,status").eq("id", eventId).single(),
+    supabase.from("event_config_drafts").select("config").eq("event_id", eventId).maybeSingle(),
+  ]);
   if (!current) return;
 
+  const effective = draft?.config && typeof draft.config === "object" && !Array.isArray(draft.config) ? draft.config.qr_config : current.qr_config;
   const existing =
-    current.qr_config &&
-    typeof current.qr_config === "object" &&
-    !Array.isArray(current.qr_config)
-      ? (current.qr_config as Record<string, unknown>)
+    effective && typeof effective === "object" && !Array.isArray(effective)
+      ? (effective as Record<string, unknown>)
       : {};
 
-  await supabase
-    .from("events")
-    .update({
-      qr_config: { ...existing, claim_mode: claimMode },
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", eventId);
+  const { error: stagedError } = await supabase.rpc("stage_event_config", { p_event_id: eventId,
+    p_patch: { qr_config: { ...existing, claim_mode: claimMode } as Json } });
+  if (stagedError) redirect(`/admin/events/${eventId}/access?error=claim_mode_locked`);
 
-  if (claimMode === "automatic") {
+  if (claimMode === "automatic" && current.status === "draft") {
     const attendees: Array<{ id: string; attendee_code: string }> = [];
     for (let from = 0; ; from += 500) {
       const { data } = await supabase
@@ -692,22 +692,17 @@ export async function uploadEventAsset(formData: FormData) {
   }
 
   if (assetType === "qr_template") {
-    const { data: current } = await supabase
-      .from("events")
-      .select("qr_config,slug")
-      .eq("id", eventId)
-      .single();
+    const [{ data: current }, { data: draft }] = await Promise.all([
+      supabase.from("events").select("qr_config,slug").eq("id", eventId).single(),
+      supabase.from("event_config_drafts").select("config").eq("event_id", eventId).maybeSingle(),
+    ]);
+    const effective = draft?.config && typeof draft.config === "object" && !Array.isArray(draft.config) ? draft.config.qr_config : current?.qr_config;
     const existing =
-      current?.qr_config && typeof current.qr_config === "object" && !Array.isArray(current.qr_config)
-        ? (current.qr_config as Record<string, unknown>)
+      effective && typeof effective === "object" && !Array.isArray(effective)
+        ? (effective as Record<string, unknown>)
         : {};
-    const { error: updateError } = await supabase
-      .from("events")
-      .update({
-        qr_config: { ...existing, template_url: publicUrl },
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", eventId);
+    const { error: updateError } = await supabase.rpc("stage_event_config", { p_event_id: eventId,
+      p_patch: { qr_config: { ...existing, template_url: publicUrl } as Json } });
 
     if (updateError) {
       return { ok: false, message: "The template was uploaded, but the event could not be updated." };
@@ -718,26 +713,14 @@ export async function uploadEventAsset(formData: FormData) {
 
   const column =
     assetType === "logo" ? "logo_url" : assetType === "hero" ? "hero_image_url" : "poster_url";
-  const updatePayload: {
-    logo_url?: string;
-    hero_image_url?: string;
-    poster_url?: string;
-    updated_at: string;
-  } = { updated_at: new Date().toISOString() };
-  updatePayload[column] = publicUrl;
-
-  const { data, error: eventError } = await supabase
-    .from("events")
-    .update(updatePayload)
-    .eq("id", eventId)
-    .select("slug")
-    .single();
+  const { error: eventError } = await supabase.rpc("stage_event_config", { p_event_id: eventId,
+    p_patch: { [column]: publicUrl } });
 
   if (eventError) {
     return { ok: false, message: "The asset was uploaded, but the event could not be updated." };
   }
 
-  revalidateEvent(eventId, data?.slug);
+  revalidateEvent(eventId);
   return {
     ok: true,
     message:

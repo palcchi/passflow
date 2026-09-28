@@ -62,8 +62,8 @@ export async function GET(request: Request, { params }: { params: Promise<{ even
   const background = await dataImage(design.preview_url);
   const attendeeIds = [...new Set((credentials ?? []).flatMap((item) => item.attendee_id ? [item.attendee_id] : []))];
   const [{ data: attendees }, { data: profiles }] = attendeeIds.length ? await Promise.all([
-    supabase.from("attendees").select("id,name,email,phone,attendee_code,ticket_type_id,ticket_types(name)").in("id", attendeeIds),
-    supabase.from("attendee_profiles").select("attendee_id,photo_storage_path").in("attendee_id", attendeeIds),
+    supabase.from("attendees").select("id,name,email,phone,attendee_code,ticket_type_id,ticket_types(name)").eq("event_id", eventId).in("id", attendeeIds),
+    supabase.from("attendee_profiles").select("attendee_id,photo_storage_path").eq("event_id", eventId).in("attendee_id", attendeeIds),
   ]) : [{ data: [] }, { data: [] }];
   const attendeeMap = new Map((attendees ?? []).map((item) => [item.id, item]));
   const activeCredentials = (credentials ?? []).filter((item) => !design.ticket_type_id || (item.attendee_id && attendeeMap.get(item.attendee_id)?.ticket_type_id === design.ticket_type_id));

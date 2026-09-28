@@ -9,7 +9,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ eve
     .eq("event_id", eventId).order("created_at", { ascending: false });
   if (error) return NextResponse.json({ error: "Export is temporarily unavailable." }, { status: 500 });
   const ticketIds = [...new Set((data ?? []).map(row => row.ticket_type_id).filter((id): id is string => Boolean(id)))];
-  const { data: tickets } = ticketIds.length ? await supabase.from("ticket_types").select("id,name").in("id", ticketIds) : { data: [] };
+  const { data: tickets } = ticketIds.length ? await supabase.from("ticket_types").select("id,name").eq("event_id", eventId).in("id", ticketIds) : { data: [] };
   const names = new Map((tickets ?? []).map(ticket => [ticket.id, ticket.name]));
   const cell = (value: unknown) => `"${String(value ?? "").replaceAll('"', '""')}"`;
   const rows = [

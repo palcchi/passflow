@@ -88,7 +88,7 @@ export function EventAdminChrome({
               Design
             </Link>
             <ShinyButton
-              href={`/e/${event.slug}?view=details`}
+              href={`/e/${event.liveSlug ?? event.slug}?view=details`}
               className="event-admin-public-cta"
             >
               Public page

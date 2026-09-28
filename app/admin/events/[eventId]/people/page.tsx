@@ -67,6 +67,7 @@ export default async function EventPeoplePage({ params, searchParams }: Props) {
     ? await supabase
         .from("attendee_profiles")
         .select("attendee_id,photo_storage_path")
+        .eq("event_id", eventId)
         .in("attendee_id", attendeeIds)
     : { data: [] };
   const photoPaths = (attendeeProfileRows ?? [])
