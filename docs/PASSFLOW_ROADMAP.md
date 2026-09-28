@@ -12,12 +12,12 @@ This roadmap converts the current PassFlow product audit and README direction in
 
 ## Progress snapshot — 28 September 2026
 
-The checkboxes below track source work and local verification. Production gates remain explicit until the database migrations, CI, and device checks have run.
+The checkboxes track implemented work. Both Phase 1 and Phase 2 migrations reached production on 28 September 2026; CI ran real PostgreSQL concurrency and browser route checks. Signed-in organizer and physical scanner checks remain acceptance gates.
 
 | Phase | Status | Evidence / remaining gate |
 | --- | --- | --- |
-| 1 · P0 reliability | Verification | Credential, scanner, RLS and manual fallback flows pass local SQL tests; real PostgreSQL CI scenarios, camera/device and signed-in UI tests remain. |
-| 2 · Event lifecycle | Verification | Core event settings stage privately, published snapshots have numbered versions and restore to draft; CI and live database checks remain. Operational tickets/gates/access edits are explicitly immediate. |
+| 1 · P0 reliability | Device sign-off | Credential, scanner and RLS tests plus real PostgreSQL concurrency pass in CI. Physical iPhone/iPad camera and signed-in UI isolation checks remain. |
+| 2 · Event lifecycle | Released, operator trial pending | Draft/live settings, numbered snapshots, restore, archive and delete guards are deployed. Existing published event received version 1; organizer publish/restore trial remains. Operational tickets/gates/access edits apply immediately. |
 | 3 · Customize | Partial | Quick Setup and editable Figma starter blocks exist; actual organizer trial remains. |
 | 4 · Figma plugin | Partial | Plugin source, pairing and metadata bindings exist; registered plugin ID, server secret and real Figma trial remain. |
 | 5 · Figma sync | Partial | Draft sync, revision checks and desktop/mobile frames exist; broader Figma node coverage remains. |
@@ -25,7 +25,7 @@ The checkboxes below track source work and local verification. Production gates 
 | 7 · Subdomains | Partial | Mapping and hostname routing exist; wildcard DNS/TLS verification and feature flag activation remain. |
 | 8 · Dashboard | Partial | Basic metrics exist; live operational feeds and reconciled aggregates remain. |
 | 9 · Command Center | Not started | Incident controls and device health remain. |
-| 10 · Acceptance | Partial | Unit, SQL fixture and browser checks exist; real devices, concurrency and load remain. |
+| 10 · Acceptance | Partial | Unit, SQL fixture, browser routes and PostgreSQL concurrency pass; real devices, authenticated flows and load remain. |
 | 11 · Scale | Not started | Deferred until P0 reliability is proven. |
 
 ---
