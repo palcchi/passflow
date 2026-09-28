@@ -218,7 +218,7 @@ Turn Customize into a guided workflow that is useful for normal organizers while
 
 ### Default experience
 
-- [ ] Make **Start with PassFlow Template** the default path.
+- [ ] Make **Start with PassFlow Template** the default path. <!-- next implementation target -->
 - [ ] Keep Quick Setup for organizers who do not want to use Figma.
 - [ ] Add an explicit **Advanced Mode / Start Blank** option.
 - [ ] Avoid building a competing drag-and-drop website builder inside PassFlow.
