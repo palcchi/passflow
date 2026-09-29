@@ -1,6 +1,6 @@
 # PassFlow Execution Roadmap
 
-**Baseline:** 28 September 2026  
+**Baseline:** 29 September 2026
 **Repository:** `palcchi/passflow`  
 **Product direction:** Event Identity & Operations Platform with Figma-based visual authoring.
 
@@ -10,18 +10,18 @@ This roadmap converts the current PassFlow product audit and README direction in
 
 ---
 
-## Progress snapshot — 28 September 2026
+## Progress snapshot — 29 September 2026
 
-The checkboxes track implemented work. Both Phase 1 and Phase 2 migrations reached production on 28 September 2026; CI ran real PostgreSQL concurrency and browser route checks. Signed-in organizer and physical scanner checks remain acceptance gates.
+The checkboxes track source and database capabilities present on `main`, not acceptance on a real organizer account or device. Phase 1–2 and 5–6 source is deployed; Phase 3–4 plugin source and pairing are available, but the standard plugin has not been installed/published or validated in a real Figma file. CI runs PostgreSQL, build and browser route checks. Manual acceptance gates remain below.
 
 | Phase | Status | Evidence / remaining gate |
 | --- | --- | --- |
 | 1 · P0 reliability | Device sign-off | Credential, scanner and RLS tests plus real PostgreSQL concurrency pass in CI. Physical iPhone/iPad camera and signed-in UI isolation checks remain. |
 | 2 · Event lifecycle | Released, operator trial pending | Draft/live settings, numbered snapshots, restore, archive and delete guards are deployed. Existing published event received version 1; organizer publish/restore trial remains. Operational tickets/gates/access edits apply immediately. |
-| 3 · Customize | Partial | Quick Setup and editable Figma starter blocks exist; actual organizer trial remains. |
-| 4 · Figma plugin | Partial | Plugin source, pairing and metadata bindings exist; registered plugin ID, server secret and real Figma trial remain. |
-| 5 · Figma sync | Partial | Draft sync, revision checks and desktop/mobile frames exist; broader Figma node coverage remains. |
-| 6 · Website runtime | Partial | Structured renderer, dynamic actions and explicit publish exist; complete dynamic section binding and SEO remain. |
+| 3 · Customize | Implemented in source, trial pending | Template-first starter, Quick Setup, Advanced Mode and desktop/mobile frames exist; organizer usability and template styles need real review. |
+| 4 · Figma plugin | Implemented in source, installation pending | Pairing, metadata, assignment and status UI exist; standard plugin ID/installation, OAuth audit and real Figma trial remain. |
+| 5 · Figma sync | Implemented core, visual parity pending | Schema 3 hierarchy, draft sync and conflicts exist; auto-layout, container image fills, masks, vectors and tablet are incomplete. |
+| 6 · Website runtime | Implemented core, live trial pending | Dynamic sections, SEO, preview, numbered publish and restore exist; auth-aware CTA, real Figma visual parity and authenticated flow need validation. |
 | 7 · Subdomains | Partial | Mapping and hostname routing exist; wildcard DNS/TLS verification and feature flag activation remain. |
 | 8 · Dashboard | Partial | Basic metrics exist; live operational feeds and reconciled aggregates remain. |
 | 9 · Command Center | Not started | Incident controls and device health remain. |
@@ -218,34 +218,34 @@ Turn Customize into a guided workflow that is useful for normal organizers while
 
 ### Default experience
 
-- [ ] Make **Start with PassFlow Template** the default path.
-- [ ] Keep Quick Setup for organizers who do not want to use Figma.
-- [ ] Add an explicit **Advanced Mode / Start Blank** option.
-- [ ] Avoid building a competing drag-and-drop website builder inside PassFlow.
+- [x] Make **Start with PassFlow Template** the default path.
+- [x] Keep Quick Setup for organizers who do not want to use Figma.
+- [x] Add an explicit **Advanced Mode / Start Blank** option.
+- [x] Avoid building a competing drag-and-drop website builder inside PassFlow.
 
 ### Starter website structure
 
 Create reusable starter sections:
 
-- [ ] Hero
-- [ ] About
-- [ ] Tickets
-- [ ] Schedule
-- [ ] Speakers
-- [ ] Sponsors
-- [ ] Venue
-- [ ] FAQ
-- [ ] CTA
-- [ ] Footer
+- [x] Hero
+- [x] About
+- [x] Tickets
+- [x] Schedule
+- [x] Speakers
+- [x] Sponsors
+- [x] Venue
+- [x] FAQ
+- [x] CTA
+- [x] Footer
 
 ### Template system
 
 - [ ] Define initial template styles.
 - [ ] Define required vs optional blocks.
-- [ ] Define desktop frame convention.
-- [ ] Define mobile frame convention.
-- [ ] Define safe fallback when mobile design is missing.
-- [ ] Make templates editable rather than locked.
+- [x] Define desktop frame convention.
+- [x] Define mobile frame convention.
+- [x] Define safe fallback when mobile design is missing.
+- [x] Make templates editable rather than locked.
 
 ## Definition of Done
 
@@ -286,58 +286,58 @@ Open Figma file
 
 ### Pairing
 
-- [ ] Create temporary event pairing codes such as `PF-82DK7`.
-- [ ] Add expiration to pairing codes.
-- [ ] Pair the open Figma file to one PassFlow event.
-- [ ] Store event connection metadata in plugin data.
-- [ ] Allow explicit unpair/re-pair.
-- [ ] Prevent a stale pairing from silently writing to the wrong event.
+- [x] Create temporary event pairing codes such as `PF-82DK7`.
+- [x] Add expiration to pairing codes.
+- [x] Pair the open Figma file to one PassFlow event.
+- [x] Store event connection metadata in plugin data.
+- [x] Allow explicit unpair/re-pair.
+- [x] Prevent a stale pairing from silently writing to the wrong event.
 
 ### Metadata binding
 
 Do not rely only on layer names.
 
-- [ ] Define plugin metadata namespace.
-- [ ] Define schema version such as `passflow.website.v1`.
-- [ ] Store semantic role in pluginData/sharedPluginData.
-- [ ] Keep readable layer markers optional for humans.
-- [ ] Preserve binding after layer rename.
+- [x] Define plugin metadata namespace.
+- [x] Define schema version such as `passflow.website.v1`.
+- [x] Store semantic role in pluginData/sharedPluginData.
+- [x] Keep readable layer markers optional for humans.
+- [x] Preserve binding after layer rename.
 
 ### Assign existing layers
 
-- [ ] Event Name
-- [ ] Event Date
-- [ ] Venue
-- [ ] Register
-- [ ] My Pass
-- [ ] Tickets
-- [ ] Schedule
-- [ ] Speakers
-- [ ] Sponsors
+- [x] Event Name
+- [x] Event Date
+- [x] Venue
+- [x] Register
+- [x] My Pass
+- [x] Tickets
+- [x] Schedule
+- [x] Speakers
+- [x] Sponsors
 - [ ] Venue Map
-- [ ] Custom Link
+- [x] Custom Link
 
 ### Insert PassFlow Block
 
-- [ ] Hero
-- [ ] Register CTA
-- [ ] Ticket List
-- [ ] Schedule
+- [x] Hero
+- [x] Register CTA
+- [x] Ticket List
+- [x] Schedule
 - [ ] Speaker Grid
 - [ ] Sponsor Grid
-- [ ] Venue
-- [ ] FAQ
-- [ ] Footer
+- [x] Venue
+- [x] FAQ
+- [x] Footer
 
 ### Plugin UX
 
-- [ ] Simple Mode for organizers.
-- [ ] Advanced Mode for designers.
-- [ ] Connected event state.
-- [ ] Sync state.
-- [ ] Validation warnings.
+- [x] Simple Mode for organizers.
+- [x] Advanced Mode for designers.
+- [x] Connected event state.
+- [x] Sync state.
+- [x] Validation warnings.
 - [ ] Open PassFlow action.
-- [ ] Preview action.
+- [x] Preview action.
 
 ## Definition of Done
 
@@ -371,7 +371,7 @@ Figma
 - [x] Version the schema.
 - [x] Support layout/frame hierarchy.
 - [x] Support text.
-- [x] Support image fills/assets.
+- [ ] Support image fills/assets beyond rasterized leaf artwork.
 - [ ] Support common auto-layout behavior.
 - [ ] Support basic vector/shape representation where practical.
 - [x] Define unsupported-node behavior.
@@ -388,7 +388,7 @@ Figma
 
 - [x] Detect Figma document changes while plugin is open.
 - [x] Debounce draft sync.
-- [ ] Add:
+- [x] Add:
   - [x] Synced
   - [x] Changes detected
   - [x] Syncing
@@ -443,7 +443,7 @@ Render event designs as real, functional websites connected to PassFlow data and
 - [x] Sponsors.
 - [x] Register action.
 - [x] My Pass action.
-- [x] Auth-aware primary CTA.
+- [ ] Auth-aware primary CTA with an explicit signed-in/registered state.
 - [x] Custom safe links.
 
 ### Publishing
@@ -466,6 +466,33 @@ Render event designs as real, functional websites connected to PassFlow data and
 ## Definition of Done
 
 An event website created from Figma behaves like a real PassFlow application page, not an exported picture, and has an explicit Draft → Preview → Publish lifecycle.
+
+---
+
++## Phase 1–6 remaining work and manual acceptance
+
+The checked items above describe implemented capabilities. A phase is not signed off for a real event until its manual checks pass. In particular, SQL isolation tests do not replace an authenticated cross-event API and browser review.
+
+| Phase | Open roadmap items | Next engineering work |
+| --- | --- | --- |
+| 1 | UI isolation; direct API/database isolation across all operational paths; audit every operational query for event scoping. | Add role-based cross-event browser/API scenarios, finish query audit and repair any leakage. Existing RLS SQL fixtures cover representative tables only. |
+| 2 | No unchecked implementation item. | Record an organizer's complete draft → publish → edit → restore → archive trial before operational sign-off. |
+| 3 | Initial template style definitions; required vs optional block contract. | Document a small set of styles and section requirements, then improve starter output from organizer feedback. |
+| 4 | Five legacy OAuth/token/reconnect/parser/export audits; Venue Map binding; real speaker/sponsor grids; dedicated Open PassFlow action. | Audit or retire the legacy OAuth route, implement remaining plugin controls and section layouts. Pairing source is available, but real installation is unverified. |
+| 5 | Container image fills/assets, common auto-layout, vectors/shapes, optional tablet frame. | Build a bounded asset pipeline and responsive translation; keep preview warnings for unsupported effects and masks. |
+| 6 | Explicit auth-aware primary CTA state. | Show Register, Continue, or My Pass based on authenticated registration state and verify each path. Current CTA reaches the claim flow but its Figma label is static. |
+
+### Manual checks before calling Phase 1–6 complete
+
+1. **Organizer and staff accounts:** In production or an isolated staging event, use two organizations, separate event managers, staff and attendee accounts. Try cross-event pages, direct API requests and database roles; confirm neither data nor operations cross event boundaries. Do not use a real participant's credential.
+2. **Real scanner devices:** Use the intended iPhone/iPad cameras at a gate. Test camera denial, camera switch, offline/slow network, session expiry, duplicate and revoked QR, station/zone rules, recovery and manual lookup. Record the outcome and audit log for each case.
+3. **Event lifecycle:** With a disposable event, edit draft basics/Quick Setup, publish, make live operational changes, restore a prior version, archive, and inspect what remains visible. Compare the public page with the version label.
+4. **Standard Figma plugin installation:** Obtain an assigned Figma plugin ID, replace the placeholder in the standard manifest, install the development plugin in Figma desktop and run it on an existing file. A Community publication is a separate step. The source ZIP alone is not an installed plugin.
+5. **Figma pairing and website trial:** Pair that file with a temporary code, insert desktop/mobile starter frames, rename a bound layer, auto-sync, inspect warnings, preview, publish, edit again, verify live remains unchanged until republish, restore an older publication and revoke/re-pair. Test a copied file and two organizer accounts.
+6. **Visual and dynamic review:** Compare desktop/mobile Figma frames against the public website using actual tickets, schedules, speakers, sponsors, logo and banner. Check register/My Pass behavior while signed out, signed in and registered. Check title, social preview, favicon and canonical URL in a real share.
+7. **Legacy Figma OAuth, if retained:** Review the Figma app's client ID, callback registration, token encryption key, scopes and reconnection/disconnection with a real account. This account OAuth route is separate from the standard pairing plugin; its production connection has not been proven by the plugin tests.
+
+Manual checks require real accounts, a Figma installation and physical devices or their owner. Engineering gaps in the table can be fixed in source first. Do not treat a successful build, SQL fixture or HTTP 200 as a completed end-to-end trial.
 
 ---
 
