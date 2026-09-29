@@ -23,6 +23,9 @@ jobs:
       - run: node scripts/management-lifecycle.test.mjs
       - run: node scripts/phase1-credential.test.mjs
       - run: node scripts/event-lifecycle.test.mjs
+      - run: node scripts/figma-plugin.test.mjs
+      - run: node scripts/figma-website.test.mjs
+      - run: node scripts/build-figma-standard.mjs
       - run: npm run typecheck
       - run: npm run build
       - run: npx playwright install --with-deps chromium
@@ -41,6 +44,8 @@ jobs:
           path: |
             verification/
             package-lock.json
+            public/figma-plugin-standard.zip
+            figma-plugin-standard/code.js
 
   auth-rls:
     runs-on: ubuntu-latest
