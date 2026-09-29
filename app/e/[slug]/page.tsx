@@ -22,11 +22,20 @@ import { CollectionArtwork, Sticker } from "@/components/flow-brand-art";
 import { KineticText } from "@/components/magicui/kinetic-text";
 import { FlowMark } from "@/components/flow-art";
 import { eventInk } from "@/lib/event-colors";
+import {readWebsiteContent} from '@/lib/event-website-content';
+import type {Metadata} from 'next';
 
 type EventPageProps = {
   params: Promise<{ slug: string }>;
   searchParams: Promise<{ view?: string }>;
 };
+
+export async function generateMetadata({params}:EventPageProps):Promise<Metadata>{
+  const {slug}=await params,event=await getPublishedEvent(slug);
+  if(!event)return {title:'Event unavailable',robots:{index:false,follow:false}};
+  const origin=getAppOrigin()??'https://passflow.my.id',url=origin+'/e/'+encodeURIComponent(event.slug),image=event.heroImageUrl??event.posterUrl??url+'/opengraph-image';
+  return {title:event.name,description:event.description.slice(0,160),alternates:{canonical:url},robots:{index:true,follow:true},openGraph:{title:event.name,description:event.description,url,images:[{url:image}]},twitter:{card:'summary_large_image',title:event.name,description:event.description,images:[image]},icons:event.logoUrl?{icon:event.logoUrl}:undefined};
+}
 
 export default async function PublicEventPage({ params, searchParams }: EventPageProps) {
   const { slug } = await params;
@@ -55,8 +64,8 @@ export default async function PublicEventPage({ params, searchParams }: EventPag
   const websiteDocument = readStudioDocument(website?.document);
   const figmaWebsite=readFigmaWebsite(website?.document);
   if(figmaWebsite){
-    const {data:tickets}=supabase?await supabase.from('ticket_types').select('id,name,price,currency').eq('event_id',event.id):{data:[]};
-    return <main><FigmaWebsiteRenderer document={figmaWebsite} data={{name:event.name,description:event.description,date:event.dateLabel,venue:event.venue,claimUrl:`${getAppOrigin()??''}/e/${event.slug}/claim`,tickets:tickets??[]}}/></main>;
+    const [tickets,content]=supabase?await Promise.all([supabase.from('ticket_types').select('id,name,price,currency').eq('event_id',event.id),supabase.from('event_website_content').select('content').eq('event_id',event.id).maybeSingle()]):[{data:[]},{data:null}];
+    return <main><FigmaWebsiteRenderer document={figmaWebsite} data={{name:event.name,description:event.description,date:event.dateLabel,venue:event.venue,logo:event.logoUrl??undefined,banner:event.heroImageUrl??event.posterUrl??undefined,claimUrl:`${getAppOrigin()??''}/e/${event.slug}/claim`,tickets:tickets.data??[],...readWebsiteContent(content.data?.content)}}/></main>;
   }
   if(websiteDocument) return <main><WebsiteRenderer document={websiteDocument} data={{event_name:event.name,event_date:event.dateLabel,venue:event.venue,description:event.description,banner:event.heroImageUrl??'',logo:event.logoUrl??''}} claimUrl={`/e/${event.slug}/claim`}/></main>;
   const { data: eventDesign } = supabase ? await supabase.from("event_designs").select("name,preview_url,template")

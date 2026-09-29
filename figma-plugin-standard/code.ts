@@ -1,11 +1,11 @@
 const ORIGIN='https://passflow.my.id';
 const NS='passflow';
-type Binding='eventName'|'eventDescription'|'eventDate'|'venue'|'tickets'|'register'|'myPass'|'schedule'|'customLink';
+type Binding='eventName'|'eventDescription'|'eventDate'|'venue'|'logo'|'banner'|'tickets'|'register'|'myPass'|'schedule'|'speakers'|'sponsors'|'customLink';
 type Session={token:string;documentId:string;eventId:string;eventName:string;revision:number;draftId?:string};
-type NodeOutput={id:string;type:'text'|'box'|'image';x:number;y:number;width:number;height:number;text:string;fill:string;color:string;fontSize:number;fontFamily:string;radius:number;align:'left'|'center'|'right';image:string;binding:Binding|null;href:string};
+type NodeOutput={id:string;parentId:string|null;type:'text'|'box'|'image';x:number;y:number;width:number;height:number;text:string;fill:string;hasFill:boolean;color:string;fontSize:number;fontFamily:string;radius:number;align:'left'|'center'|'right';image:string;binding:Binding|null;href:string};
 type FrameOutput={width:number;height:number;background:string;nodes:NodeOutput[]};
 type Message={type:'pair';code:string}|{type:'template'}|{type:'block';block:string}|{type:'assign';binding:Binding;href:string}|{type:'frame';role:'desktop'|'mobile'}|{type:'sync'|'disconnect'|'reload'|'confirm'};
-const bindings:Binding[]=['eventName','eventDescription','eventDate','venue','tickets','register','myPass','schedule','customLink'];
+const bindings:Binding[]=['eventName','eventDescription','eventDate','venue','logo','banner','tickets','register','myPass','schedule','speakers','sponsors','customLink'];
 const blocks=['Hero','About','Tickets','Schedule','Speakers','Sponsors','Venue','FAQ','CTA','Footer'];
 let session:Session|null=null,mutating=false,syncing=false,dirty=false,blocked=false,confirmed=false,commandPending=false,timer:ReturnType<typeof setTimeout>|null=null;
 let documentId=figma.root.getSharedPluginData(NS,'documentId');
@@ -26,7 +26,10 @@ async function block(parent:FrameNode,name:string,y:number){
     await text(section,'A purposeful gathering. A space for new connections.',pad,mobile?240:260,w-pad*2,mobile?18:24,'eventDescription');
   }else{
     await text(section,name,pad,35,w-pad*2,mobile?30:42);
-    await text(section,name==='Schedule'?'10:00 · Doors open\n11:00 · Main session':name==='Speakers'?'Add your speakers and their stories.':name==='Sponsors'?'Your partners and sponsors':name==='FAQ'?'What should I bring?\nYour event pass, ready on your phone.':name==='Footer'?'Made for people. Designed by you.':'Tell your event story here.',pad,110,w-pad*2,mobile?17:22,name==='About'?'eventDescription':name==='Venue'?'venue':undefined);
+    if(['Schedule','Speakers','Sponsors'].includes(name)){
+      const list=figma.createFrame();section.appendChild(list);list.resize(w-pad*2,180);list.x=pad;list.y=110;list.fills=[color('#f4f4f4')];list.cornerRadius=16;bind(list,name.toLowerCase() as Binding);
+      await text(list,'Live '+name.toLowerCase()+' from PassFlow',20,24,list.width-40,20);
+    }else await text(section,name==='FAQ'?'What should I bring?\nYour event pass, ready on your phone.':name==='Footer'?'Made for people. Designed by you.':'Tell your event story here.',pad,110,w-pad*2,mobile?17:22,name==='About'?'eventDescription':name==='Venue'?'venue':undefined);
   }
   if(name==='Tickets'){
     const list=figma.createFrame();section.appendChild(list);list.resize(w-pad*2,180);list.x=pad;list.y=110;list.fills=[color('#f4f4f4')];list.cornerRadius=16;bind(list,'tickets');await text(list,'Live tickets from PassFlow',20,30,list.width-40,20);
@@ -46,7 +49,7 @@ function findFrames(){const all=figma.currentPage.children.filter(n=>n.type==='F
 async function serialize(frame:FrameNode,warnings:string[]):Promise<FrameOutput>{
   const bounds=frame.absoluteBoundingBox;if(!bounds)throw Error('The frame has no bounds.');
   const nodes:NodeOutput[]=[];let visited=0;
-  async function visit(node:SceneNode){
+  async function visit(node:SceneNode,parentId:string|null,parentBox:Rect){
     if(!node.visible)return;if(++visited>1500)throw Error('Use fewer than 1,500 layers per responsive frame.');
     const box=node.absoluteBoundingBox;if(!box||!box.width||!box.height)return;
     const raw=node.getSharedPluginData(NS,'binding'),binding=bindings.includes(raw as Binding)?raw as Binding:null;
@@ -56,19 +59,23 @@ async function serialize(frame:FrameNode,warnings:string[]):Promise<FrameOutput>
     if('opacity' in node&&node.opacity<1)warnings.push('Layer opacity is simplified. Review translucent layers in Preview.');
     if('rotation' in node&&Math.abs(node.rotation)>.1&&!binding)warnings.push('Rotated artwork is simplified. Review its position in Preview.');
     const children='children' in node?node.children:null;
+    if(children&&Array.isArray(paints)&&paints.some(p=>p.type==='IMAGE'||p.type.startsWith('GRADIENT')))warnings.push('Image/gradient fills on containers are simplified. Use an image layer for detailed artwork.');
+    if('clipsContent' in node&&node.clipsContent)warnings.push('Clipped content is simplified. Review masks in Preview.');
     const buttonText=children?.find(n=>n.type==='TEXT');
     const id=node.getSharedPluginData(NS,'id')||node.id;
-    const output:NodeOutput={id:nodes.some(n=>n.id===id)?node.id:id,type:textNode?'text':'box',x:box.x-bounds.x,y:box.y-bounds.y,width:box.width,height:box.height,text:textNode?.characters??(buttonText?.type==='TEXT'?buttonText.characters:''),fill:hex(paints),color:hex(textNode?.fills??(buttonText?.type==='TEXT'?buttonText.fills:undefined),'#171717'),fontSize:textNode&&typeof textNode.fontSize==='number'?textNode.fontSize:buttonText?.type==='TEXT'&&typeof buttonText.fontSize==='number'?buttonText.fontSize:20,fontFamily:textNode&&textNode.fontName!==figma.mixed?textNode.fontName.family:'Inter',radius:'cornerRadius' in node&&typeof node.cornerRadius==='number'?node.cornerRadius:0,align:textNode?.textAlignHorizontal==='CENTER'?'center':textNode?.textAlignHorizontal==='RIGHT'?'right':binding==='register'||binding==='myPass'?'center':'left',image:'',binding,href:node.getSharedPluginData(NS,'href')};
+    const output:NodeOutput={id:nodes.some(n=>n.id===id)?node.id:id,parentId,type:textNode?'text':'box',x:box.x-parentBox.x,y:box.y-parentBox.y,width:box.width,height:box.height,text:textNode?.characters??(buttonText?.type==='TEXT'?buttonText.characters:''),fill:hex(paints),hasFill:Array.isArray(paints)&&paints.some(p=>p.visible!==false),color:hex(textNode?.fills??(buttonText?.type==='TEXT'?buttonText.fills:undefined),'#171717'),fontSize:textNode&&typeof textNode.fontSize==='number'?textNode.fontSize:buttonText?.type==='TEXT'&&typeof buttonText.fontSize==='number'?buttonText.fontSize:20,fontFamily:textNode&&textNode.fontName!==figma.mixed?textNode.fontName.family:'Inter',radius:'cornerRadius' in node&&typeof node.cornerRadius==='number'?node.cornerRadius:0,align:textNode?.textAlignHorizontal==='CENTER'?'center':textNode?.textAlignHorizontal==='RIGHT'?'right':binding==='register'||binding==='myPass'?'center':'left',image:'',binding,href:node.getSharedPluginData(NS,'href')};
     if('rotation' in node&&Math.abs(node.rotation)>.1&&binding)throw Error('Rotated dynamic layers are not supported. Remove rotation before syncing.');
     if(textNode){if(textNode.fontSize===figma.mixed||textNode.fontName===figma.mixed)warnings.push('Mixed text styles are simplified. Use one style per text layer.');nodes.push(output);return;}
     if(binding){nodes.push(output);return;}
     const raster=!children&&(node.type==='VECTOR'||node.type==='BOOLEAN_OPERATION'||node.type==='ELLIPSE'||(Array.isArray(paints)&&paints.some(p=>p.type==='IMAGE'||p.type.startsWith('GRADIENT'))));
     if(raster){const png=await node.exportAsync({format:'PNG',constraint:{type:'SCALE',value:1}});output.type='image';output.image='data:image/png;base64,'+figma.base64Encode(png);if(output.image.length>450000)throw Error('An artwork image exceeds 450 KB. Reduce its resolution.');nodes.push(output);return;}
-    if(Array.isArray(paints)&&paints.some(p=>p.visible!==false))nodes.push(output);
-    if(children)for(const child of children)await visit(child);
+    // Keep the hierarchy even for transparent containers so children use local coordinates.
+    nodes.push(output);
+    if(children)for(const child of children)await visit(child,output.id,box);
   }
-  for(const child of frame.children)await visit(child);
+  for(const child of frame.children)await visit(child,null,bounds);
   if(nodes.length>500)throw Error('Use at most 500 exported layers per frame.');
+  if('layoutMode' in frame&&frame.layoutMode!=='NONE')warnings.push('Auto layout is captured at current frame size. Check responsive Preview.');
   return {width:frame.width,height:frame.height,background:hex(frame.fills),nodes};
 }
 async function api(path:string,body:unknown,token?:string){
@@ -78,7 +85,7 @@ async function api(path:string,body:unknown,token?:string){
 async function sync(){
   if(!session){status('Disconnected','Pair an event first.');return;}if(!confirmed){status('Confirm event','Confirm this file should update '+session.eventName+'. Pair again if this is a copy for another event.');return;}if(syncing||mutating){dirty=true;return;}if(blocked)return;
   syncing=true;dirty=false;status('Syncing');
-  try{const frames=findFrames(),warnings:string[]=[];const document={schema:2,source:'figma',desktop:await serialize(frames.desktop,warnings),mobile:frames.mobile?await serialize(frames.mobile,warnings):null,warnings:[...new Set(warnings)]};if(JSON.stringify(document).length>850000)throw Error('Design exceeds 850 KB. Reduce image sizes.');const result=await api('sync',{documentId,revision:session.revision,document},session.token);session.revision=result.revision;session.draftId=result.draftId;await figma.clientStorage.setAsync(storageKey,session);status('Synced',warnings.join(' '));}
+  try{const frames=findFrames(),warnings:string[]=[];if(!frames.mobile)warnings.push('No mobile frame: a readable fallback is shown on phones.');const document={schema:3,source:'figma',desktop:await serialize(frames.desktop,warnings),mobile:frames.mobile?await serialize(frames.mobile,warnings):null,warnings:[...new Set(warnings)]};if(JSON.stringify(document).length>850000)throw Error('Design exceeds 850 KB. Reduce image sizes.');const result=await api('sync',{documentId,revision:session.revision,document},session.token);if(result.error)throw Error(String(result.error));session.revision=result.revision;session.draftId=result.draftId;await figma.clientStorage.setAsync(storageKey,session);status('Synced','Draft ready. '+warnings.join(' '));}
   catch(error){dirty=true;const message=error instanceof Error?error.message:'Sync failed';blocked=true;status('Sync paused',message==='revision_conflict'?'Another session changed the draft. Use Resume after reviewing the current draft.':message+' · Your Figma changes are still intact. Use Retry sync.');}
   finally{syncing=false;if(dirty&&!blocked)schedule();}
 }

@@ -1,6 +1,6 @@
 const ORIGIN = 'https://passflow.my.id';
 const NS = 'passflow';
-const bindings = ['eventName', 'eventDescription', 'eventDate', 'venue', 'tickets', 'register', 'myPass', 'schedule', 'customLink'];
+const bindings = ['eventName', 'eventDescription', 'eventDate', 'venue', 'logo', 'banner', 'tickets', 'register', 'myPass', 'schedule', 'speakers', 'sponsors', 'customLink'];
 const blocks = ['Hero', 'About', 'Tickets', 'Schedule', 'Speakers', 'Sponsors', 'Venue', 'FAQ', 'CTA', 'Footer'];
 let session = null, mutating = false, syncing = false, dirty = false, blocked = false, confirmed = false, commandPending = false, timer = null;
 let documentId = figma.root.getSharedPluginData(NS, 'documentId');
@@ -44,7 +44,19 @@ async function block(parent, name, y) {
     }
     else {
         await text(section, name, pad, 35, w - pad * 2, mobile ? 30 : 42);
-        await text(section, name === 'Schedule' ? '10:00 · Doors open\n11:00 · Main session' : name === 'Speakers' ? 'Add your speakers and their stories.' : name === 'Sponsors' ? 'Your partners and sponsors' : name === 'FAQ' ? 'What should I bring?\nYour event pass, ready on your phone.' : name === 'Footer' ? 'Made for people. Designed by you.' : 'Tell your event story here.', pad, 110, w - pad * 2, mobile ? 17 : 22, name === 'About' ? 'eventDescription' : name === 'Venue' ? 'venue' : undefined);
+        if (['Schedule', 'Speakers', 'Sponsors'].includes(name)) {
+            const list = figma.createFrame();
+            section.appendChild(list);
+            list.resize(w - pad * 2, 180);
+            list.x = pad;
+            list.y = 110;
+            list.fills = [color('#f4f4f4')];
+            list.cornerRadius = 16;
+            bind(list, name.toLowerCase());
+            await text(list, 'Live ' + name.toLowerCase() + ' from PassFlow', 20, 24, list.width - 40, 20);
+        }
+        else
+            await text(section, name === 'FAQ' ? 'What should I bring?\nYour event pass, ready on your phone.' : name === 'Footer' ? 'Made for people. Designed by you.' : 'Tell your event story here.', pad, 110, w - pad * 2, mobile ? 17 : 22, name === 'About' ? 'eventDescription' : name === 'Venue' ? 'venue' : undefined);
     }
     if (name === 'Tickets') {
         const list = figma.createFrame();
@@ -103,7 +115,7 @@ async function serialize(frame, warnings) {
         throw Error('The frame has no bounds.');
     const nodes = [];
     let visited = 0;
-    async function visit(node) {
+    async function visit(node, parentId, parentBox) {
         var _a, _b;
         if (!node.visible)
             return;
@@ -122,9 +134,13 @@ async function serialize(frame, warnings) {
         if ('rotation' in node && Math.abs(node.rotation) > .1 && !binding)
             warnings.push('Rotated artwork is simplified. Review its position in Preview.');
         const children = 'children' in node ? node.children : null;
+        if (children && Array.isArray(paints) && paints.some(p => p.type === 'IMAGE' || p.type.startsWith('GRADIENT')))
+            warnings.push('Image/gradient fills on containers are simplified. Use an image layer for detailed artwork.');
+        if ('clipsContent' in node && node.clipsContent)
+            warnings.push('Clipped content is simplified. Review masks in Preview.');
         const buttonText = children === null || children === void 0 ? void 0 : children.find(n => n.type === 'TEXT');
         const id = node.getSharedPluginData(NS, 'id') || node.id;
-        const output = { id: nodes.some(n => n.id === id) ? node.id : id, type: textNode ? 'text' : 'box', x: box.x - bounds.x, y: box.y - bounds.y, width: box.width, height: box.height, text: (_a = textNode === null || textNode === void 0 ? void 0 : textNode.characters) !== null && _a !== void 0 ? _a : ((buttonText === null || buttonText === void 0 ? void 0 : buttonText.type) === 'TEXT' ? buttonText.characters : ''), fill: hex(paints), color: hex((_b = textNode === null || textNode === void 0 ? void 0 : textNode.fills) !== null && _b !== void 0 ? _b : ((buttonText === null || buttonText === void 0 ? void 0 : buttonText.type) === 'TEXT' ? buttonText.fills : undefined), '#171717'), fontSize: textNode && typeof textNode.fontSize === 'number' ? textNode.fontSize : (buttonText === null || buttonText === void 0 ? void 0 : buttonText.type) === 'TEXT' && typeof buttonText.fontSize === 'number' ? buttonText.fontSize : 20, fontFamily: textNode && textNode.fontName !== figma.mixed ? textNode.fontName.family : 'Inter', radius: 'cornerRadius' in node && typeof node.cornerRadius === 'number' ? node.cornerRadius : 0, align: (textNode === null || textNode === void 0 ? void 0 : textNode.textAlignHorizontal) === 'CENTER' ? 'center' : (textNode === null || textNode === void 0 ? void 0 : textNode.textAlignHorizontal) === 'RIGHT' ? 'right' : binding === 'register' || binding === 'myPass' ? 'center' : 'left', image: '', binding, href: node.getSharedPluginData(NS, 'href') };
+        const output = { id: nodes.some(n => n.id === id) ? node.id : id, parentId, type: textNode ? 'text' : 'box', x: box.x - parentBox.x, y: box.y - parentBox.y, width: box.width, height: box.height, text: (_a = textNode === null || textNode === void 0 ? void 0 : textNode.characters) !== null && _a !== void 0 ? _a : ((buttonText === null || buttonText === void 0 ? void 0 : buttonText.type) === 'TEXT' ? buttonText.characters : ''), fill: hex(paints), hasFill: Array.isArray(paints) && paints.some(p => p.visible !== false), color: hex((_b = textNode === null || textNode === void 0 ? void 0 : textNode.fills) !== null && _b !== void 0 ? _b : ((buttonText === null || buttonText === void 0 ? void 0 : buttonText.type) === 'TEXT' ? buttonText.fills : undefined), '#171717'), fontSize: textNode && typeof textNode.fontSize === 'number' ? textNode.fontSize : (buttonText === null || buttonText === void 0 ? void 0 : buttonText.type) === 'TEXT' && typeof buttonText.fontSize === 'number' ? buttonText.fontSize : 20, fontFamily: textNode && textNode.fontName !== figma.mixed ? textNode.fontName.family : 'Inter', radius: 'cornerRadius' in node && typeof node.cornerRadius === 'number' ? node.cornerRadius : 0, align: (textNode === null || textNode === void 0 ? void 0 : textNode.textAlignHorizontal) === 'CENTER' ? 'center' : (textNode === null || textNode === void 0 ? void 0 : textNode.textAlignHorizontal) === 'RIGHT' ? 'right' : binding === 'register' || binding === 'myPass' ? 'center' : 'left', image: '', binding, href: node.getSharedPluginData(NS, 'href') };
         if ('rotation' in node && Math.abs(node.rotation) > .1 && binding)
             throw Error('Rotated dynamic layers are not supported. Remove rotation before syncing.');
         if (textNode) {
@@ -147,16 +163,18 @@ async function serialize(frame, warnings) {
             nodes.push(output);
             return;
         }
-        if (Array.isArray(paints) && paints.some(p => p.visible !== false))
-            nodes.push(output);
+        // Keep the hierarchy even for transparent containers so children use local coordinates.
+        nodes.push(output);
         if (children)
             for (const child of children)
-                await visit(child);
+                await visit(child, output.id, box);
     }
     for (const child of frame.children)
-        await visit(child);
+        await visit(child, null, bounds);
     if (nodes.length > 500)
         throw Error('Use at most 500 exported layers per frame.');
+    if ('layoutMode' in frame && frame.layoutMode !== 'NONE')
+        warnings.push('Auto layout is captured at current frame size. Check responsive Preview.');
     return { width: frame.width, height: frame.height, background: hex(frame.fills), nodes };
 }
 async function api(path, body, token) {
@@ -186,14 +204,18 @@ async function sync() {
     status('Syncing');
     try {
         const frames = findFrames(), warnings = [];
-        const document = { schema: 2, source: 'figma', desktop: await serialize(frames.desktop, warnings), mobile: frames.mobile ? await serialize(frames.mobile, warnings) : null, warnings: [...new Set(warnings)] };
+        if (!frames.mobile)
+            warnings.push('No mobile frame: a readable fallback is shown on phones.');
+        const document = { schema: 3, source: 'figma', desktop: await serialize(frames.desktop, warnings), mobile: frames.mobile ? await serialize(frames.mobile, warnings) : null, warnings: [...new Set(warnings)] };
         if (JSON.stringify(document).length > 850000)
             throw Error('Design exceeds 850 KB. Reduce image sizes.');
         const result = await api('sync', { documentId, revision: session.revision, document }, session.token);
+        if (result.error)
+            throw Error(String(result.error));
         session.revision = result.revision;
         session.draftId = result.draftId;
         await figma.clientStorage.setAsync(storageKey, session);
-        status('Synced', warnings.join(' '));
+        status('Synced', 'Draft ready. ' + warnings.join(' '));
     }
     catch (error) {
         dirty = true;

@@ -41,6 +41,14 @@ export async function publishFigmaDraft(eventId:string,id:string) {
   return {success:true};
 }
 
+export async function restoreFigmaPublication(eventId:string,id:string){
+  const {supabase}=await requireOrganizer();
+  const {data,error}=await supabase.rpc('restore_figma_publication',{p_event_id:eventId,p_id:id});
+  if(error||!data)return {error:'This version could not be restored.'};
+  revalidatePath(`/admin/events/${eventId}/design`,'layout');
+  return {success:true};
+}
+
 export async function retireStudio(eventId:string,id:string,revision:number,remove:boolean) {
   const {supabase}=await requireOrganizer();
   const {error}=await supabase.rpc('retire_studio_document',{p_event_id:eventId,p_id:id,p_revision:revision,p_delete:remove});

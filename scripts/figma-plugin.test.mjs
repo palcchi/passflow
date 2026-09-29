@@ -19,9 +19,10 @@ test('standard plugin templates serialize into valid desktop/mobile HTML documen
  vm.runInContext(compiled+'\nglobalThis.testApi={template,serialize,findFrames,sync};',context);
  await context.testApi.template();
  const frames=context.testApi.findFrames();
- const exported={schema:2,source:'figma',desktop:await context.testApi.serialize(frames.desktop,[]),mobile:await context.testApi.serialize(frames.mobile,[])};
+ const exported={schema:3,source:'figma',desktop:await context.testApi.serialize(frames.desktop,[]),mobile:await context.testApi.serialize(frames.mobile,[])};
  const document=readFigmaWebsite(exported);assert.ok(document);assert.deepEqual(validateFigmaWebsite(document),[]);
  assert.equal(frames.desktop.children.length,10);assert.equal(frames.mobile.children.length,10);
+ assert.ok(document.desktop.nodes.some(n=>n.parentId&&n.binding==='eventName'));
  const before=document.desktop.nodes.filter(n=>n.binding).map(n=>[n.id,n.binding]);
  for(const section of frames.desktop.children)for(const child of section.children)child.name='Entirely renamed';
  const after=await context.testApi.serialize(frames.desktop,[]);

@@ -34,9 +34,9 @@ export type Database = {
         Relationships: []
       }
       event_studio_documents: {
-        Row: { id: string; event_id: string; ticket_type_id: string | null; kind: string; name: string; status: string; revision: number; document: Json; created_by: string | null; created_at: string; updated_at: string }
-        Insert: { event_id: string; kind: string; name: string; document: Json; id?: string; ticket_type_id?: string | null; status?: string; revision?: number; created_by?: string | null; created_at?: string; updated_at?: string }
-        Update: { name?: string; document?: Json; status?: string; revision?: number }
+        Row: { id: string; event_id: string; ticket_type_id: string | null; kind: string; name: string; status: string; revision: number; document: Json; created_by: string | null; created_at: string; updated_at: string; published_at:string|null;publication_number:number|null }
+        Insert: { event_id: string; kind: string; name: string; document: Json; id?: string; ticket_type_id?: string | null; status?: string; revision?: number; created_by?: string | null; created_at?: string; updated_at?: string;published_at?:string|null;publication_number?:number|null }
+        Update: { name?: string; document?: Json; status?: string; revision?: number;published_at?:string|null;publication_number?:number|null }
         Relationships: []
       }
       access_rules: {
@@ -503,6 +503,12 @@ export type Database = {
           },
         ]
       }
+      event_website_content: {
+        Row: {event_id:string;content:Json;updated_at:string}
+        Insert: {event_id:string;content?:Json;updated_at?:string}
+        Update: {event_id?:string;content?:Json;updated_at?:string}
+        Relationships: []
+      }
       organization_members: {
         Row: {
           created_at: string
@@ -795,6 +801,7 @@ export type Database = {
       publish_figma_draft: { Args: {p_event_id:string;p_id:string}; Returns:undefined }
       save_studio_document: { Args: { p_event_id: string; p_id: string | null; p_revision: number; p_kind: string; p_ticket_type_id: string | null; p_name: string; p_document: Json }; Returns: Json }
       publish_studio_document: { Args: { p_event_id: string; p_id: string; p_revision: number }; Returns: undefined }
+      restore_figma_publication: {Args:{p_event_id:string;p_id:string};Returns:string}
       manage_event_resource: { Args: { p_event_id: string; p_id: string; p_kind: string; p_operation: string; p_values?: Json }; Returns: undefined }
       delete_event_person_record: {
         Args: { p_event_id: string; p_id: string; p_kind: string }

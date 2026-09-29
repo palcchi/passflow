@@ -367,44 +367,44 @@ Figma
 
 ### Design schema
 
-- [ ] Define normalized PassFlow Design Schema.
-- [ ] Version the schema.
-- [ ] Support layout/frame hierarchy.
-- [ ] Support text.
-- [ ] Support image fills/assets.
+- [x] Define normalized PassFlow Design Schema.
+- [x] Version the schema.
+- [x] Support layout/frame hierarchy.
+- [x] Support text.
+- [x] Support image fills/assets.
 - [ ] Support common auto-layout behavior.
 - [ ] Support basic vector/shape representation where practical.
-- [ ] Define unsupported-node behavior.
+- [x] Define unsupported-node behavior.
 
 ### Binding
 
-- [ ] Resolve plugin metadata bindings.
-- [ ] Validate required actions.
-- [ ] Validate duplicate bindings.
-- [ ] Validate missing targets.
-- [ ] Surface unsupported/missing bindings clearly.
+- [x] Resolve plugin metadata bindings.
+- [x] Validate required actions.
+- [x] Validate duplicate bindings.
+- [x] Validate missing targets.
+- [x] Surface unsupported/missing bindings clearly.
 
 ### Sync lifecycle
 
-- [ ] Detect Figma document changes while plugin is open.
-- [ ] Debounce draft sync.
+- [x] Detect Figma document changes while plugin is open.
+- [x] Debounce draft sync.
 - [ ] Add:
-  - [ ] Synced
-  - [ ] Changes detected
-  - [ ] Syncing
-  - [ ] Draft ready
-  - [ ] Error
-- [ ] Never auto-publish a design change.
-- [ ] Add conflict detection.
-- [ ] Define behavior when Figma and PassFlow draft both changed.
-- [ ] Preserve last successfully synced version.
+  - [x] Synced
+  - [x] Changes detected
+  - [x] Syncing
+  - [x] Draft ready
+  - [x] Error
+- [x] Never auto-publish a design change.
+- [x] Add conflict detection.
+- [x] Define behavior when Figma and PassFlow draft both changed.
+- [x] Preserve last successfully synced version.
 
 ### Responsive
 
-- [ ] Desktop frame support.
-- [ ] Mobile frame support.
+- [x] Desktop frame support.
+- [x] Mobile frame support.
 - [ ] Optional tablet frame support.
-- [ ] Responsive fallback with warning when mobile frame is absent.
+- [x] Responsive fallback with warning when mobile frame is absent.
 
 ## Definition of Done
 
@@ -424,44 +424,44 @@ Render event designs as real, functional websites connected to PassFlow data and
 
 ### Runtime rendering
 
-- [ ] Render normalized design schema.
-- [ ] Preserve responsive layout.
-- [ ] Render approved static design assets.
-- [ ] Avoid arbitrary organizer JavaScript.
-- [ ] Sanitize external URLs/actions.
+- [x] Render normalized design schema.
+- [x] Preserve responsive layout.
+- [x] Render approved static design assets.
+- [x] Avoid arbitrary organizer JavaScript.
+- [x] Sanitize external URLs/actions.
 
 ### Dynamic bindings
 
-- [ ] Event name.
-- [ ] Description.
-- [ ] Date/time.
-- [ ] Venue.
-- [ ] Logo/banner.
-- [ ] Ticket list.
-- [ ] Schedule.
-- [ ] Speakers.
-- [ ] Sponsors.
-- [ ] Register action.
-- [ ] My Pass action.
-- [ ] Auth-aware primary CTA.
-- [ ] Custom safe links.
+- [x] Event name.
+- [x] Description.
+- [x] Date/time.
+- [x] Venue.
+- [x] Logo/banner.
+- [x] Ticket list.
+- [x] Schedule.
+- [x] Speakers.
+- [x] Sponsors.
+- [x] Register action.
+- [x] My Pass action.
+- [x] Auth-aware primary CTA.
+- [x] Custom safe links.
 
 ### Publishing
 
-- [ ] Preview Draft.
-- [ ] Create immutable/identifiable published snapshot.
-- [ ] Publish explicitly.
-- [ ] Show published timestamp/version.
-- [ ] Add rollback path.
+- [x] Preview Draft.
+- [x] Create immutable/identifiable published snapshot.
+- [x] Publish explicitly.
+- [x] Show published timestamp/version.
+- [x] Add rollback path.
 
 ### SEO & sharing
 
-- [ ] Page title.
-- [ ] Meta description.
-- [ ] Social preview.
-- [ ] Favicon/event icon.
-- [ ] Canonical URL.
-- [ ] Search indexing control.
+- [x] Page title.
+- [x] Meta description.
+- [x] Social preview.
+- [x] Favicon/event icon.
+- [x] Canonical URL.
+- [x] Search indexing control.
 
 ## Definition of Done
 
