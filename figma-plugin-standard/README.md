@@ -1,25 +1,118 @@
-# PassFlow standard plugin
+# PassFlow standard Figma plugin
 
-This is a standard Figma Design plugin, not the account-library plugin. Source is prepared locally; it is not published or live.
+PassFlow uses a standard Figma Design plugin for the connected event workflow.
+
+## What this plugin does
+
+- pairs the current Figma file to a PassFlow event with a temporary code;
+- stores semantic bindings in Figma metadata, so renaming layers does not break the connection;
+- creates editable Desktop 1440 and Mobile 390 starter frames;
+- offers Minimal, Editorial and Festival starter styles;
+- inserts Hero, About, Tickets, Schedule, Speaker Grid, Sponsor Grid, Venue, Venue Map, FAQ, CTA and Footer blocks;
+- supports Simple Mode and Advanced Mode;
+- auto-syncs changes to a private PassFlow Draft;
+- never publishes automatically;
+- opens Draft Preview and the event Design workspace in PassFlow;
+- detects draft revision conflicts and requires an explicit refresh before overwriting newer work.
+
+## Security model
+
+The plugin never contains a Supabase service-role key, Figma OAuth secret or database password.
+
+Pairing flow:
+
+    PassFlow organizer session
+    → temporary pairing code
+    → plugin exchanges code
+    → event-scoped opaque plugin token
+    → token stored in Figma clientStorage
+    → draft sync API
+
+The Figma document only remembers non-secret event metadata and bindings. Revoking the paired file in PassFlow invalidates the server-side connection.
 
 ## Development installation
 
-1. Create a development plugin in Figma to obtain its assigned ID.
-2. Replace `REPLACE_WITH_FIGMA_ASSIGNED_PLUGIN_ID` in manifest.json with that ID.
-3. Source checkout: build with `node scripts/build-figma-standard.mjs` from the repository root. The download already includes compiled code.js; no build is needed for the ZIP.
-4. Import the manifest in Figma desktop. Public distribution and Community publishing are separate release steps.
+Figma assigns a standard plugin ID when a development plugin is created. Keep the generated ID in the local manifest used for installation.
 
-The production API origin is fixed to https://passflow.my.id. Never embed service-role keys or OAuth secrets in plugin source. Pairing returns an event-scoped opaque credential stored only in Figma clientStorage, not shared document metadata. Revoke or renew it in PassFlow. Codes expire after ten minutes; plugin grants after thirty days.
+1. Open Figma Desktop.
+2. Go to **Plugins → Development → New plugin / Import plugin from manifest**.
+3. If Figma creates a new plugin first, copy its assigned ID into `manifest.json`.
+4. From the repository root run `node scripts/build-figma-standard.mjs`.
+5. Import `figma-plugin-standard/manifest.json`.
+6. Open any Design file and run **PassFlow** from Development plugins.
 
-## Workflow
+Production API access is restricted to `https://passflow.my.id`. Local development may use `http://localhost:3000`.
 
-Open an existing file, pair the event, insert the Desktop/Mobile starter, edit, auto-sync draft, preview in PassFlow, publish in PassFlow. Advanced Mode can start with a blank frame and assign responsive roles and dynamic bindings. Renames do not change bindings.
+## Pairing workflow
+
+In PassFlow:
+
+    Event
+    → Design
+    → Generate pairing code
+
+In Figma:
+
+    PassFlow plugin
+    → enter PF-XXXXXXXXXX
+    → Pair event
+    → Insert Desktop + Mobile starter
+    → edit freely
+    → Draft auto-sync
+    → Preview
+    → Publish from PassFlow
+
+Pairing codes expire after ten minutes. Copied files should be paired again before they can sync to another event.
+
+## Binding model
+
+Bindings are metadata-based, not layer-name based.
+
+Examples:
+
+    eventName
+    eventDescription
+    eventDate
+    venue
+    venueMap
+    tickets
+    schedule
+    speakers
+    sponsors
+    register
+    myPass
+    customLink
+
+A designer can rename a layer after binding it without breaking PassFlow.
+
+## Website contract
+
+Required:
+
+- Event Name
+- one Register action or Tickets block
+
+Recommended:
+
+- Event Date
+- Venue
+
+Optional:
+
+- About
+- Schedule
+- Speakers
+- Sponsors
+- Venue Map
+- FAQ
+
+The plugin blocks Draft sync when a required binding is missing and reports recommendations as warnings.
 
 ## Current boundaries
 
-- Observes node changes on the current page only. Keep paired responsive frames on that page.
-- Figma fileKey is restricted for many plugin distributions. Shared document identity is not proof of file ownership and is copied when a file is duplicated. A copied file must be paired again for another event. Client credentials never travel with copied/shared metadata.
-- Reopening the plugin or changing pages requires confirming the linked event before auto-sync resumes. This prevents silent updates from a copied file on the same device. Pair again to target a different event.
-- Basic text, solid fills, rectangular layout and dynamic actions render as HTML. Individual vector/image artwork is rasterized, never the entire website. Effects, rotations, mixed text styles and complex masks are not fully supported; review the preview.
-- The Web app's migration and server configuration must be released before pairing works. Downloading this source does not activate the API.
-- The optional webhook receiver marks external changes only. Provisioning, verified file-key mapping and server passcodes are separate release steps; webhook delivery never publishes.
+- Auto-sync runs while the plugin is open.
+- Responsive frames should remain top-level frames on the current Figma page.
+- Complex masks, effects, rotations and container image fills still require Preview review.
+- Leaf vector/shape/image artwork can be rasterized instead of turning the entire website into one screenshot.
+- Auto layout is captured at the current responsive frame size; Desktop and Mobile remain the source of responsive truth.
+- Publishing stays explicit in PassFlow.
