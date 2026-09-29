@@ -1,14 +1,166 @@
-<!doctype html><html lang="en"><meta charset="utf-8"><style>body{font:13px Inter,Arial,sans-serif;padding:20px;color:var(--figma-color-text,#171717);background:var(--figma-color-bg,#fff)}h1{font-size:24px;letter-spacing:-1px}label{display:grid;gap:6px;margin:14px 0}input,select,button{font:inherit;padding:11px;border:1px solid #8885;border-radius:12px;color:inherit;background:transparent;box-sizing:border-box;width:100%}button{cursor:pointer;margin-bottom:8px}button.primary{background:#635bff;color:white;border:0}p{line-height:1.55;opacity:.75}.status{border:1px solid #8883;border-radius:14px;padding:14px}#message{white-space:pre-wrap}hr{border:0;border-top:1px solid #8883;margin:20px 0}[hidden]{display:none!important}</style>
-<h1>PassFlow</h1><p>Start with a template. Make it yours.</p><section class="status"><strong id="status">Disconnected</strong><p id="event"></p><p id="message" role="status"></p></section>
-<label>Pair Event<input id="code" placeholder="PF-XXXXXXXXXX" maxlength="20" autocomplete="off"></label><button id="pair" class="primary">Pair event</button>
-<button id="confirm" hidden>Confirm linked event for this page</button>
-<label>Mode<select id="mode"><option value="simple">Simple · recommended</option><option value="advanced">Advanced · designer</option></select></label><button id="template" class="primary">Insert Desktop + Mobile starter</button><p>This adds new frames to your current file. Existing artwork is not replaced.</p>
-<label>Insert PassFlow Block<select id="block"><option>Hero</option><option>About</option><option>Tickets</option><option>Schedule</option><option>Speakers</option><option>Sponsors</option><option>Venue</option><option>FAQ</option><option>CTA</option><option>Footer</option></select></label><button id="insert">Insert into selected frame</button>
-<section id="advanced" hidden><hr><label>Responsive frame<select id="frameRole"><option value="desktop">Desktop</option><option value="mobile">Mobile</option></select></label><button id="frame">Assign selected frame</button><label>Assign selected layer<select id="binding"><option value="register">Register</option><option value="tickets">Tickets</option><option value="schedule">Schedule</option><option value="speakers">Speakers</option><option value="sponsors">Sponsors</option><option value="logo">Event logo</option><option value="banner">Event banner</option><option value="myPass">My Pass</option><option value="customLink">Custom Link</option><option value="eventName">Event name</option><option value="eventDescription">About</option><option value="eventDate">Event date</option><option value="venue">Venue</option></select></label><label>Custom link<input id="href" placeholder="https://… or #schedule"></label><button id="assign">Assign binding</button><p>Bindings use metadata. Renaming layers is safe. To start from scratch, create a blank frame and assign Desktop.</p></section>
-<hr><button id="sync" class="primary">Sync draft / Retry</button><button id="resume">Resume after reviewing conflict</button><button id="preview" disabled>Preview in PassFlow</button><button id="disconnect">Disconnect this device</button><p>Changes sync to a private draft after 1.5 seconds. Publish is only available in PassFlow. No live site changes happen here.</p>
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<style>
+:root{color-scheme:light dark}
+*{box-sizing:border-box}
+body{margin:0;font:13px Inter,Arial,sans-serif;color:var(--figma-color-text,#171717);background:var(--figma-color-bg,#fff)}
+.shell{padding:18px;display:grid;gap:14px}
+.brand{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.brand h1{font-size:24px;line-height:1;margin:0;letter-spacing:-1px}
+.brand small{opacity:.55}
+.status{border:1px solid var(--figma-color-border,#8884);border-radius:16px;padding:14px;background:var(--figma-color-bg-secondary,#f7f7f7)}
+.status-line{display:flex;align-items:center;gap:8px}.dot{width:8px;height:8px;border-radius:999px;background:#999}.dot.on{background:#2dbf64}.dot.warn{background:#d59617}.dot.bad{background:#d84848}
+#message{white-space:pre-wrap;margin:8px 0 0;line-height:1.45;opacity:.72}
+.event{font-weight:600;margin-top:6px}
+.group{display:grid;gap:9px;padding-top:4px}
+.group-title{display:flex;align-items:center;justify-content:space-between;font-size:11px;text-transform:uppercase;letter-spacing:.08em;opacity:.58}
+label{display:grid;gap:6px}
+input,select,button{font:inherit;color:inherit;background:transparent;border:1px solid var(--figma-color-border,#8885);border-radius:12px;padding:10px 11px;width:100%}
+button{cursor:pointer;font-weight:600}
+button:hover{background:var(--figma-color-bg-hover,#8881)}
+button.primary{background:#635bff;color:#fff;border-color:#635bff}
+button.primary:hover{filter:brightness(.96)}
+button:disabled{opacity:.42;cursor:not-allowed}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.note{font-size:11px;line-height:1.45;opacity:.62;margin:0}
+.selection{border:1px dashed var(--figma-color-border,#8886);border-radius:12px;padding:10px 12px}
+.selection strong{display:block}.selection span{font-size:11px;opacity:.62}
+.contract{display:grid;gap:4px;font-size:11px;opacity:.68;padding:10px 12px;border-radius:12px;background:var(--figma-color-bg-secondary,#f7f7f7)}
+hr{border:0;border-top:1px solid var(--figma-color-border,#8884);margin:2px 0}
+.footer{position:sticky;bottom:0;background:var(--figma-color-bg,#fff);padding:12px 18px 16px;border-top:1px solid var(--figma-color-border,#8884);display:grid;gap:8px}
+.linklike{text-align:center;text-decoration:none;display:block}
+[hidden]{display:none!important}
+</style>
+<body>
+<div class="shell">
+  <div class="brand"><div><h1>PassFlow</h1><small>Design your event. Run it in PassFlow.</small></div><span>v2</span></div>
+
+  <section class="status">
+    <div class="status-line"><span id="dot" class="dot"></span><strong id="status">Disconnected</strong></div>
+    <div id="event" class="event"></div>
+    <p id="message"></p>
+  </section>
+
+  <section id="pairing" class="group">
+    <div class="group-title"><span>Pair Event</span><span>10 min code</span></div>
+    <label>Pairing code<input id="code" placeholder="PF-XXXXXXXXXX" maxlength="20" autocomplete="off" autocapitalize="characters"></label>
+    <button id="pair" class="primary">Pair event</button>
+    <p class="note">Generate a temporary code in PassFlow → Event → Design. No OAuth secret is stored in this file.</p>
+  </section>
+
+  <button id="confirm" hidden>Confirm linked event for this page</button>
+
+  <section class="group">
+    <div class="group-title"><span>Start</span><span>Template-first</span></div>
+    <label>Template style
+      <select id="style">
+        <option value="minimal">Minimal</option>
+        <option value="editorial">Editorial</option>
+        <option value="festival">Festival</option>
+      </select>
+    </label>
+    <button id="template" class="primary">Insert Desktop + Mobile starter</button>
+    <p class="note">Adds editable 1440px Desktop and 390px Mobile frames. Existing artwork is not replaced.</p>
+  </section>
+
+  <section class="group">
+    <div class="group-title"><span>Insert PassFlow Block</span><span>Reusable</span></div>
+    <label>Block
+      <select id="block">
+        <option>Hero</option><option>About</option><option>Tickets</option><option>Schedule</option>
+        <option>Speakers</option><option>Sponsors</option><option>Venue</option><option>Venue Map</option>
+        <option>FAQ</option><option>CTA</option><option>Footer</option>
+      </select>
+    </label>
+    <button id="insert">Insert into selected frame</button>
+  </section>
+
+  <div class="contract">
+    <strong>Website contract</strong>
+    <span>Required: Event Name + Register/Tickets</span>
+    <span>Recommended: Event Date + Venue</span>
+    <span>Optional: About, Speakers, Sponsors, Venue Map, FAQ</span>
+  </div>
+
+  <label>Mode
+    <select id="mode">
+      <option value="simple">Simple · recommended</option>
+      <option value="advanced">Advanced · designer</option>
+    </select>
+  </label>
+
+  <section id="advanced" class="group" hidden>
+    <hr>
+    <div class="group-title"><span>Advanced binding</span><span>Metadata-based</span></div>
+    <div class="selection"><strong id="selected">Nothing selected</strong><span id="selectedBinding">No PassFlow binding</span></div>
+    <label>Responsive frame
+      <select id="frameRole"><option value="desktop">Desktop</option><option value="mobile">Mobile</option></select>
+    </label>
+    <button id="frame">Assign selected frame</button>
+    <label>Assign selected layer
+      <select id="binding">
+        <option value="register">Primary Register CTA</option>
+        <option value="myPass">My Pass</option>
+        <option value="tickets">Tickets</option>
+        <option value="schedule">Schedule</option>
+        <option value="speakers">Speakers</option>
+        <option value="sponsors">Sponsors</option>
+        <option value="venueMap">Venue Map</option>
+        <option value="logo">Event logo</option>
+        <option value="banner">Event banner</option>
+        <option value="eventName">Event name</option>
+        <option value="eventDescription">About / description</option>
+        <option value="eventDate">Event date</option>
+        <option value="venue">Venue</option>
+        <option value="customLink">Custom Link</option>
+      </select>
+    </label>
+    <label id="hrefWrap" hidden>Custom link<input id="href" placeholder="https://… or #schedule"></label>
+    <button id="assign">Assign binding</button>
+    <p class="note">Bindings live in plugin metadata. Rename layers freely after assigning them.</p>
+  </section>
+</div>
+
+<div class="footer">
+  <div class="row"><button id="sync" class="primary">Sync draft</button><button id="resume">Refresh revision</button></div>
+  <div class="row"><button id="preview" disabled>Preview</button><button id="open" disabled>Open PassFlow</button></div>
+  <button id="disconnect">Disconnect this device</button>
+  <p class="note">Edits auto-sync to Draft after 1.5 seconds. Publishing stays explicit in PassFlow.</p>
+</div>
+
 <script>
-const $=id=>document.getElementById(id),send=m=>parent.postMessage({pluginMessage:m},'*');let eventId='',draftId='';
-$('pair').onclick=()=>send({type:'pair',code:$('code').value});$('template').onclick=()=>send({type:'template'});$('insert').onclick=()=>send({type:'block',block:$('block').value});$('mode').onchange=()=>{$('advanced').hidden=$('mode').value!=='advanced';};$('assign').onclick=()=>send({type:'assign',binding:$('binding').value,href:$('href').value});$('frame').onclick=()=>send({type:'frame',role:$('frameRole').value});$('sync').onclick=()=>send({type:'sync'});$('disconnect').onclick=()=>send({type:'disconnect'});$('resume').onclick=()=>{if(confirm('Review the current draft in PassFlow first. Refresh the revision so your next sync can replace that draft?'))send({type:'reload'});};$('preview').onclick=()=>window.open('https://passflow.my.id/admin/events/'+encodeURIComponent(eventId)+'/design/preview/'+encodeURIComponent(draftId),'_blank');
+const $=id=>document.getElementById(id),send=m=>parent.postMessage({pluginMessage:m},'*');
+let eventId='',draftId='',state='Disconnected';
+function openUrl(url){window.open(url,'_blank','noopener,noreferrer')}
+function updateStatus(m){
+  state=m.state||'Disconnected';$('status').textContent=state;$('message').textContent=m.message||'';$('event').textContent=m.eventName||'';
+  eventId=m.eventId||'';draftId=m.draftId||'';
+  $('preview').disabled=!eventId||!draftId;$('open').disabled=!eventId;
+  $('confirm').hidden=state!=='Confirm event';
+  const dot=$('dot');dot.className='dot '+(state==='Connected'||state==='Synced'?'on':state.includes('paused')||state==='Confirm event'||state==='Changes detected'?'warn':state==='Action failed'||state==='Connection expired'?'bad':'');
+}
+$('pair').onclick=()=>send({type:'pair',code:$('code').value});
+$('template').onclick=()=>send({type:'template',style:$('style').value});
+$('insert').onclick=()=>send({type:'block',block:$('block').value,style:$('style').value});
+$('mode').onchange=()=>{$('advanced').hidden=$('mode').value!=='advanced'};
+$('binding').onchange=()=>{$('hrefWrap').hidden=$('binding').value!=='customLink'};
+$('assign').onclick=()=>send({type:'assign',binding:$('binding').value,href:$('href').value});
+$('frame').onclick=()=>send({type:'frame',role:$('frameRole').value});
+$('sync').onclick=()=>send({type:'sync'});
+$('disconnect').onclick=()=>send({type:'disconnect'});
+$('resume').onclick=()=>{if(confirm('Refresh the current draft revision before retrying sync?'))send({type:'reload'})};
 $('confirm').onclick=()=>send({type:'confirm'});
-window.onmessage=e=>{const m=e.data.pluginMessage;if(!m||m.type!=='status')return;$('confirm').hidden=m.state!=='Confirm event';$('status').textContent=m.state;$('message').textContent=m.message;$('event').textContent=m.eventName;eventId=m.eventId||'';draftId=m.draftId||'';$('preview').disabled=!eventId||!draftId;};
-</script></html>
+$('preview').onclick=()=>{if(eventId&&draftId)openUrl('https://passflow.my.id/admin/events/'+encodeURIComponent(eventId)+'/design/preview/'+encodeURIComponent(draftId))};
+$('open').onclick=()=>{if(eventId)openUrl('https://passflow.my.id/admin/events/'+encodeURIComponent(eventId)+'/design')};
+window.onmessage=e=>{
+  const m=e.data.pluginMessage;if(!m)return;
+  if(m.type==='status')updateStatus(m);
+  if(m.type==='selection'){
+    $('selected').textContent=m.name||'Nothing selected';
+    $('selectedBinding').textContent=m.binding?'Bound: '+m.binding:(m.frameRole?'Frame role: '+m.frameRole:'No PassFlow binding');
+  }
+};
+</script>
+</body>
+</html>

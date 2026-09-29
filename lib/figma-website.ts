@@ -1,4 +1,4 @@
-export const websiteBindings=['eventName','eventDescription','eventDate','venue','logo','banner','tickets','register','myPass','schedule','speakers','sponsors','customLink'] as const;
+export const websiteBindings=['eventName','eventDescription','eventDate','venue','venueMap','logo','banner','tickets','register','myPass','schedule','speakers','sponsors','customLink'] as const;
 export type WebsiteBinding=typeof websiteBindings[number];
 export type WebsiteNode={id:string;parentId:string|null;type:'text'|'box'|'image';x:number;y:number;width:number;height:number;text:string;fill:string;hasFill:boolean;color:string;fontSize:number;fontFamily:string;radius:number;align:'left'|'center'|'right';image:string;binding:WebsiteBinding|null;href:string};
 export type WebsiteFrame={width:number;height:number;background:string;nodes:WebsiteNode[]};
