@@ -18,10 +18,10 @@ The checkboxes track source and database capabilities present on `main`, not acc
 | --- | --- | --- |
 | 1 · P0 reliability | Device sign-off | Credential, scanner and RLS tests plus real PostgreSQL concurrency pass in CI. Physical iPhone/iPad camera and signed-in UI isolation checks remain. |
 | 2 · Event lifecycle | Released, operator trial pending | Draft/live settings, numbered snapshots, restore, archive and delete guards are deployed. Existing published event received version 1; organizer publish/restore trial remains. Operational tickets/gates/access edits apply immediately. |
-| 3 · Customize | Implemented in source, trial pending | Template-first starter, Quick Setup, Advanced Mode and desktop/mobile frames exist; organizer usability and template styles need real review. |
-| 4 · Figma plugin | Implemented in source, installation pending | Pairing, metadata, assignment and status UI exist; standard plugin ID/installation, OAuth audit and real Figma trial remain. |
+| 3 · Customize | Implemented in source, trial pending | Template-first starter, Quick Setup, Advanced Mode, Minimal/Editorial/Festival styles and the required/optional website contract exist; organizer usability still needs real review. |
+| 4 · Figma plugin | v2 source ready, installation pending | Pairing, metadata binding, three starter styles, reusable grids/venue map, Simple/Advanced UI, Draft sync, Preview and Open PassFlow exist; standard plugin installation, OAuth audit and a real Figma-file trial remain. |
 | 5 · Figma sync | Implemented core, visual parity pending | Schema 3 hierarchy, draft sync and conflicts exist; auto-layout, container image fills, masks, vectors and tablet are incomplete. |
-| 6 · Website runtime | Implemented core, live trial pending | Dynamic sections, SEO, preview, numbered publish and restore exist; auth-aware CTA, real Figma visual parity and authenticated flow need validation. |
+| 6 · Website runtime | Implemented core, live trial pending | Dynamic sections, SEO, preview, numbered publish/restore, Venue Map and auth-aware CTA exist; real Figma visual parity and authenticated flow still need validation. |
 | 7 · Subdomains | Partial | Mapping and hostname routing exist; wildcard DNS/TLS verification and feature flag activation remain. |
 | 8 · Dashboard | Partial | Basic metrics exist; live operational feeds and reconciled aggregates remain. |
 | 9 · Command Center | Not started | Incident controls and device health remain. |
@@ -240,8 +240,8 @@ Create reusable starter sections:
 
 ### Template system
 
-- [ ] Define initial template styles.
-- [ ] Define required vs optional blocks.
+- [x] Define initial template styles: Minimal, Editorial and Festival.
+- [x] Define required vs optional block contract.
 - [x] Define desktop frame convention.
 - [x] Define mobile frame convention.
 - [x] Define safe fallback when mobile design is missing.
@@ -314,7 +314,7 @@ Do not rely only on layer names.
 - [x] Schedule
 - [x] Speakers
 - [x] Sponsors
-- [ ] Venue Map
+- [x] Venue Map
 - [x] Custom Link
 
 ### Insert PassFlow Block
@@ -323,8 +323,8 @@ Do not rely only on layer names.
 - [x] Register CTA
 - [x] Ticket List
 - [x] Schedule
-- [ ] Speaker Grid
-- [ ] Sponsor Grid
+- [x] Speaker Grid
+- [x] Sponsor Grid
 - [x] Venue
 - [x] FAQ
 - [x] Footer
@@ -336,7 +336,7 @@ Do not rely only on layer names.
 - [x] Connected event state.
 - [x] Sync state.
 - [x] Validation warnings.
-- [ ] Open PassFlow action.
+- [x] Open PassFlow action.
 - [x] Preview action.
 
 ## Definition of Done
@@ -443,7 +443,7 @@ Render event designs as real, functional websites connected to PassFlow data and
 - [x] Sponsors.
 - [x] Register action.
 - [x] My Pass action.
-- [ ] Auth-aware primary CTA with an explicit signed-in/registered state.
+- [x] Auth-aware primary CTA with signed-out, signed-in and registered labels.
 - [x] Custom safe links.
 
 ### Publishing
@@ -477,10 +477,10 @@ The checked items above describe implemented capabilities. A phase is not signed
 | --- | --- | --- |
 | 1 | UI isolation; direct API/database isolation across all operational paths; audit every operational query for event scoping. | Add role-based cross-event browser/API scenarios, finish query audit and repair any leakage. Existing RLS SQL fixtures cover representative tables only. |
 | 2 | No unchecked implementation item. | Record an organizer's complete draft → publish → edit → restore → archive trial before operational sign-off. |
-| 3 | Initial template style definitions; required vs optional block contract. | Document a small set of styles and section requirements, then improve starter output from organizer feedback. |
-| 4 | Five legacy OAuth/token/reconnect/parser/export audits; Venue Map binding; real speaker/sponsor grids; dedicated Open PassFlow action. | Audit or retire the legacy OAuth route, implement remaining plugin controls and section layouts. Pairing source is available, but real installation is unverified. |
+| 3 | No unchecked source item. | Trial Minimal, Editorial and Festival starter output with organizers and refine from feedback. |
+| 4 | Five legacy OAuth/token/reconnect/parser/export audits. | Install the standard plugin in Figma Desktop, run a real pairing/sync trial, then audit or retire the legacy OAuth route. |
 | 5 | Container image fills/assets, common auto-layout, vectors/shapes, optional tablet frame. | Build a bounded asset pipeline and responsive translation; keep preview warnings for unsupported effects and masks. |
-| 6 | Explicit auth-aware primary CTA state. | Show Register, Continue, or My Pass based on authenticated registration state and verify each path. Current CTA reaches the claim flow but its Figma label is static. |
+| 6 | No unchecked source item. | Verify signed-out, signed-in unregistered and registered CTA behavior against a live Figma website. |
 
 ### Manual checks before calling Phase 1–6 complete
 
