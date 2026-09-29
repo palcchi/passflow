@@ -18,7 +18,7 @@ export async function GET(request: Request) {
   }
   const { supabase, user } = context;
   const requestedNext = cookieStore.get("passflow_figma_next")?.value;
-  const next = requestedNext && /^\/admin\/events\/[a-zA-Z0-9_-]+\/design$/.test(requestedNext) ? requestedNext : "/profile";
+  const next = requestedNext && /^\/admin\/events\/[a-zA-Z0-9_-]+\/design(\/legacy)?$/.test(requestedNext) ? requestedNext : "/profile";
   const go = (status: string) => {
     const destination = new URL(next, request.url);
     destination.searchParams.set("figma", status);

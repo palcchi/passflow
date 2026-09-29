@@ -528,9 +528,9 @@ export async function saveEventTheme(formData: FormData) {
     return { ok: false, message: "Invalid color value. Use a 6-digit HEX code." };
   }
   const { error } = await supabase.rpc("stage_event_config", { p_event_id: eventId, p_patch: { theme } });
-  if (error) return { ok: false, message: "Appearance settings could not be saved. Please try again." };
+  if (error) return { ok: false, message: "Quick Setup could not be saved. Please try again." };
   revalidateEvent(eventId);
-  return { ok: true, message: "Appearance saved to draft. Publish in Settings to update the live event." };
+  return { ok: true, message: "Quick Setup saved to draft. Publish in Settings to update the live event." };
 }
 
 export async function saveEventQrConfig(formData: FormData) {

@@ -31,7 +31,7 @@ export default async function EventDesignPage({
   if (!event) notFound();
 
   const { supabase, user } = await requireOrganizerMembership(
-    `/admin/events/${eventId}/design`,
+    `/admin/events/${eventId}/design/legacy`,
   );
 
   const [
@@ -70,7 +70,7 @@ export default async function EventDesignPage({
         </p>
       </header>
 
-      <section className="event-admin-section"><h3>Create, preview, publish</h3><p>Use the design studio for your website, digital pass, ID card, and wristband. Figma plugin bundles import as private drafts.</p><Link className="button button-dark" href={`/admin/events/${eventId}/design/studio`}>Open design studio</Link></section>
+      <section className="event-admin-section"><h3>Create, preview, publish</h3><p>This older flow links frames by URL through your Figma account. For event websites, use Figma website with the standard plugin instead. For passes, ID cards and wristbands, use Pass layouts.</p><Link className="button button-dark" href={`/admin/events/${eventId}/design/studio`}>Open pass layouts</Link></section>
       <EventDesignFlow />
 
       {!connection ? (
@@ -89,7 +89,7 @@ export default async function EventDesignPage({
             <a
               className="button button-dark"
               href={`/api/figma/connect?next=${encodeURIComponent(
-                `/admin/events/${eventId}/design`,
+                `/admin/events/${eventId}/design/legacy`,
               )}`}
             >
               Connect Figma
@@ -310,7 +310,7 @@ export default async function EventDesignPage({
               </label>
 
               <label className="design-form-url">
-                Figma file atau frame URL
+                Figma file or frame URL
                 <input
                   name="figmaUrl"
                   required
@@ -318,7 +318,7 @@ export default async function EventDesignPage({
                 />
                 <small>
                   Select a frame in Figma, then copy its selection link. Sync reads every marker
-                  di frame itu.
+                  in that frame.
                 </small>
               </label>
 
@@ -335,7 +335,7 @@ export default async function EventDesignPage({
               </label>
 
               <label>
-                Latar QR
+                QR background
                 <span className="design-color-input">
                   <input
                     type="color"
@@ -347,14 +347,14 @@ export default async function EventDesignPage({
               </label>
 
               <label>
-                Bentuk modul
+                Module shape
                 <SmartSelect
                   name="qrModules"
                   value="square"
                   options={[
                     {
                       value: "square",
-                      label: "Kotak",
+                      label: "Square",
                       description: "Recommended for reliable scanning",
                     },
                     { value: "rounded", label: "Rounded" },
@@ -369,7 +369,7 @@ export default async function EventDesignPage({
                 <p>
                   The PassFlow Design plugin can insert these markers automatically. Layer names
                   must match exactly. Attendee data, optional photos, tickets, and QR codes are still sourced
-                  dari PassFlow.
+                  from PassFlow.
                 </p>
               </div>
 
@@ -379,7 +379,7 @@ export default async function EventDesignPage({
                 </button>
                 <p>
                   Your original design remains unchanged. Save as creates a separate export and does not edit
-                  file Figma.
+                  your Figma file.
                 </p>
               </div>
             </form>
@@ -393,7 +393,7 @@ export default async function EventDesignPage({
           <span>
             Add markers in Figma → Sync → review detected markers → Save as to
             generate attendee output. Event page assets continue to use the registration and QR system
-            milik PassFlow.
+            from PassFlow.
           </span>
         </section>
     </div>
