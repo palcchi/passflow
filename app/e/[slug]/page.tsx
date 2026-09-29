@@ -37,7 +37,7 @@ export async function generateMetadata({params}:EventPageProps):Promise<Metadata
   return {title:event.name,description:event.description.slice(0,160),alternates:{canonical:url},robots:{index:true,follow:true},openGraph:{title:event.name,description:event.description,url,images:[{url:image}]},twitter:{card:'summary_large_image',title:event.name,description:event.description,images:[image]},icons:event.logoUrl?{icon:event.logoUrl}:undefined};
 }
 
-export default async function PublicEventPage({ params, searchParams }: EventPageProps) {
+export default async function PublicEventPage({ params }: EventPageProps) {
   const { slug } = await params;
   const event = await getPublishedEvent(slug);
 
