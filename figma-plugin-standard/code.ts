@@ -280,7 +280,7 @@ async function api(path:string,body:unknown,token?:string){
     headers:{'Content-Type':'application/json',...(token?{Authorization:'Bearer '+token}:{})},
     body:JSON.stringify(body)
   });
-  let result:any={};
+  let result:Record<string,unknown>={};
   try{result=await response.json();}catch{}
   if(!response.ok||result.error)throw Error(result.error||'Request failed');
   return result;
