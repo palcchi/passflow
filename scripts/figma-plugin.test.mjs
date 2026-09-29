@@ -90,6 +90,21 @@ test('standard plugin templates serialize into valid desktop/mobile HTML documen
 
   await context.testApi.template('minimal');
   const frames=context.testApi.findFrames();
+
+  function reflow(parent){
+    for(const child of parent.children??[])if(child.children?.length)reflow(child);
+    if(parent.layoutMode==='VERTICAL'){
+      let y=parent.paddingTop||0;
+      for(const child of parent.children){child.x=parent.paddingLeft||0;child.y=y;y+=child.height+(parent.itemSpacing||0);}
+      if(parent.primaryAxisSizingMode==='AUTO')parent.height=y-(parent.children.length?(parent.itemSpacing||0):0)+(parent.paddingBottom||0);
+    }else if(parent.layoutMode==='HORIZONTAL'){
+      let x=parent.paddingLeft||0;
+      for(const child of parent.children){child.x=x;child.y=parent.paddingTop||0;x+=child.width+(parent.itemSpacing||0);}
+      if(parent.primaryAxisSizingMode==='AUTO')parent.width=x-(parent.children.length?(parent.itemSpacing||0):0)+(parent.paddingRight||0);
+    }
+  }
+  reflow(frames.desktop);
+  reflow(frames.mobile);
   const exported={
     schema:3,
     source:'figma',
