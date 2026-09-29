@@ -11,7 +11,7 @@ test('standard plugin templates serialize into valid desktop/mobile HTML documen
  appendChild(child){child.parent=this;this.children.push(child);},resize(w,h){this.width=w;this.height=h;},
  getSharedPluginData(ns,key){return metadata.get(ns+key)??'';},setSharedPluginData(ns,key,value){metadata.set(ns+key,value);},
  on(){},off(){},async loadAsync(){}};}
- const root=node('DOCUMENT'),page=node('PAGE');root.appendChild(page);
+ const root=node('DOCUMENT'),page=node('PAGE');page.selection=[];root.appendChild(page);
  const figma={root,currentPage:page,mixed:Symbol('mixed'),fileKey:undefined,createFrame:()=>node('FRAME'),createText:()=>node('TEXT'),loadFontAsync:async()=>{},viewport:{center:{x:0,y:0},scrollAndZoomIntoView(){}},ui:{postMessage:m=>states.push(m)},showUI(){},on(){},clientStorage:{getAsync:async()=>null,setAsync:async()=>{},deleteAsync:async()=>{}},base64Encode:data=>Buffer.from(data).toString('base64')};
  const source=fs.readFileSync('figma-plugin-standard/code.ts','utf8');
  const compiled=ts.transpileModule(source,{compilerOptions:{target:ts.ScriptTarget.ES2020,module:ts.ModuleKind.None}}).outputText;
@@ -21,8 +21,8 @@ test('standard plugin templates serialize into valid desktop/mobile HTML documen
  const frames=context.testApi.findFrames();
  const exported={schema:3,source:'figma',desktop:await context.testApi.serialize(frames.desktop,[]),mobile:await context.testApi.serialize(frames.mobile,[])};
  const document=readFigmaWebsite(exported);assert.ok(document);assert.deepEqual(validateFigmaWebsite(document),[]);
- assert.equal(frames.desktop.children.length,10);assert.equal(frames.mobile.children.length,10);
- assert.ok(document.desktop.nodes.some(n=>n.parentId&&n.binding==='eventName'));
+ assert.equal(frames.desktop.children.length,11);assert.equal(frames.mobile.children.length,11);
+ assert.ok(document.desktop.nodes.some(n=>n.parentId&&n.binding==='eventName'));assert.ok(document.desktop.nodes.some(n=>n.binding==='venueMap'));assert.ok(document.desktop.nodes.some(n=>n.binding==='speakers'));assert.ok(document.desktop.nodes.some(n=>n.binding==='sponsors'));
  const before=document.desktop.nodes.filter(n=>n.binding).map(n=>[n.id,n.binding]);
  for(const section of frames.desktop.children)for(const child of section.children)child.name='Entirely renamed';
  const after=await context.testApi.serialize(frames.desktop,[]);
