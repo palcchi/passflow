@@ -4,11 +4,6 @@ import { useSyncExternalStore } from "react";
 import { Monitor, Moon, Sun } from "lucide-react";
 
 type ThemeMode = "system" | "light" | "dark";
-type TransitionDocument = Document & {
-  startViewTransition?: (callback: () => void) => {
-    ready: Promise<void>;
-  };
-};
 
 const STORAGE_KEY = "passflow-theme";
 const CHANGE_EVENT = "passflow-theme-change";
@@ -43,46 +38,27 @@ function persistTheme(mode: ThemeMode) {
 export function ThemeToggle() {
   const mode = useSyncExternalStore(subscribe, readTheme, () => "system");
 
-  async function choose(nextMode: ThemeMode, button: HTMLButtonElement) {
+  function choose(nextMode: ThemeMode) {
     if (nextMode === mode) return;
 
+    const root = document.documentElement;
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const transitionDocument = document as TransitionDocument;
-    if (reduceMotion || !transitionDocument.startViewTransition) {
+
+    if (reduceMotion) {
       persistTheme(nextMode);
       applyTheme(nextMode);
       window.dispatchEvent(new Event(CHANGE_EVENT));
       return;
     }
 
-    const rect = button.getBoundingClientRect();
-    const x = rect.left + rect.width / 2;
-    const y = rect.top + rect.height / 2;
-    const radius = Math.hypot(
-      Math.max(x, window.innerWidth - x),
-      Math.max(y, window.innerHeight - y),
-    );
+    root.classList.add("theme-switching");
+    persistTheme(nextMode);
+    applyTheme(nextMode);
+    window.dispatchEvent(new Event(CHANGE_EVENT));
 
-    const transition = transitionDocument.startViewTransition(() => {
-      persistTheme(nextMode);
-      applyTheme(nextMode);
-      window.dispatchEvent(new Event(CHANGE_EVENT));
-    });
-
-    await transition.ready;
-    document.documentElement.animate(
-      {
-        clipPath: [
-          `circle(0px at ${x}px ${y}px)`,
-          `circle(${radius}px at ${x}px ${y}px)`,
-        ],
-      },
-      {
-        duration: 430,
-        easing: "cubic-bezier(.22,.8,.3,1)",
-        pseudoElement: "::view-transition-new(root)",
-      },
-    );
+    window.setTimeout(() => {
+      root.classList.remove("theme-switching");
+    }, 180);
   }
 
   const options = [
@@ -102,7 +78,7 @@ export function ThemeToggle() {
           aria-pressed={mode === value}
           aria-label={label}
           title={label}
-          onClick={(event) => void choose(value, event.currentTarget)}
+          onClick={() => choose(value)}
         >
           <Icon size={13} />
           <span>{label}</span>

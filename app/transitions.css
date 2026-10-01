@@ -7,6 +7,16 @@ body {
   overflow-x: clip;
 }
 
+/* Theme changes use a short color transition instead of a circular view-transition
+   wipe. The old wipe could snapshot nested route transitions and produce a jump. */
+html.theme-switching,
+html.theme-switching body,
+html.theme-switching * {
+  transition-property: background-color, color, border-color, box-shadow, fill, stroke !important;
+  transition-duration: 180ms !important;
+  transition-timing-function: ease-out !important;
+}
+
 .pf-route-stage {
   width: 100%;
   min-height: 100dvh;
