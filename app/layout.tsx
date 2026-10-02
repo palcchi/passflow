@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import "./apple-workspace.css";
@@ -7,6 +7,7 @@ import "./flow.css";
 import "./unified-ui.css";
 import "./transitions.css";
 import "./management-design.css";
+import "./polish.css";
 import { RouteTransition } from "@/components/route-transition";
 import { AppNavigationController } from "@/components/app-navigation-controller";
 
@@ -40,6 +41,14 @@ export const metadata: Metadata = {
   },
   description:
     "Multi-event management, QR wristband claiming, digital passes, and camera-based access validation.",
+};
+
+export const viewport: Viewport = {
+  viewportFit: "cover",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f5f5f1" },
+    { media: "(prefers-color-scheme: dark)", color: "#0d0e0d" },
+  ],
 };
 
 export default function RootLayout({

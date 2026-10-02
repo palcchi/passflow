@@ -221,8 +221,6 @@
 /* Compact thumbnails stay decorative; status remains readable in the row. */
 .flow-event-list .flow-cover-title { display:none; }
 .flow-event-list .event-cover-art > .flow-shapes { right:0; bottom:0; }
-.flow-event-status { display:inline-flex; align-self:flex-start; width:fit-content; padding:2px 6px; border-radius:99px; background:var(--muted); color:var(--muted-foreground); font-size:8px; text-transform:capitalize; }
-.flow-event-status[data-state="published"] { color:var(--foreground); background:color-mix(in srgb,#b6e975 17%,var(--card)); }
 .auth-shell .auth-input input { background:transparent!important; }
 .flow-workspace .studio-metric,.flow-workspace .event-admin-metric { border-radius:12px!important; }
 

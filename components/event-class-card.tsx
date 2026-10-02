@@ -20,7 +20,6 @@ export function EventClassCard({ event, joined = false, manage = false, flow = f
     </div>
     <div className="class-event-body">
       <h3>{event.name}</h3>
-      {manage && <span className="flow-event-status" data-state={event.status}>{event.status || "draft"}</span>}
       <p><CalendarDays size={15}/>{event.dateLabel}</p>
       <p><MapPin size={15}/>{event.venue || "Venue to be announced"}</p>
     </div>

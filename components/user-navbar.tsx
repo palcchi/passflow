@@ -9,12 +9,10 @@ import {
   ChevronDown,
   LayoutDashboard,
   LogOut,
-  Menu,
   Plus,
   Settings2,
   Sparkles,
   UserRound,
-  X,
 } from "lucide-react";
 import { signOut } from "@/app/auth/actions";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -35,17 +33,17 @@ export function UserNavbar({
 }: UserNavbarProps) {
   const pathname = usePathname();
   const reduceMotion = useReducedMotion();
-  const [openMenu, setOpenMenu] = useState<"profile" | "mobile" | null>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
   const [pendingHref, setPendingHref] = useState<string | null>(null);
   const rootRef = useRef<HTMLElement>(null);
   const initial = (name || email || "P").trim().charAt(0).toUpperCase() || "P";
 
   useEffect(() => {
     function closeOutside(event: PointerEvent) {
-      if (!rootRef.current?.contains(event.target as Node)) setOpenMenu(null);
+      if (!rootRef.current?.contains(event.target as Node)) setMenuOpen(false);
     }
     function escape(event: KeyboardEvent) {
-      if (event.key === "Escape") setOpenMenu(null);
+      if (event.key === "Escape") setMenuOpen(false);
     }
     document.addEventListener("pointerdown", closeOutside, true);
     document.addEventListener("keydown", escape);
@@ -80,7 +78,17 @@ export function UserNavbar({
     return pendingHref ? pendingHref === href : routeActive(href);
   }
 
+  const pillTransition = reduceMotion
+    ? { duration: 0 }
+    : { type: "spring" as const, stiffness: 300, damping: 30, mass: 0.82 };
+
+  function go(href: string) {
+    setPendingHref(href);
+    setMenuOpen(false);
+  }
+
   return (
+    <>
     <nav ref={rootRef} className="user-nav-shell flow-sidebar" aria-label="Workspace navigation">
       <div className="user-nav user-nav-flat">
         <div className="user-nav-left">
@@ -100,16 +108,13 @@ export function UserNavbar({
                   className="user-nav-link"
                   data-active={isActive}
                   aria-current={isActive ? "page" : undefined}
-                  onClick={() => {
-                    setPendingHref(href);
-                    setOpenMenu(null);
-                  }}
+                  onClick={() => go(href)}
                 >
                   {isActive && (
                     <motion.span
                       className="user-nav-active-pill"
                       layoutId="passflow-global-nav-pill"
-                      transition={reduceMotion ? { duration: 0 } : { type: "spring", stiffness: 300, damping: 30, mass: 0.82 }}
+                      transition={pillTransition}
                     />
                   )}
                   <span className="user-nav-link-content"><Icon size={16}/>{label}</span>
@@ -137,9 +142,9 @@ export function UserNavbar({
           <button
             type="button"
             className="user-profile-trigger"
-            aria-expanded={openMenu === "profile"}
+            aria-expanded={menuOpen}
             aria-label="Account menu"
-            onClick={() => setOpenMenu(openMenu === "profile" ? null : "profile")}
+            onClick={() => setMenuOpen(!menuOpen)}
           >
             <span
               className="user-avatar"
@@ -153,22 +158,12 @@ export function UserNavbar({
             </span>
             <ChevronDown
               size={14}
-              className={openMenu === "profile" ? "is-open" : ""}
+              className={menuOpen ? "is-open" : ""}
             />
-          </button>
-
-          <button
-            type="button"
-            className="user-mobile-menu-button"
-            aria-label={openMenu === "mobile" ? "Close menu" : "Open menu"}
-            aria-expanded={openMenu === "mobile"}
-            onClick={() => setOpenMenu(openMenu === "mobile" ? null : "mobile")}
-          >
-            {openMenu === "mobile" ? <X size={18} /> : <Menu size={18} />}
           </button>
         </div>
 
-        {openMenu === "profile" && (
+        {menuOpen && (
           <div className="user-profile-menu flat-popover">
             <div className="user-profile-menu-head">
               <span
@@ -183,7 +178,11 @@ export function UserNavbar({
               </div>
             </div>
             <div className="user-profile-menu-divider" />
-            <Link href="/profile" onClick={() => setOpenMenu(null)}>
+            <div className="user-profile-menu-theme">
+              <span>Appearance</span>
+              <ThemeToggle />
+            </div>
+            <Link href="/profile" onClick={() => setMenuOpen(false)}>
               <UserRound size={16} />
               <span>
                 <strong>Profile</strong>
@@ -191,7 +190,7 @@ export function UserNavbar({
               </span>
             </Link>
             {organizer && (
-              <Link href="/admin" onClick={() => setOpenMenu(null)}>
+              <Link href="/admin" onClick={() => setMenuOpen(false)}>
                 <Settings2 size={16} />
                 <span>
                   <strong>Organizer workspace</strong>
@@ -208,32 +207,35 @@ export function UserNavbar({
           </div>
         )}
 
-        {openMenu === "mobile" && (
-          <div className="user-mobile-menu flat-popover">
-            {navItems.map(({ href, label, icon: Icon }) => (
-              <Link
-                href={href}
-                key={href}
-                data-active={active(href)}
-                aria-current={active(href) ? "page" : undefined}
-                onClick={() => {
-                  setPendingHref(href);
-                  setOpenMenu(null);
-                }}
-              >
-                <Icon size={16} />
-                {label}
-              </Link>
-            ))}
-            <form action={signOut}>
-              <button type="submit">
-                <LogOut size={16} />
-                Sign out
-              </button>
-            </form>
-          </div>
-        )}
       </div>
     </nav>
+
+    {/* Phone and iPad: thumb-reachable tab bar, like a native app. */}
+    <nav className="user-tabbar" aria-label="Workspace tabs">
+      {navItems.map(({ href, label, icon: Icon }) => {
+        const isActive = active(href);
+        return (
+          <Link
+            href={href}
+            key={href}
+            className="user-tab"
+            data-active={isActive}
+            aria-current={isActive ? "page" : undefined}
+            onClick={() => go(href)}
+          >
+            {isActive && (
+              <motion.span
+                className="user-tab-pill"
+                layoutId="passflow-tab-pill"
+                transition={pillTransition}
+              />
+            )}
+            <Icon size={20} strokeWidth={isActive ? 2.2 : 1.8} />
+            <span>{label}</span>
+          </Link>
+        );
+      })}
+    </nav>
+    </>
   );
 }

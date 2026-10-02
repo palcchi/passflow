@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion, useReducedMotion } from "motion/react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const items = [
   { key: "overview", label: "Overview", suffix: "" },
@@ -20,6 +20,13 @@ export function EventAdminNav({ eventId }: { eventId: string }) {
   const reduceMotion = useReducedMotion();
   const [pendingHref, setPendingHref] = useState<string | null>(null);
   const base = `/admin/events/${eventId}`;
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  // On narrow screens the dock scrolls sideways; keep the current tab visible.
+  useEffect(() => {
+    scrollRef.current?.querySelector('[aria-current="page"]')
+      ?.scrollIntoView({ inline: "center", block: "nearest", behavior: reduceMotion ? "auto" : "smooth" });
+  }, [pathname, reduceMotion]);
 
   const [previousPath, setPreviousPath] = useState(pathname);
   if (previousPath !== pathname) {
@@ -29,7 +36,7 @@ export function EventAdminNav({ eventId }: { eventId: string }) {
 
   return (
     <nav className="event-section-dock" aria-label="Event management">
-      <div className="event-section-dock-scroll">
+      <div className="event-section-dock-scroll" ref={scrollRef}>
         {items.map(({ key, label, suffix }) => {
           const href = base + suffix;
           const routeIsActive = suffix

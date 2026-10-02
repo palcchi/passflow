@@ -33,7 +33,9 @@ export function RouteTransition({ children }: { children: ReactNode }) {
       {
         duration: 260,
         easing: "cubic-bezier(0.22, 1, 0.36, 1)",
-        fill: "both",
+        // Do not keep the transform after the animation: a lingering transform
+        // turns <main> into the containing block for position: fixed children.
+        fill: "backwards",
       },
     );
   }, [pathname, reduceMotion]);
