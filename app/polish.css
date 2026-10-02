@@ -1,0 +1,226 @@
+/* Final polish: responsive fixes, native-feel navigation and restrained motion.
+ Plain rules are unlayered and imported last, so they win over the legacy sheets on
+ source order. Overrides that must beat legacy layered !important rules live in the
+ passflow-ui block at the end of this file. */
+
+html { -webkit-tap-highlight-color: transparent; }
+
+/* ---------- Native tab bar (phone + iPad) ---------- */
+.user-tabbar { display: none; }
+
+@media (max-width: 1023px) {
+  .user-tabbar {
+    position: fixed;
+    z-index: 60;
+    left: 12px;
+    right: 12px;
+    bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0, 1fr);
+    gap: 2px;
+    max-width: 520px;
+    margin-inline: auto;
+    padding: 6px;
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    background: color-mix(in srgb, var(--card) 82%, transparent);
+    box-shadow: var(--pf-float-shadow);
+    backdrop-filter: blur(20px) saturate(160%);
+    -webkit-backdrop-filter: blur(20px) saturate(160%);
+    view-transition-name: passflow-tabbar;
+  }
+
+  .user-tab {
+    position: relative;
+    isolation: isolate;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    min-height: 52px;
+    border-radius: 18px;
+    color: var(--muted-foreground);
+    font-size: 10.5px;
+    font-weight: 500;
+    letter-spacing: 0;
+    text-decoration: none;
+    transition: color 180ms ease, transform 180ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .user-tab > svg, .user-tab > span { position: relative; z-index: 1; }
+  .user-tab[data-active="true"] { color: var(--foreground); }
+  .user-tab:active { transform: scale(0.93); }
+
+  .user-tab-pill {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    border-radius: inherit;
+    background: color-mix(in srgb, var(--flow-violet, #8273ef) 14%, var(--card));
+  }
+}
+
+::view-transition-old(passflow-tabbar),
+::view-transition-new(passflow-tabbar) { animation: none; }
+
+/* Theme switch inside the account menu where the bar has no room for it. */
+.user-profile-menu-theme { display: none; }
+
+@media (max-width: 800px) {
+  .user-profile-menu-theme {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 6px 10px;
+    color: var(--muted-foreground);
+    font-size: 12px;
+  }
+
+  .user-profile-menu .theme-toggle button {
+    width: 32px;
+    height: 32px;
+    min-height: 32px;
+  }
+}
+
+/* ---------- Desktop sidebar note: art no longer covers the copy ---------- */
+@media (min-width: 1024px) {
+  .flow-sidebar-note { padding-top: 86px; }
+}
+
+/* ---------- Event cards ---------- */
+.flow-workspace .class-event-card .flow-event-progress {
+  padding: 2px 20px 0;
+  font-size: 11px;
+}
+
+.event-cover-art { container-type: inline-size; }
+
+.event-cover-art .flow-cover-title {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow: hidden;
+  overflow-wrap: break-word;
+  hyphens: auto;
+  font-size: clamp(14px, 7.2cqi, 26px);
+}
+
+.class-event-body h3 { overflow-wrap: break-word; }
+
+/* ---------- Event management header ---------- */
+.flow-workspace .event-admin-back {
+  display: flex;
+  width: fit-content;
+  align-items: center;
+  gap: 6px;
+}
+
+.flow-workspace .event-admin-kicker { width: fit-content; }
+
+@media (max-width: 680px) {
+  .flow-workspace .event-admin-hero-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .flow-workspace .event-admin-hero-actions > :last-child { grid-column: 1 / -1; }
+}
+
+/* Section dock: show that it scrolls, snap tabs into place. */
+@media (max-width: 1023px) {
+  .flow-workspace.event-admin-context .event-section-dock-scroll {
+    scroll-snap-type: x proximity;
+    scroll-padding-inline: 24px;
+    mask-image: linear-gradient(90deg, transparent, #000 14px, #000 calc(100% - 32px), transparent);
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 14px, #000 calc(100% - 32px), transparent);
+  }
+
+  .flow-workspace.event-admin-context .event-dock-item {
+    flex-shrink: 0;
+    scroll-snap-align: center;
+  }
+}
+
+/* ---------- Motion ---------- */
+.class-event-grid > * {
+  animation: pf-rise 560ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
+}
+
+.class-event-grid > :nth-child(2) { animation-delay: 60ms; }
+.class-event-grid > :nth-child(3) { animation-delay: 120ms; }
+.class-event-grid > :nth-child(4) { animation-delay: 180ms; }
+.class-event-grid > :nth-child(5) { animation-delay: 240ms; }
+.class-event-grid > :nth-child(n + 6) { animation-delay: 300ms; }
+
+.event-cover-art .flow-shapes {
+  transition: transform 520ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@media (hover: hover) {
+  .class-event-card:hover .event-cover-art .flow-shapes {
+    transform: translate(-4px, -4px) rotate(-19deg) scale(1.05);
+  }
+}
+
+.flat-popover {
+  transform-origin: top right;
+  animation: pf-pop 200ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
+}
+
+.flow-sidebar .flat-popover { transform-origin: bottom left; }
+
+.button:active,
+.magic-shiny-button:active,
+.user-nav-icon-button:active,
+.user-profile-trigger:active,
+.event-dock-item:active {
+  transform: scale(0.97);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .class-event-grid > *,
+  .flat-popover { animation: none; }
+
+  .user-tab:active,
+  .button:active,
+  .magic-shiny-button:active,
+  .user-nav-icon-button:active,
+  .user-profile-trigger:active,
+  .event-dock-item:active { transform: none; }
+
+  .event-cover-art .flow-shapes { transition: none; }
+}
+
+@keyframes pf-rise {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes pf-pop {
+  from { opacity: 0; transform: scale(0.96) translateY(-4px); }
+  to { opacity: 1; transform: none; }
+}
+
+@layer passflow-ui {
+  @media (max-width: 1023px) {
+    .user-nav-shell .user-nav-links { display: none !important; }
+    /* Leave room so the last card is never hidden behind the tab bar. */
+    .flow-workspace { padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px)) !important; }
+  }
+
+  @media (max-width: 800px) {
+    .user-profile-menu .theme-toggle button { border-radius: 50% !important; }
+  }
+
+  @media (min-width: 1024px) {
+    .flow-sidebar-note { padding-top: 86px !important; }
+  }
+
+  @media (max-width: 680px) {
+    .flow-workspace .event-admin-hero-actions { display: grid !important; }
+  }
+}

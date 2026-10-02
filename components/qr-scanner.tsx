@@ -93,6 +93,9 @@ export function QrScanner({ stationId, stationName, eventName, venue, mode }: {
             const sessionExpired = response.status === 401 || data?.reason === "unauthenticated";
             const serviceUnavailable = response.status >= 500 ||
               ["rate_limited", "validation_failed", "station_not_found", "event_not_live", "forbidden"].includes(data?.reason);
+            const status = sessionExpired ? "session_expired" : serviceUnavailable ? "network_error" :
+              response.ok ? data?.decision ?? (data?.ok ? "granted" : "invalid") : "invalid";
+            navigator.vibrate?.(status === "granted" ? 40 : [70, 50, 70]);
             setResult({
               status: sessionExpired ? "session_expired" : serviceUnavailable ? "network_error" :
                 response.ok ? data?.decision ?? (data?.ok ? "granted" : "invalid") : "invalid",
