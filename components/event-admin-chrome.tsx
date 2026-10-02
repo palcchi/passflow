@@ -75,18 +75,6 @@ export function EventAdminChrome({
           <div className="event-admin-cover" aria-hidden="true">{event.heroImageUrl || event.posterUrl ? <Image src={(event.heroImageUrl || event.posterUrl)!} fill unoptimized sizes="210px" alt=""/> : <EventCoverArtwork name={event.name} color={event.theme.primary}/>}</div>
 
           <div className="event-admin-hero-actions">
-            <Link
-              className="button button-ghost"
-              href={`/admin/events/${event.id}/appearance`}
-            >
-              Customize
-            </Link>
-            <Link
-              className="button button-ghost"
-              href={`/admin/events/${event.id}/design`}
-            >
-              Design
-            </Link>
             <ShinyButton
               href={`/e/${event.liveSlug ?? event.slug}?view=details`}
               className="event-admin-public-cta"

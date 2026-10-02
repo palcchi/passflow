@@ -6,7 +6,7 @@ import { figmaAuthorizeUrl, figmaConfigured, figmaState } from "@/lib/figma";
 export async function GET(request: Request) {
   const { user } = await requireUser("/profile");
   const requestedNext = new URL(request.url).searchParams.get("next");
-  const next = requestedNext && /^\/admin\/events\/[a-zA-Z0-9_-]+\/design$/.test(requestedNext) ? requestedNext : "/profile";
+  const next = requestedNext && /^\/admin\/events\/[a-zA-Z0-9_-]+\/design(\/legacy)?$/.test(requestedNext) ? requestedNext : "/profile";
   if (!figmaConfigured()) {
     console.warn("Figma OAuth connect: server configuration missing");
     return NextResponse.redirect(new URL("/profile?figma=not-configured", request.url));

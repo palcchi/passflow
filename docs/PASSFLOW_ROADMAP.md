@@ -469,7 +469,7 @@ An event website created from Figma behaves like a real PassFlow application pag
 
 ---
 
-+## Phase 1–6 remaining work and manual acceptance
+## Phase 1–6 remaining work and manual acceptance
 
 The checked items above describe implemented capabilities. A phase is not signed off for a real event until its manual checks pass. In particular, SQL isolation tests do not replace an authenticated cross-event API and browser review.
 

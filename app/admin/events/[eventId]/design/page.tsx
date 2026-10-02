@@ -1,4 +1,3 @@
-import Link from 'next/link';
 import {notFound} from 'next/navigation';
 import {getManagedEvent} from '@/lib/events';
 import {requireOrganizerMembership} from '@/lib/auth/session';
@@ -14,5 +13,5 @@ export default async function EventDesignPage({params}:{params:Promise<{eventId:
   ]);
   // eslint-disable-next-line react-hooks/purity -- Request-scoped server timestamp, serialized identically for hydration.
   const now=Date.now();
-  return <div className="event-admin-editor-page"><FigmaPairingPanel now={now} eventId={eventId} connections={links.data??[]} versions={versions.data??[]} ready={!links.error&&!versions.error&&!!process.env.SUPABASE_SERVICE_ROLE_KEY}/><EventSubdomainPanel eventId={eventId} current={address.data?.label??''} suggestion={event.slug} enabled={process.env.PASSFLOW_EVENT_SUBDOMAINS_ENABLED==='true'}/><nav className="resource-toolbar"><Link href={`/admin/events/${eventId}/design/content`}>Website content</Link><Link href={`/admin/events/${eventId}/appearance`}>Quick Setup</Link><Link href={`/admin/events/${eventId}/design/studio`}>Pass layout tools</Link><Link href={`/admin/events/${eventId}/design/legacy`}>Legacy Figma sync</Link></nav></div>;
+  return <div className="event-admin-editor-page"><FigmaPairingPanel now={now} eventId={eventId} connections={links.data??[]} versions={versions.data??[]} ready={!links.error&&!versions.error&&!!process.env.SUPABASE_SERVICE_ROLE_KEY}/><EventSubdomainPanel eventId={eventId} current={address.data?.label??''} suggestion={event.slug} enabled={process.env.PASSFLOW_EVENT_SUBDOMAINS_ENABLED==='true'}/></div>;
 }
