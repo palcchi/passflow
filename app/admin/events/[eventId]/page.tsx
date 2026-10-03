@@ -23,6 +23,7 @@ export default async function EventOverviewPage({ params }: Props) {
     scansResult,
     activityCountResult,
     benefitCountResult,
+    ticketCountResult,
   ] = await Promise.all([
     supabase
       .from("qr_credentials")
@@ -45,6 +46,10 @@ export default async function EventOverviewPage({ params }: Props) {
       .eq("event_id", eventId),
     supabase
       .from("benefit_claims")
+      .select("id", { count: "exact", head: true })
+      .eq("event_id", eventId),
+    supabase
+      .from("ticket_types")
       .select("id", { count: "exact", head: true })
       .eq("event_id", eventId),
   ]);
@@ -85,23 +90,16 @@ export default async function EventOverviewPage({ params }: Props) {
     { label: "Denied", value: denied, note: "recent scans" },
   ];
 
-  const quickLinks = [
-    {
-      href: `/admin/events/${eventId}/people`,
-      title: "People",
-      copy: "Tickets, attendee, dan crew.",
-    },
-    {
-      href: `/admin/events/${eventId}/access`,
-      title: "Access",
-      copy: "QR, zones, rules, dan scanner.",
-    },
-    {
-      href: `/admin/events/${eventId}/experience`,
-      title: "Experience",
-      copy: "Activities dan benefit claims.",
-    },
+  // Mirrors transition_event's publish checks (basics + a ticket type), plus two recommended steps.
+  const base = `/admin/events/${eventId}`;
+  const checklist = [
+    { done: !!(event.venue && event.startsAt && event.endsAt), title: "Add venue and dates", href: `${base}/settings`, required: true },
+    { done: (ticketCountResult.count ?? 0) > 0, title: "Create a ticket type", href: `${base}/people`, required: true },
+    { done: !!(event.heroImageUrl || event.posterUrl || event.theme.tagline), title: "Set the look in Design", href: `${base}/design`, required: false },
+    { done: activeStations > 0, title: "Set up a scanner station", href: `${base}/access`, required: false },
+    { done: event.status === "published", title: "Publish the event", href: `${base}/settings`, required: true },
   ];
+  const remaining = checklist.filter((item) => !item.done).length;
 
   return (
     <>
@@ -119,22 +117,23 @@ export default async function EventOverviewPage({ params }: Props) {
         <section className="event-admin-section">
           <div className="event-admin-section-head">
             <div>
-              <span className="section-kicker">Quick access</span>
-              <h2>Manage the event</h2>
-              <p>Choose a workspace section without reloading the event shell.</p>
+              <span className="section-kicker">Launch checklist</span>
+              <h2>{remaining ? `${remaining} step${remaining > 1 ? "s" : ""} to go` : "Ready for the day"}</h2>
+              <p>Required steps unlock publishing; recommended ones make check-in smooth.</p>
             </div>
           </div>
-          <div className="event-overview-actions">
-            {quickLinks.map(({ href, title, copy }) => (
-              <Link href={href} className="event-overview-action" key={href}>
-                <div>
+          <ol className="launch-checklist">
+            {checklist.map(({ done, title, href, required }) => (
+              <li key={title} data-done={done || undefined}>
+                <Link href={href}>
+                  <span className="launch-check" aria-hidden="true">{done ? "✓" : ""}</span>
                   <strong>{title}</strong>
-                  <small>{copy}</small>
-                </div>
-                <ArrowUpRight size={14} />
-              </Link>
+                  <small>{done ? "Done" : required ? "Required" : "Recommended"}</small>
+                  <ArrowUpRight size={14} />
+                </Link>
+              </li>
             ))}
-          </div>
+          </ol>
         </section>
 
         <section className="event-admin-section">

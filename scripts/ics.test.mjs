@@ -1,0 +1,11 @@
+import assert from 'node:assert/strict';
+const { icsEvent } = await import('../lib/ics.ts');
+const ics = icsEvent({ uid: 'evt1', title: 'Nails, Art; & Talk', start: '2026-10-12T02:00:00Z', end: '2026-10-12T10:00:00+07:00', location: 'Hall A\nJakarta', url: 'https://passflow.my.id/e/x' });
+assert.match(ics, /^BEGIN:VCALENDAR\r\n/);
+assert.match(ics, /SUMMARY:Nails\\, Art\; & Talk\r\n/);
+assert.match(ics, /LOCATION:Hall A\\nJakarta\r\n/);
+assert.match(ics, /DTSTART:20261012T020000Z\r\n/);
+assert.match(ics, /DTEND:20261012T030000Z\r\n/, 'end converted to UTC');
+assert.ok(!/DESCRIPTION/.test(ics), 'empty fields omitted');
+assert.match(ics, /END:VCALENDAR\r\n$/);
+console.log('ics checks passed');
