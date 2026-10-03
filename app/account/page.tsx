@@ -97,7 +97,7 @@ export default async function AccountPage() {
           {myEvents.length > 0 ? (
             <div className="class-event-grid">
               {myEvents.map((event) => (
-                <EventClassCard flow event={event} joined key={event.id} />
+                <EventClassCard event={event} joined key={event.id} />
               ))}
             </div>
           ) : (
@@ -111,7 +111,7 @@ export default async function AccountPage() {
             </div>
           )}
         </section>
-        {publishedEvents.some((event) => !registeredIds.has(event.id)) && <section className="studio-section" aria-labelledby="discover-events"><div className="studio-section-heading"><div><p className="section-kicker">A LITTLE DISCOVERY</p><h2 id="discover-events">For your next event.</h2></div><Link href="/events" className="studio-text-link">Explore <ArrowUpRight size={14}/></Link></div><div className="class-event-grid">{publishedEvents.filter(event => !registeredIds.has(event.id)).slice(0, 3).map(event => <EventClassCard flow event={event} key={event.id}/>)}</div></section>}
+        {publishedEvents.some((event) => !registeredIds.has(event.id)) && <section className="studio-section" aria-labelledby="discover-events"><div className="studio-section-heading"><div><p className="section-kicker">A LITTLE DISCOVERY</p><h2 id="discover-events">For your next event.</h2></div><Link href="/events" className="studio-text-link">Explore <ArrowUpRight size={14}/></Link></div><div className="class-event-grid">{publishedEvents.filter(event => !registeredIds.has(event.id)).slice(0, 3).map(event => <EventClassCard event={event} key={event.id}/>)}</div></section>}
       </main>
     </div>
   );

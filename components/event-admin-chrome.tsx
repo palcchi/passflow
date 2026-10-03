@@ -1,7 +1,7 @@
 import type { CSSProperties, ReactNode } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { EventCoverArtwork } from "@/components/flow-brand-art";
+import { eventInk } from "@/lib/event-colors";
 import { ArrowLeft } from "lucide-react";
 import type { PassFlowEvent } from "@/lib/events";
 import { UserNavbar } from "@/components/user-navbar";
@@ -16,16 +16,6 @@ type Profile = {
   avatarUrl?: string | null;
 };
 
-function eventAccentText(hex: string) {
-  const value = hex.replace("#", "");
-  if (!/^[0-9a-f]{6}$/i.test(value)) return "#ffffff";
-  const [r, g, b] = [0, 2, 4].map((index) =>
-    Number.parseInt(value.slice(index, index + 2), 16),
-  );
-  const luminance = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
-  return luminance > 0.62 ? "#171717" : "#ffffff";
-}
-
 export function EventAdminChrome({
   event,
   profile,
@@ -38,7 +28,7 @@ export function EventAdminChrome({
   const eventStyle = {
     "--event-admin-accent": event.theme.primary,
     "--event-admin-secondary": event.theme.secondary,
-    "--event-admin-accent-text": eventAccentText(event.theme.primary),
+    "--event-admin-accent-text": eventInk(event.theme.primary),
     "--page-accent": event.theme.primary,
   } as CSSProperties;
 
@@ -72,21 +62,9 @@ export function EventAdminChrome({
             </TextAnimate>
           </div>
 
-          <div className="event-admin-cover" aria-hidden="true">{event.heroImageUrl || event.posterUrl ? <Image src={(event.heroImageUrl || event.posterUrl)!} fill unoptimized sizes="210px" alt=""/> : <EventCoverArtwork name={event.name} color={event.theme.primary}/>}</div>
+          <div className="event-admin-cover" aria-hidden="true">{event.heroImageUrl || event.posterUrl ? <Image src={(event.heroImageUrl || event.posterUrl)!} fill unoptimized sizes="210px" alt=""/> : <div className="class-event-ticket" style={{ background: event.theme.primary, color: eventInk(event.theme.primary) }}><span className="hero-fan-meta"><b>PassFlow</b>{event.dateLabel}</span><strong>{event.name}</strong><span className="hero-fan-barcode"/></div>}</div>
 
           <div className="event-admin-hero-actions">
-            <Link
-              className="button button-ghost"
-              href={`/admin/events/${event.id}/appearance`}
-            >
-              Customize
-            </Link>
-            <Link
-              className="button button-ghost"
-              href={`/admin/events/${event.id}/design`}
-            >
-              Design
-            </Link>
             <ShinyButton
               href={`/e/${event.liveSlug ?? event.slug}?view=details`}
               className="event-admin-public-cta"

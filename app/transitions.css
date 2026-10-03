@@ -42,8 +42,7 @@ html.theme-switching::view-transition-new(root) {
 }
 
 .user-nav-link-content,
-.event-dock-label,
-.event-dock-icon {
+.event-dock-label {
   position: relative;
   z-index: 2;
 }
@@ -55,8 +54,7 @@ html.theme-switching::view-transition-new(root) {
 }
 
 .user-nav-active-pill,
-.event-nav-active-pill,
-.event-dock-active-pill {
+.event-nav-active-pill {
   position: absolute;
   inset: 0;
   z-index: 0;
@@ -130,21 +128,6 @@ html.theme-switching::view-transition-new(root) {
 .event-nav-active-pill {
   background: var(--event-admin-accent);
   box-shadow: 0 7px 18px color-mix(in srgb, var(--event-admin-accent) 22%, transparent);
-}
-
-.liquid-nav .event-dock-item {
-  position: relative;
-}
-
-.liquid-nav .event-dock-item[data-active="true"] {
-  background: transparent !important;
-  color: #fff;
-  box-shadow: none;
-}
-
-.event-dock-active-pill {
-  background: #20211e;
-  box-shadow: 0 7px 18px rgba(27, 27, 24, 0.13);
 }
 
 @media (max-width: 1023px) {
@@ -265,7 +248,7 @@ html.theme-switching::view-transition-new(root) {
     .class-event-grid > *,
     .invitation-list > div,
     .organizer-steps > li,
-    .studio-section {
+    :not(.studio-website) > .studio-section {
       animation: pf-reveal linear both;
       animation-timeline: view();
       animation-range: entry 0% entry 60%;

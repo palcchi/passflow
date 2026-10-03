@@ -5,6 +5,7 @@ import { FlowMark } from "@/components/flow-art";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { ShinyButton } from "@/components/magicui/shiny-button";
 import { Sticker } from "@/components/brand-art";
+import { HeroCardFan } from "@/components/hero-card-fan";
 import { getAuthContext, getMemberships } from "@/lib/auth/session";
 import { canManage } from "@/lib/auth/redirect";
 
@@ -40,6 +41,7 @@ export default async function OrganizerLandingPage() {
     <section className="editorial-canvas">
       <span className="editorial-eyebrow"><span/> PASSFLOW FOR ORGANIZERS</span>
       <h1>Run the event.<span>Not the <em>spreadsheet.</em></span></h1>
+      <HeroCardFan events={[]}/>
       <p className="editorial-hero-description">Registration, QR tickets, crew access, and live check-in in one workspace, from the first invitation to the last scan at the door.</p>
       <div className="editorial-hero-actions"><ShinyButton href={cta}>{ctaLabel}<ArrowUpRight size={16}/></ShinyButton><a href="#how-it-works">How it works ↓</a></div>
     </section>

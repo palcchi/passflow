@@ -611,20 +611,6 @@
 }
 
 .flow-workspace :is(
-  .event-admin-section,
-  .theme-controls,
-  .design-workspace,
-  .design-connect-card,
-  .studio-panel,
-  .profile-card.liquid-panel,
-  .profile-integration-card,
-  .create-event-form,
-  .qr-editor-section
-) {
-  border-radius: var(--pf-radius-lg) !important;
-}
-
-.flow-workspace :is(
   .event-admin-mini-card,
   .event-admin-list-card,
   .event-overview-action,

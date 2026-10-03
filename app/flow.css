@@ -47,8 +47,6 @@
 .flow-object { width:180px; height:140px; position:relative; flex:none; }
 .flow-object > .flow-shapes { position:absolute; width:142px; height:115px; top:-7px; left:15px; transform:rotate(-13deg); }
 .flow-object > span { position:absolute; display:flex; align-items:center; gap:8px; bottom:0; left:8px; font-size:10px; color:var(--muted-foreground); transform:rotate(-6deg); }
-.flow-cover-title { position:absolute; left:22px; top:34px; width:56%; font-size:26px; line-height:1.03; letter-spacing:-.055em; font-weight:550; overflow-wrap:anywhere; }
-.event-cover-art > .flow-shapes { position:absolute; right:-10px; bottom:-30px; width:160px; height:170px; transform:rotate(-14deg); opacity:.65; }
 
 /* Auth retains the existing real forms and authentication actions. */
 .auth-shell { background:var(--background); min-height:100dvh; padding:0 36px; }
@@ -96,9 +94,6 @@
 .flow-event-list .class-event-card:hover { transform:none; background:var(--flow-soft); box-shadow:none; }
 .flow-event-list .class-event-cover { height:62px; width:62px; margin:0; }
 .flow-event-list .class-event-badge { display:none; }
-.flow-event-list .cover-index,.flow-event-list .cover-corner { display:none; }
-.flow-event-list .flow-cover-title { font-size:13px; top:8px; left:7px; width:75%; }
-.flow-event-list .event-cover-art > .flow-shapes { width:65px; height:65px; right:-15px; bottom:-10px; }
 .flow-event-list .class-event-body { padding:0; gap:4px; }
 .flow-event-list .class-event-body h3 { font-size:16px; letter-spacing:-.025em; }
 .flow-event-list .class-event-body p { font-size:10px; }
@@ -134,7 +129,6 @@
 .flow-workspace .event-admin-table th { background:var(--flow-soft); font-size:10px; font-weight:500; text-transform:none; letter-spacing:0; }
 .flow-workspace .event-admin-table td { font-size:12px; padding:15px 12px; }
 .flow-workspace .event-admin-state { border-radius:99px; font-size:10px; }
-.flow-workspace :is(.theme-controls,.design-workspace,.design-connect-card,.studio-panel,.profile-card.liquid-panel,.profile-integration-card) { border-radius:14px!important; box-shadow:none; }
 .flow-workspace .create-event-layout { max-width:1000px; padding:40px; }
 .flow-workspace .create-event-layout .studio-page-hero { margin:24px 0; }
 .flow-workspace .create-event-form { padding:26px; border-radius:16px; }
@@ -164,9 +158,7 @@
   .flow-sidebar .user-profile-trigger-copy { flex:1; max-width:110px; }
   .flow-sidebar .user-profile-trigger > svg { margin-left:auto; }
   .flow-sidebar .user-profile-menu { top:auto!important; bottom:18px; left:205px; right:auto; width:290px; }
-  .flow-sidebar .user-mobile-menu-button { display:none; }
   .flow-workspace.event-admin-context .event-section-dock { top:0; }
-  .flow-workspace .theme-preview-wrap { top:76px; }
 }
 @media(max-width:1100px) {
   .flow-pass-hanger { transform:rotate(13deg) scale(.86); }
@@ -219,8 +211,6 @@
 
 
 /* Compact thumbnails stay decorative; status remains readable in the row. */
-.flow-event-list .flow-cover-title { display:none; }
-.flow-event-list .event-cover-art > .flow-shapes { right:0; bottom:0; }
 .auth-shell .auth-input input { background:transparent!important; }
 .flow-workspace .studio-metric,.flow-workspace .event-admin-metric { border-radius:12px!important; }
 
@@ -242,7 +232,6 @@
 .flow-workspace .event-admin-section { padding:24px!important; border-radius:14px!important; }
 .flow-workspace :is(.event-admin-mini-card,.event-admin-list-card,.event-overview-action,.event-admin-subpanel,.event-admin-credential-card) { background:var(--flow-soft)!important; border-radius:10px!important; }
 .flow-workspace :is(.event-admin-input,.event-admin-search,.smart-select-trigger,.date-picker-trigger,.date-time-grid input) { background:var(--card)!important; border-radius:8px!important; }
-.flow-workspace :is(.theme-controls,.design-workspace,.design-connect-card,.studio-panel,.profile-card.liquid-panel,.profile-integration-card) { border-radius:14px!important; }
 
 @media(min-width:1024px) {
   .flow-sidebar.user-nav-shell { border-bottom:0!important; background:var(--card)!important; }

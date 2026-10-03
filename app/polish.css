@@ -97,18 +97,6 @@ html { -webkit-tap-highlight-color: transparent; }
   font-size: 11px;
 }
 
-.event-cover-art { container-type: inline-size; }
-
-.event-cover-art .flow-cover-title {
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 3;
-  overflow: hidden;
-  overflow-wrap: break-word;
-  hyphens: auto;
-  font-size: clamp(14px, 7.2cqi, 26px);
-}
-
 .class-event-body h3 { overflow-wrap: break-word; }
 
 /* ---------- Event management header ---------- */
@@ -156,16 +144,6 @@ html { -webkit-tap-highlight-color: transparent; }
 .class-event-grid > :nth-child(5) { animation-delay: 240ms; }
 .class-event-grid > :nth-child(n + 6) { animation-delay: 300ms; }
 
-.event-cover-art .flow-shapes {
-  transition: transform 520ms cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-@media (hover: hover) {
-  .class-event-card:hover .event-cover-art .flow-shapes {
-    transform: translate(-4px, -4px) rotate(-19deg) scale(1.05);
-  }
-}
-
 .flat-popover {
   transform-origin: top right;
   animation: pf-pop 200ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
@@ -191,8 +169,6 @@ html { -webkit-tap-highlight-color: transparent; }
   .user-nav-icon-button:active,
   .user-profile-trigger:active,
   .event-dock-item:active { transform: none; }
-
-  .event-cover-art .flow-shapes { transition: none; }
 }
 
 @keyframes pf-rise {

@@ -1,4 +1,3 @@
-import type { CSSProperties } from "react";
 import { ArrowUpRight, Asterisk, Check, MoveUpRight, Sparkles } from "lucide-react";
 
 /** Lightweight, decorative artwork. No images, network requests, or layout shift. */
@@ -42,11 +41,3 @@ export function CollectionArtwork({ compact = false }: { compact?: boolean }) {
   </div>;
 }
 
-export function EventCoverArtwork({ name, color }: { name: string; color: string }) {
-  return <div className="event-cover-art" style={{ "--cover-accent": color } as CSSProperties} aria-hidden="true">
-    <span className="cover-index">PASSFLOW / EVENT COLLECTION</span>
-    <div className="cover-mini-poster"><span>Save<br/>the date.</span><i/><small>{name}</small></div>
-    <Sticker kind="spark" className="cover-sticker"/>
-    <span className="cover-corner">Made for a good time ↗</span>
-  </div>;
-}

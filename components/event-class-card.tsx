@@ -4,18 +4,15 @@ import type { CSSProperties } from "react";
 import { ArrowUpRight, CalendarDays, MapPin } from "lucide-react";
 import type { PassFlowEvent } from "@/lib/events";
 import { eventInk } from "@/lib/event-colors";
-import { EventCoverArtwork as FlowCoverArtwork } from "@/components/flow-brand-art";
-import { EventCoverArtwork } from "@/components/brand-art";
 import { AvatarCircles } from "@/components/magicui/avatar-circles";
 
-export function EventClassCard({ event, joined = false, manage = false, flow = false }: {
-  event: PassFlowEvent; joined?: boolean; manage?: boolean; flow?: boolean;
+export function EventClassCard({ event, joined = false, manage = false }: {
+  event: PassFlowEvent; joined?: boolean; manage?: boolean;
 }) {
-  const CoverArtwork = flow || manage ? FlowCoverArtwork : EventCoverArtwork;
   const href = manage ? `/admin/events/${event.id}` : joined ? `/e/${event.slug}/claim` : `/e/${event.slug}`;
   return <Link href={href} className="class-event-card" style={{ "--card-brand": event.theme.primary, "--card-brand-ink": eventInk(event.theme.primary), "--card-secondary": event.theme.secondary } as CSSProperties}>
     <div className="class-event-cover">
-      {event.heroImageUrl || event.posterUrl ? <Image src={(event.heroImageUrl || event.posterUrl)!} fill unoptimized sizes="(max-width: 680px) 90vw, (max-width: 1100px) 45vw, 360px" alt="" className="class-event-image"/> : <CoverArtwork name={event.name} color={event.theme.primary}/>}
+      {event.heroImageUrl || event.posterUrl ? <Image src={(event.heroImageUrl || event.posterUrl)!} fill unoptimized sizes="(max-width: 680px) 90vw, (max-width: 1100px) 45vw, 360px" alt="" className="class-event-image"/> : <div className="class-event-ticket" aria-hidden="true"><span className="hero-fan-meta"><b>PassFlow</b>{event.dateLabel}</span><strong>{event.name}</strong><span className="hero-fan-barcode"/></div>}
       <span className="class-event-badge" data-state={manage ? event.status : joined ? "joined" : "open"}><i/>{manage ? event.status === "published" ? "Published" : "Draft" : joined ? "Registered" : "Open event"}</span>
     </div>
     <div className="class-event-body">
