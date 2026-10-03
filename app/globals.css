@@ -64,9 +64,6 @@ button {
   transition: transform 160ms ease, opacity 160ms ease, background 160ms ease;
 }
 
-.button:hover {
-  transform: translateY(-1px);
-}
 
 .button-dark {
   background: #292a25;

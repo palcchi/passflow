@@ -41,13 +41,14 @@ export function TextAnimate({
           key={`${segment}-${index}`}
           aria-hidden="true"
           className="text-animate-segment"
-          initial={{ opacity: 0, y: 12, filter: "blur(5px)" }}
-          whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+          // Dashboard headers are seen many times a day: a short fade, no travel or blur.
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
           viewport={{ once, amount: 0.4 }}
           transition={{
-            duration: 0.42,
-            delay: delay + index * (by === "character" ? 0.018 : 0.045),
-            ease: [0.22, 0.8, 0.3, 1],
+            duration: 0.2,
+            delay: delay + index * (by === "character" ? 0.012 : 0.03),
+            ease: [0.23, 1, 0.32, 1],
           }}
         >
           {segment}

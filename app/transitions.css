@@ -18,7 +18,7 @@ html.theme-switching::view-transition-old(root) {
 }
 
 html.theme-switching::view-transition-new(root) {
-  animation: pf-theme-reveal 620ms cubic-bezier(0.65, 0, 0.35, 1) both;
+  animation: pf-theme-reveal 500ms var(--ease-in-out) both;
 }
 
 @keyframes pf-theme-reveal {
@@ -195,25 +195,25 @@ html.theme-switching::view-transition-new(root) {
   }
 
   ::view-transition-old(passflow-route-content) {
-    animation: pf-route-out 150ms cubic-bezier(0.4, 0, 1, 1) both;
+    animation: pf-route-out 120ms var(--ease-out) both;
   }
 
   ::view-transition-new(passflow-route-content) {
-    animation: pf-route-in 320ms cubic-bezier(0.22, 1, 0.36, 1) 60ms both;
+    animation: pf-route-in 220ms var(--ease-out) both;
   }
 }
 
 @keyframes pf-route-out {
   to {
     opacity: 0;
-    transform: translateY(-8px);
+    transform: translateY(-4px);
   }
 }
 
 @keyframes pf-route-in {
   from {
     opacity: 0;
-    transform: translateY(14px);
+    transform: translateY(8px);
   }
 
   to {
@@ -225,18 +225,22 @@ html.theme-switching::view-transition-new(root) {
 /* Entrance + scroll reveals. Keyframes use the individual `translate`/`scale`
    properties so they compose with any layout `transform` already on an element. */
 @media (prefers-reduced-motion: no-preference) {
-  .editorial-canvas > *,
+  .editorial-canvas > * {
+    animation: pf-rise 720ms var(--ease-out) both;
+  }
+
+  /* Forms are UI, not marketing: short, so inputs are usable almost at once. */
   .auth-heading,
   .auth-form-panel > form,
   .utility-card {
-    animation: pf-rise 720ms cubic-bezier(0.22, 1, 0.36, 1) both;
+    animation: pf-rise 260ms var(--ease-out) both;
   }
 
   .editorial-canvas > :nth-child(2) { animation-delay: 70ms; }
   .editorial-canvas > :nth-child(3) { animation-delay: 140ms; }
   .editorial-canvas > :nth-child(4) { animation-delay: 210ms; }
   .editorial-canvas > :nth-child(n + 5) { animation-delay: 300ms; }
-  .auth-form-panel > form { animation-delay: 120ms; }
+  .auth-form-panel > form { animation-delay: 40ms; }
 
   .editorial-canvas h1 em::after {
     animation: pf-draw 700ms cubic-bezier(0.65, 0, 0.35, 1) 520ms both;
@@ -244,11 +248,10 @@ html.theme-switching::view-transition-new(root) {
   }
 
   @supports (animation-timeline: view()) {
-    .editorial-section,
-    .class-event-grid > *,
-    .invitation-list > div,
-    .organizer-steps > li,
-    :not(.studio-website) > .studio-section {
+    .editorial-landing .editorial-section,
+    .editorial-landing .class-event-grid > *,
+    .editorial-landing .invitation-list > div,
+    .editorial-landing .organizer-steps > li {
       animation: pf-reveal linear both;
       animation-timeline: view();
       animation-range: entry 0% entry 60%;
@@ -348,3 +351,19 @@ html.theme-switching::view-transition-new(root) {
   color: inherit;
   font: inherit;
 }
+
+/* Hover motion only for fine pointers (touch fires false hovers on tap). */
+@media not ((hover: hover) and (pointer: fine)) {
+  .class-event-card:hover, .design-card:hover, .asset-upload-card:hover,
+  .class-event-card:hover .class-event-ticket, .class-event-card:hover .class-event-image,
+  .hero-fan-card:hover, .theme-flip:hover { transform: none; translate: none; scale: none; rotate: none; }
+}
+
+/* Dropdowns grow from their trigger, which sits above them. */
+.smart-select-menu { transform-origin: top center; }
+
+/* First activation of a pass is a rare moment: allow a short entrance. */
+@media (prefers-reduced-motion: no-preference) {
+  .claim-card[data-celebrate] { animation: pf-pass-in 500ms var(--ease-out) both; }
+}
+@keyframes pf-pass-in { from { opacity: 0; scale: 0.96; translate: 0 12px; } }
