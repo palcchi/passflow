@@ -24,7 +24,7 @@ export default async function CrewJoinPage({ searchParams }: { searchParams: Pro
     {invitation ? <>
       <div className="auth-notice"><span className="section-kicker">CREW INVITATION</span><h2 className="mt-3 text-2xl tracking-tight">{invitation.job_title}</h2><p className="mt-2 text-sm text-muted-foreground">Access role: {invitation.access_role}</p></div>
       {context ? <form action={acceptCrewInvitation} className="auth-form"><input type="hidden" name="token" value={token}/><AuthSubmit>Accept invitation ↗</AuthSubmit></form> : <Link className="button button-dark w-full" href={"/login?next=" + encodeURIComponent("/crew/join?token=" + token)}>Sign in to join ↗</Link>}
-      <p className="auth-switch">Berlaku sampai {new Intl.DateTimeFormat("id-ID", { dateStyle: "medium" }).format(new Date(invitation.expires_at))}.</p>
+      <p className="auth-switch">Valid until {new Intl.DateTimeFormat("en", { dateStyle: "medium" }).format(new Date(invitation.expires_at))}.</p>
     </> : <p role="status" className="auth-notice">This invitation has expired or could not be found. Ask the organizer to send a new link.</p>}
   </AuthShell>;
 }

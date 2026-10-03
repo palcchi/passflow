@@ -6,13 +6,13 @@ import { ArrowUpRight, FolderOpen, Plus } from "lucide-react";
 import { accountProfile, requireOrganizer } from "@/lib/auth/session";
 import { UserNavbar } from "@/components/user-navbar";
 import { getManagedEvents } from "@/lib/events";
+import { HeroCardFan } from "@/components/hero-card-fan";
 import { KineticText } from "@/components/magicui/kinetic-text";
 import { TextAnimate } from "@/components/magicui/text-animate";
 import { NumberTicker } from "@/components/magicui/number-ticker";
 import { ShinyButton } from "@/components/magicui/shiny-button";
 import { AnimatedList } from "@/components/magicui/animated-list";
 import { EventCollection } from "@/components/event-collection";
-import { FolderArtwork, Sticker } from "@/components/flow-brand-art";
 
 export default async function AdminDashboardPage() {
   const { supabase, user } = await requireOrganizer();
@@ -68,7 +68,7 @@ export default async function AdminDashboardPage() {
       <main className="studio-page-shell">
         <header className="studio-page-hero workspace-welcome">
           <div className="workspace-welcome-copy">
-            <span className="section-kicker">Organizer workspace</span>
+            <span className="editorial-eyebrow"><span/> ORGANIZER WORKSPACE</span>
             <KineticText
               text={`Welcome, ${name}.`}
               className="studio-page-title"
@@ -78,7 +78,7 @@ export default async function AdminDashboardPage() {
             </TextAnimate>
           <ShinyButton href="/admin/events/new"><Plus size={15}/>Create event</ShinyButton>
           </div>
-          <div className="workspace-art"><span className="workspace-art-label">For your next big thing ↗</span><FolderArtwork color="lavender" label="Made by you"/><Sticker kind="arrow"/></div>
+          <div className="workspace-fan"><HeroCardFan events={events} compact/></div>
         </header>
 
         {events[0] && <Link className="recent-project" href={`/admin/events/${events[0].id}`}><span className="recent-project-icon"><FolderOpen size={21}/></span><span className="recent-project-copy"><span>LATEST EVENT · CONTINUE MANAGING</span><strong>{events[0].name}</strong></span><ArrowUpRight size={19}/></Link>}

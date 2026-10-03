@@ -1,7 +1,8 @@
 import type { CSSProperties } from "react";
 import type { PassFlowEvent } from "@/lib/events";
+import { EventArtwork } from "@/components/event-artwork";
 
-// Shown when there are fewer published events with artwork than fan slots.
+// Fill slots on the marketing hero when there are fewer real events than cards.
 const sampleCards = [
   { bg: "#e9573f", fg: "#fff", title: "Live\nmusic", meta: "FRI · 19:00" },
   { bg: "#dce6ff", fg: "#1f3b8f", title: "Design\nweek", meta: "HALL B" },
@@ -12,36 +13,33 @@ const sampleCards = [
   { bg: "#2f9e6b", fg: "#fff", title: "Food\nfest", meta: "ALL DAY" },
 ];
 
-export function HeroCardFan({ events }: { events: PassFlowEvent[] }) {
-  const images = events.flatMap((event) => {
-    const image = event.posterUrl ?? event.heroImageUrl;
-    return image ? [{ image, name: event.name }] : [];
-  });
-  const cards = sampleCards.map((card, index) => ({ ...card, ...images[index] }));
-  const middle = (cards.length - 1) / 2;
+/** Real events show their image or generated artwork (no text); compact = dashboard heroes, events only. */
+export function HeroCardFan({ events, compact = false }: { events: PassFlowEvent[]; compact?: boolean }) {
+  const real = events.slice(0, compact ? 5 : 7);
+  const fill = compact && real.length ? [] : sampleCards.slice(real.length, compact ? 5 : 7);
+  const total = real.length + fill.length;
+  const middle = (total - 1) / 2;
+  const slot = (index: number, extra?: CSSProperties) => {
+    const offset = index - middle;
+    return { "--o": offset, "--a": Math.abs(offset), "--d": `${Math.abs(offset) * 60}ms`, zIndex: index, ...extra } as CSSProperties;
+  };
 
-  return <div className="hero-fan" aria-hidden="true">
-    {cards.map((card, index) => {
-      const offset = index - middle;
-      return <div
-        key={index}
-        className="hero-fan-card"
-        style={{ "--o": offset, "--a": Math.abs(offset), "--d": `${Math.abs(offset) * 60}ms`, background: card.bg, color: card.fg, zIndex: index } as CSSProperties}
-      >
-        {"image" in card && card.image
-          ? <>
-              {/* eslint-disable-next-line @next/next/no-img-element -- organizer-hosted artwork */}
-              <img src={card.image} alt="" loading="lazy" />
-              <span className="hero-fan-caption">{card.name}</span>
-            </>
-          : <>
-              <span className="hero-fan-meta"><b>PassFlow</b>{card.meta}</span>
-              <strong>{card.title}</strong>
-              <span className="hero-fan-barcode" />
-            </>}
+  return <div className={compact ? "hero-fan is-compact" : "hero-fan"} aria-hidden="true">
+    {real.map((event, index) => {
+      const image = event.posterUrl ?? event.heroImageUrl;
+      return <div key={event.id} className="hero-fan-card is-event" style={slot(index)}>
+        {/* eslint-disable-next-line @next/next/no-img-element -- organizer-hosted artwork */}
+        {image ? <img src={image} alt="" loading="lazy" /> : <EventArtwork event={event} />}
       </div>;
     })}
-    <span className="hero-fan-chip hero-fan-chip-left">✓ checked in</span>
-    <span className="hero-fan-chip hero-fan-chip-right">@you · 1 pass</span>
+    {fill.map((card, i) => <div key={card.title} className="hero-fan-card" style={slot(real.length + i, { background: card.bg, color: card.fg })}>
+      <span className="hero-fan-meta"><b>PassFlow</b>{card.meta}</span>
+      <strong>{card.title}</strong>
+      <span className="hero-fan-barcode" />
+    </div>)}
+    {!compact && <>
+      <span className="hero-fan-chip hero-fan-chip-left">✓ checked in</span>
+      <span className="hero-fan-chip hero-fan-chip-right">@you · 1 pass</span>
+    </>}
   </div>;
 }

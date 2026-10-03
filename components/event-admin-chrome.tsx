@@ -2,6 +2,7 @@ import type { CSSProperties, ReactNode } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { eventInk } from "@/lib/event-colors";
+import { EventArtwork } from "@/components/event-artwork";
 import { accountProfile } from "@/lib/auth/session";
 import { ArrowLeft } from "lucide-react";
 import type { PassFlowEvent } from "@/lib/events";
@@ -63,7 +64,7 @@ export function EventAdminChrome({
             </TextAnimate>
           </div>
 
-          <div className="event-admin-cover" aria-hidden="true">{event.heroImageUrl || event.posterUrl ? <Image src={(event.heroImageUrl || event.posterUrl)!} fill unoptimized sizes="210px" alt=""/> : <div className="class-event-ticket" style={{ background: event.theme.primary, color: eventInk(event.theme.primary) }}><span className="hero-fan-meta"><b>PassFlow</b>{event.dateLabel}</span><strong>{event.name}</strong><span className="hero-fan-barcode"/></div>}</div>
+          <div className="event-admin-cover" aria-hidden="true">{event.heroImageUrl || event.posterUrl ? <Image src={(event.heroImageUrl || event.posterUrl)!} fill unoptimized sizes="210px" alt=""/> : <EventArtwork event={event}/>}</div>
 
           <div className="event-admin-hero-actions">
             <ShinyButton

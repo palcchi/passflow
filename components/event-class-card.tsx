@@ -4,6 +4,7 @@ import type { CSSProperties } from "react";
 import { ArrowUpRight, CalendarDays, MapPin } from "lucide-react";
 import type { PassFlowEvent } from "@/lib/events";
 import { eventInk } from "@/lib/event-colors";
+import { EventArtwork } from "@/components/event-artwork";
 import { AvatarCircles } from "@/components/magicui/avatar-circles";
 
 export function EventClassCard({ event, joined = false, manage = false }: {
@@ -12,10 +13,10 @@ export function EventClassCard({ event, joined = false, manage = false }: {
   const href = manage ? `/admin/events/${event.id}` : joined ? `/e/${event.slug}/claim` : `/e/${event.slug}`;
   return <Link href={href} className="class-event-card" style={{ "--card-brand": event.theme.primary, "--card-brand-ink": eventInk(event.theme.primary), "--card-secondary": event.theme.secondary } as CSSProperties}>
     <div className="class-event-cover">
-      {event.heroImageUrl || event.posterUrl ? <Image src={(event.heroImageUrl || event.posterUrl)!} fill unoptimized sizes="(max-width: 680px) 90vw, (max-width: 1100px) 45vw, 360px" alt="" className="class-event-image"/> : <div className="class-event-ticket" aria-hidden="true"><span className="hero-fan-meta"><b>PassFlow</b>{event.dateLabel}</span><strong>{event.name}</strong><span className="hero-fan-barcode"/></div>}
-      <span className="class-event-badge" data-state={manage ? event.status : joined ? "joined" : "open"}><i/>{manage ? event.status === "published" ? "Published" : "Draft" : joined ? "Registered" : "Open event"}</span>
+      {event.heroImageUrl || event.posterUrl ? <Image src={(event.heroImageUrl || event.posterUrl)!} fill unoptimized sizes="(max-width: 680px) 90vw, (max-width: 1100px) 45vw, 360px" alt="" className="class-event-image"/> : <EventArtwork event={event}/>}
     </div>
     <div className="class-event-body">
+      <span className="class-event-badge" data-state={manage ? event.status : joined ? "joined" : "open"}><i/>{manage ? event.status === "published" ? "Published" : "Draft" : joined ? "Registered" : "Open event"}</span>
       <h3>{event.name}</h3>
       <p><CalendarDays size={15}/>{event.dateLabel}</p>
       <p><MapPin size={15}/>{event.venue || "Venue to be announced"}</p>

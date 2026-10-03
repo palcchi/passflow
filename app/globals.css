@@ -1015,11 +1015,6 @@ select { appearance: none; background-image: linear-gradient(45deg, transparent 
   align-items: center;
   gap: 24px;
 }
-.profile-integration-main { display: flex; align-items: center; gap: 13px; }
-.profile-integration-main h2 { margin: 3px 0 2px; font-size: 18px; }
-.profile-integration-main p,
-.profile-integration-body p { margin: 0; color: #85857f; font-size: 12px; line-height: 1.55; }
-.profile-integration-security { margin-top: 8px; display: inline-flex; align-items: center; gap: 6px; color: #66665f; font-size: 10px; }
 .profile-integration-actions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 7px; }
 
 /* Upload controls */
@@ -3810,8 +3805,6 @@ body {
 
 .profile-details-form label,
 .profile-avatar-copy p,
-.profile-integration-body p,
-.profile-integration-security,
 .profile-save-note,
 .profile-details-form label > small,
 .profile-username-field > span {
