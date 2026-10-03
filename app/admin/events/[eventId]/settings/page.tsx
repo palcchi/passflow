@@ -3,6 +3,7 @@ import { getManagedEvent } from "@/lib/events";
 import { requireOrganizerMembership } from "@/lib/auth/session";
 import { DateTimeField, FormattedNumberInput } from "@/components/form-fields";
 import { deleteEvent, setEventStatus, updateEvent } from "@/app/admin/actions";
+import { EventSubdomainPanel } from "@/components/event-subdomain-panel";
 
 type Props = { params: Promise<{ eventId: string }>; searchParams: Promise<{ error?: string }> };
 
@@ -24,6 +25,7 @@ export default async function EventSettingsPage({ params, searchParams }: Props)
     supabase.from("activity_logs").select("id", { count: "exact", head: true }).eq("event_id", eventId),
     supabase.from("benefit_claims").select("id", { count: "exact", head: true }).eq("event_id", eventId),
   ]);
+  const { data: address } = await supabase.from("event_subdomains").select("label").eq("event_id", eventId).maybeSingle();
   const canDelete = event.status === "draft" && !(versions?.length || attendees.count || credentials.count || scans.count || activities.count || benefits.count);
   const { error } = await searchParams;
   const errors: Record<string, string> = {
@@ -119,6 +121,7 @@ export default async function EventSettingsPage({ params, searchParams }: Props)
         </form>)}</div></div>}
       </section>
 
+      <EventSubdomainPanel eventId={eventId} current={address?.label ?? ""} suggestion={event.slug} enabled={process.env.PASSFLOW_EVENT_SUBDOMAINS_ENABLED === "true"} />
       <section className="event-admin-danger-zone">
         <div className="event-admin-danger-copy">
           <div>

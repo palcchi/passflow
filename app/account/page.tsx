@@ -89,9 +89,6 @@ export default async function AccountPage() {
               <p className="section-kicker">My events</p>
               <h2 id="my-events">Your events</h2>
             </div>
-            <Link href="/events" className="studio-text-link">
-              View all <ArrowUpRight size={14} />
-            </Link>
           </div>
 
           {myEvents.length > 0 ? (

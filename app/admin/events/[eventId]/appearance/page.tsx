@@ -24,7 +24,7 @@ export default async function EventAppearancePage({
         </p>
       </header>
 
-      <section className="event-admin-section"><h3>Designed in Figma. Powered by PassFlow.</h3><p>Pair an existing file, insert a starter template, then sync a private draft. Published designs take priority over these basic settings.</p><Link className="button button-dark" href={`/admin/events/${eventId}/design`}>Connect Figma</Link> <Link className="button button-ghost" href={`/admin/events/${eventId}/design/studio`}>Pass layout tools</Link></section>
+      <section className="event-admin-section"><h3>Designed in Figma. Powered by PassFlow.</h3><p>Pair an existing file, insert a starter template, then sync a private draft. Published designs take priority over these basic settings.</p><Link className="button button-dark" href={`/admin/events/${eventId}/design`}>Open Design</Link></section>
       <EventCustomizer event={event} />
     </div>
   );
