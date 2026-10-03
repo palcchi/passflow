@@ -7,14 +7,23 @@ body {
   overflow-x: clip;
 }
 
-/* Theme changes use a short color transition instead of a circular view-transition
-   wipe. The old wipe could snapshot nested route transitions and produce a jump. */
-html.theme-switching,
-html.theme-switching body,
+/* Theme changes: circular reveal from the clicked toggle (see ThemeToggle).
+   Named route groups are disabled so nested snapshots cannot jump. */
 html.theme-switching * {
-  transition-property: background-color, color, border-color, box-shadow, fill, stroke !important;
-  transition-duration: 180ms !important;
-  transition-timing-function: ease-out !important;
+  view-transition-name: none !important;
+}
+
+html.theme-switching::view-transition-old(root) {
+  animation: none;
+}
+
+html.theme-switching::view-transition-new(root) {
+  animation: pf-theme-reveal 620ms cubic-bezier(0.65, 0, 0.35, 1) both;
+}
+
+@keyframes pf-theme-reveal {
+  from { clip-path: circle(0 at var(--theme-x, 50%) var(--theme-y, 0)); }
+  to { clip-path: circle(var(--theme-r, 150vmax) at var(--theme-x, 50%) var(--theme-y, 0)); }
 }
 
 .pf-route-stage {
@@ -203,28 +212,156 @@ html.theme-switching * {
   }
 
   ::view-transition-old(passflow-route-content) {
-    animation: pf-route-out 140ms ease-out both;
+    animation: pf-route-out 150ms cubic-bezier(0.4, 0, 1, 1) both;
   }
 
   ::view-transition-new(passflow-route-content) {
-    animation: pf-route-in 260ms cubic-bezier(0.22, 1, 0.36, 1) both;
+    animation: pf-route-in 320ms cubic-bezier(0.22, 1, 0.36, 1) 60ms both;
   }
 }
 
 @keyframes pf-route-out {
   to {
-    opacity: .985;
+    opacity: 0;
+    transform: translateY(-8px);
   }
 }
 
 @keyframes pf-route-in {
   from {
-    opacity: .92;
-    transform: translateY(10px);
+    opacity: 0;
+    transform: translateY(14px);
   }
 
   to {
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+/* Entrance + scroll reveals. Keyframes use the individual `translate`/`scale`
+   properties so they compose with any layout `transform` already on an element. */
+@media (prefers-reduced-motion: no-preference) {
+  .editorial-canvas > *,
+  .auth-heading,
+  .auth-form-panel > form,
+  .utility-card {
+    animation: pf-rise 720ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  .editorial-canvas > :nth-child(2) { animation-delay: 70ms; }
+  .editorial-canvas > :nth-child(3) { animation-delay: 140ms; }
+  .editorial-canvas > :nth-child(4) { animation-delay: 210ms; }
+  .editorial-canvas > :nth-child(n + 5) { animation-delay: 300ms; }
+  .auth-form-panel > form { animation-delay: 120ms; }
+
+  .editorial-canvas h1 em::after {
+    animation: pf-draw 700ms cubic-bezier(0.65, 0, 0.35, 1) 520ms both;
+    transform-origin: left center;
+  }
+
+  @supports (animation-timeline: view()) {
+    .editorial-section,
+    .class-event-grid > *,
+    .invitation-list > div,
+    .organizer-steps > li,
+    .studio-section {
+      animation: pf-reveal linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 60%;
+    }
+  }
+}
+
+@keyframes pf-rise {
+  from { opacity: 0; translate: 0 22px; }
+}
+
+@keyframes pf-reveal {
+  from { opacity: 0; translate: 0 36px; scale: 0.97; }
+}
+
+@keyframes pf-draw {
+  from { scale: 0 1; }
+}
+
+/* Organizer application steps. */
+.organizer-steps {
+  display: grid;
+  gap: 10px;
+  margin: 14px 0 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: pf-step;
+}
+
+.organizer-steps > li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+  color: var(--muted-foreground);
+  counter-increment: pf-step;
+}
+
+.organizer-steps > li::before {
+  content: counter(pf-step);
+  display: grid;
+  place-items: center;
+  flex: 0 0 28px;
+  height: 28px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.organizer-steps > li[data-done="true"] {
+  color: var(--foreground);
+}
+
+.organizer-steps > li[data-done="true"]::before {
+  content: "✓";
+  border-color: var(--foreground);
+  background: var(--foreground);
+  color: var(--background);
+}
+
+.organizer-steps-large {
+  gap: 14px;
+  margin: 32px 0 0;
+}
+
+.organizer-steps-large > li {
+  padding: 22px;
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  background: var(--card);
+  color: var(--foreground);
+  font-size: clamp(17px, 2vw, 22px);
+  letter-spacing: -0.02em;
+}
+
+.organizer-steps-large > li::before {
+  flex-basis: 40px;
+  height: 40px;
+  font-size: 15px;
+}
+
+.organizer-note {
+  margin-top: 20px;
+  max-width: 60ch;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--muted-foreground);
+}
+
+.auth-input select {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
 }
