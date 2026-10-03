@@ -134,10 +134,6 @@ export function getEventBySlug(slug: string) {
   return demoEvents.find((event) => event.slug === slug);
 }
 
-export function getEventById(id: string) {
-  return demoEvents.find((event) => event.id === id || event.slug === id);
-}
-
 type EventRow =
   import("@/lib/supabase/database.types").Database["public"]["Tables"]["events"]["Row"];
 

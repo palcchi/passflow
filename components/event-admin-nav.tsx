@@ -10,7 +10,7 @@ const items = [
   { key: "people", label: "People", suffix: "/people" },
   { key: "access", label: "Access", suffix: "/access" },
   { key: "experience", label: "Experience", suffix: "/experience" },
-  { key: "appearance", label: "Appearance", suffix: "/appearance" },
+  { key: "appearance", label: "Quick Setup", suffix: "/appearance" },
   { key: "design", label: "Design", suffix: "/design" },
   { key: "settings", label: "Settings", suffix: "/settings" },
 ] as const;

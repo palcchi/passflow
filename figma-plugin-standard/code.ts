@@ -66,8 +66,9 @@ function autoFrame(name:string,direction:'HORIZONTAL'|'VERTICAL',fill:string){
   f.name=name;
   f.layoutMode=direction;
   f.primaryAxisSizingMode='AUTO';
-  f.counterAxisSizingMode='FIXED';
+  f.counterAxisSizingMode='AUTO';
   f.itemSpacing=16;
+  f.clipsContent=false;
   f.paddingTop=0;f.paddingRight=0;f.paddingBottom=0;f.paddingLeft=0;
   f.fills=[color(fill)];
   return f;
@@ -78,9 +79,9 @@ async function text(parent:FrameNode,value:string,size:number,width:number,bindi
   n.characters=value;
   n.fontSize=size;
   n.fills=[color('#171717')];
-  n.textAutoResize='HEIGHT';
   parent.appendChild(n);
   n.resize(Math.max(80,width),Math.max(size*1.5,36));
+  n.textAutoResize='HEIGHT';
   if(binding)bind(n,binding);
   return n;
 }
@@ -280,7 +281,8 @@ async function api(path:string,body:unknown,token?:string){
     headers:{'Content-Type':'application/json',...(token?{Authorization:'Bearer '+token}:{})},
     body:JSON.stringify(body)
   });
-  let result:Record<string,unknown>={};
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- server JSON, fields checked by the API
+  let result:any={};
   try{result=await response.json();}catch{}
   if(!response.ok||result.error)throw Error(result.error||'Request failed');
   return result;
@@ -323,13 +325,18 @@ function schedule(){
 
 figma.showUI(__html__,{width:390,height:760,themeColors:true});
 figma.on('selectionchange',selectionState);
+// dynamic-page forbids figma.on('documentchange') without loadAllPagesAsync; watch only the current page.
+let watchedPage:PageNode|null=null;
+const onNodeChange=()=>{if(!mutating)schedule();};
+function watchPage(){watchedPage?.off('nodechange',onNodeChange);watchedPage=figma.currentPage;watchedPage.on('nodechange',onNodeChange);}
+watchPage();
 figma.on('currentpagechange',()=>{
+  watchPage();
   if(timer)clearTimeout(timer);
   confirmed=false;
   status(session?'Confirm event':'Disconnected','Current page changed. Confirm the linked event before this page can sync.');
   selectionState();
 });
-figma.on('documentchange',()=>{if(!mutating)schedule();});
 selectionState();
 
 figma.ui.onmessage=async(message:Message)=>{
@@ -337,11 +344,12 @@ figma.ui.onmessage=async(message:Message)=>{
   commandPending=true;
   try{
     if(message.type==='pair'){
-      const result=await api('pair',{code:message.code,documentId,fileName:figma.root.name,fileKey:figma.fileKey??null});
-      session={token:result.token,documentId,eventId:result.eventId,eventName:result.eventName,revision:0};
-      await figma.clientStorage.setAsync(storageKey,session);
-      figma.root.setSharedPluginData(NS,'eventId',session.eventId);
-      figma.root.setSharedPluginData(NS,'eventName',session.eventName);
+      const result=await api('pair',{code:message.code,documentId,fileName:figma.root.name.slice(0,150)||'Untitled',fileKey:figma.fileKey??null});
+      const paired:Session={token:result.token,documentId,eventId:result.eventId,eventName:result.eventName,revision:0};
+      session=paired;
+      await figma.clientStorage.setAsync(storageKey,paired);
+      figma.root.setSharedPluginData(NS,'eventId',paired.eventId);
+      figma.root.setSharedPluginData(NS,'eventName',paired.eventName);
       figma.root.setSharedPluginData(NS,'schema',SCHEMA);
       blocked=false;confirmed=true;
       status('Connected','Insert a starter template, or assign existing frames in Advanced Mode.');

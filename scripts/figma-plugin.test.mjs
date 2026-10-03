@@ -78,7 +78,7 @@ test('standard plugin templates serialize into valid desktop/mobile HTML documen
     viewport:{center:{x:0,y:0},scrollAndZoomIntoView(){}},
     ui:{postMessage:m=>states.push(m)},
     showUI(){},
-    on(){},
+    on(event){if(event==='documentchange')throw Error('documentchange requires loadAllPagesAsync under dynamic-page');},
     clientStorage:{getAsync:async()=>null,setAsync:async()=>{},deleteAsync:async()=>{}},
     base64Encode:data=>Buffer.from(data).toString('base64')
   };

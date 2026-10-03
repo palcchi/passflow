@@ -373,16 +373,6 @@ export async function generateQrBatch(input: QrBatchInput) {
   };
 }
 
-export async function generateWristbands(formData: FormData) {
-  return generateQrBatch({
-    eventId: text(formData, "eventId", 60),
-    prefix: text(formData, "prefix", 16) || "WR",
-    amount: numberValue(formData, "amount") ?? 1,
-    startNumber: numberValue(formData, "startNumber"),
-    mode: text(formData, "mode", 10) === "custom" ? "custom" : "auto",
-  });
-}
-
 export async function revokeCredential(formData: FormData) {
   const eventId = text(formData, "eventId", 60);
   const credentialId = text(formData, "credentialId", 60);
@@ -468,15 +458,6 @@ export async function createStation(formData: FormData) {
     is_active: true,
   });
   if (error) return { error: error.code === "23505" ? "This code already exists. Choose a unique code." : "The record could not be saved. Review the configuration and try again." };
-  revalidateEvent(eventId);
-}
-
-export async function toggleStation(formData: FormData) {
-  const eventId = text(formData, "eventId", 60);
-  const stationId = text(formData, "stationId", 60);
-  const isActive = text(formData, "isActive", 10) === "true";
-  const { supabase } = await managedContext(eventId);
-  await supabase.from("scanner_stations").update({ is_active: isActive }).eq("id", stationId).eq("event_id", eventId);
   revalidateEvent(eventId);
 }
 

@@ -68,13 +68,4 @@ export async function requestPasswordReset(formData: FormData) {
   if(origin&&getSupabaseConfig()&&email){try{const supabase=await createServerSupabaseClient(); await supabase.auth.resetPasswordForEmail(email,{redirectTo:`${origin}/auth/reset`});}catch{}}
   redirect("/login?notice=reset-sent");
 }
-export async function updatePassword(formData: FormData) {
-  const password=String(formData.get("password")??""); if(password.length<8) redirect("/auth/reset?error=invalid");
-  let success = false;
-  let hasUser = true;
-  try{const supabase=await createServerSupabaseClient();const {data:{user}}=await supabase.auth.getUser();if(!user) hasUser = false; else { const {error}=await supabase.auth.updateUser({password}); success = !error; }}catch{}
-  if (!hasUser) redirect("/login?error=expired");
-  if (success) redirect("/account?notice=password-updated");
-  redirect("/auth/reset?error=provider");
-}
 export async function signOut(){let failed=false;if(getSupabaseConfig()){try{const supabase=await createServerSupabaseClient();const {error}=await supabase.auth.signOut({scope:"local"});failed=!!error;}catch{failed=true;}}if(failed)redirect("/login?error=signout");revalidatePath("/","layout");redirect("/login?notice=signed-out");}

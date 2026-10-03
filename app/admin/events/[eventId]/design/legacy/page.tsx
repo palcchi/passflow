@@ -64,13 +64,13 @@ export default async function EventDesignPage({
     <div className="event-admin-editor-page">
       <header className="event-admin-local-heading">
         <span className="section-kicker">PassFlow Design</span>
-        <h2>Legacy Figma connections</h2>
+        <h2>Pass designs from Figma</h2>
         <p>
-          Connect Figma frames as drafts, then review and publish the selected version.
+          Sync digital pass, ID card and wristband frames from Figma as drafts, then review and publish the selected version.
         </p>
       </header>
 
-      <section className="event-admin-section"><h3>Create, preview, publish</h3><p>Use the design studio for your website, digital pass, ID card, and wristband. Figma plugin bundles import as private drafts.</p><Link className="button button-dark" href={`/admin/events/${eventId}/design/studio`}>Open design studio</Link></section>
+      
       <EventDesignFlow />
 
       {!connection ? (
@@ -89,7 +89,7 @@ export default async function EventDesignPage({
             <a
               className="button button-dark"
               href={`/api/figma/connect?next=${encodeURIComponent(
-                `/admin/events/${eventId}/design`,
+                `/admin/events/${eventId}/design/legacy`,
               )}`}
             >
               Connect Figma

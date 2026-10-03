@@ -3,7 +3,7 @@ export const revalidate = 0;
 
 import Link from "next/link";
 import { ArrowUpRight, FolderOpen, Plus } from "lucide-react";
-import { requireOrganizer } from "@/lib/auth/session";
+import { accountProfile, requireOrganizer } from "@/lib/auth/session";
 import { UserNavbar } from "@/components/user-navbar";
 import { getManagedEvents } from "@/lib/events";
 import { KineticText } from "@/components/magicui/kinetic-text";
@@ -34,21 +34,8 @@ export default async function AdminDashboardPage() {
       ])
     : [{ count: 0 }, { data: [] }];
 
-  const username =
-    typeof user.user_metadata.username === "string"
-      ? user.user_metadata.username.trim()
-      : "";
-  const fullName =
-    typeof user.user_metadata.full_name === "string"
-      ? user.user_metadata.full_name.trim()
-      : "";
-  const avatarUrl =
-    typeof user.user_metadata.avatar_url === "string"
-      ? user.user_metadata.avatar_url
-      : typeof user.user_metadata.picture === "string"
-        ? user.user_metadata.picture
-        : null;
-  const name = fullName || username || user.email?.split("@")[0] || "Organizer";
+  const { name: accountName, avatarUrl } = accountProfile(user);
+  const name = accountName || "Organizer";
 
   const totalRegistered = events.reduce(
     (total, event) => total + event.attendeeCount,
