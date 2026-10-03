@@ -118,6 +118,7 @@ export default async function PublicEventPage({ params }: EventPageProps) {
           <div className="event-meta-row">
             <span>
               <CalendarDays size={17} /> {event.dateLabel}
+              {event.startsAt && event.endsAt && <a className="event-calendar-link" href={`/e/${event.slug}/calendar`} download>Add to calendar</a>}
             </span>
             <span>
               <MapPin size={17} /> {event.venue}

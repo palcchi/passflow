@@ -547,3 +547,17 @@ button, a { -webkit-tap-highlight-color:transparent; }
 .hero-fan-card.is-event img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
 @media (max-width:900px) { .workspace-fan { width:240px; } .hero-fan.is-compact { --step:26px; --w:80px; --h:106px; height:146px; } }
 @media (max-width:680px) { .workspace-fan { display:none; } }
+.event-admin-note { margin:4px 0 18px; font-size:13px; color:var(--muted-foreground); }
+.event-admin-note a { color:var(--foreground); font-weight:550; text-decoration:underline; text-underline-offset:3px; }
+
+/* ---------- Event overview: launch checklist ---------- */
+.launch-checklist { display:grid; gap:6px; margin:0; padding:0; list-style:none; }
+.launch-checklist a { display:grid; grid-template-columns:24px 1fr auto 14px; align-items:center; gap:12px; padding:12px 14px; border:1px solid var(--border); border-radius:14px; color:var(--foreground); transition:background 150ms ease; }
+.launch-checklist a:hover { background:var(--muted); }
+.launch-check { display:grid; place-items:center; width:24px; height:24px; border:1.5px solid var(--border); border-radius:50%; font-size:12px; }
+.launch-checklist strong { font-size:13px; font-weight:550; }
+.launch-checklist small { font-size:11px; color:var(--muted-foreground); }
+.launch-checklist li[data-done] .launch-check { border-color:#3f9f72; background:#3f9f72; color:#fff; }
+.launch-checklist li[data-done] strong { color:var(--muted-foreground); text-decoration:line-through; text-decoration-color:var(--border); }
+.event-calendar-link { margin-left:8px; font-size:12px; font-weight:550; text-decoration:underline; text-underline-offset:3px; color:inherit; }
+.claim-identity .event-calendar-link { display:inline-block; margin:8px 0 0; }
