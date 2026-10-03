@@ -5250,12 +5250,13 @@ body {
 .velocity-scroll-track {
   display: flex;
   width: max-content;
-  gap: 2.4rem;
   will-change: transform;
 }
 
+/* Spacing lives inside each copy so 25% of the track is exactly two copies. */
 .velocity-scroll-track > span {
   flex: 0 0 auto;
+  padding-right: 2.4rem;
 }
 
 .text-3d-flip {

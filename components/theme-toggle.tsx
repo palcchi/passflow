@@ -38,27 +38,28 @@ function persistTheme(mode: ThemeMode) {
 export function ThemeToggle() {
   const mode = useSyncExternalStore(subscribe, readTheme, () => "system");
 
-  function choose(nextMode: ThemeMode) {
+  function choose(nextMode: ThemeMode, origin: HTMLElement) {
     if (nextMode === mode) return;
 
-    const root = document.documentElement;
-    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-
-    if (reduceMotion) {
+    const commit = () => {
       persistTheme(nextMode);
       applyTheme(nextMode);
       window.dispatchEvent(new Event(CHANGE_EVENT));
-      return;
-    }
+    };
+    const root = document.documentElement;
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduceMotion || !document.startViewTransition) return commit();
 
+    // Circular reveal from the clicked button. Route view-transition names are
+    // switched off for the duration so only the single root snapshot animates.
+    const { left, top, width, height } = origin.getBoundingClientRect();
+    const x = left + width / 2;
+    const y = top + height / 2;
+    root.style.setProperty("--theme-x", `${x}px`);
+    root.style.setProperty("--theme-y", `${y}px`);
+    root.style.setProperty("--theme-r", `${Math.hypot(Math.max(x, innerWidth - x), Math.max(y, innerHeight - y))}px`);
     root.classList.add("theme-switching");
-    persistTheme(nextMode);
-    applyTheme(nextMode);
-    window.dispatchEvent(new Event(CHANGE_EVENT));
-
-    window.setTimeout(() => {
-      root.classList.remove("theme-switching");
-    }, 180);
+    document.startViewTransition(commit).finished.finally(() => root.classList.remove("theme-switching"));
   }
 
   const options = [
@@ -78,7 +79,7 @@ export function ThemeToggle() {
           aria-pressed={mode === value}
           aria-label={label}
           title={label}
-          onClick={() => choose(value)}
+          onClick={(event) => choose(value, event.currentTarget)}
         >
           <Icon size={13} />
           <span>{label}</span>

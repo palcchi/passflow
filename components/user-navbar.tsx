@@ -189,15 +189,13 @@ export function UserNavbar({
                 <small>Photo, name, username, and Figma</small>
               </span>
             </Link>
-            {organizer && (
-              <Link href="/admin" onClick={() => setMenuOpen(false)}>
-                <Settings2 size={16} />
-                <span>
-                  <strong>Organizer workspace</strong>
-                  <small>Event, scanner, design</small>
-                </span>
-              </Link>
-            )}
+            <Link href={organizer ? "/admin" : "/organizer/start"} onClick={() => setMenuOpen(false)}>
+              <Settings2 size={16} />
+              <span>
+                <strong>{organizer ? "Organizer workspace" : "Become an organizer"}</strong>
+                <small>{organizer ? "Event, scanner, design" : "Apply to host events on PassFlow"}</small>
+              </span>
+            </Link>
             <form action={signOut}>
               <button type="submit" className="user-profile-logout">
                 <LogOut size={16} />

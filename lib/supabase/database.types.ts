@@ -17,13 +17,13 @@ export type Database = {
       event_config_drafts: {
         Row: { event_id: string; config: Json; revision: number; updated_at: string }
         Insert: never
-        Update: never
+        Update: { [_ in never]: never }
         Relationships: []
       }
       event_publications: {
         Row: { id: string; event_id: string; version: number; config: Json; published_at: string; published_by: string | null }
         Insert: never
-        Update: never
+        Update: { [_ in never]: never }
         Relationships: []
       }
       event_subdomains: {Row:{event_id:string;label:string;updated_at:string};Insert:never;Update:never;Relationships:[]}
@@ -563,6 +563,28 @@ export type Database = {
           plan_event_limit?: number
           slug?: string
         }
+        Relationships: []
+      }
+      organizer_applications: {
+        Row: {
+          city: string | null
+          created_at: string
+          event_scale: string | null
+          organization_id: string | null
+          organization_name: string
+          phone: string | null
+          reviewed_at: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          city?: string | null
+          event_scale?: string | null
+          organization_name: string
+          phone?: string | null
+          user_id: string
+        }
+        Update: { [_ in never]: never }
         Relationships: []
       }
       qr_credentials: {

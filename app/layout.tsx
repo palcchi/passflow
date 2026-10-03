@@ -10,6 +10,7 @@ import "./management-design.css";
 import "./polish.css";
 import { RouteTransition } from "@/components/route-transition";
 import { AppNavigationController } from "@/components/app-navigation-controller";
+import { getAppOrigin } from "@/lib/supabase/config";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -34,13 +35,21 @@ const themeScript = `
 })();
 `;
 
+const description =
+  "PassFlow is an event platform for registration, QR tickets, digital passes, and live check-in. One account for attendees, one workspace for organizers.";
+
 export const metadata: Metadata = {
+  metadataBase: new URL(getAppOrigin() ?? "https://passflow.my.id"),
+  applicationName: "PassFlow",
   title: {
-    default: "PassFlow",
+    default: "PassFlow — Event registration, QR tickets & digital passes",
     template: "%s | PassFlow",
   },
-  description:
-    "Multi-event management, QR wristband claiming, digital passes, and camera-based access validation.",
+  description,
+  keywords: ["event registration", "QR ticket", "digital pass", "event check-in", "event management", "tiket event", "registrasi event"],
+  openGraph: { type: "website", siteName: "PassFlow", locale: "en_US", description },
+  twitter: { card: "summary_large_image", description },
+  formatDetection: { telephone: false },
 };
 
 export const viewport: Viewport = {
