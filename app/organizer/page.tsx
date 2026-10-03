@@ -35,7 +35,7 @@ export default async function OrganizerLandingPage() {
     <nav className="editorial-nav" aria-label="Main navigation">
       <Link href="/" className="brand-lockup"><FlowMark/>PassFlow</Link>
       <div className="editorial-nav-links"><Link href="/#events">Discover</Link><a href="#how-it-works">How it works</a></div>
-      <div className="editorial-nav-actions"><ThemeToggle/>{!session && <Link href={"/login?next=" + encodeURIComponent("/organizer/start")}>Sign in</Link>}<Link href={cta} className="button button-dark">{organizer ? "Workspace" : "Apply"}<ArrowUpRight size={15}/></Link></div>
+      <div className="editorial-nav-actions"><ThemeToggle compact/>{!session && <Link href={"/login?next=" + encodeURIComponent("/organizer/start")}>Sign in</Link>}<Link href={cta} className="button button-dark">{organizer ? "Workspace" : "Apply"}<ArrowUpRight size={15}/></Link></div>
     </nav>
     <section className="editorial-canvas">
       <span className="editorial-eyebrow"><span/> PASSFLOW FOR ORGANIZERS</span>

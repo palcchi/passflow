@@ -11,7 +11,7 @@ export function AuthShell({ title, description, children, backHref = "/", backLa
   return <main className="auth-shell">
     <header className="auth-nav">
       <Link href="/" className="brand-lockup"><FlowMark/>PassFlow</Link>
-      <ThemeToggle/>
+      <ThemeToggle compact/>
     </header>
     <div className="auth-layout">
       <section className="auth-form-panel">

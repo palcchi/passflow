@@ -127,7 +127,7 @@ export function UserNavbar({
         <div className="flow-sidebar-note"><FlowShapes/><strong>Make events flow.</strong><span>One workspace for every event.</span></div>
 
         <div className="user-nav-actions">
-          <ThemeToggle />
+          <ThemeToggle compact />
 
           <Link
             href={organizer ? "/admin/events/new" : "/events"}

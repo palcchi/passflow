@@ -35,7 +35,8 @@ function persistTheme(mode: ThemeMode) {
   else window.localStorage.setItem(STORAGE_KEY, mode);
 }
 
-export function ThemeToggle() {
+// compact: one icon button that flips light/dark (navbars). Default: System/Light/Dark segmented control.
+export function ThemeToggle({ compact = false }: { compact?: boolean }) {
   const mode = useSyncExternalStore(subscribe, readTheme, () => "system");
 
   function choose(nextMode: ThemeMode, origin: HTMLElement) {
@@ -67,6 +68,26 @@ export function ThemeToggle() {
     { value: "light" as const, label: "Light", Icon: Sun },
     { value: "dark" as const, label: "Dark", Icon: Moon },
   ];
+
+  if (compact) {
+    // Icons swap in CSS from the resolved theme, so server and client markup match.
+    return (
+      <button
+        type="button"
+        className="theme-flip"
+        aria-label="Toggle dark mode"
+        title="Toggle dark mode"
+        onClick={(event) => {
+          const root = document.documentElement;
+          const dark = root.dataset.theme === "dark" || (!root.dataset.theme && matchMedia("(prefers-color-scheme: dark)").matches);
+          choose(dark ? "light" : "dark", event.currentTarget);
+        }}
+      >
+        <Moon size={15} className="theme-flip-moon" />
+        <Sun size={15} className="theme-flip-sun" />
+      </button>
+    );
+  }
 
   return (
     <div className="theme-toggle" aria-label="Appearance theme">
