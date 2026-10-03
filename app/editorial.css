@@ -513,3 +513,8 @@ button, a { -webkit-tap-highlight-color:transparent; }
 .claim-account strong { font-size:16px; letter-spacing:-.02em; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .claim-account small { font-size:11px; color:var(--muted-foreground); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .claim-account > a { flex:none; font-size:12px; font-weight:600; text-decoration:underline; text-underline-offset:3px; }
+/* Very small phones (≤360px): "Sign in" stays reachable from the register page; the fan tightens. */
+@media (max-width:360px) {
+  .editorial-nav-actions > a:not(.button) { display:none; }
+  .hero-fan { --step:46px; --w:92px; --h:124px; }
+}
