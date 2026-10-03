@@ -9,7 +9,7 @@ import { getPublishedEvent } from "@/lib/events";
 import { accountProfile, requireUser } from "@/lib/auth/session";
 import { registerForEvent, claimQr, replaceQr } from "@/app/events-actions";
 import { SmartSelect } from "@/components/form-fields";
-import { eventInk } from "@/lib/event-colors";
+import { contrastRatio, eventInk } from "@/lib/event-colors";
 import { WristbandInput } from "@/components/wristband-input";
 import { readTemplate, type FigmaElement } from "@/lib/design-template";
 import { qrSvgDataUri } from "@/lib/qr-svg";
@@ -19,11 +19,6 @@ type ClaimPageProps = { params: Promise<{ slug: string }>; searchParams: Promise
 const reasonText: Record<string, string> = { invalid_name: "Enter your full name (2–100 characters).", not_registered: "Register for this event before claiming a pass.", invalid_code: "The wristband QR code could not be found.", already_claimed: "This QR code is already linked to another attendee.", claim_disabled: "This event uses automatic QR credentials, so no wristband claim is required.", event_full: "Event registration is full.", ticket_full: "This pass category is full.", ticket_not_found: "This pass type is unavailable.", provider: "Something went wrong. Please try again." };
 function boxStyle(element: FigmaElement, frameWidth: number, frameHeight: number): CSSProperties {
   return { position: "absolute", left: `${element.x / frameWidth * 100}%`, top: `${element.y / frameHeight * 100}%`, width: `${element.width / frameWidth * 100}%`, height: `${element.height / frameHeight * 100}%` };
-}
-function contrast(a: string, b: string) {
-  const lum = (hex: string) => hex.slice(1).match(/.{2}/g)!.map((v) => parseInt(v, 16) / 255).map((c) => c <= .04045 ? c / 12.92 : ((c + .055) / 1.055) ** 2.4).reduce((sum, c, i) => sum + c * [0.2126, 0.7152, 0.0722][i], 0);
-  const x = lum(a), y = lum(b);
-  return (Math.max(x, y) + .05) / (Math.min(x, y) + .05);
 }
 
 export default async function ClaimPage({ params, searchParams }: ClaimPageProps) {
@@ -57,8 +52,8 @@ export default async function ClaimPage({ params, searchParams }: ClaimPageProps
   const photoSrc = account.avatarUrl ?? legacyPhoto?.signedUrl ?? "";
   const qrElement = template?.elements.find((element) => element.field === "qr");
   const qrForeground = template?.qrStyle.foreground ?? "#151515", qrBackground = template?.qrStyle.background ?? "#ffffff";
-  const safeForeground = contrast(qrForeground, qrBackground) >= 4.5 ? qrForeground : "#151515";
-  const safeBackground = contrast(qrForeground, qrBackground) >= 4.5 ? qrBackground : "#ffffff";
+  const safeForeground = contrastRatio(qrForeground, qrBackground) >= 4.5 ? qrForeground : "#151515";
+  const safeBackground = contrastRatio(qrForeground, qrBackground) >= 4.5 ? qrBackground : "#ffffff";
   const qrData = credential ? qrSvgDataUri(`PF1:${credential.code}`, qrElement?.width ?? 260, qrElement?.height ?? 260, safeForeground, safeBackground, template?.qrStyle.modules ?? "square") : null;
   const error = typeof query.error === "string" ? reasonText[query.error] ?? "The request could not be processed." : null;
   const ticketName = (attendee?.ticket_types as { name?: string } | null)?.name ?? "Event Pass";

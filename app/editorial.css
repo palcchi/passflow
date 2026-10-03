@@ -208,7 +208,7 @@ button, a { -webkit-tap-highlight-color:transparent; }
 .auth-input input { width:100%; min-width:0; flex:1; padding:13px 0; border:0; border-radius:0; background:transparent; font-size:14px; font-weight:400; }
 .auth-input svg { flex:none; }
 .auth-field > small { color:var(--muted-foreground); font-size:10px; font-weight:400; line-height:1.5; }
-.auth-submit[data-slot="button"] { min-height:48px; border-radius:999px; font-size:13px; font-weight:550; }
+.auth-submit { min-height:48px; border-radius:999px; font-size:13px; font-weight:550; }
 .auth-divider { display:flex; align-items:center; gap:13px; margin:22px 0; color:var(--muted-foreground); font-size:11px; }
 .auth-divider::before, .auth-divider::after { content:""; height:1px; flex:1; background:var(--border); }
 .auth-form-links { display:flex; justify-content:space-between; gap:15px; font-size:12px; margin-top:22px; color:var(--muted-foreground); }
@@ -253,7 +253,6 @@ button, a { -webkit-tap-highlight-color:transparent; }
 .asset-upload-card:focus-within { outline:2px solid var(--ring); outline-offset:3px; }
 .design-card { border-radius:16px; background:var(--card); }
 .design-preview-empty { background:var(--muted); }
-.design-beam-flow { border-radius:18px; }
 .figma-howto { padding:20px; }
 .create-event-layout { max-width:1100px; margin:0 auto; padding:40px 32px 80px; }
 .create-event-form { max-width:800px; padding:32px; border:1px solid var(--border); border-radius:22px; background:var(--card); }

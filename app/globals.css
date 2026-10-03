@@ -3729,69 +3729,6 @@ body {
 }
 
 /* Design animated beam */
-.design-beam-flow {
-  position: relative;
-  min-height: 150px;
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0,1fr));
-  align-items: center;
-  gap: clamp(28px, 8vw, 100px);
-  margin: 4px 0 30px;
-  padding: 24px;
-  overflow: hidden;
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  background: color-mix(in srgb, var(--card) 78%, transparent);
-}
-
-.design-beam-node {
-  position: relative;
-  z-index: 3;
-  min-height: 70px;
-  display: grid;
-  align-content: center;
-  gap: 4px;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 12px;
-  background: var(--card);
-  text-align: center;
-}
-
-.design-beam-node strong {
-  color: var(--foreground);
-  font-size: 12px;
-}
-
-.design-beam-node span {
-  color: var(--muted-foreground);
-  font-size: 9px;
-}
-
-.design-beam-node.is-core {
-  border-color: color-mix(in srgb, var(--event-admin-accent) 45%, var(--border));
-  box-shadow: inset 0 -2px 0 var(--event-admin-accent);
-}
-
-.animated-beam-svg {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  pointer-events: none;
-  overflow: visible;
-}
-
-.animated-beam-path {
-  fill: none;
-  stroke: color-mix(in srgb, var(--event-admin-accent) 20%, var(--border));
-  stroke-width: 1;
-}
-
-.animated-beam-runner {
-  fill: none;
-  stroke-width: 1.8;
-  stroke-linecap: round;
-}
 
 /* Profile */
 .profile-page-heading {
@@ -3982,15 +3919,6 @@ select,
 
   .event-admin-context .event-section-dock-scroll {
     gap: 20px !important;
-  }
-
-  .design-beam-flow {
-    grid-template-columns: 1fr;
-    gap: 22px;
-  }
-
-  .animated-beam-svg {
-    display: none;
   }
 
   .claim-mode-options {

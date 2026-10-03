@@ -1,3 +1,4 @@
+import { contrastRatio } from "@/lib/event-colors";
 import { attendeePhotoColumns, attendeePhotoUrls } from "@/lib/attendee-photos";
 import { NextResponse } from "next/server";
 import { getManagedEvent } from "@/lib/events";
@@ -20,14 +21,6 @@ async function dataImage(url: string | null) {
   } catch { return null; }
 }
 function safeFile(name: string) { return name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 70) || "passflow-export"; }
-function luminance(hex: string) {
-  const channels = hex.slice(1).match(/.{2}/g)!.map((value) => parseInt(value, 16) / 255).map((value) => value <= .04045 ? value / 12.92 : ((value + .055) / 1.055) ** 2.4);
-  return .2126 * channels[0] + .7152 * channels[1] + .0722 * channels[2];
-}
-function qrContrast(foreground: string, background: string) {
-  const l1 = luminance(foreground), l2 = luminance(background);
-  return (Math.max(l1, l2) + .05) / (Math.min(l1, l2) + .05);
-}
 function wrappedLines(value: string, maxChars: number, maxLines: number) {
   const words = value.split(/\s+/); const lines: string[] = []; let line = "";
   for (const word of words) { const next = line ? `${line} ${word}` : word; if (next.length > maxChars && line) { lines.push(line); line = word; } else line = next; }
@@ -59,7 +52,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ even
   const template = readTemplate(design.template), frame = template.frame;
   if (!template.elements.length) return new NextResponse("No PassFlow elements were detected. Add markers in Figma, then sync again.", { status: 422 });
   const qr = template.elements.find((element) => element.field === "qr");
-  if (qr && qrContrast(template.qrStyle.foreground, template.qrStyle.background) < 4.5) return new NextResponse("QR contrast is too low. Use a dark foreground on a light background for reliable scanning.", { status: 422 });
+  if (qr && contrastRatio(template.qrStyle.foreground, template.qrStyle.background) < 4.5) return new NextResponse("QR contrast is too low. Use a dark foreground on a light background for reliable scanning.", { status: 422 });
   const background = await dataImage(design.preview_url);
   const attendeeIds = [...new Set((credentials ?? []).flatMap((item) => item.attendee_id ? [item.attendee_id] : []))];
   const [{ data: attendees }, { data: profiles }] = attendeeIds.length ? await Promise.all([

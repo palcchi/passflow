@@ -2,7 +2,6 @@
 
 import { useFormStatus } from "react-dom";
 import { LoaderCircle } from "lucide-react";
-import { Button } from "@/components/ui/button";
 
 export function AuthSubmit({
   children,
@@ -16,22 +15,20 @@ export function AuthSubmit({
   const { pending } = useFormStatus();
 
   return (
-    <Button
-      className="auth-submit w-full"
-      variant={variant}
-      size="lg"
+    <button
+      className={`button ${variant === "outline" ? "button-ghost" : "button-dark"} auth-submit w-full`}
       type="submit"
       disabled={disabled || pending}
       aria-busy={pending}
     >
       {pending ? (
         <>
-          <LoaderCircle className="animate-spin" aria-hidden="true" />
-          Memproses...
+          <LoaderCircle className="animate-spin" size={16} aria-hidden="true" />
+          Working…
         </>
       ) : (
         children
       )}
-    </Button>
+    </button>
   );
 }

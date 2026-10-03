@@ -61,7 +61,7 @@
 .auth-shell .auth-story-footer { padding:25px; margin-top:0; position:absolute; bottom:0; left:0; right:0; }
 .auth-shell .auth-input { border-radius:10px; min-height:46px; background:var(--card); border-color:var(--border); }
 .auth-shell .auth-field { font-size:11px; }
-.auth-shell .auth-submit[data-slot="button"] { border-radius:10px; min-height:46px; font-weight:500; }
+.auth-shell .auth-submit { border-radius:10px; min-height:46px; font-weight:500; }
 .auth-shell .auth-footer { max-width:1000px; }
 
 /* Workspace shell: sidebar on desktop, existing account/menu controls on mobile. */

@@ -682,7 +682,7 @@
 }
 
 .auth-input,
-.auth-shell .auth-submit[data-slot="button"],
+.auth-shell .auth-submit,
 .profile-avatar-picker,
 .profile-integration-card {
   border-radius: var(--pf-radius-md) !important;
