@@ -225,7 +225,8 @@ html.theme-switching::view-transition-new(root) {
 /* Entrance + scroll reveals. Keyframes use the individual `translate`/`scale`
    properties so they compose with any layout `transform` already on an element. */
 @media (prefers-reduced-motion: no-preference) {
-  .editorial-canvas > * {
+  /* The card fan has its own entrance; rising its wrapper too made it move twice. */
+  .editorial-canvas > :not(.hero-fan) {
     animation: pf-rise 720ms var(--ease-out) both;
   }
 
@@ -248,13 +249,12 @@ html.theme-switching::view-transition-new(root) {
   }
 
   @supports (animation-timeline: view()) {
-    .editorial-landing .editorial-section,
     .editorial-landing .class-event-grid > *,
     .editorial-landing .invitation-list > div,
     .editorial-landing .organizer-steps > li {
       animation: pf-reveal linear both;
       animation-timeline: view();
-      animation-range: entry 0% entry 60%;
+      animation-range: entry 0% entry 100%;
     }
   }
 }
@@ -264,7 +264,7 @@ html.theme-switching::view-transition-new(root) {
 }
 
 @keyframes pf-reveal {
-  from { opacity: 0; translate: 0 36px; scale: 0.97; }
+  from { opacity: 0; translate: 0 16px; }
 }
 
 @keyframes pf-draw {

@@ -10,7 +10,6 @@ const items = [
   { key: "people", label: "People", suffix: "/people" },
   { key: "access", label: "Access", suffix: "/access" },
   { key: "experience", label: "Experience", suffix: "/experience" },
-  { key: "appearance", label: "Quick Setup", suffix: "/appearance" },
   { key: "design", label: "Design", suffix: "/design" },
   { key: "settings", label: "Settings", suffix: "/settings" },
 ] as const;
@@ -39,8 +38,9 @@ export function EventAdminNav({ eventId }: { eventId: string }) {
       <div className="event-section-dock-scroll" ref={scrollRef}>
         {items.map(({ key, label, suffix }) => {
           const href = base + suffix;
+          // Quick Setup lives under Design, so it keeps the Design tab highlighted.
           const routeIsActive = suffix
-            ? pathname === href || pathname.startsWith(href + "/")
+            ? pathname === href || pathname.startsWith(href + "/") || (key === "design" && pathname === base + "/appearance")
             : pathname === base;
           const active = pendingHref ? pendingHref === href : routeIsActive;
           return (

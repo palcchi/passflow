@@ -10,14 +10,13 @@ import {
   LayoutDashboard,
   LogOut,
   PanelLeftClose,
-  Plus,
   Settings2,
   Sparkles,
   UserRound,
 } from "lucide-react";
 import { signOut } from "@/app/auth/actions";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { FlowMark, FlowShapes } from "@/components/flow-art";
+import { FlowMark } from "@/components/flow-art";
 
 type UserNavbarProps = {
   name: string;
@@ -61,12 +60,11 @@ export function UserNavbar({
   }
 
   const navItems = [
-    { href: "/account", label: "Dashboard", icon: LayoutDashboard },
-    { href: "/events", label: "Events", icon: CalendarDays },
+    { href: "/account", label: "Home", icon: LayoutDashboard },
+    { href: "/events", label: "Discover", icon: CalendarDays },
     ...(organizer
       ? [{ href: "/admin", label: "Organizer", icon: Sparkles }]
       : []),
-    { href: "/profile", label: "Profile", icon: UserRound },
   ];
 
   function routeActive(href: string) {
@@ -140,20 +138,10 @@ export function UserNavbar({
           </div>
         </div>
 
-        <div className="flow-sidebar-note"><FlowShapes/><strong>Make events flow.</strong><span>One workspace for every event.</span></div>
 
         <div className="user-nav-actions">
           <ThemeToggle compact />
 
-          <Link
-            href={organizer ? "/admin/events/new" : "/events"}
-            prefetch={true}
-            className="user-nav-icon-button"
-            aria-label={organizer ? "Create event" : "Explore events"}
-            title={organizer ? "Create event" : "Explore events"}
-          >
-            <Plus size={18} />
-          </Link>
 
           <button
             type="button"
@@ -205,13 +193,15 @@ export function UserNavbar({
                 <small>Photo, name, username, and Figma</small>
               </span>
             </Link>
-            <Link href={organizer ? "/admin" : "/organizer/start"} onClick={() => setMenuOpen(false)}>
-              <Settings2 size={16} />
-              <span>
-                <strong>{organizer ? "Organizer workspace" : "Become an organizer"}</strong>
-                <small>{organizer ? "Event, scanner, design" : "Apply to host events on PassFlow"}</small>
-              </span>
-            </Link>
+            {!organizer && (
+              <Link href="/organizer/start" onClick={() => setMenuOpen(false)}>
+                <Settings2 size={16} />
+                <span>
+                  <strong>Become an organizer</strong>
+                  <small>Apply to host events on PassFlow</small>
+                </span>
+              </Link>
+            )}
             <form action={signOut}>
               <button type="submit" className="user-profile-logout">
                 <LogOut size={16} />
