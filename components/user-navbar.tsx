@@ -9,6 +9,7 @@ import {
   ChevronDown,
   LayoutDashboard,
   LogOut,
+  PanelLeftClose,
   Plus,
   Settings2,
   Sparkles,
@@ -82,6 +83,15 @@ export function UserNavbar({
     ? { duration: 0 }
     : { type: "spring" as const, stiffness: 300, damping: 30, mass: 0.82 };
 
+  // Desktop sidebar can shrink to an icon rail; the choice is remembered (see layout theme script).
+  function toggleSidebar() {
+    const root = document.documentElement;
+    const collapsed = root.dataset.sidebar !== "collapsed";
+    if (collapsed) root.dataset.sidebar = "collapsed";
+    else delete root.dataset.sidebar;
+    try { localStorage.setItem("passflow-sidebar", collapsed ? "collapsed" : "open"); } catch {}
+  }
+
   function go(href: string) {
     setPendingHref(href);
     setMenuOpen(false);
@@ -92,10 +102,15 @@ export function UserNavbar({
     <nav ref={rootRef} className="user-nav-shell flow-sidebar" aria-label="Workspace navigation">
       <div className="user-nav user-nav-flat">
         <div className="user-nav-left">
-          <Link href="/account" className="user-nav-brand" aria-label="PassFlow dashboard">
-            <FlowMark/>
-            <span>PassFlow</span>
-          </Link>
+          <div className="user-nav-brand-row">
+            <Link href="/account" className="user-nav-brand" aria-label="PassFlow dashboard">
+              <FlowMark/>
+              <span>PassFlow</span>
+            </Link>
+            <button type="button" className="sidebar-toggle" onClick={toggleSidebar} aria-label="Collapse or expand sidebar" title="Collapse or expand sidebar">
+              <PanelLeftClose size={16} />
+            </button>
+          </div>
 
           <div className="user-nav-links">
             {navItems.map(({ href, label, icon: Icon }) => {
@@ -108,6 +123,7 @@ export function UserNavbar({
                   className="user-nav-link"
                   data-active={isActive}
                   aria-current={isActive ? "page" : undefined}
+                  title={label}
                   onClick={() => go(href)}
                 >
                   {isActive && (
@@ -117,7 +133,7 @@ export function UserNavbar({
                       transition={pillTransition}
                     />
                   )}
-                  <span className="user-nav-link-content"><Icon size={16}/>{label}</span>
+                  <span className="user-nav-link-content"><Icon size={16}/><span className="user-nav-link-label">{label}</span></span>
                 </Link>
               );
             })}

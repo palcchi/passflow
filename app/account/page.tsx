@@ -7,7 +7,8 @@ import { UserNavbar } from "@/components/user-navbar";
 import { KineticText } from "@/components/magicui/kinetic-text";
 import { TextAnimate } from "@/components/magicui/text-animate";
 import { EventClassCard } from "@/components/event-class-card";
-import { FolderArtwork, Sticker } from "@/components/flow-brand-art";
+import { HeroCardFan } from "@/components/hero-card-fan";
+import { FolderArtwork } from "@/components/flow-brand-art";
 
 export const metadata = { title: "Dashboard | PassFlow" };
 export const dynamic = "force-dynamic";
@@ -49,7 +50,7 @@ export default async function AccountPage() {
       <main className="studio-page-shell">
         <header className="studio-page-hero workspace-welcome">
           <div className="workspace-welcome-copy">
-            <span className="section-kicker">YOUR LITTLE CORNER OF PASSFLOW</span>
+            <span className="editorial-eyebrow"><span/> YOUR EVENTS & PASSES</span>
             <KineticText text={`Welcome, ${name}.`} className="studio-page-title" />
             <TextAnimate className="studio-page-subtitle" delay={0.05}>
               Your events and digital passes are organized here, ready when you need them.
@@ -61,7 +62,7 @@ export default async function AccountPage() {
             </span>
           </Link>
           </div>
-          <div className="workspace-art"><span className="workspace-art-label">↗ {myEvents.length} saved events</span><FolderArtwork color="blue" label="Your next moment"/><Sticker kind="smile"/></div>
+          <div className="workspace-fan"><HeroCardFan events={myEvents.length ? myEvents : publishedEvents} compact/></div>
         </header>
 
         {unavailable && (

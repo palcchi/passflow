@@ -354,9 +354,7 @@ html.theme-switching::view-transition-new(root) {
 
 /* Hover motion only for fine pointers (touch fires false hovers on tap). */
 @media not ((hover: hover) and (pointer: fine)) {
-  .class-event-card:hover, .design-card:hover, .asset-upload-card:hover,
-  .class-event-card:hover .class-event-ticket, .class-event-card:hover .class-event-image,
-  .hero-fan-card:hover, .theme-flip:hover { transform: none; translate: none; scale: none; rotate: none; }
+  .class-event-card:hover, .design-card:hover, .asset-upload-card:hover, .class-event-card:hover .class-event-image, .hero-fan-card:hover, .theme-flip:hover { transform: none; translate: none; scale: none; rotate: none; }
 }
 
 /* Dropdowns grow from their trigger, which sits above them. */

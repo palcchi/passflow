@@ -5,6 +5,7 @@ import {FigmaWebsiteRenderer} from '@/components/figma-website-renderer';
 import {getAppOrigin} from '@/lib/supabase/config';
 import type { CSSProperties } from "react";
 import Link from "next/link";
+import { EventArtwork } from "@/components/event-artwork";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { getAuthContext } from "@/lib/auth/session";
@@ -18,7 +19,7 @@ import { getPublishedEvent } from "@/lib/events";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { getSupabaseConfig } from "@/lib/supabase/config";
 import { readTemplate } from "@/lib/design-template";
-import { CollectionArtwork, Sticker } from "@/components/flow-brand-art";
+import { Sticker } from "@/components/flow-brand-art";
 import { KineticText } from "@/components/magicui/kinetic-text";
 import { FlowMark } from "@/components/flow-art";
 import { eventInk } from "@/lib/event-colors";
@@ -56,7 +57,7 @@ export default async function PublicEventPage({ params }: EventPageProps) {
     ? "Sign in to register"
     : registration
       ? "View my pass"
-      : "Register now";
+      : event.theme.ctaLabel || "Register now";
 
   const themeStyle = {
     "--foreground": event.theme.foreground,
@@ -67,6 +68,8 @@ export default async function PublicEventPage({ params }: EventPageProps) {
     "--event-bg": event.theme.background,
     "--event-fg": event.theme.foreground,
     "--event-surface": event.theme.surface,
+    "--event-font": event.theme.font === "serif" ? '"New York", "Iowan Old Style", Georgia, serif' : event.theme.font === "mono" ? 'ui-monospace, "SF Mono", Menlo, monospace' : "inherit",
+    "--event-radius": event.theme.corners === "sharp" ? "4px" : event.theme.corners === "soft" ? "14px" : "999px",
   } as CSSProperties;
 
   const supabase = getSupabaseConfig() ? await createServerSupabaseClient() : null;
@@ -109,7 +112,7 @@ export default async function PublicEventPage({ params }: EventPageProps) {
       <section className={`event-public-hero event-header-${event.theme.headerStyle ?? "editorial"}`}>
         <div className="event-public-copy">
           {event.logoUrl && <Image src={event.logoUrl} alt={event.name} width={120} height={80} unoptimized className="mb-5 object-contain" />}
-          <span className="event-kicker">{event.eyebrow}</span>
+          {event.eyebrow && <span className="event-kicker">{event.eyebrow}</span>}
           <KineticText text={event.name}/>
           <p>{event.description}</p>
           <div className="event-meta-row">
@@ -132,7 +135,7 @@ export default async function PublicEventPage({ params }: EventPageProps) {
           </div>
         </div>
 
-        {event.heroImageUrl || event.posterUrl ? <Image src={(event.heroImageUrl || event.posterUrl)!} alt={event.name} width={1600} height={900} unoptimized className="event-public-cover" /> : <div className="event-public-art"><span className="section-kicker">SAVE THE DATE. MAKE A MEMORY.</span><CollectionArtwork compact/></div>}
+        {event.heroImageUrl || event.posterUrl ? <Image src={(event.heroImageUrl || event.posterUrl)!} alt={event.name} width={1600} height={900} unoptimized className="event-public-cover" /> : <div className="event-public-cover event-public-artwork"><EventArtwork event={event}/></div>}
       </section>
 
       <section className="event-info-grid">
