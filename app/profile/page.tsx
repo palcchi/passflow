@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { requireUser, getMemberships } from "@/lib/auth/session";
+import { accountProfile, requireUser, getMemberships } from "@/lib/auth/session";
 import { canManage } from "@/lib/auth/redirect";
 import { figmaConfigured } from "@/lib/figma";
 import { UserNavbar } from "@/components/user-navbar";
@@ -36,12 +36,7 @@ export default async function ProfilePage({
     typeof user.user_metadata.full_name === "string" && user.user_metadata.full_name.trim()
       ? user.user_metadata.full_name.trim()
       : username || "Attendee";
-  const avatarUrl =
-    typeof user.user_metadata.avatar_url === "string"
-      ? user.user_metadata.avatar_url
-      : typeof user.user_metadata.picture === "string"
-        ? user.user_metadata.picture
-        : null;
+  const { avatarUrl } = accountProfile(user);
   const organizer = memberships.some((item) => canManage(item.role));
   const status = typeof query.status === "string" ? query.status : "";
   const figma = typeof query.figma === "string" ? query.figma : "";

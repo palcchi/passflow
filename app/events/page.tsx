@@ -1,4 +1,4 @@
-import { requireUser, getMemberships } from "@/lib/auth/session";
+import { accountProfile, requireUser, getMemberships } from "@/lib/auth/session";
 import { canManage } from "@/lib/auth/redirect";
 import { getPublishedEvents } from "@/lib/events";
 import { UserNavbar } from "@/components/user-navbar";
@@ -11,17 +11,8 @@ export const metadata = { title: "Event | PassFlow" };
 
 export default async function EventsPage() {
   const { user, supabase } = await requireUser("/events");
-  const name =
-    typeof user.user_metadata.full_name === "string" &&
-    user.user_metadata.full_name.trim()
-      ? user.user_metadata.full_name.trim()
-      : user.email?.split("@")[0] || "Attendee";
-  const avatarUrl =
-    typeof user.user_metadata.avatar_url === "string"
-      ? user.user_metadata.avatar_url
-      : typeof user.user_metadata.picture === "string"
-        ? user.user_metadata.picture
-        : null;
+  const { name: accountName, avatarUrl } = accountProfile(user);
+  const name = accountName || "Attendee";
 
   const [{ memberships }, registrationsResult, events] = await Promise.all([
     getMemberships(),

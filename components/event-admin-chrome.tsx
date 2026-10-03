@@ -2,6 +2,7 @@ import type { CSSProperties, ReactNode } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { eventInk } from "@/lib/event-colors";
+import { accountProfile } from "@/lib/auth/session";
 import { ArrowLeft } from "lucide-react";
 import type { PassFlowEvent } from "@/lib/events";
 import { UserNavbar } from "@/components/user-navbar";
@@ -81,28 +82,7 @@ export function EventAdminChrome({
   );
 }
 
-export function eventAdminProfile(user: {
-  email?: string | null;
-  user_metadata: Record<string, unknown>;
-}) {
-  const username =
-    typeof user.user_metadata.username === "string"
-      ? user.user_metadata.username.trim()
-      : "";
-  const fullName =
-    typeof user.user_metadata.full_name === "string"
-      ? user.user_metadata.full_name.trim()
-      : "";
-  const avatarUrl =
-    typeof user.user_metadata.avatar_url === "string"
-      ? user.user_metadata.avatar_url
-      : typeof user.user_metadata.picture === "string"
-        ? user.user_metadata.picture
-        : null;
-
-  return {
-    name: fullName || username || user.email?.split("@")[0] || "Organizer",
-    email: user.email,
-    avatarUrl,
-  };
+export function eventAdminProfile(user: Parameters<typeof accountProfile>[0]) {
+  const { name, email, avatarUrl } = accountProfile(user);
+  return { name: name || "Organizer", email, avatarUrl };
 }

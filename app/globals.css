@@ -152,10 +152,6 @@ select { appearance: none; background-image: linear-gradient(45deg, transparent 
 .qr-mode-card { border: 1px solid var(--line); border-radius: 14px; padding: 12px; transition: border-color 160ms ease, background 160ms ease; }
 .qr-mode-card[data-active="true"] { border-color: var(--accent); background: var(--accent-soft); }
 
-.full-button {
-  width: 100%;
-}
-
 .text-link,
 .back-link {
   color: #555;
@@ -570,14 +566,6 @@ select { appearance: none; background-image: linear-gradient(45deg, transparent 
   font-size: 13px;
   line-height: 1.5;
   max-width: 380px;
-}
-
-.digital-pass-qr {
-  min-height: 280px;
-  border-radius: 18px;
-  display: grid;
-  place-items: center;
-  background: #f4f4f1;
 }
 
 .claim-success {
@@ -1354,23 +1342,6 @@ select { appearance: none; background-image: linear-gradient(45deg, transparent 
   syntax: "<angle>";
   initial-value: 0deg;
   inherits: false;
-}
-
-@keyframes passflow-border-beam {
-  to { --beam-angle: 360deg; }
-}
-
-@keyframes passflow-shine-border {
-  0% { background-position: 180% 0; }
-  100% { background-position: -80% 0; }
-}
-
-@keyframes passflow-shiny-text {
-  to { background-position: -240% center; }
-}
-
-@keyframes passflow-shimmer-spin {
-  to { transform: rotate(360deg); }
 }
 
 /* Organizer workspace v2: same visual language as personal dashboard */
@@ -2247,7 +2218,6 @@ select { appearance: none; background-image: linear-gradient(45deg, transparent 
 
   .liquid-panel,
   .liquid-popover,
-  .flat-card,
   .flat-popover,
   .empty-glass-state,
   .design-connect-card,
@@ -2342,7 +2312,6 @@ select { appearance: none; background-image: linear-gradient(45deg, transparent 
 
   .button-dark,
   .button-primary,
-  .flat-primary-button,
   .event-admin-public-cta {
     background: var(--ink) !important;
     background-image: none !important;
@@ -2352,7 +2321,6 @@ select { appearance: none; background-image: linear-gradient(45deg, transparent 
   }
 
   .button,
-  .flat-primary-button,
   .event-admin-public-cta {
     border-radius: 10px !important;
     transition: background-color 140ms ease, color 140ms ease, border-color 140ms ease, opacity 140ms ease !important;
@@ -2360,7 +2328,6 @@ select { appearance: none; background-image: linear-gradient(45deg, transparent 
   }
 
   .button:hover,
-  .flat-primary-button:hover,
   .event-admin-public-cta:hover {
     transform: none !important;
     opacity: .82;
@@ -2441,19 +2408,6 @@ select { appearance: none; background-image: linear-gradient(45deg, transparent 
   .profile-page-heading p {
     color: var(--muted-text) !important;
     animation: text-slide-up 460ms cubic-bezier(.22,.8,.3,1) 70ms both;
-  }
-
-  .text-weight-motion {
-    background: none !important;
-    -webkit-text-fill-color: currentColor !important;
-    color: var(--muted-text) !important;
-    animation: text-weight-pulse 7s ease-in-out infinite;
-  }
-
-  .minimal-reveal {
-    opacity: 1;
-    filter: none;
-    transform: none;
   }
 
   .event-admin-metrics {
@@ -2684,7 +2638,6 @@ select { appearance: none; background-image: linear-gradient(45deg, transparent 
   @media (prefers-reduced-motion: reduce) {
     .profile-page-heading h1,
     .profile-page-heading p,
-    .text-weight-motion,
     .flat-popover {
       animation: none !important;
     }
@@ -2990,24 +2943,6 @@ body {
   will-change: transform, opacity, filter;
 }
 
-.typing-animation {
-  display: inline-flex;
-  align-items: center;
-  min-height: 1.2em;
-}
-
-.typing-caret {
-  width: 1px;
-  height: 1em;
-  margin-left: 3px;
-  background: currentColor;
-  animation: studio-caret .9s steps(1) infinite;
-}
-
-@keyframes studio-caret {
-  50% { opacity: 0; }
-}
-
 .velocity-scroll {
   overflow: hidden;
   white-space: nowrap;
@@ -3023,37 +2958,6 @@ body {
 .velocity-scroll-track > span {
   flex: 0 0 auto;
   padding-right: 2.4rem;
-}
-
-.text-3d-flip {
-  display: flex;
-  flex-wrap: wrap;
-  perspective: 900px;
-}
-
-.text-3d-letter {
-  position: relative;
-  display: inline-block;
-  transform-style: preserve-3d;
-  transition: transform 520ms cubic-bezier(.2,.8,.2,1);
-}
-
-.text-3d-front,
-.text-3d-back {
-  display: inline-block;
-  backface-visibility: hidden;
-}
-
-.text-3d-back {
-  position: absolute;
-  inset: 0;
-  transform: rotateX(-90deg) translateY(100%);
-  transform-origin: top center;
-  color: var(--page-accent);
-}
-
-.text-3d-flip:hover .text-3d-letter {
-  transform: rotateX(90deg) translateY(-100%);
 }
 
 .magic-shiny-button {
@@ -3099,20 +3003,6 @@ body {
 @keyframes studio-shine {
   0%, 66% { transform: translateX(-58%) rotate(8deg); }
   88%, 100% { transform: translateX(58%) rotate(8deg); }
-}
-
-.smooth-cursor {
-  position: fixed;
-  top: 0;
-  left: 0;
-  z-index: 9999;
-  width: 14px;
-  height: 14px;
-  pointer-events: none;
-  border: 1px solid color-mix(in srgb, var(--foreground) 65%, transparent);
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--background) 58%, transparent);
-  mix-blend-mode: difference;
 }
 
 /* Navigation */
@@ -3954,8 +3844,7 @@ body {
 }
 
 .button-dark,
-.button-primary,
-.flat-primary-button {
+.button-primary {
   border-color: var(--foreground) !important;
   background: var(--foreground) !important;
   color: var(--background) !important;
@@ -4123,17 +4012,11 @@ select,
     filter: none !important;
   }
 
-  .magic-shiny-button::before,
-  .typing-caret {
+  .magic-shiny-button::before {
     animation: none !important;
   }
 
-  .kinetic-letter,
-  .text-3d-letter {
+  .kinetic-letter {
     transition: none !important;
-  }
-
-  .text-3d-flip:hover .text-3d-letter {
-    transform: none !important;
   }
 }
