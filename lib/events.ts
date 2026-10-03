@@ -1,5 +1,6 @@
 import { cache } from "react";
 import { getSupabaseConfig } from "@/lib/supabase/config";
+import { attendeePhotoColumns, attendeePhotoUrls } from "@/lib/attendee-photos";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 export const defaultEventTheme = {
@@ -158,35 +159,14 @@ async function loadPublishedParticipantPreview(
 
   const { data: profiles } = await supabase
     .from("attendee_profiles")
-    .select("attendee_id,photo_storage_path")
+    .select(attendeePhotoColumns)
     .eq("event_id", eventId)
     .in("attendee_id", rows.map((attendee) => attendee.id));
-
-  const pathByAttendee = new Map(
-    (profiles ?? [])
-      .filter((profile) => profile.photo_storage_path)
-      .map((profile) => [profile.attendee_id, profile.photo_storage_path as string]),
-  );
-  const paths = [...new Set(pathByAttendee.values())];
-  const { data: signed } = paths.length
-    ? await supabase.storage.from("attendee-photos").createSignedUrls(paths, 300)
-    : { data: [] };
-
-  const urlByPath = new Map(
-    (signed ?? [])
-      .filter((item) => item.path && item.signedUrl)
-      .map((item) => [item.path, item.signedUrl]),
-  );
+  const photos = await attendeePhotoUrls(supabase, profiles);
 
   return {
     count: count ?? rows.length,
-    people: rows.map((attendee) => {
-      const path = pathByAttendee.get(attendee.id);
-      return {
-        name: attendee.name,
-        imageUrl: path ? urlByPath.get(path) ?? null : null,
-      };
-    }),
+    people: rows.map((attendee) => ({ name: attendee.name, imageUrl: photos.get(attendee.id) ?? null })),
   };
 }
 
@@ -365,36 +345,15 @@ export async function getManagedEvents(): Promise<PassFlowEvent[]> {
       const { data: profileRows } = previewIds.length
         ? await supabase
             .from("attendee_profiles")
-            .select("attendee_id,photo_storage_path")
+            .select(attendeePhotoColumns)
             .eq("event_id", row.id)
             .in("attendee_id", previewIds)
         : { data: [] };
-
-      const paths = (profileRows ?? [])
-        .map((profile) => profile.photo_storage_path)
-        .filter((path): path is string => Boolean(path));
-      const { data: signedRows } = paths.length
-        ? await supabase.storage.from("attendee-photos").createSignedUrls(paths, 300)
-        : { data: [] };
-
-      const urlByPath = new Map(
-        (signedRows ?? [])
-          .filter((item) => item.signedUrl)
-          .map((item) => [item.path, item.signedUrl]),
-      );
-      const pathByAttendee = new Map(
-        (profileRows ?? []).map((profile) => [
-          profile.attendee_id,
-          profile.photo_storage_path,
-        ]),
-      );
-      const participantPreview = previewAttendees.map((attendee) => {
-        const path = pathByAttendee.get(attendee.id);
-        return {
-          name: attendee.name,
-          imageUrl: path ? urlByPath.get(path) ?? null : null,
-        };
-      });
+      const photos = await attendeePhotoUrls(supabase, profileRows);
+      const participantPreview = previewAttendees.map((attendee) => ({
+        name: attendee.name,
+        imageUrl: photos.get(attendee.id) ?? null,
+      }));
 
       return mapEvent(
         row,

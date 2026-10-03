@@ -506,3 +506,10 @@ button, a { -webkit-tap-highlight-color:transparent; }
 .event-admin-cover .class-event-ticket { border-radius:inherit; padding:14px; }
 .event-admin-cover .class-event-ticket strong { font-size:22px; }
 @media (prefers-reduced-motion: reduce) { .class-event-ticket { transition:none; } }
+
+/* ---------- Registration: account identity card ---------- */
+.claim-account { display:flex; align-items:center; gap:14px; padding:14px; border:1px solid var(--border); border-radius:18px; background:var(--muted); }
+.claim-account > div { display:grid; min-width:0; flex:1; }
+.claim-account strong { font-size:16px; letter-spacing:-.02em; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.claim-account small { font-size:11px; color:var(--muted-foreground); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.claim-account > a { flex:none; font-size:12px; font-weight:600; text-decoration:underline; text-underline-offset:3px; }

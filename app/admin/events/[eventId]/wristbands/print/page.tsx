@@ -1,3 +1,4 @@
+import { attendeePhotoColumns, attendeePhotoUrls } from "@/lib/attendee-photos";
 import { PassRenderer } from "@/components/studio-renderer";
 import { selectStudioDesign } from "@/lib/studio/select";
 import Link from "next/link";
@@ -27,8 +28,8 @@ export default async function WristbandPrintPage({ params, searchParams }: { par
     : (credentials ?? []);
   const qrCodes = await Promise.all(sourceCredentials.map(async (qr) => ({ ...qr, src: await QRCode.toDataURL(`PF1:${qr.code}`, { margin: 4, width: 600, errorCorrectionLevel: "M" }) })));
   const attendeeIds=sourceCredentials.flatMap(qr=>qr.attendee_id?[qr.attendee_id]:[]);
-  const {data:profiles}=attendeeIds.length?await supabase.from('attendee_profiles').select('attendee_id,photo_storage_path').in('attendee_id',attendeeIds):{data:[]};
-  const photos=new Map(await Promise.all((profiles??[]).filter(p=>p.photo_storage_path).map(async p=>{const {data}=await supabase.storage.from('attendee-photos').createSignedUrl(p.photo_storage_path!,600);return [p.attendee_id,data?.signedUrl??''] as const;})));
+  const {data:profiles}=attendeeIds.length?await supabase.from('attendee_profiles').select(attendeePhotoColumns).in('attendee_id',attendeeIds):{data:[]};
+  const photos=await attendeePhotoUrls(supabase,profiles,600);
   const config = event.qrConfig;
   const physical = config.mode !== "digital";
   const width = physical ? config.widthMm : 86;

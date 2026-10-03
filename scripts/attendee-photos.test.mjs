@@ -1,0 +1,10 @@
+import assert from 'node:assert/strict';
+process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://proj.supabase.co';
+process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = 'k';
+const { safeAvatarUrl } = await import('../lib/attendee-photos.ts');
+assert.equal(safeAvatarUrl('https://proj.supabase.co/storage/v1/object/public/profile-avatars/u/a.png'), 'https://proj.supabase.co/storage/v1/object/public/profile-avatars/u/a.png');
+assert.equal(safeAvatarUrl('https://lh3.googleusercontent.com/a/x'), 'https://lh3.googleusercontent.com/a/x');
+assert.equal(safeAvatarUrl('https://proj.supabase.co.evil.com/storage/v1/object/public/profile-avatars/x'), null);
+assert.equal(safeAvatarUrl('https://tracker.example/pixel.png'), null);
+assert.equal(safeAvatarUrl(null), null);
+console.log('attendee photo url checks passed');

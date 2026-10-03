@@ -1,3 +1,4 @@
+import { attendeePhotoColumns, attendeePhotoUrls } from "@/lib/attendee-photos";
 import { NextResponse } from "next/server";
 import { getManagedEvent } from "@/lib/events";
 import { requireOrganizerMembership } from "@/lib/auth/session";
@@ -63,16 +64,14 @@ export async function GET(request: Request, { params }: { params: Promise<{ even
   const attendeeIds = [...new Set((credentials ?? []).flatMap((item) => item.attendee_id ? [item.attendee_id] : []))];
   const [{ data: attendees }, { data: profiles }] = attendeeIds.length ? await Promise.all([
     supabase.from("attendees").select("id,name,email,phone,attendee_code,ticket_type_id,ticket_types(name)").eq("event_id", eventId).in("id", attendeeIds),
-    supabase.from("attendee_profiles").select("attendee_id,photo_storage_path").eq("event_id", eventId).in("attendee_id", attendeeIds),
+    supabase.from("attendee_profiles").select(attendeePhotoColumns).eq("event_id", eventId).in("attendee_id", attendeeIds),
   ]) : [{ data: [] }, { data: [] }];
   const attendeeMap = new Map((attendees ?? []).map((item) => [item.id, item]));
   const activeCredentials = (credentials ?? []).filter((item) => !design.ticket_type_id || (item.attendee_id && attendeeMap.get(item.attendee_id)?.ticket_type_id === design.ticket_type_id));
   if (!activeCredentials.length) return new NextResponse("No attendees with active QR credentials are available for this design category.", { status: 422 });
-  const profileMap = new Map((profiles ?? []).flatMap((item) => item.photo_storage_path ? [[item.attendee_id, item.photo_storage_path] as const] : []));
   const photos = new Map<string, string>();
-  await Promise.all([...profileMap.entries()].map(async ([attendeeId, path]) => {
-    const { data } = await supabase.storage.from("attendee-photos").createSignedUrl(path, 90);
-    const image = data ? await dataImage(data.signedUrl) : null;
+  await Promise.all([...(await attendeePhotoUrls(supabase, profiles, 90)).entries()].map(async ([attendeeId, url]) => {
+    const image = await dataImage(url);
     if (image) photos.set(attendeeId, image);
   }));
   const imageDefinitions = `${background ? `<image id="passflow-design-background" href="${background}" width="${frame.width}" height="${frame.height}" preserveAspectRatio="none"/>` : ""}${[...photos.entries()].flatMap(([attendeeId, image]) => template.elements.filter((element) => element.field === "photo").map((element) => {

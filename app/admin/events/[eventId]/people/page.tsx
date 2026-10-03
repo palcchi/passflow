@@ -1,3 +1,4 @@
+import { attendeePhotoColumns, attendeePhotoUrls } from "@/lib/attendee-photos";
 import { Search } from "lucide-react";
 import { PeopleRecordEditor } from "@/components/people-record-editor";
 import { requireOrganizerMembership } from "@/lib/auth/session";
@@ -66,33 +67,12 @@ export default async function EventPeoplePage({ params, searchParams }: Props) {
   const { data: attendeeProfileRows } = attendeeIds.length
     ? await supabase
         .from("attendee_profiles")
-        .select("attendee_id,photo_storage_path")
+        .select(attendeePhotoColumns)
         .eq("event_id", eventId)
         .in("attendee_id", attendeeIds)
     : { data: [] };
-  const photoPaths = (attendeeProfileRows ?? [])
-    .map((profile) => profile.photo_storage_path)
-    .filter((path): path is string => Boolean(path));
-  const { data: signedPhotoRows } = photoPaths.length
-    ? await supabase.storage.from("attendee-photos").createSignedUrls(photoPaths, 300)
-    : { data: [] };
-  const signedUrlByPath = new Map(
-    (signedPhotoRows ?? [])
-      .filter((item) => item.signedUrl)
-      .map((item) => [item.path, item.signedUrl]),
-  );
-  const photoPathByAttendee = new Map(
-    (attendeeProfileRows ?? []).map((profile) => [
-      profile.attendee_id,
-      profile.photo_storage_path,
-    ]),
-  );
-  const attendeePhoto = new Map(
-    attendees.map((attendee) => {
-      const path = photoPathByAttendee.get(attendee.id);
-      return [attendee.id, path ? signedUrlByPath.get(path) ?? null : null];
-    }),
-  );
+  const photos = await attendeePhotoUrls(supabase, attendeeProfileRows);
+  const attendeePhoto = new Map(attendees.map((attendee) => [attendee.id, photos.get(attendee.id) ?? null]));
 
   return (
     <>
@@ -201,19 +181,9 @@ export default async function EventPeoplePage({ params, searchParams }: Props) {
                     <div className="people-identity">
                       <span
                         className="people-avatar"
-                        style={
-                          photoPathByAttendee.get(attendee.id) &&
-                          signedUrlByPath.get(photoPathByAttendee.get(attendee.id)!)
-                            ? {
-                                backgroundImage: `url("${signedUrlByPath.get(photoPathByAttendee.get(attendee.id)!)}")`,
-                              }
-                            : undefined
-                        }
+                        style={photos.get(attendee.id) ? { backgroundImage: `url("${photos.get(attendee.id)}")` } : undefined}
                       >
-                        {!(
-                          photoPathByAttendee.get(attendee.id) &&
-                          signedUrlByPath.get(photoPathByAttendee.get(attendee.id)!)
-                        ) && attendee.name.trim().charAt(0).toUpperCase()}
+                        {!photos.get(attendee.id) && attendee.name.trim().charAt(0).toUpperCase()}
                       </span>
                       <strong>{attendee.name}</strong>
                     </div>

@@ -272,7 +272,7 @@ export type Database = {
         ]
       }
       attendee_profiles: {
-        Row: { attendee_id: string; event_id: string; user_id: string; photo_storage_path: string | null; updated_at: string }
+        Row: { attendee_id: string; event_id: string; user_id: string; photo_storage_path: string | null; avatar_url: string | null; updated_at: string }
         Insert: { attendee_id: string; event_id: string; user_id: string; photo_storage_path?: string | null; updated_at?: string }
         Update: { attendee_id?: string; event_id?: string; user_id?: string; photo_storage_path?: string | null; updated_at?: string }
         Relationships: [
