@@ -682,7 +682,7 @@
 }
 
 .auth-input,
-.auth-shell .auth-submit[data-slot="button"],
+.auth-shell .auth-submit,
 .profile-avatar-picker,
 .profile-integration-card {
   border-radius: var(--pf-radius-md) !important;
@@ -1047,8 +1047,6 @@
     inset: 0 auto 0 0 !important;
     height: 100dvh !important;
     max-height: 100dvh !important;
-    overflow-y: auto !important;
-    overscroll-behavior: contain;
     z-index: 60 !important;
     transform: none !important;
     will-change: auto !important;

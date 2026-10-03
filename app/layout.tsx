@@ -26,6 +26,7 @@ const themeScript = `
 (function () {
   try {
     var theme = localStorage.getItem("passflow-theme");
+    if (localStorage.getItem("passflow-sidebar") === "collapsed") document.documentElement.dataset.sidebar = "collapsed";
     if (theme === "light" || theme === "dark") {
       document.documentElement.dataset.theme = theme;
     } else {

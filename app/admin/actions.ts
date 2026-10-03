@@ -504,6 +504,10 @@ export async function saveEventTheme(formData: FormData) {
     foreground: text(formData, "foreground", 20) || defaultEventTheme.foreground,
     surface: text(formData, "surface", 20) || defaultEventTheme.surface,
     headerStyle: ["minimal", "editorial", "split"].includes(text(formData, "headerStyle", 20)) ? text(formData, "headerStyle", 20) : defaultEventTheme.headerStyle,
+    tagline: text(formData, "tagline", 60).replace(/\s+/g, " "),
+    ctaLabel: text(formData, "ctaLabel", 28).replace(/\s+/g, " "),
+    font: ["sans", "serif", "mono"].includes(text(formData, "font", 10)) ? text(formData, "font", 10) : "sans",
+    corners: ["rounded", "soft", "sharp"].includes(text(formData, "corners", 10)) ? text(formData, "corners", 10) : "rounded",
   };
   if ([theme.primary, theme.secondary, theme.background, theme.foreground, theme.surface].some(value => !/^#[0-9a-f]{6}$/i.test(value))) {
     return { ok: false, message: "Invalid color value. Use a 6-digit HEX code." };

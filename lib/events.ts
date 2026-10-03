@@ -49,6 +49,11 @@ export type EventTheme = {
   foreground: string;
   surface: string;
   headerStyle?: "minimal" | "editorial" | "split";
+  /** Quick Setup text and style; empty text falls back to PassFlow defaults. */
+  tagline?: string;
+  ctaLabel?: string;
+  font?: "sans" | "serif" | "mono";
+  corners?: "rounded" | "soft" | "sharp";
 };
 
 export type ParticipantPreview = {
@@ -244,7 +249,7 @@ function mapEvent(
     id: row.id,
     name: row.name,
     slug: row.slug,
-    eyebrow: row.status === "published" ? "Published event" : "Draft event",
+    eyebrow: typeof theme.tagline === "string" ? theme.tagline.trim().slice(0, 60) : "",
     description: row.description ?? "",
     venue: row.venue ?? "",
     status: row.status,
@@ -260,7 +265,14 @@ function mapEvent(
       : "Date to be announced",
     attendeeCount,
     checkedInCount,
-    theme: { ...safeTheme, headerStyle },
+    theme: {
+      ...safeTheme,
+      headerStyle,
+      tagline: typeof theme.tagline === "string" ? theme.tagline.trim().slice(0, 60) : "",
+      ctaLabel: typeof theme.ctaLabel === "string" ? theme.ctaLabel.trim().slice(0, 28) : "",
+      font: theme.font === "serif" || theme.font === "mono" ? theme.font : "sans",
+      corners: theme.corners === "soft" || theme.corners === "sharp" ? theme.corners : "rounded",
+    },
     qrConfig,
     heroImageUrl: row.hero_image_url,
     logoUrl: row.logo_url,

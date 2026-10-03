@@ -14,7 +14,6 @@ import { getManagedEvent } from "@/lib/events";
 import { syncFigmaDesign } from "@/app/admin/actions";
 import { DeleteDesignForm } from "@/components/delete-design-form";
 import { SmartSelect } from "@/components/form-fields";
-import { EventDesignFlow } from "@/components/event-design-flow";
 
 const markerHelp = Object.keys(dynamicMarkers).join(" · ");
 
@@ -71,7 +70,6 @@ export default async function EventDesignPage({
       </header>
 
       
-      <EventDesignFlow />
 
       {!connection ? (
           <section className="design-connect-card liquid-panel">

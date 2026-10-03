@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { accountProfile, requireUser, getMemberships } from "@/lib/auth/session";
 import { canManage } from "@/lib/auth/redirect";
 import { figmaConfigured } from "@/lib/figma";
@@ -123,64 +122,31 @@ export default async function ProfilePage({
             organizer={organizer}
           />
 
-        <section className="profile-integration-card">
-            <div className="profile-integration-main">
-              <div>
-                <span className="section-kicker">Integration</span>
-                <h2>Figma account</h2>
-                <p>
-                  {connection
-                    ? connection.handle ?? connection.email ?? "Connected account"
-                    : "Not connected"}
-                </p>
-              </div>
-            </div>
-
-            <div className="profile-integration-body">
-              <p>
-                PassFlow reads the account identity, metadata, previews, and file structure you
-                authorize. Your design files remain in the connected Figma account.
+        {organizer && <section className="profile-integration-card profile-figma">
+          <div className="profile-figma-row">
+            <div>
+              <span className="section-kicker">For organizers</span>
+              <h2>Figma account</h2>
+              <p className="profile-figma-status" data-connected={connection ? "true" : undefined}>
+                {connection ? `Connected · ${connection.handle ?? connection.email ?? "Figma account"}` : "Not connected"}
               </p>
-              <div className="profile-integration-security">
-                Figma tokens are stored encrypted on the server.
-              </div>
-              {connectionError && (
-                <p role="alert" className="text-sm text-red-700">
-                  The Figma connection status could not be loaded. Refresh the page and try again.
-                </p>
-              )}
             </div>
-
             <div className="profile-integration-actions">
               {connection ? (
                 <>
-                  <a
-                    href="/api/figma/connect"
-                    className="button button-ghost"
-                  >
-                    Reconnect
-                  </a>
+                  <a href="/api/figma/connect" className="button button-ghost">Reconnect</a>
                   <form action="/api/figma/disconnect" method="post">
-                    <button type="submit" className="button button-ghost text-red-700">
-                      Disconnect
-                    </button>
+                    <button type="submit" className="button button-ghost text-red-700">Disconnect</button>
                   </form>
                 </>
               ) : figmaConfigured() ? (
-                <a
-                  href="/api/figma/connect"
-                  className="button button-dark"
-                >
-                  Connect Figma
-                </a>
+                <a href="/api/figma/connect" className="button button-dark">Connect Figma</a>
               ) : <button type="button" className="button button-dark" disabled title="Figma integration is not available in this environment">Figma unavailable</button>}
-              {organizer && (
-                <Link href="/admin" className="button button-ghost">
-                  Manage events
-                </Link>
-              )}
             </div>
-        </section>
+          </div>
+          <p className="profile-figma-note">Used to sync pass, ID card and wristband designs from Figma. Your files stay in Figma; access tokens are stored encrypted.</p>
+          {connectionError && <p role="alert" className="text-sm text-red-700">The Figma connection status could not be loaded. Refresh the page and try again.</p>}
+        </section>}
       </main>
     </div>
   );
