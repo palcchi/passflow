@@ -66,3 +66,16 @@ export async function requireStation(stationId: string) {
   if (error || !stations || stations.length !== 1) redirect("/unauthorized");
   return { ...context, station: stations[0] };
 }
+
+/** Account profile from auth metadata (full name, username, avatar or Google picture). */
+export function accountProfile(user: { email?: string | null; user_metadata: Record<string, unknown> }) {
+  const read = (key: string) => (typeof user.user_metadata[key] === "string" ? (user.user_metadata[key] as string).trim().replace(/\s+/g, " ") : "");
+  const fullName = read("full_name");
+  const username = read("username");
+  return {
+    fullName,
+    name: fullName || username || user.email?.split("@")[0] || "",
+    email: user.email ?? null,
+    avatarUrl: read("avatar_url") || read("picture") || null,
+  };
+}

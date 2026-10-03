@@ -1,4 +1,3 @@
-import type { CSSProperties } from "react";
 import { ArrowUpRight } from "lucide-react";
 import { FlowPass, FlowShapes } from "@/components/flow-art";
 
@@ -16,11 +15,3 @@ export function CollectionArtwork({ compact = false }: { compact?: boolean }) {
   return <FlowPass compact={compact}/>;
 }
 
-export function EventCoverArtwork({ name, color }: { name: string; color: string }) {
-  return <div className="event-cover-art" style={{ "--cover-accent": color } as CSSProperties} aria-hidden="true">
-    <FlowShapes color={color}/>
-    <span className="cover-index">PASSFLOW / UPCOMING MOMENTS</span>
-    <div className="flow-cover-title">{name}</div>
-    <span className="cover-corner">See you there. ↗</span>
-  </div>;
-}
