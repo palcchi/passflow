@@ -4,7 +4,6 @@ import { ArrowUpRight } from "lucide-react";
 import { FlowMark } from "@/components/flow-art";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { VelocityScroll } from "@/components/magicui/scroll-based-velocity";
-import { ShinyButton } from "@/components/magicui/shiny-button";
 import { FolderArtwork, Sticker } from "@/components/brand-art";
 import { HeroCardFan } from "@/components/hero-card-fan";
 import { EventClassCard } from "@/components/event-class-card";
@@ -33,14 +32,13 @@ export default async function HomePage() {
       <h1>Every event.<span>One <em>pass.</em></span></h1>
       <HeroCardFan events={recent.events}/>
       <p className="editorial-hero-description">Find events worth showing up for, register in seconds, and walk in with a personal QR pass that is always in your pocket.</p>
-      <div className="editorial-hero-actions"><ShinyButton href={session ? "/account" : "/register"}>{session ? "Open dashboard" : "Create free account"}<ArrowUpRight size={16}/></ShinyButton><a href="#events">Browse events ↓</a></div>
-      <div className="hero-corner-note"><span>↗</span>No paper tickets.<br/>No long queues.</div>
+      <div className="editorial-hero-actions"><Link className="button button-dark" href={session ? "/account" : "/register"}>{session ? "Open dashboard" : "Create free account"}<ArrowUpRight size={16}/></Link><a href="#events">Browse events <span aria-hidden="true">↓</span></a></div>
     </section>
     <div className="editorial-marquee" aria-hidden="true"><VelocityScroll defaultVelocity={0.35}>REGISTER · GET YOUR PASS · SCAN IN · ENJOY THE EVENT · </VelocityScroll></div>
     <section className="landing-proof" aria-label="PassFlow benefits">
       <div><strong>One account</strong><span>for every event</span></div>
       <div><strong>Instant QR</strong><span>digital passes</span></div>
-      <div><strong>Figma-ready</strong><span>event experiences</span></div>
+      <div><strong>Built for doors</strong><span>fast check-in</span></div>
       <div><strong>Live check-in</strong><span>for your crew</span></div>
     </section>
     <section className="editorial-section" id="events" aria-labelledby="recent-events">
@@ -60,7 +58,7 @@ export default async function HomePage() {
       <div className="figma-mini-preview" aria-hidden="true"><span className="figma-mini-top"/><span className="figma-mini-title">A pass<br/>people keep.</span><span className="figma-mini-ticket"><b>PASSFLOW</b><strong>ADMIT ONE</strong><small>SCAN TO ENTER</small></span></div>
     </section>
     <section className="editorial-section organizer-invitation" id="organizer" aria-labelledby="organizer-title">
-      <div><span className="section-kicker">PASSFLOW FOR ORGANIZERS</span><h2 id="organizer-title">Hosting an event?<br/><span>Run it on PassFlow.</span></h2><p>Registration, ticket types, crew access, and live check-in in one organizer workspace.</p><ShinyButton href="/organizer">Explore organizer tools<ArrowUpRight size={15}/></ShinyButton></div>
+      <div><span className="section-kicker">PASSFLOW FOR ORGANIZERS</span><h2 id="organizer-title">Hosting an event?<br/><span>Run it on PassFlow.</span></h2><p>Registration, ticket types, crew access, and live check-in in one organizer workspace.</p><Link className="button button-dark" href="/organizer">Explore organizer tools<ArrowUpRight size={15}/></Link></div>
       <div className="invitation-list">
         <div><Sticker kind="arrow"/><div><h3>Branded event pages.</h3><p>Publish an event website and digital pass in your own colors, or bring a design from Figma.</p></div></div>
         <div><Sticker kind="smile"/><div><h3>Attendees & crew.</h3><p>Manage registrations, import guest lists, and invite crew with role-based access.</p></div></div>
