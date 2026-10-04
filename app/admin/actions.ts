@@ -154,7 +154,6 @@ function revalidateEvent(eventId: string, slug?: string | null) {
   revalidatePath(`/admin/events/${eventId}/access`);
   revalidatePath(`/admin/events/${eventId}/experience`);
   revalidatePath(`/admin/events/${eventId}/settings`);
-  revalidatePath(`/admin/events/${eventId}/appearance`);
   if (slug) {
     revalidatePath(`/e/${slug}`);
     revalidatePath(`/e/${slug}/claim`);

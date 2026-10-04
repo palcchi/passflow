@@ -36,7 +36,7 @@ export default async function WristbandPrintPage({ params, searchParams }: { par
   const height = physical ? config.heightMm : 54;
 
   return <main className="qr-export-page">
-    <header className="qr-export-toolbar print:hidden"><Link href={`/admin/events/${eventId}/access`} className="back-link"><ArrowLeft size={16}/> Back to event</Link><div className="flex items-center gap-2"><span className="soft-badge">{labels[config.mode]}</span><Link className="button button-ghost" href={`/admin/events/${eventId}/design/studio`}>Edit design</Link><PrintButton /></div></header>
+    <header className="qr-export-toolbar print:hidden"><Link href={`/admin/events/${eventId}/access`} className="back-link"><ArrowLeft size={16}/> Back to event</Link><div className="flex items-center gap-2"><span className="soft-badge">{labels[config.mode]}</span><Link className="button button-ghost" href={`/admin/events/${eventId}/design`}>Edit design</Link><PrintButton /></div></header>
     <nav className="print:hidden resource-toolbar" aria-label="Print batches">{["digital","id_card","wristband"].map(kind=><Link key={kind} className="button button-ghost" href={`?kind=${kind}`}>{kind.replace('_',' ')}</Link>)}{page>0&&<Link href={`?kind=${printKind}&page=${page-1}`}>Previous batch</Link>}<span>Batch {page+1} · {count??0} valid credentials</span>{(page+1)*pageSize<(count??0)&&<Link href={`?kind=${printKind}&page=${page+1}`}>Next batch</Link>}</nav>
     <div className={`qr-export-sheet qr-export-${config.mode}`}>
       <div className="qr-export-heading print:hidden"><p className="section-kicker">PassFlow export</p><h1>{event.name}</h1><p>{labels[config.mode]} · {qrCodes.length} QR credential</p></div>

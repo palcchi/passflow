@@ -22,7 +22,7 @@ Updated 4 October 2026 (user direction): Figma is the whole frontend; PassFlow i
 - Keep desktop, tablet and mobile frames separate. Each owns a width range (≥1200, 768–1199, <768); missing frames fall back to the nearest one, and Home without phone or tablet frames shows a readable fallback.
 - Preserve stable, versioned plugin metadata for identity and bindings. Visible layer names are hints, not identifiers; renaming must not break sync.
 - Produce a structured website, not a single flattened PNG.
-- Keep the internal editor as Quick Setup/basic theme, not the main flow.
+- Figma-only design (4 October 2026). Quick Setup and the simple pass layout were removed. Until a Figma design is published, events show the PassFlow default page and the standard QR pass. Banner, logo, poster and accent color live in Settings → Branding, because cards, link previews and the pass page use them. Credential format and print size live in Access.
 
 ## Connection and synchronization
 
