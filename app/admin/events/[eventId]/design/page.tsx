@@ -8,7 +8,7 @@ export default async function EventDesignPage({params}:{params:Promise<{eventId:
   const {supabase}=await requireOrganizerMembership(`/admin/events/${eventId}/design`);
   const [links,versions]=await Promise.all([
     supabase.from('figma_plugin_links').select('id,file_name,expires_at,revoked_at,last_synced_at,external_change_at').eq('event_id',eventId).order('created_at',{ascending:false}).limit(50),
-    supabase.from('event_studio_documents').select('id,name,status,revision,updated_at,published_at,publication_number').eq('event_id',eventId).eq('kind','website').eq('document->>source','figma').order('updated_at',{ascending:false}).limit(50),
+    supabase.from('event_studio_documents').select('id,kind,name,status,revision,updated_at,published_at,publication_number').eq('event_id',eventId).in('kind',['website','digital','id_card','wristband']).eq('document->>source','figma').order('updated_at',{ascending:false}).limit(50),
   ]);
   // eslint-disable-next-line react-hooks/purity -- Request-scoped server timestamp, serialized identically for hydration.
   const now=Date.now();

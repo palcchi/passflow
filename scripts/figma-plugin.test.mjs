@@ -4,10 +4,11 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 import ts from 'typescript';
 import {readFigmaWebsite,validateFigmaWebsite} from '../lib/figma-website.ts';
+import {readStudioDocument,validateStudio} from '../lib/studio/model.ts';
 
 test('standard plugin templates serialize into valid desktop/mobile HTML documents',async()=>{
   let count=0;
-  const registry=new Map();
+  const registry=new Map(),metadataStore=new Map(),metadataOf=n=>metadataStore.get(n)??new Map();
   const states=[];
 
   function node(type){
@@ -67,9 +68,12 @@ test('standard plugin templates serialize into valid desktop/mobile HTML documen
       off(){},
       async loadAsync(){},
       insertChild(i,child){this.appendChild(child);this.children.splice(this.children.indexOf(child),1);this.children.splice(i,0,child);},
-      async exportAsync(){return new Uint8Array([1,2,3]);}
+      async exportAsync(){return new Uint8Array([1,2,3]);},
+      findAll(fn){const out=[];const walk=n=>{for(const c of n.children){if(fn(c))out.push(c);walk(c);}};walk(this);return out;},
+      clone(){const copy=src=>{const c=node(src.type);for(const k of ['x','y','width','height','fills','visible','fontSize','characters','textAlignHorizontal'])if(k in src)c[k]=src[k];for(const [k,v] of metadataOf(src))c.setSharedPluginData('',k,v);for(const ch of src.children)c.appendChild(copy(ch));return c;};const c=copy(this);this.parent?.appendChild(c);return c;},
+      remove(){const i=this.parent?.children.indexOf(this)??-1;if(i>=0)this.parent.children.splice(i,1);}
     };
-    registry.set(n.id,n);
+    registry.set(n.id,n);metadataStore.set(n,metadata);
     return n;
   }
 
@@ -83,7 +87,8 @@ test('standard plugin templates serialize into valid desktop/mobile HTML documen
     mixed:Symbol('mixed'),
     fileKey:undefined,
     createFrame:()=>node('FRAME'),
-    createText:()=>node('TEXT'),
+    createText:()=>{const t=node('TEXT');t.height=12;return t;},
+    createRectangle:()=>node('RECTANGLE'),
     createEllipse:()=>node('ELLIPSE'),
     createComponent:()=>node('COMPONENT'),
     combineAsVariants:(nodes,parent)=>{const set=node('COMPONENT_SET');for(const v of nodes)set.appendChild(v);parent.appendChild(set);return set;},
@@ -101,7 +106,7 @@ test('standard plugin templates serialize into valid desktop/mobile HTML documen
   const source=fs.readFileSync('figma-plugin-standard/code.ts','utf8');
   const compiled=ts.transpileModule(source,{compilerOptions:{target:ts.ScriptTarget.ES2020,module:ts.ModuleKind.None}}).outputText;
   const context=vm.createContext({figma,__html__:'',setTimeout:()=>1,clearTimeout(){},fetch:()=>{throw Error('Unexpected network request');}});
-  vm.runInContext(compiled+'\nglobalThis.testApi={template,serialize,findFrames,sync,pageTemplate};',context);
+  vm.runInContext(compiled+'\nglobalThis.testApi={template,serialize,findFrames,sync,pageTemplate,passTemplate,exportPass};',context);
 
   await context.testApi.template('minimal');
   const frames=context.testApi.findFrames();
@@ -166,6 +171,19 @@ test('standard plugin templates serialize into valid desktop/mobile HTML documen
   assert.ok(multi,'multi-page document parses');
   assert.deepEqual(validateFigmaWebsite(multi),[]);
   assert.ok(multi.pages.find(p=>p.slug==='agenda').desktop.nodes.some(n=>n.href==='page:home'),'navbar brand navigates home');
+  for(const kind of ['id_card','wristband']){
+    await context.testApi.passTemplate('minimal',kind);
+    const frame=context.testApi.findFrames().passes.find(p=>p.kind===kind).frame;
+    const warnings=[];
+    const pass=readStudioDocument(await context.testApi.exportPass(frame,kind,warnings));
+    assert.ok(pass,kind+' exports a pass document');
+    assert.deepEqual(JSON.parse(JSON.stringify(warnings)),[],kind+' has no QR warnings');
+    assert.deepEqual(validateStudio(pass,kind),[],kind+' passes PassFlow print validation');
+    assert.equal(pass.layers[0].id,'figma-background');
+    assert.deepEqual(JSON.parse(JSON.stringify(pass.layers.slice(1).map(l=>l.type==='qr'?'qr':l.field).sort())),kind==='id_card'?['category','code','name','photo','qr']:['category','code','name','qr']);
+    assert.ok(frame.findAll(n=>n.getSharedPluginData('passflow','passField')).every(n=>n.visible),'original frame keeps attendee layers visible');
+  }
+  await assert.rejects(()=>context.testApi.passTemplate('minimal','id_card'),/already has/);
   for(const style of ['festival']){
     page.children.length=0;
     await context.testApi.template(style);
