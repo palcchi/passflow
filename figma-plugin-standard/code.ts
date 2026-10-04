@@ -6,7 +6,7 @@ type Binding='eventName'|'eventDescription'|'eventDate'|'venue'|'venueMap'|'logo
 type FrameRole='desktop'|'mobile';
 type TemplateStyle='minimal'|'editorial'|'festival';
 type Session={token:string;documentId:string;eventId:string;eventName:string;revision:number;draftId?:string};
-type NodeOutput={id:string;parentId:string|null;type:'text'|'box'|'image';x:number;y:number;width:number;height:number;text:string;fill:string;hasFill:boolean;color:string;fontSize:number;fontFamily:string;radius:number;align:'left'|'center'|'right';image:string;binding:Binding|null;href:string};
+type NodeOutput={id:string;parentId:string|null;type:'text'|'box'|'image';x:number;y:number;width:number;height:number;text:string;fill:string;hasFill:boolean;color:string;fontSize:number;fontFamily:string;radius:number;align:'left'|'center'|'right';image:string;binding:Binding|null;href:string;fontWeight:number;lineHeight:number;letterSpacing:number;opacity:number;stroke:string;strokeWidth:number;sticky:boolean};
 type FrameOutput={width:number;height:number;background:string;nodes:NodeOutput[]};
 type Message=
   |{type:'pair';code:string}
@@ -17,7 +17,7 @@ type Message=
   |{type:'sync'|'disconnect'|'reload'|'confirm'};
 
 const bindings:Binding[]=['eventName','eventDescription','eventDate','venue','venueMap','logo','banner','tickets','register','myPass','schedule','speakers','sponsors','customLink'];
-const blocks=['Hero','About','Tickets','Schedule','Speakers','Sponsors','Venue','Venue Map','FAQ','CTA','Footer'];
+const blocks=['Navbar','Hero','About','Tickets','Schedule','Speakers','Sponsors','Venue','FAQ','CTA','Footer'];
 let session:Session|null=null;
 let mutating=false,syncing=false,dirty=false,blocked=false,confirmed=false,commandPending=false;
 let timer:ReturnType<typeof setTimeout>|null=null;
@@ -38,145 +38,224 @@ function selectionState(){
   figma.ui.postMessage({
     type:'selection',
     single:!!node,
+    frame:!!node&&node.type==='FRAME'&&node.parent===figma.currentPage,
     name:node?.name??'Nothing selected',
     binding:node?.getSharedPluginData(NS,'binding')??'',
     frameRole:node?.getSharedPluginData(NS,'frame')??''
   });
 }
-function color(hex:string):SolidPaint{
+function solid(hex:string):SolidPaint{
   return {type:'SOLID',color:{r:parseInt(hex.slice(1,3),16)/255,g:parseInt(hex.slice(3,5),16)/255,b:parseInt(hex.slice(5,7),16)/255}};
 }
 function hex(paints:ReadonlyArray<Paint>|typeof figma.mixed|undefined,fallback='#ffffff'){
   const p=Array.isArray(paints)?paints.find(p=>p.type==='SOLID'&&p.visible!==false):null;
   return p?.type==='SOLID'?'#'+[p.color.r,p.color.g,p.color.b].map(v=>Math.round(v*255).toString(16).padStart(2,'0')).join(''):fallback;
 }
-function palette(style:TemplateStyle){
-  if(style==='festival')return {bg:'#fff7ed',surface:'#ffffff',ink:'#171717',accent:'#ff5c35',soft:'#fde7df'};
-  if(style==='editorial')return {bg:'#f3f1ea',surface:'#ffffff',ink:'#171717',accent:'#2f35d3',soft:'#e4e5ff'};
-  return {bg:'#f7f7f5',surface:'#ffffff',ink:'#171717',accent:'#171717',soft:'#eeeeea'};
-}
-function bind(node:SceneNode,binding:Binding){
+function bind(node:SceneNode,binding:Binding,href=''){
   node.setSharedPluginData(NS,'binding',binding);
+  node.setSharedPluginData(NS,'href',href);
   node.setSharedPluginData(NS,'schema',SCHEMA);
   if(!node.getSharedPluginData(NS,'id'))node.setSharedPluginData(NS,'id',node.id);
 }
-async function ensureFont(){await figma.loadFontAsync({family:'Inter',style:'Regular'});}
-function autoFrame(name:string,direction:'HORIZONTAL'|'VERTICAL',fill:string){
+
+// ---------- Templates: three distinct styles, one structure ----------
+type Theme={bg:string;surface:string;alt:string;ink:string;muted:string;accent:string;accentInk:string;kicker:string;line:string;radius:number;buttonRadius:number;display:FontName;body:FontName;bodyMedium:FontName;bodyBold:FontName;upper:boolean;tracking:number;heroSize:[number,number];stickers:string[]};
+const inter=(style:string):FontName=>({family:'Inter',style});
+async function font(wanted:FontName,fallback:FontName){
+  try{await figma.loadFontAsync(wanted);return wanted;}catch{await figma.loadFontAsync(fallback);return fallback;}
+}
+async function theme(style:TemplateStyle):Promise<Theme>{
+  const body=await font(inter('Regular'),inter('Regular')),bodyMedium=await font(inter('Medium'),body),bodyBold=await font(inter('Semi Bold'),body);
+  if(style==='editorial')return {bg:'#f4f1ea',surface:'#fbf9f4',alt:'#ebe6da',ink:'#1c1b18',muted:'#6f6a5f',accent:'#1f3a5f',accentInk:'#ffffff',kicker:'#a4482f',line:'#d6cebd',radius:8,buttonRadius:6,
+    display:await font({family:'Playfair Display',style:'Regular'},inter('Light')),body,bodyMedium,bodyBold,upper:false,tracking:-1,heroSize:[96,46],stickers:['#e2553f','#f2b544']};
+  if(style==='festival')return {bg:'#0f0f10',surface:'#1c1c1f',alt:'#161618',ink:'#f6f5f0',muted:'#a3a29b',accent:'#ff5c35',accentInk:'#0f0f10',kicker:'#c6f432',line:'#2e2e33',radius:28,buttonRadius:999,
+    display:await font(inter('Black'),inter('Bold')),body,bodyMedium,bodyBold,upper:true,tracking:-3,heroSize:[132,54],stickers:['#ff5c35','#c6f432','#7c5cff']};
+  return {bg:'#ffffff',surface:'#ffffff',alt:'#f5f5f3',ink:'#242421',muted:'#74736d',accent:'#242421',accentInk:'#ffffff',kicker:'#74736d',line:'#e6e5df',radius:24,buttonRadius:999,
+    display:await font(inter('Bold'),bodyBold),body,bodyMedium,bodyBold,upper:false,tracking:-3,heroSize:[96,46],stickers:['#ff6b4a','#4f7cff','#ffc93c']};
+}
+function box(name:string,dir:'HORIZONTAL'|'VERTICAL',o:{fill?:string;gap?:number;pad?:[number,number];radius?:number;stroke?:string;align?:'MIN'|'CENTER'|'MAX'|'SPACE_BETWEEN';cross?:'MIN'|'CENTER'|'MAX'}={}){
   const f=figma.createFrame();
-  f.name=name;
-  f.layoutMode=direction;
-  f.primaryAxisSizingMode='AUTO';
-  f.counterAxisSizingMode='AUTO';
-  f.itemSpacing=16;
+  f.name=name;f.layoutMode=dir;f.primaryAxisSizingMode='AUTO';f.counterAxisSizingMode='AUTO';
+  f.itemSpacing=o.gap??0;
+  const [py,px]=o.pad??[0,0];f.paddingTop=py;f.paddingBottom=py;f.paddingLeft=px;f.paddingRight=px;
+  f.fills=o.fill?[solid(o.fill)]:[];f.cornerRadius=o.radius??0;
+  if(o.stroke){f.strokes=[solid(o.stroke)];f.strokeWeight=1;}
+  f.primaryAxisAlignItems=o.align??'MIN';f.counterAxisAlignItems=o.cross??'MIN';
   f.clipsContent=false;
-  f.paddingTop=0;f.paddingRight=0;f.paddingBottom=0;f.paddingLeft=0;
-  f.fills=[color(fill)];
   return f;
 }
-async function text(parent:FrameNode,value:string,size:number,width:number,binding?:Binding){
+// Fill the parent's width; `width` keeps the starting geometry sensible before Figma reflows.
+function fillW(node:FrameNode|TextNode,width:number){
+  node.resize(Math.max(1,width),Math.max(1,node.height));
+  node.layoutSizingHorizontal='FILL';
+  if(node.type==='FRAME')node.layoutSizingVertical='HUG';else node.textAutoResize='HEIGHT';
+}
+function fixW(node:FrameNode|TextNode,width:number){
+  node.resize(Math.max(1,width),Math.max(1,node.height));
+  node.layoutSizingHorizontal='FIXED';
+  if(node.type==='FRAME')node.layoutSizingVertical='HUG';else node.textAutoResize='HEIGHT';
+}
+function txt(parent:FrameNode,chars:string,o:{size:number;font:FontName;color:string;lh?:number;ls?:number;align?:'LEFT'|'CENTER'|'RIGHT';binding?:Binding;href?:string;opacity?:number}){
   const n=figma.createText();
-  n.fontName={family:'Inter',style:'Regular'};
-  n.characters=value;
-  n.fontSize=size;
-  n.fills=[color('#171717')];
+  n.fontName=o.font;n.characters=chars;n.fontSize=o.size;n.fills=[solid(o.color)];
+  if(o.lh)n.lineHeight={unit:'PERCENT',value:o.lh*100};
+  if(o.ls)n.letterSpacing={unit:'PERCENT',value:o.ls};
+  if(o.align)n.textAlignHorizontal=o.align;
+  if(o.opacity!==undefined)n.opacity=o.opacity;
   parent.appendChild(n);
-  n.resize(Math.max(80,width),Math.max(size*1.5,36));
-  n.textAutoResize='HEIGHT';
-  if(binding)bind(n,binding);
+  n.textAutoResize='WIDTH_AND_HEIGHT';
+  if(o.binding)bind(n,o.binding,o.href);
   return n;
 }
-function setupSection(section:FrameNode,width:number,pad:number,fill:string){
-  section.resize(width,100);
-  section.layoutMode='VERTICAL';
-  section.primaryAxisSizingMode='AUTO';
-  section.counterAxisSizingMode='FIXED';
-  section.itemSpacing=18;
-  section.paddingTop=pad;
-  section.paddingRight=pad;
-  section.paddingBottom=pad;
-  section.paddingLeft=pad;
-  section.fills=[color(fill)];
-  section.clipsContent=false;
+function button(parent:FrameNode,t:Theme,label:string,kind:'primary'|'secondary'|'inverse',binding:Binding,href:string,size:number){
+  const fill=kind==='primary'?t.accent:kind==='inverse'?t.accentInk:undefined;
+  const ink=kind==='primary'?t.accentInk:kind==='inverse'?t.accent:t.ink;
+  const b=box(label,'HORIZONTAL',{fill,stroke:kind==='secondary'?t.ink:undefined,pad:[Math.round(size*0.85),Math.round(size*1.5)],radius:t.buttonRadius,align:'CENTER',cross:'CENTER'});
+  parent.appendChild(b);
+  txt(b,label,{size,font:t.bodyBold,color:ink});
+  bind(b,binding,href);
+  return b;
 }
-async function chip(parent:FrameNode,label:string,fill:string,ink:string){
-  const c=autoFrame(label,'HORIZONTAL',fill);
+function chip(parent:FrameNode,t:Theme,label:string,binding:Binding,fill:string,ink:string){
+  const c=box(label,'HORIZONTAL',{fill,stroke:fill===t.bg?t.line:undefined,pad:[9,16],radius:t.buttonRadius,cross:'CENTER'});
   parent.appendChild(c);
-  c.cornerRadius=999;
-  c.paddingTop=10;c.paddingBottom=10;c.paddingLeft=14;c.paddingRight=14;
-  const t=await text(c,label,14,Math.max(80,label.length*8));
-  t.fills=[color(ink)];
+  txt(c,label,{size:14,font:t.bodyMedium,color:ink,binding});
   return c;
 }
-async function card(parent:FrameNode,title:string,subtitle:string,width:number,fill:string){
-  const c=autoFrame(title,'VERTICAL',fill);
-  parent.appendChild(c);
-  c.resize(width,160);
-  c.counterAxisSizingMode='FIXED';
-  c.paddingTop=22;c.paddingRight=22;c.paddingBottom=22;c.paddingLeft=22;
-  c.cornerRadius=18;
-  await text(c,title,22,width-44);
-  const sub=await text(c,subtitle,14,width-44);sub.opacity=.65;
-  return c;
+function sticker(parent:FrameNode,kind:'circle'|'star',color:string,size:number,x:number,y:number){
+  const s=kind==='star'?figma.createStar():figma.createEllipse();
+  s.name='Sticker';parent.appendChild(s);s.layoutPositioning='ABSOLUTE';
+  s.resize(size,size);s.x=x;s.y=y;s.fills=[solid(color)];
+}
+function kicker(parent:FrameNode,t:Theme,label:string){
+  return txt(parent,label.toUpperCase(),{size:13,font:t.bodyBold,color:t.kicker,ls:12});
+}
+function heading(parent:FrameNode,t:Theme,label:string,mobile:boolean,width:number){
+  const h=txt(parent,t.upper?label.toUpperCase():label,{size:mobile?34:56,font:t.display,color:t.ink,lh:1.04,ls:t.tracking});
+  fillW(h,width);return h;
+}
+function card(parent:FrameNode,t:Theme,name:string,width:number,dir:'HORIZONTAL'|'VERTICAL'='VERTICAL'){
+  const c=box(name,dir,{fill:t.surface,stroke:t.line,gap:dir==='VERTICAL'?10:16,pad:[22,24],radius:t.radius,align:dir==='HORIZONTAL'?'SPACE_BETWEEN':'MIN',cross:dir==='HORIZONTAL'?'CENTER':'MIN'});
+  parent.appendChild(c);fillW(c,width);return c;
 }
 async function block(parent:FrameNode,name:string,style:TemplateStyle){
-  await ensureFont();
-  const mobile=parent.width<600,pad=mobile?24:80,w=parent.width,p=palette(style);
-  const section=figma.createFrame();
-  parent.appendChild(section);
-  section.name=name;
-  setupSection(section,w,pad,name==='Hero'?p.soft:p.surface);
-  section.setSharedPluginData(NS,'block',name.toLowerCase().replace(/\s+/g,'-'));
-  section.setSharedPluginData(NS,'schema',SCHEMA);
-  section.layoutAlign='STRETCH';
+  const t=await theme(style),w=parent.width,mobile=w<600,pad=mobile?24:96,cw=w-pad*2,D=(s:string)=>t.upper?s.toUpperCase():s;
 
-  if(name==='Hero'){
-    const kicker=await text(section,'YOUR EVENT, YOUR WAY.',13,w-pad*2);kicker.opacity=.55;
-    const title=await text(section,'Your event starts here',mobile?44:76,w-pad*2,'eventName');title.fills=[color(p.ink)];
-    const desc=await text(section,'A purposeful gathering. A space for new connections.',mobile?18:24,w-pad*2,'eventDescription');desc.opacity=.72;
-    const meta=autoFrame('Event details','HORIZONTAL',p.soft);section.appendChild(meta);meta.itemSpacing=10;meta.fills=[];
-    await chip(meta,'27 September 2026',p.surface,p.ink);bind(meta.children[0] as SceneNode,'eventDate');
-    await chip(meta,'Event venue',p.surface,p.ink);bind(meta.children[1] as SceneNode,'venue');
-    const button=autoFrame('Primary CTA','HORIZONTAL',p.accent);section.appendChild(button);button.cornerRadius=999;button.paddingTop=16;button.paddingBottom=16;button.paddingLeft=24;button.paddingRight=24;bind(button,'register');
-    const label=await text(button,'Register / open pass',17,mobile?210:260);label.fills=[color('#ffffff')];
+  if(name==='Navbar'){
+    const nav=box('Navbar','HORIZONTAL',{fill:t.bg,pad:[mobile?12:16,pad],align:'SPACE_BETWEEN',cross:'CENTER'});
+    parent.insertChild(0,nav);fillW(nav,w);
+    nav.setSharedPluginData(NS,'sticky','true');nav.setSharedPluginData(NS,'block','navbar');nav.setSharedPluginData(NS,'schema',SCHEMA);
+    txt(nav,'Event name',{size:mobile?16:18,font:t.bodyBold,color:t.ink,binding:'eventName'});
+    if(!mobile){
+      const links=box('Links','HORIZONTAL',{gap:32,cross:'CENTER'});nav.appendChild(links);
+      for(const [label,target] of [['Tickets','tickets'],['Schedule','schedule'],['Speakers','speakers'],['Venue','venueMap']])txt(links,label,{size:15,font:t.bodyMedium,color:t.muted,binding:'customLink',href:'#'+target});
+    }
+    button(nav,t,'Register','primary','register','',mobile?13:14);
     return;
   }
 
-  const heading=await text(section,name,mobile?30:44,w-pad*2);heading.fills=[color(p.ink)];
+  const fill=['Tickets','Speakers','Venue','Footer'].includes(name)?t.alt:t.bg;
+  const py=name==='Footer'?(mobile?28:40):name==='Hero'?(mobile?56:128):(mobile?64:112);
+  const sec=box(name,'VERTICAL',{fill,gap:mobile?18:26,pad:[py,pad]});
+  parent.appendChild(sec);fillW(sec,w);
+  sec.setSharedPluginData(NS,'block',name.toLowerCase());sec.setSharedPluginData(NS,'schema',SCHEMA);
 
+  if(name==='Hero'){
+    const center=style==='minimal',align=center?'CENTER':'LEFT';
+    if(center)sec.counterAxisAlignItems='CENTER';
+    const meta=box('Event details','HORIZONTAL',{gap:10,cross:'CENTER'});sec.appendChild(meta);
+    chip(meta,t,'27 September 2026','eventDate',style==='festival'?t.accent:t.bg,style==='festival'?t.accentInk:t.ink);
+    chip(meta,t,'Event venue','venue',style==='festival'?t.kicker:t.bg,style==='festival'?t.accentInk:t.ink);
+    const title=txt(sec,D('Your event starts here'),{size:t.heroSize[mobile?1:0],font:t.display,color:t.ink,lh:style==='editorial'?1.02:0.94,ls:t.tracking,align,binding:'eventName'});
+    fillW(title,cw);
+    const desc=txt(sec,'A purposeful gathering. A space for new ideas, new people and a day worth remembering.',{size:mobile?17:22,font:t.body,color:t.muted,lh:1.5,align,binding:'eventDescription'});
+    if(mobile)fillW(desc,cw);else fixW(desc,640);
+    const actions=box('Actions','HORIZONTAL',{gap:12,cross:'CENTER'});sec.appendChild(actions);
+    button(actions,t,'Register now','primary','register','',mobile?15:17);
+    button(actions,t,'See schedule','secondary','customLink','#schedule',mobile?15:17);
+    if(!mobile||style==='festival'){
+      const size=mobile?34:60;
+      t.stickers.forEach((c,i)=>sticker(sec,i===1?'star':'circle',c,Math.round(size*(i?0.7:1)),w-pad-size*(1+i*1.25),(mobile?20:64)+i*Math.round(size*0.55)));
+    }
+    return;
+  }
   if(name==='About'){
-    await text(section,'Tell people why this gathering matters, what they will experience, and what makes it worth showing up for.',mobile?17:20,w-pad*2,'eventDescription');
-  }else if(name==='Tickets'){
-    const list=autoFrame('Live ticket list','VERTICAL',p.soft);section.appendChild(list);list.paddingTop=18;list.paddingRight=18;list.paddingBottom=18;list.paddingLeft=18;list.cornerRadius=18;bind(list,'tickets');
-    await card(list,'VIP','Live ticket data from PassFlow',w-pad*2-36,p.surface);
-    await card(list,'Regular','Availability and price stay dynamic',w-pad*2-36,p.surface);
-  }else if(name==='Schedule'){
-    const list=autoFrame('Live schedule','VERTICAL',p.soft);section.appendChild(list);list.paddingTop=18;list.paddingRight=18;list.paddingBottom=18;list.paddingLeft=18;list.cornerRadius=18;bind(list,'schedule');
-    await card(list,'10:00 · Doors open','Schedule content comes from PassFlow',w-pad*2-36,p.surface);
-    await card(list,'11:00 · Main session','Keep the frame styling, replace the data',w-pad*2-36,p.surface);
-  }else if(name==='Speakers'||name==='Sponsors'){
-    const grid=autoFrame(name+' grid',mobile?'VERTICAL':'HORIZONTAL',p.surface);section.appendChild(grid);grid.itemSpacing=14;bind(grid,name==='Speakers'?'speakers':'sponsors');
-    const cardWidth=mobile?w-pad*2:(w-pad*2-28)/3;
-    for(let i=0;i<3;i++)await card(grid,name==='Speakers'?'Speaker '+(i+1):'Sponsor '+(i+1),name==='Speakers'?'Role / company':'Partner',cardWidth,p.soft);
-  }else if(name==='Venue'){
-    const venue=await text(section,'Event venue',mobile?22:28,w-pad*2,'venue');venue.fills=[color(p.ink)];
-    const note=await text(section,'Arrival details, address, accessibility, and entry notes can live here.',mobile?16:18,w-pad*2);note.opacity=.65;
-  }else if(name==='Venue Map'){
-    const map=autoFrame('Venue map','VERTICAL',p.soft);section.appendChild(map);map.resize(w-pad*2,mobile?260:360);map.counterAxisSizingMode='FIXED';map.paddingTop=24;map.paddingRight=24;map.paddingBottom=24;map.paddingLeft=24;map.cornerRadius=20;bind(map,'venueMap');
-    await text(map,'Venue map',mobile?24:32,w-pad*2-48);
-    const hint=await text(map,'PassFlow links this block to the event venue.',15,w-pad*2-48);hint.opacity=.6;
-  }else if(name==='FAQ'){
-    await card(section,'What should I bring?','Your event pass, ready on your phone.',w-pad*2,p.soft);
-    await card(section,'Where do I enter?','Use the gate shown in your attendee instructions.',w-pad*2,p.soft);
-  }else if(name==='CTA'){
-    const button=autoFrame('Primary CTA','HORIZONTAL',p.accent);section.appendChild(button);button.cornerRadius=999;button.paddingTop=16;button.paddingBottom=16;button.paddingLeft=24;button.paddingRight=24;bind(button,'register');
-    const label=await text(button,'Register / open pass',17,mobile?210:260);label.fills=[color('#ffffff')];
-  }else if(name==='Footer'){
-    const copy=await text(section,'Made for people. Designed by you.',mobile?16:18,w-pad*2);copy.opacity=.65;
+    kicker(sec,t,'About');
+    const row=box('About row',mobile?'VERTICAL':'HORIZONTAL',{gap:mobile?14:80});sec.appendChild(row);fillW(row,cw);
+    const h=txt(row,D('Why this gathering matters'),{size:mobile?32:48,font:t.display,color:t.ink,lh:1.05,ls:t.tracking});
+    const p=txt(row,'Tell people what they will experience, who it is for and why it is worth showing up. Edit this text freely in Figma.',{size:mobile?17:21,font:t.body,color:t.muted,lh:1.55});
+    if(mobile){fillW(h,cw);fillW(p,cw);}else{fixW(h,440);fillW(p,cw-520);}
+    return;
+  }
+  if(name==='Tickets'||name==='Schedule'){
+    const tickets=name==='Tickets';
+    kicker(sec,t,tickets?'Tickets':'Schedule');heading(sec,t,tickets?'Choose your pass':'How the day unfolds',mobile,cw);
+    const list=box(tickets?'Live tickets':'Live schedule','VERTICAL',{gap:10});sec.appendChild(list);fillW(list,cw);bind(list,tickets?'tickets':'schedule');
+    const rows=tickets?[['Early bird','IDR 150,000'],['Regular','IDR 250,000'],['VIP','IDR 500,000']]:[['09:00','Doors open'],['10:00','Opening keynote'],['13:00','Sessions and workshops']];
+    for(const [a,b] of rows){
+      const c=card(list,t,a,cw,'HORIZONTAL');
+      txt(c,tickets?a:b,{size:mobile?16:18,font:t.bodyBold,color:t.ink});
+      txt(c,tickets?b:a,{size:mobile?15:16,font:t.body,color:t.muted});
+    }
+    return;
+  }
+  if(name==='Speakers'){
+    kicker(sec,t,'Speakers');heading(sec,t,'Voices you will hear',mobile,cw);
+    const grid=box('Speaker grid',mobile?'VERTICAL':'HORIZONTAL',{gap:16});sec.appendChild(grid);fillW(grid,cw);bind(grid,'speakers');
+    const cardW=mobile?cw:(cw-32)/3;
+    for(let i=0;i<3;i++){
+      const c=card(grid,t,'Speaker '+(i+1),cardW);
+      const avatar=figma.createEllipse();c.appendChild(avatar);avatar.resize(64,64);avatar.fills=[solid(t.stickers[i%t.stickers.length])];
+      txt(c,'Speaker name',{size:19,font:t.bodyBold,color:t.ink});
+      txt(c,'Role · Company',{size:15,font:t.body,color:t.muted});
+    }
+    return;
+  }
+  if(name==='Sponsors'){
+    kicker(sec,t,'Partners');heading(sec,t,'Supported by',mobile,cw);
+    const row=box('Sponsor logos','HORIZONTAL',{gap:12});sec.appendChild(row);fillW(row,cw);bind(row,'sponsors');
+    const n=mobile?3:4,tileW=(cw-12*(n-1))/n;
+    for(let i=0;i<n;i++){const c=card(row,t,'Sponsor '+(i+1),tileW);txt(c,'Logo',{size:15,font:t.bodyMedium,color:t.muted});}
+    return;
+  }
+  if(name==='Venue'){
+    const row=box('Venue row',mobile?'VERTICAL':'HORIZONTAL',{gap:mobile?20:48});sec.appendChild(row);fillW(row,cw);
+    const left=box('Venue details','VERTICAL',{gap:14});row.appendChild(left);
+    const leftW=mobile?cw:440;if(mobile)fillW(left,cw);else fixW(left,leftW);
+    kicker(left,t,'Venue');
+    const h=txt(left,D('Getting there'),{size:mobile?34:56,font:t.display,color:t.ink,lh:1.04,ls:t.tracking});fillW(h,leftW);
+    const v=txt(left,'Event venue',{size:mobile?19:22,font:t.bodyBold,color:t.ink,binding:'venue'});fillW(v,leftW);
+    const note=txt(left,'Arrival details, entrances and accessibility notes can live here.',{size:16,font:t.body,color:t.muted,lh:1.5});fillW(note,leftW);
+    const map=box('Venue map','VERTICAL',{fill:t.surface,stroke:t.line,radius:t.radius,align:'CENTER',cross:'CENTER'});row.appendChild(map);
+    map.resize(mobile?cw:cw-leftW-48,mobile?220:320);map.layoutSizingHorizontal='FILL';map.layoutSizingVertical='FIXED';bind(map,'venueMap');
+    txt(map,'Open in Maps',{size:16,font:t.bodyBold,color:t.ink});
+    return;
+  }
+  if(name==='FAQ'){
+    kicker(sec,t,'FAQ');heading(sec,t,'Good to know',mobile,cw);
+    for(const [q,a] of [['What should I bring?','Your event pass, ready on your phone.'],['Where do I enter?','Use the gate shown in your attendee instructions.'],['Can I transfer my ticket?','Contact the organizer before the event day.']]){
+      const c=card(sec,t,q,cw);
+      fillW(txt(c,q,{size:mobile?17:19,font:t.bodyBold,color:t.ink}),cw-48);
+      fillW(txt(c,a,{size:16,font:t.body,color:t.muted,lh:1.5}),cw-48);
+    }
+    return;
+  }
+  if(name==='CTA'){
+    const inner=mobile?24:80;
+    const c=box('Call to action','VERTICAL',{fill:t.accent,gap:22,pad:[mobile?44:88,inner],radius:t.radius,cross:'CENTER'});sec.appendChild(c);fillW(c,cw);
+    fillW(txt(c,D('Ready to be there?'),{size:mobile?36:64,font:t.display,color:t.accentInk,lh:1.02,ls:t.tracking,align:'CENTER'}),cw-inner*2);
+    fillW(txt(c,'Seats are limited. Secure your pass in a minute.',{size:mobile?16:19,font:t.body,color:t.accentInk,opacity:.75,align:'CENTER'}),cw-inner*2);
+    button(c,t,'Register now','inverse','register','',mobile?15:17);
+    return;
+  }
+  if(name==='Footer'){
+    const row=box('Footer row',mobile?'VERTICAL':'HORIZONTAL',{gap:8,align:mobile?'MIN':'SPACE_BETWEEN',cross:mobile?'MIN':'CENTER'});sec.appendChild(row);fillW(row,cw);
+    txt(row,'Made with PassFlow',{size:14,font:t.body,color:t.muted});
+    txt(row,'27 September 2026',{size:14,font:t.body,color:t.muted,binding:'eventDate'});
   }
 }
 async function template(style:TemplateStyle){
-  await ensureFont();
-  const p=palette(style),created:FrameNode[]=[];
+  const t=await theme(style),created:FrameNode[]=[];
   for(const role of ['desktop','mobile'] as const){
     const frame=figma.createFrame();
     figma.currentPage.appendChild(frame);
@@ -186,7 +265,7 @@ async function template(style:TemplateStyle){
     frame.primaryAxisSizingMode='AUTO';
     frame.counterAxisSizingMode='FIXED';
     frame.itemSpacing=0;
-    frame.fills=[color(p.bg)];
+    frame.fills=[solid(t.bg)];
     frame.setSharedPluginData(NS,'frame',role);
     frame.setSharedPluginData(NS,'documentId',documentId);
     frame.setSharedPluginData(NS,'schema',SCHEMA);
@@ -224,6 +303,17 @@ function contractWarnings(frame:FrameNode,label:string){
   if(!found.has('venue'))warnings.push(label+': Venue is recommended.');
   return warnings;
 }
+function fontWeight(style:string){
+  const s=style.toLowerCase().replace(/[\s-]/g,'');
+  for(const [key,weight] of [['thin',100],['extralight',200],['ultralight',200],['light',300],['medium',500],['semibold',600],['demibold',600],['extrabold',800],['ultrabold',800],['black',900],['heavy',900],['bold',700]] as const)if(s.includes(key))return weight;
+  return 400;
+}
+// The web renderer accepts a short font whitelist; map Figma families onto the closest one.
+function webFamily(family:string){
+  if(/mono|code/i.test(family))return 'monospace';
+  if(/serif|playfair|georgia|garamond|times|lora|merriweather|baskerville|bodoni|caslon/i.test(family)&&!/sans/i.test(family))return 'Georgia';
+  return family==='Arial'?'Arial':'Inter';
+}
 async function serialize(frame:FrameNode,warnings:string[]):Promise<FrameOutput>{
   const bounds=frame.absoluteBoundingBox;if(!bounds)throw Error('The frame has no bounds.');
   const nodes:NodeOutput[]=[];let visited=0;
@@ -235,23 +325,34 @@ async function serialize(frame:FrameNode,warnings:string[]):Promise<FrameOutput>
     const paints='fills' in node?node.fills:undefined;
     const textNode=node.type==='TEXT'?node:null;
     if('effects' in node&&node.effects.some(effect=>effect.visible))warnings.push('Layer effects are simplified. Review shadows and blurs in Preview.');
-    if('opacity' in node&&node.opacity<1)warnings.push('Layer opacity is simplified. Review translucent layers in Preview.');
     if('rotation' in node&&Math.abs(node.rotation)>.1&&!binding)warnings.push('Rotated artwork is simplified. Review its position in Preview.');
     const children='children' in node?node.children:null;
     if(children&&Array.isArray(paints)&&paints.some(p=>p.type==='IMAGE'||p.type.startsWith('GRADIENT')))warnings.push('Image/gradient fills on containers are simplified. Use an image layer for detailed artwork.');
     if('clipsContent' in node&&node.clipsContent)warnings.push('Clipped content is simplified. Review masks in Preview.');
-    const buttonText=children?.find(n=>n.type==='TEXT');
+    // Bound containers (buttons, live lists) take their typography from the first text inside them.
+    const inner=textNode??(binding&&'findOne' in node?node.findOne(n=>n.type==='TEXT'):children?.find(n=>n.type==='TEXT'));
+    const typo=inner?.type==='TEXT'?inner:null;
+    const size=typo&&typeof typo.fontSize==='number'?typo.fontSize:20;
+    const lh=typo?.lineHeight,ls=typo?.letterSpacing;
+    const strokes='strokes' in node&&Array.isArray(node.strokes)?node.strokes:[];
+    const strokeWidth='strokeWeight' in node&&typeof node.strokeWeight==='number'&&strokes.some(p=>p.visible!==false)?node.strokeWeight:0;
     const id=node.getSharedPluginData(NS,'id')||node.id;
     const output:NodeOutput={
       id:nodes.some(n=>n.id===id)?node.id:id,parentId,type:textNode?'text':'box',
       x:box.x-parentBox.x,y:box.y-parentBox.y,width:box.width,height:box.height,
-      text:textNode?.characters??(buttonText?.type==='TEXT'?buttonText.characters:''),
+      text:textNode||binding?typo?.characters??'':'',
       fill:hex(paints),hasFill:Array.isArray(paints)&&paints.some(p=>p.visible!==false),
-      color:hex(textNode?.fills??(buttonText?.type==='TEXT'?buttonText.fills:undefined),'#171717'),
-      fontSize:textNode&&typeof textNode.fontSize==='number'?textNode.fontSize:buttonText?.type==='TEXT'&&typeof buttonText.fontSize==='number'?buttonText.fontSize:20,
-      fontFamily:textNode&&textNode.fontName!==figma.mixed?textNode.fontName.family:'Inter',
+      color:hex(typo?.fills,'#171717'),
+      fontSize:size,
+      fontFamily:typo&&typo.fontName!==figma.mixed?webFamily(typo.fontName.family):'Inter',
+      fontWeight:typo&&typo.fontName!==figma.mixed?fontWeight(typo.fontName.style):400,
+      lineHeight:lh&&lh!==figma.mixed&&typeof lh==='object'?Math.min(3,Math.max(.7,lh.unit==='PIXELS'?lh.value/size:lh.unit==='PERCENT'?lh.value/100:1.2)):1.25,
+      letterSpacing:ls&&ls!==figma.mixed&&typeof ls==='object'?(ls.unit==='PIXELS'?ls.value:ls.value/100*size):0,
+      opacity:'opacity' in node&&typeof node.opacity==='number'?node.opacity:1,
+      stroke:strokeWidth?hex(strokes,''):'',strokeWidth,
+      sticky:parentId===null&&node.getSharedPluginData(NS,'sticky')==='true',
       radius:'cornerRadius' in node&&typeof node.cornerRadius==='number'?node.cornerRadius:0,
-      align:textNode?.textAlignHorizontal==='CENTER'?'center':textNode?.textAlignHorizontal==='RIGHT'?'right':binding==='register'||binding==='myPass'?'center':'left',
+      align:textNode?.textAlignHorizontal==='CENTER'?'center':textNode?.textAlignHorizontal==='RIGHT'?'right':binding==='register'||binding==='myPass'||(binding==='customLink'&&!textNode)?'center':'left',
       image:'',binding,href:node.getSharedPluginData(NS,'href')
     };
     if('rotation' in node&&Math.abs(node.rotation)>.1&&binding)throw Error('Rotated dynamic layers are not supported. Remove rotation before syncing.');
@@ -262,7 +363,7 @@ async function serialize(frame:FrameNode,warnings:string[]):Promise<FrameOutput>
     if(binding){nodes.push(output);return;}
     const raster=!children&&(node.type==='VECTOR'||node.type==='BOOLEAN_OPERATION'||node.type==='ELLIPSE'||node.type==='POLYGON'||node.type==='STAR'||(Array.isArray(paints)&&paints.some(p=>p.type==='IMAGE'||p.type.startsWith('GRADIENT'))));
     if(raster){
-      const png=await node.exportAsync({format:'PNG',constraint:{type:'SCALE',value:1}});
+      const png=await node.exportAsync({format:'PNG',constraint:{type:'SCALE',value:2}});
       output.type='image';output.image='data:image/png;base64,'+figma.base64Encode(png);
       if(output.image.length>450000)throw Error('An artwork image exceeds 450 KB. Reduce its resolution.');
       nodes.push(output);return;
@@ -382,8 +483,7 @@ figma.ui.onmessage=async(message:Message)=>{
       const node=figma.currentPage.selection[0];
       if(figma.currentPage.selection.length!==1||!node||!bindings.includes(message.binding))throw Error('Select one layer and a valid binding.');
       if(message.binding==='customLink'&&!/^(https:\/\/[^\s]+|#[a-zA-Z][\w-]*)$/.test(message.href))throw Error('Use an HTTPS link or a section anchor.');
-      bind(node,message.binding);
-      node.setSharedPluginData(NS,'href',message.binding==='customLink'?message.href:'');
+      bind(node,message.binding,message.binding==='customLink'?message.href:'');
       status('Changes detected','Binding saved in metadata. Renaming this layer will not break it.');
     }
     if(message.type==='frame'){

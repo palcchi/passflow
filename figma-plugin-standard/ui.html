@@ -2,153 +2,200 @@
 <html lang="en">
 <meta charset="utf-8">
 <style>
-:root{color-scheme:light dark}
+:root{--ink:#242421;--muted:#74736d;--line:#e6e5df;--soft:#f5f5f3;--paper:#fff;--on:#2fa86a;--warn:#d59617;--bad:#d84848;color-scheme:light}
+html.figma-dark{--ink:#f2f1ec;--muted:#a3a29b;--line:#3a3a37;--soft:#2a2a28;--paper:#1f1f1e;color-scheme:dark}
 *{box-sizing:border-box}
-body{margin:0;font:13px Inter,Arial,sans-serif;color:var(--figma-color-text,#171717);background:var(--figma-color-bg,#fff)}
-.shell{padding:18px;display:grid;gap:14px}
-.brand{display:flex;align-items:center;justify-content:space-between;gap:12px}
-.brand h1{font-size:24px;line-height:1;margin:0;letter-spacing:-1px}
-.brand small{opacity:.55}
-.status{border:1px solid var(--figma-color-border,#8884);border-radius:16px;padding:14px;background:var(--figma-color-bg-secondary,#f7f7f7)}
-.status-line{display:flex;align-items:center;gap:8px}.dot{width:8px;height:8px;border-radius:999px;background:#999}.dot.on{background:#2dbf64}.dot.warn{background:#d59617}.dot.bad{background:#d84848}
-#message{white-space:pre-wrap;margin:8px 0 0;line-height:1.45;opacity:.72}
-.event{font-weight:600;margin-top:6px}
-.group{display:grid;gap:9px;padding-top:4px}
-.group-title{display:flex;align-items:center;justify-content:space-between;font-size:11px;text-transform:uppercase;letter-spacing:.08em;opacity:.58}
-label{display:grid;gap:6px}
-input,select,button{font:inherit;color:inherit;background:transparent;border:1px solid var(--figma-color-border,#8885);border-radius:12px;padding:10px 11px;width:100%}
-button{cursor:pointer;font-weight:600}
-button:hover{background:var(--figma-color-bg-hover,#8881)}
-button.primary{background:#635bff;color:#fff;border-color:#635bff}
-button.primary:hover{filter:brightness(.96)}
-button:disabled{opacity:.42;cursor:not-allowed}
+body{margin:0;font:13px/1.45 -apple-system,BlinkMacSystemFont,"SF Pro Text",Inter,"Segoe UI",Roboto,sans-serif;color:var(--ink);background:var(--paper);-webkit-font-smoothing:antialiased}
+.shell{padding:20px 18px 8px;display:grid;gap:18px}
+header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+h1{font-size:26px;line-height:1;margin:0;letter-spacing:-.04em;font-weight:700}
+.tagline{margin:6px 0 0;color:var(--muted);font-weight:300;font-size:13px}
+.badge{border:1px solid var(--line);border-radius:999px;padding:3px 9px;font-size:11px;color:var(--muted)}
+.status{border:1px solid var(--line);border-radius:18px;padding:14px 16px;background:var(--soft)}
+.status-line{display:flex;align-items:center;gap:8px;font-weight:600}
+.dot{width:8px;height:8px;border-radius:999px;background:var(--muted);flex:none}
+.dot.on{background:var(--on)}.dot.warn{background:var(--warn)}.dot.bad{background:var(--bad)}
+.event{margin-top:4px;font-weight:600;font-size:15px;letter-spacing:-.01em}
+#message{white-space:pre-wrap;margin:6px 0 0;color:var(--muted)}
+.step{display:grid;gap:10px}
+.step-title{display:flex;align-items:center;gap:10px;font-weight:600;font-size:14px;letter-spacing:-.01em}
+.num{width:22px;height:22px;border-radius:999px;background:var(--ink);color:var(--paper);display:grid;place-items:center;font-size:11px;font-weight:700;flex:none}
+.hint{margin:0;color:var(--muted);font-size:12px}
+label.field{display:grid;gap:6px;font-size:12px;color:var(--muted)}
+input,select{font:inherit;font-size:13px;color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:10px 12px;width:100%;outline:none}
+input:focus,select:focus{border-color:var(--ink)}
+input#code{font:600 15px/1 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.06em;text-transform:uppercase}
+/* Native selects inherited a transparent background, so the open list was unreadable in dark mode. */
+select{appearance:none;-webkit-appearance:none;padding-right:34px;cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='none' stroke='%2374736d' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 4.5 6 7.5 9 4.5'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center}
+select option{background:var(--paper);color:var(--ink)}
+button{font:inherit;font-weight:600;font-size:13px;cursor:pointer;border-radius:999px;padding:10px 16px;border:1px solid var(--line);background:var(--paper);color:var(--ink);transition:background-color .15s ease,opacity .15s ease}
+button:hover:not(:disabled){background:var(--soft)}
+button.primary{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+button.primary:hover:not(:disabled){background:var(--ink);opacity:.88}
+button:disabled{opacity:.4;cursor:not-allowed}
+button.link{border:0;background:none;padding:4px 0;color:var(--muted);font-weight:500;white-space:nowrap}
+button.link:hover:not(:disabled){background:none;color:var(--ink)}
 .row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.note{font-size:11px;line-height:1.45;opacity:.62;margin:0}
-.selection{border:1px dashed var(--figma-color-border,#8886);border-radius:12px;padding:10px 12px}
-.selection strong{display:block}.selection span{font-size:11px;opacity:.62}
-.contract{display:grid;gap:4px;font-size:11px;opacity:.68;padding:10px 12px;border-radius:12px;background:var(--figma-color-bg-secondary,#f7f7f7)}
-hr{border:0;border-top:1px solid var(--figma-color-border,#8884);margin:2px 0}
-.footer{position:sticky;bottom:0;background:var(--figma-color-bg,#fff);padding:12px 18px 16px;border-top:1px solid var(--figma-color-border,#8884);display:grid;gap:8px}
-.linklike{text-align:center;text-decoration:none;display:block}
+.styles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.style{position:relative;cursor:pointer}
+.style input{position:absolute;opacity:0;pointer-events:none}
+.card{border:1px solid var(--line);border-radius:14px;overflow:hidden;transition:border-color .15s ease,box-shadow .15s ease}
+.style input:checked+.card{border-color:var(--ink);box-shadow:0 0 0 1px var(--ink)}
+.style input:focus-visible+.card{outline:2px solid var(--ink);outline-offset:2px}
+.preview{height:64px;padding:8px;display:grid;align-content:space-between}
+.preview .bar{height:4px;border-radius:2px;width:60%}
+.preview .big{font-weight:800;font-size:17px;line-height:1;letter-spacing:-.04em}
+.preview .pill{height:8px;width:30px;border-radius:999px}
+.minimal .preview{background:#fff;color:#242421}.minimal .bar{background:#e6e5df}.minimal .pill{background:#242421}
+.editorial .preview{background:#f4f1ea;color:#1c1b18}.editorial .big{font:400 18px/1 Georgia,serif;letter-spacing:-.02em}.editorial .bar{background:#d6cebd}.editorial .pill{background:#1f3a5f;border-radius:2px}
+.festival .preview{background:#0f0f10;color:#f6f5f0}.festival .big{font-weight:900;text-transform:uppercase}.festival .bar{background:#c6f432}.festival .pill{background:#ff5c35}
+.style-name{padding:7px 8px;font-size:11px;font-weight:600;border-top:1px solid var(--line)}
+.contract{display:grid;gap:3px;font-size:12px;color:var(--muted);padding:12px 14px;border-radius:14px;background:var(--soft)}
+.contract strong{color:var(--ink);font-weight:600}
+.toggle{display:flex;align-items:center;justify-content:space-between;gap:12px;cursor:pointer;font-weight:600;font-size:14px}
+.switch{position:relative;width:36px;height:20px;flex:none}
+.switch input{position:absolute;inset:0;opacity:0;margin:0;cursor:pointer}
+.switch span{position:absolute;inset:0;border-radius:999px;background:var(--line);transition:background-color .2s ease;pointer-events:none}
+.switch span::after{content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:999px;background:#fff;box-shadow:0 1px 2px #0003;transition:transform .2s cubic-bezier(.2,.8,.2,1)}
+.switch input:checked+span{background:var(--ink)}
+.switch input:checked+span::after{transform:translateX(16px)}
+.selection{border:1px dashed var(--line);border-radius:12px;padding:10px 12px}
+.selection strong{display:block;font-weight:600}.selection span{font-size:12px;color:var(--muted)}
+hr{border:0;border-top:1px solid var(--line);margin:0}
+footer{position:sticky;bottom:0;background:var(--paper);padding:12px 18px 14px;border-top:1px solid var(--line);display:grid;gap:8px}
+.foot-note{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:11px;color:var(--muted)}
 [hidden]{display:none!important}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 <body>
 <div class="shell">
-  <div class="brand"><div><h1>PassFlow</h1><small>Design your event. Run it in PassFlow.</small></div><span>v2</span></div>
+  <header>
+    <div><h1>PassFlow</h1><p class="tagline">Design in Figma. Run it in PassFlow.</p></div>
+    <span class="badge">v3</span>
+  </header>
 
-  <section class="status">
-    <div class="status-line"><span id="dot" class="dot"></span><strong id="status">Disconnected</strong></div>
-    <div id="event" class="event"></div>
+  <section class="status" aria-live="polite">
+    <div class="status-line"><span id="dot" class="dot"></span><span id="status">Disconnected</span></div>
+    <div id="event" class="event" hidden></div>
     <p id="message"></p>
+    <button id="confirm" class="primary" style="margin-top:10px;width:100%" hidden>Yes, sync this page to the event</button>
   </section>
 
-  <section id="pairing" class="group">
-    <div class="group-title"><span>Pair Event</span><span>10 min code</span></div>
-    <label>Pairing code<input id="code" placeholder="PF-XXXXXXXXXX" maxlength="20" autocomplete="off" autocapitalize="characters"></label>
+  <section id="pairing" class="step">
+    <div class="step-title"><span class="num">1</span>Pair your event</div>
+    <label class="field">Pairing code from PassFlow → Event → Design
+      <input id="code" placeholder="PF-XXXXXXXXXX" maxlength="20" autocomplete="off" autocapitalize="characters" spellcheck="false">
+    </label>
     <button id="pair" class="primary">Pair event</button>
-    <p class="note">Generate a temporary code in PassFlow → Event → Design. No OAuth secret is stored in this file.</p>
+    <p class="hint">Codes expire after 10 minutes. No password is stored in this file.</p>
   </section>
 
-  <button id="confirm" hidden>Confirm linked event for this page</button>
-
-  <section class="group">
-    <div class="group-title"><span>Start</span><span>Template-first</span></div>
-    <label>Template style
-      <select id="style">
-        <option value="minimal">Minimal</option>
-        <option value="editorial">Editorial</option>
-        <option value="festival">Festival</option>
-      </select>
-    </label>
-    <button id="template" class="primary">Insert Desktop + Mobile starter</button>
-    <p class="note">Adds editable 1440px Desktop and 390px Mobile frames. Existing artwork is not replaced.</p>
+  <section class="step">
+    <div class="step-title"><span class="num" id="n2">2</span>Choose a style</div>
+    <div class="styles" role="radiogroup" aria-label="Template style">
+      <label class="style minimal"><input type="radio" name="style" value="minimal" checked><div class="card"><div class="preview"><div class="bar"></div><div class="big">Aa</div><div class="pill"></div></div><div class="style-name">Minimal</div></div></label>
+      <label class="style editorial"><input type="radio" name="style" value="editorial"><div class="card"><div class="preview"><div class="bar"></div><div class="big">Aa</div><div class="pill"></div></div><div class="style-name">Editorial</div></div></label>
+      <label class="style festival"><input type="radio" name="style" value="festival"><div class="card"><div class="preview"><div class="bar"></div><div class="big">Aa</div><div class="pill"></div></div><div class="style-name">Festival</div></div></label>
+    </div>
+    <button id="template" class="primary">Insert Desktop + Mobile website</button>
+    <p class="hint">Adds editable 1440 and 390 frames with a sticky navbar and 10 sections. Existing artwork stays untouched.</p>
   </section>
 
-  <section class="group">
-    <div class="group-title"><span>Insert PassFlow Block</span><span>Reusable</span></div>
-    <label>Block
+  <section class="step">
+    <div class="step-title"><span class="num" id="n3">3</span>Add a section</div>
+    <label class="field">Section
       <select id="block">
-        <option>Hero</option><option>About</option><option>Tickets</option><option>Schedule</option>
-        <option>Speakers</option><option>Sponsors</option><option>Venue</option><option>Venue Map</option>
-        <option>FAQ</option><option>CTA</option><option>Footer</option>
+        <option>Navbar</option><option>Hero</option><option>About</option><option>Tickets</option><option>Schedule</option>
+        <option>Speakers</option><option>Sponsors</option><option>Venue</option><option>FAQ</option><option>CTA</option><option>Footer</option>
       </select>
     </label>
-    <button id="insert">Insert into selected frame</button>
+    <button id="insert" disabled>Add to selected frame</button>
+    <p class="hint" id="insertHint">Select the Desktop or Mobile frame first.</p>
   </section>
 
   <div class="contract">
-    <strong>Website contract</strong>
-    <span>Required: Event Name + Register/Tickets</span>
-    <span>Recommended: Event Date + Venue</span>
-    <span>Optional: About, Speakers, Sponsors, Venue Map, FAQ</span>
+    <strong>Before publishing</strong>
+    <span>Required: Event name and a Register button or Tickets list</span>
+    <span>Recommended: Event date and Venue</span>
   </div>
 
-  <label>Mode
-    <select id="mode">
-      <option value="simple">Simple · recommended</option>
-      <option value="advanced">Advanced · designer</option>
-    </select>
+  <hr>
+  <label class="toggle">Advanced binding
+    <span class="switch"><input type="checkbox" id="advancedToggle"><span></span></span>
   </label>
 
-  <section id="advanced" class="group" hidden>
-    <hr>
-    <div class="group-title"><span>Advanced binding</span><span>Metadata-based</span></div>
+  <section id="advanced" class="step" hidden>
     <div class="selection"><strong id="selected">Nothing selected</strong><span id="selectedBinding">No PassFlow binding</span></div>
-    <label>Responsive frame
+    <label class="field">Responsive frame
       <select id="frameRole"><option value="desktop">Desktop</option><option value="mobile">Mobile</option></select>
     </label>
-    <button id="frame">Assign selected frame</button>
-    <label>Assign selected layer
+    <button id="frame">Use selected frame</button>
+    <label class="field">Connect selected layer to
       <select id="binding">
-        <option value="register">Primary Register CTA</option>
-        <option value="myPass">My Pass</option>
-        <option value="tickets">Tickets</option>
-        <option value="schedule">Schedule</option>
-        <option value="speakers">Speakers</option>
-        <option value="sponsors">Sponsors</option>
-        <option value="venueMap">Venue Map</option>
+        <option value="register">Register button</option>
+        <option value="myPass">My Pass button</option>
+        <option value="tickets">Tickets list</option>
+        <option value="schedule">Schedule list</option>
+        <option value="speakers">Speakers grid</option>
+        <option value="sponsors">Sponsors grid</option>
+        <option value="venueMap">Venue map</option>
         <option value="logo">Event logo</option>
         <option value="banner">Event banner</option>
         <option value="eventName">Event name</option>
-        <option value="eventDescription">About / description</option>
+        <option value="eventDescription">Event description</option>
         <option value="eventDate">Event date</option>
-        <option value="venue">Venue</option>
-        <option value="customLink">Custom Link</option>
+        <option value="venue">Venue name</option>
+        <option value="customLink">Custom link</option>
       </select>
     </label>
-    <label id="hrefWrap" hidden>Custom link<input id="href" placeholder="https://… or #schedule"></label>
-    <button id="assign">Assign binding</button>
-    <p class="note">Bindings live in plugin metadata. Rename layers freely after assigning them.</p>
+    <label class="field" id="hrefWrap" hidden>Link
+      <input id="href" placeholder="https://… or #tickets">
+    </label>
+    <button id="assign">Connect layer</button>
+    <p class="hint">Connections live in layer metadata, so renaming layers never breaks them.</p>
   </section>
 </div>
 
-<div class="footer">
-  <div class="row"><button id="sync" class="primary">Sync draft</button><button id="resume">Refresh revision</button></div>
-  <div class="row"><button id="preview" disabled>Preview</button><button id="open" disabled>Open PassFlow</button></div>
-  <button id="disconnect">Disconnect this device</button>
-  <p class="note">Edits auto-sync to Draft after 1.5 seconds. Publishing stays explicit in PassFlow.</p>
-</div>
+<footer>
+  <div class="row"><button id="sync" class="primary">Sync now</button><button id="preview" disabled>Preview</button></div>
+  <div class="foot-note">
+    <span>Auto-syncs to a private draft. Publish in PassFlow.</span>
+    <button id="open" class="link" disabled>Open PassFlow ↗</button>
+  </div>
+  <div class="foot-note">
+    <button id="resume" class="link">Refresh draft revision</button>
+    <button id="disconnect" class="link">Disconnect device</button>
+  </div>
+</footer>
 
 <script>
 const $=id=>document.getElementById(id),send=m=>parent.postMessage({pluginMessage:m},'*');
-let eventId='',draftId='',state='Disconnected';
+const style=()=>document.querySelector('input[name=style]:checked').value;
+let eventId='',draftId='',connected=false;
+const offline=['Disconnected','Connection expired','Connection unavailable'];
 function openUrl(url){window.open(url,'_blank','noopener,noreferrer')}
 function updateStatus(m){
-  state=m.state||'Disconnected';$('status').textContent=state;$('message').textContent=m.message||'';$('event').textContent=m.eventName||'';
+  const state=m.state||'Disconnected';
+  $('status').textContent=state;$('message').textContent=m.message||'';
+  $('event').textContent=m.eventName||'';$('event').hidden=!m.eventName;
   eventId=m.eventId||'';draftId=m.draftId||'';
+  connected=!!m.eventName&&!offline.includes(state);
+  $('pairing').hidden=connected;
+  $('n2').textContent=connected?'1':'2';$('n3').textContent=connected?'2':'3';
   $('preview').disabled=!eventId||!draftId;$('open').disabled=!eventId;
   $('confirm').hidden=state!=='Confirm event';
-  const dot=$('dot');dot.className='dot '+(state==='Connected'||state==='Synced'?'on':state.includes('paused')||state==='Confirm event'||state==='Changes detected'?'warn':state==='Action failed'||state==='Connection expired'?'bad':'');
+  $('dot').className='dot '+(state==='Connected'||state==='Synced'?'on':/paused|Confirm|Changes|Syncing|Working/.test(state)?'warn':/failed|expired|unavailable/.test(state)?'bad':'');
 }
 $('pair').onclick=()=>send({type:'pair',code:$('code').value});
-$('template').onclick=()=>send({type:'template',style:$('style').value});
-$('insert').onclick=()=>send({type:'block',block:$('block').value,style:$('style').value});
-$('mode').onchange=()=>{$('advanced').hidden=$('mode').value!=='advanced'};
+$('code').onkeydown=e=>{if(e.key==='Enter')send({type:'pair',code:$('code').value})};
+$('template').onclick=()=>send({type:'template',style:style()});
+$('insert').onclick=()=>send({type:'block',block:$('block').value,style:style()});
+$('advancedToggle').onchange=e=>{$('advanced').hidden=!e.target.checked};
 $('binding').onchange=()=>{$('hrefWrap').hidden=$('binding').value!=='customLink'};
 $('assign').onclick=()=>send({type:'assign',binding:$('binding').value,href:$('href').value});
 $('frame').onclick=()=>send({type:'frame',role:$('frameRole').value});
 $('sync').onclick=()=>send({type:'sync'});
-$('disconnect').onclick=()=>send({type:'disconnect'});
+$('disconnect').onclick=()=>{if(confirm('Remove this device\'s connection? The file stays paired in PassFlow until you revoke it there.'))send({type:'disconnect'})};
 $('resume').onclick=()=>{if(confirm('Refresh the current draft revision before retrying sync?'))send({type:'reload'})};
 $('confirm').onclick=()=>send({type:'confirm'});
 $('preview').onclick=()=>{if(eventId&&draftId)openUrl('https://passflow.my.id/admin/events/'+encodeURIComponent(eventId)+'/design/preview/'+encodeURIComponent(draftId))};
@@ -158,7 +205,8 @@ window.onmessage=e=>{
   if(m.type==='status')updateStatus(m);
   if(m.type==='selection'){
     $('selected').textContent=m.name||'Nothing selected';
-    $('selectedBinding').textContent=m.binding?'Bound: '+m.binding:(m.frameRole?'Frame role: '+m.frameRole:'No PassFlow binding');
+    $('selectedBinding').textContent=m.binding?'Connected to: '+m.binding:(m.frameRole?'Frame: '+m.frameRole:'No PassFlow binding');
+    $('insert').disabled=!m.frame;$('insertHint').hidden=!!m.frame;
   }
 };
 </script>
