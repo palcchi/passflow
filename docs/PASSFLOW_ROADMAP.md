@@ -278,11 +278,11 @@ Open Figma file
 
 ### Existing integration audit
 
-- [ ] Audit current Figma OAuth flow.
-- [ ] Audit encrypted token storage.
-- [ ] Audit reconnect/disconnect behavior.
-- [ ] Audit current Figma file/frame parsing.
-- [ ] Audit current design export/save flow.
+- [x] ~~Audit current Figma OAuth flow.~~ Retired on 4 October 2026; the standard plugin's pairing replaces it.
+- [x] ~~Audit encrypted token storage.~~ Retired with OAuth.
+- [x] ~~Audit reconnect/disconnect behavior.~~ Retired with OAuth; plugin links are revoked in Design.
+- [x] ~~Audit current Figma file/frame parsing.~~ The REST URL parser was retired; the plugin serializes frames.
+- [x] ~~Audit current design export/save flow.~~ The SVG export and JSON import were retired; passes sync from the plugin.
 
 ### Pairing
 
@@ -371,9 +371,9 @@ Figma
 - [x] Version the schema.
 - [x] Support layout/frame hierarchy.
 - [x] Support text.
-- [ ] Support image fills/assets beyond rasterized leaf artwork.
+- [x] Support image fills/assets beyond rasterized leaf artwork. Frame photo fills become CSS backgrounds, and images are hoisted to the event-assets bucket.
 - [ ] Support common auto-layout behavior.
-- [ ] Support basic vector/shape representation where practical.
+- [x] Support basic vector/shape representation where practical: vectors are rasterized at 2×, and gradients and shadows become CSS.
 - [x] Define unsupported-node behavior.
 
 ### Binding
@@ -403,7 +403,7 @@ Figma
 
 - [x] Desktop frame support.
 - [x] Mobile frame support.
-- [ ] Optional tablet frame support.
+- [x] Optional tablet frame support (834; 768–1199 px).
 - [x] Responsive fallback with warning when mobile frame is absent.
 
 ## Definition of Done

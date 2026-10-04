@@ -1,6 +1,5 @@
 import { accountProfile, requireUser, getMemberships } from "@/lib/auth/session";
 import { canManage } from "@/lib/auth/redirect";
-import { figmaConfigured } from "@/lib/figma";
 import { UserNavbar } from "@/components/user-navbar";
 import { ProfileEditor } from "@/components/profile-editor";
 import { KineticText } from "@/components/magicui/kinetic-text";
@@ -15,17 +14,8 @@ export default async function ProfilePage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const { supabase, user } = await requireUser("/profile");
-  const [{ data: connection, error: connectionError }, { memberships }, query] =
-    await Promise.all([
-      supabase
-        .from("figma_connections")
-        .select("handle,email,expires_at")
-        .eq("user_id", user.id)
-        .maybeSingle(),
-      getMemberships(),
-      searchParams,
-    ]);
+  const { user } = await requireUser("/profile");
+  const [{ memberships }, query] = await Promise.all([getMemberships(), searchParams]);
 
   const username =
     typeof user.user_metadata.username === "string"
@@ -38,7 +28,6 @@ export default async function ProfilePage({
   const { avatarUrl } = accountProfile(user);
   const organizer = memberships.some((item) => canManage(item.role));
   const status = typeof query.status === "string" ? query.status : "";
-  const figma = typeof query.figma === "string" ? query.figma : "";
 
   const statusMessages: Record<string, { tone: "success" | "error" | "neutral"; text: string }> = {
     saved: { tone: "success", text: "Profile updated successfully." },
@@ -56,16 +45,6 @@ export default async function ProfilePage({
     error: { tone: "error", text: "The profile could not be saved." },
   };
 
-  const figmaErrors: Record<string, string> = {
-    "not-configured": "The Figma server configuration is incomplete.",
-    "invalid-state": "The Figma connection session changed. Please reconnect.",
-    "missing-code": "Figma did not return an access code.",
-    cancelled: "Figma access was cancelled.",
-    "token-error": "The Figma access code was rejected or has expired.",
-    "profile-error": "PassFlow could not read the connected Figma account.",
-    "database-error": "The connection was accepted but could not be saved.",
-    error: "The Figma connection could not be completed.",
-  };
 
   const profileStatus = statusMessages[status];
 
@@ -84,7 +63,7 @@ export default async function ProfilePage({
             <span className="section-kicker">Account settings</span>
             <KineticText text="Your profile." className="studio-page-title" />
             <TextAnimate className="studio-page-subtitle">
-              Manage your identity, profile photo, and design connections in one place.
+              Manage your identity and profile photo in one place.
             </TextAnimate>
           </div>
           <Sticker kind="smile"/>
@@ -98,21 +77,6 @@ export default async function ProfilePage({
             {profileStatus.text}
           </div>
         )}
-        {figma === "connected" && (
-          <div role="status" className="profile-status-message is-success">
-            Figma account connected successfully.
-          </div>
-        )}
-        {figma === "disconnected" && (
-          <div role="status" className="profile-status-message is-neutral">
-            Figma account disconnected.
-          </div>
-        )}
-        {figma && figmaErrors[figma] && (
-          <div role="alert" className="profile-status-message is-error">
-            {figmaErrors[figma]}
-          </div>
-        )}
 
         <ProfileEditor
             fullName={fullName}
@@ -122,31 +86,6 @@ export default async function ProfilePage({
             organizer={organizer}
           />
 
-        {organizer && <section className="profile-integration-card profile-figma">
-          <div className="profile-figma-row">
-            <div>
-              <span className="section-kicker">For organizers</span>
-              <h2>Figma account</h2>
-              <p className="profile-figma-status" data-connected={connection ? "true" : undefined}>
-                {connection ? `Connected · ${connection.handle ?? connection.email ?? "Figma account"}` : "Not connected"}
-              </p>
-            </div>
-            <div className="profile-integration-actions">
-              {connection ? (
-                <>
-                  <a href="/api/figma/connect" className="button button-ghost">Reconnect</a>
-                  <form action="/api/figma/disconnect" method="post">
-                    <button type="submit" className="button button-ghost text-red-700">Disconnect</button>
-                  </form>
-                </>
-              ) : figmaConfigured() ? (
-                <a href="/api/figma/connect" className="button button-dark">Connect Figma</a>
-              ) : <button type="button" className="button button-dark" disabled title="Figma integration is not available in this environment">Figma unavailable</button>}
-            </div>
-          </div>
-          <p className="profile-figma-note">Used to sync pass, ID card and wristband designs from Figma. Your files stay in Figma; access tokens are stored encrypted.</p>
-          {connectionError && <p role="alert" className="text-sm text-red-700">The Figma connection status could not be loaded. Refresh the page and try again.</p>}
-        </section>}
       </main>
     </div>
   );

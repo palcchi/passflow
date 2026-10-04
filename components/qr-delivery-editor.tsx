@@ -97,9 +97,6 @@ export function QrDeliveryEditor({ event }: { event: PassFlowEvent }) {
           <a className="button button-ghost" href={`/admin/events/${event.id}/wristbands/print`}>
             Preview export
           </a>
-          <a className="button button-dark" href={`/admin/events/${event.id}/export/figma`}>
-            Export Figma
-          </a>
         </div>
       </div>
 
@@ -234,13 +231,6 @@ export function QrDeliveryEditor({ event }: { event: PassFlowEvent }) {
             </div>
           </div>
           <p className="customize-preview-note">{widthMm} × {heightMm} mm · Example QR only, not an active credential.</p>
-          <div className="figma-export-note">
-            <strong>Figma-ready</strong>
-            <span>
-              Event name, theme colors, template, text, and QR placement remain independent so they are easy
-              to refine before final printing.
-            </span>
-          </div>
         </div>
       </div>
     </section>

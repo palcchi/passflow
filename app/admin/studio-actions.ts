@@ -31,16 +31,6 @@ export async function publishStudio(eventId: string, id: string, revision: numbe
   return { success:true };
 }
 
-export async function publishFigmaDraft(eventId:string,id:string) {
-  const {supabase}=await requireOrganizer();
-  const {error}=await supabase.rpc('publish_figma_draft',{p_event_id:eventId,p_id:id});
-  if(error)return {error:'The Figma draft could not be published. Refresh and check your event access.'};
-  revalidatePath(`/admin/events/${eventId}`,'layout');
-  const {data:event}=await supabase.from('events').select('slug').eq('id',eventId).single();
-  if(event)revalidatePath(`/e/${event.slug}`,'layout');
-  return {success:true};
-}
-
 export async function restoreFigmaPublication(eventId:string,id:string){
   const {supabase}=await requireOrganizer();
   const {data,error}=await supabase.rpc('restore_figma_publication',{p_event_id:eventId,p_id:id});
