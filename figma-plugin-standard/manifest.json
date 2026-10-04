@@ -1,14 +1,20 @@
 {
   "name": "PassFlow",
-  "id": "REPLACE_WITH_FIGMA_ASSIGNED_PLUGIN_ID",
+  "id": "1688236057846110459",
   "api": "1.0.0",
   "main": "code.js",
   "ui": "ui.html",
-  "editorType": ["figma"],
+  "editorType": [
+    "figma"
+  ],
   "documentAccess": "dynamic-page",
   "networkAccess": {
-    "allowedDomains": ["https://passflow.my.id"],
-    "devAllowedDomains": ["http://localhost:3000"],
+    "allowedDomains": [
+      "https://passflow.my.id"
+    ],
+    "devAllowedDomains": [
+      "http://localhost:3000"
+    ],
     "reasoning": "Pair an event and sync private design drafts to PassFlow."
   }
 }

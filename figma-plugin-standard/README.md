@@ -36,8 +36,8 @@ Figma assigns a standard plugin ID when a development plugin is created. Keep th
 
 1. Open Figma Desktop.
 2. Go to **Plugins → Development → New plugin / Import plugin from manifest**.
-3. If Figma creates a new plugin first, copy its assigned ID into `manifest.json`.
-4. From the repository root run `node scripts/build-figma-standard.mjs`.
+3. Choose **New plugin → Figma design → Empty**, then copy the numeric ID from the generated `manifest.json` and discard that scaffold.
+4. From the repository root run `node scripts/build-figma-standard.mjs <ID>`. It writes the ID into `manifest.json` and rebuilds `code.js` and the ZIP.
 5. Import `figma-plugin-standard/manifest.json`.
 6. Open any Design file and run **PassFlow** from Development plugins.
 
