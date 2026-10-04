@@ -16,3 +16,9 @@ fieldset.studio-workspace{border:0;padding:0;margin:0;min-width:0}
 .figma-badge-on{background:#e8f6ee;border-color:#bfe5cf;color:#1d7a4a}
 .figma-badge-warn{background:#fdf4e3;border-color:#f1dcae;color:#8a5a0b}
 :root[data-theme="dark"] .figma-badge-on{background:#173326;border-color:#24543b;color:#8fdcb1}:root[data-theme="dark"] .figma-badge-warn{background:#3a2c12;border-color:#5c4518;color:#f0c674}
+
+.figma-hover,.figma-hover *{transition:background-color var(--hm) var(--he),color var(--hm) var(--he),border-color var(--hm) var(--he),opacity var(--hm) var(--he)}
+.figma-hover:hover{background-color:var(--hb)!important;opacity:var(--ho)!important}
+.figma-hover[data-hs]:hover{border-color:var(--hs)!important}
+.figma-hover[data-hc]:hover,.figma-hover[data-hc]:hover *{color:var(--hc)!important}
+@media(prefers-reduced-motion:reduce){.figma-hover,.figma-hover *{transition:none}}

@@ -26,7 +26,7 @@ export function FigmaPairingPanel({eventId,connections,versions,ready,now}:{even
     <section className="event-admin-section">
       <span className="section-kicker">Website from Figma</span>
       <h2>Design your event website in Figma.</h2>
-      <p>Pick a starter style in the PassFlow plugin, edit it freely, and it syncs to a private draft. Nothing goes live until you publish here.</p>
+      <p>Figma is your website: every word, color and hover effect. PassFlow runs sign-up, live tickets and QR passes. Edits sync to a private draft and nothing goes live until you publish here.</p>
       <ol className="figma-steps">
         <li>
           <strong>Install the PassFlow plugin</strong>
@@ -42,8 +42,8 @@ export function FigmaPairingPanel({eventId,connections,versions,ready,now}:{even
           {!ready&&<span role="status">Pairing is not available on this server yet. Ask the PassFlow admin to finish the server setup.</span>}
         </li>
         <li>
-          <strong>Choose a style and edit</strong>
-          <span>Minimal, Editorial or Festival. Each comes with a sticky navbar, tickets, schedule, speakers, venue and FAQ.</span>
+          <strong>Design everything in Figma</strong>
+          <span>Start Blank, Minimal or Festival. Type your own text; links and hover effects come from Figma prototype interactions. Mark your Register button in the plugin.</span>
         </li>
         <li>
           <strong>Preview and publish</strong>

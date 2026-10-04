@@ -30,6 +30,9 @@ function Frame({frame,data,preview,prefix}:{frame:WebsiteFrame;data:WebsiteData;
 
   const nav=(children.get(null)??[]).find(n=>n.sticky&&n.x<=1&&n.y<=1&&n.width>=frame.width-1);
   const anchorOffset=nav?(nav.height/frame.width*100)+'cqw':undefined;
+  // Text is typed in Figma now, so the largest body text becomes the page <h1> unless eventName is bound.
+  const inNavTree=(n:WebsiteNode)=>{let top=n;while(top.parentId){const p=frame.nodes.find(x=>x.id===top.parentId);if(!p)break;top=p;}return top===nav;};
+  const headingId=frame.nodes.some(n=>n.binding==='eventName'&&!inNavTree(n))?null:frame.nodes.filter(n=>n.type==='text'&&!n.binding&&!inNavTree(n)).sort((a,b)=>b.fontSize-a.fontSize)[0]?.id??null;
 
   function render(n:WebsiteNode,parentWidth:number,parentHeight:number,inNav=false):ReactNode{
     const nested=children.get(n.id)?.map(c=>render(c,n.width,n.height,inNav));
@@ -59,9 +62,12 @@ function Frame({frame,data,preview,prefix}:{frame:WebsiteFrame;data:WebsiteData;
       whiteSpace:'pre-wrap',
       overflow:'hidden',
       lineHeight:n.lineHeight,
-      scrollMarginTop:anchorOffset
-    };
-    const id=['tickets','schedule','speakers','sponsors','venueMap'].includes(n.binding??'')?prefix+'-'+n.binding:undefined;
+      scrollMarginTop:anchorOffset,
+      ...(n.hover?{'--hb':n.hover.fill,'--hc':n.hover.color,'--hs':n.hover.stroke,'--ho':n.hover.opacity,'--hm':n.hover.ms+'ms','--he':n.hover.ease}:{})
+    } as CSSProperties;
+    // Hover comes from a Figma "While hovering → Change to" variant; CSS vars carry the target state.
+    const hover=n.hover?{className:'figma-hover','data-hc':n.hover.color?'':undefined,'data-hs':n.hover.stroke?'':undefined}:{};
+    const id=n.anchor?prefix+'-'+n.anchor:['tickets','schedule','speakers','sponsors','venueMap'].includes(n.binding??'')?prefix+'-'+n.binding:undefined;
     const value=n.binding&&n.binding in values?values[n.binding]:n.text;
 
     if(n.binding==='logo'||n.binding==='banner'){
@@ -114,24 +120,30 @@ function Frame({frame,data,preview,prefix}:{frame:WebsiteFrame;data:WebsiteData;
       const href=n.binding==='customLink'
         ? (n.href.startsWith('#')?'#'+prefix+'-'+n.href.slice(1):n.href)
         : data.claimUrl;
-      const label=n.binding==='register'
+      // Buttons designed in Figma keep their own layers; drafts from before v3 have none, so fall back to a label.
+      const label=nested?.length?nested:n.binding==='register'&&!n.text
         ? data.ctaLabel
-        : n.binding==='myPass'
+        : n.binding==='myPass'&&!n.text
           ? 'View my pass'
           : value;
+      const external=n.binding==='customLink'&&!n.href.startsWith('#');
       return <a
         key={n.id}
+        id={id}
+        {...hover}
         href={preview?undefined:href}
         aria-disabled={preview}
-        style={{...style,display:'flex',alignItems:'center',justifyContent:n.align==='left'?'flex-start':n.align==='right'?'flex-end':'center'}}
+        target={external&&!preview?'_blank':undefined}
+        rel={external?'noopener noreferrer':undefined}
+        style={nested?.length?style:{...style,display:'flex',alignItems:'center',justifyContent:n.align==='left'?'flex-start':n.align==='right'?'flex-end':'center'}}
       >
         {label}
       </a>;
     }
 
     if(n.type==='image')return n.image?<img key={n.id} src={n.image} alt={n.text} style={{...style,objectFit:'contain'}}/>:null;
-    if(n.binding==='eventName'&&!inNav)return <h1 key={n.id} style={{...style,margin:0}}>{value}</h1>;
-    return <div key={n.id} style={style}>{n.type==='text'?value:nested}</div>;
+    if((n.binding==='eventName'||n.id===headingId)&&!inNav)return <h1 key={n.id} id={id} {...hover} style={{...style,margin:0}}>{value}</h1>;
+    return <div key={n.id} id={id} {...hover} style={style}>{n.type==='text'?value:nested}</div>;
   }
 
   return <div className="figma-live-frame" style={{aspectRatio:frame.width+'/'+frame.height,background:frame.background}}>

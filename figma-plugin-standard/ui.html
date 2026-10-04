@@ -47,11 +47,11 @@ button.link:hover:not(:disabled){background:none;color:var(--ink)}
 .preview .big{font-weight:800;font-size:17px;line-height:1;letter-spacing:-.04em}
 .preview .pill{height:8px;width:30px;border-radius:999px}
 .minimal .preview{background:#fff;color:#242421}.minimal .bar{background:#e6e5df}.minimal .pill{background:#242421}
-.editorial .preview{background:#f4f1ea;color:#1c1b18}.editorial .big{font:400 18px/1 Georgia,serif;letter-spacing:-.02em}.editorial .bar{background:#d6cebd}.editorial .pill{background:#1f3a5f;border-radius:2px}
+.blank .preview{background:repeating-linear-gradient(45deg,#fff 0 8px,#f5f5f3 8px 16px);color:#b6b5ae;place-items:center;align-content:center}.blank .big{font-weight:300}
 .festival .preview{background:#0f0f10;color:#f6f5f0}.festival .big{font-weight:900;text-transform:uppercase}.festival .bar{background:#c6f432}.festival .pill{background:#ff5c35}
 .style-name{padding:7px 8px;font-size:11px;font-weight:600;border-top:1px solid var(--line)}
 .contract{display:grid;gap:3px;font-size:12px;color:var(--muted);padding:12px 14px;border-radius:14px;background:var(--soft)}
-.contract strong{color:var(--ink);font-weight:600}
+.contract strong{color:var(--ink);font-weight:600}.contract b{color:var(--ink);font-weight:600}
 .toggle{display:flex;align-items:center;justify-content:space-between;gap:12px;cursor:pointer;font-weight:600;font-size:14px}
 .switch{position:relative;width:36px;height:20px;flex:none}
 .switch input{position:absolute;inset:0;opacity:0;margin:0;cursor:pointer}
@@ -93,12 +93,12 @@ footer{position:sticky;bottom:0;background:var(--paper);padding:12px 18px 14px;b
   <section class="step">
     <div class="step-title"><span class="num" id="n2">2</span>Choose a style</div>
     <div class="styles" role="radiogroup" aria-label="Template style">
+      <label class="style blank"><input type="radio" name="style" value="blank"><div class="card"><div class="preview"><div class="big">+</div></div><div class="style-name">Blank</div></div></label>
       <label class="style minimal"><input type="radio" name="style" value="minimal" checked><div class="card"><div class="preview"><div class="bar"></div><div class="big">Aa</div><div class="pill"></div></div><div class="style-name">Minimal</div></div></label>
-      <label class="style editorial"><input type="radio" name="style" value="editorial"><div class="card"><div class="preview"><div class="bar"></div><div class="big">Aa</div><div class="pill"></div></div><div class="style-name">Editorial</div></div></label>
       <label class="style festival"><input type="radio" name="style" value="festival"><div class="card"><div class="preview"><div class="bar"></div><div class="big">Aa</div><div class="pill"></div></div><div class="style-name">Festival</div></div></label>
     </div>
     <button id="template" class="primary">Insert Desktop + Mobile website</button>
-    <p class="hint">Adds editable 1440 and 390 frames with a sticky navbar and 10 sections. Existing artwork stays untouched.</p>
+    <p class="hint" id="styleHint">A sticky navbar and 10 sections with hover buttons. Every word is yours to edit.</p>
   </section>
 
   <section class="step">
@@ -114,9 +114,11 @@ footer{position:sticky;bottom:0;background:var(--paper);padding:12px 18px 14px;b
   </section>
 
   <div class="contract">
-    <strong>Before publishing</strong>
-    <span>Required: Event name and a Register button or Tickets list</span>
-    <span>Recommended: Event date and Venue</span>
+    <strong>How your site works</strong>
+    <span><b>Text and design:</b> exactly what you draw in Figma.</span>
+    <span><b>Links:</b> Prototype → On click → Open link, or Scroll to a section.</span>
+    <span><b>Hover:</b> make the button a component with a Hover variant, then While hovering → Change to.</span>
+    <span><b>Register:</b> select your button → Advanced → Register button. Needed before publishing.</span>
   </div>
 
   <hr>
@@ -132,20 +134,10 @@ footer{position:sticky;bottom:0;background:var(--paper);padding:12px 18px 14px;b
     <button id="frame">Use selected frame</button>
     <label class="field">Connect selected layer to
       <select id="binding">
-        <option value="register">Register button</option>
-        <option value="myPass">My Pass button</option>
-        <option value="tickets">Tickets list</option>
-        <option value="schedule">Schedule list</option>
-        <option value="speakers">Speakers grid</option>
-        <option value="sponsors">Sponsors grid</option>
-        <option value="venueMap">Venue map</option>
-        <option value="logo">Event logo</option>
-        <option value="banner">Event banner</option>
-        <option value="eventName">Event name</option>
-        <option value="eventDescription">Event description</option>
-        <option value="eventDate">Event date</option>
-        <option value="venue">Venue name</option>
-        <option value="customLink">Custom link</option>
+        <option value="register">Register button → PassFlow sign-up</option>
+        <option value="myPass">My Pass button → attendee pass</option>
+        <option value="tickets">Live tickets list (prices from PassFlow)</option>
+        <option value="customLink">Custom link (if not using Prototype)</option>
       </select>
     </label>
     <label class="field" id="hrefWrap" hidden>Link
@@ -189,6 +181,8 @@ function updateStatus(m){
 $('pair').onclick=()=>send({type:'pair',code:$('code').value});
 $('code').onkeydown=e=>{if(e.key==='Enter')send({type:'pair',code:$('code').value})};
 $('template').onclick=()=>send({type:'template',style:style()});
+const styleHints={blank:'Empty Desktop 1440 and Mobile 390 frames. Draw anything, then mark your Register button.',minimal:'Clean white layout, a sticky navbar and 10 sections with hover buttons. Every word is yours to edit.',festival:'Bold dark layout with loud type and color, a sticky navbar and hover buttons. Every word is yours to edit.'};
+for(const r of document.querySelectorAll('input[name=style]'))r.onchange=()=>{$('styleHint').textContent=styleHints[style()];};
 $('insert').onclick=()=>send({type:'block',block:$('block').value,style:style()});
 $('advancedToggle').onchange=e=>{$('advanced').hidden=!e.target.checked};
 $('binding').onchange=()=>{$('hrefWrap').hidden=$('binding').value!=='customLink'};

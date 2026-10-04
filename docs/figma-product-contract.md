@@ -4,15 +4,20 @@ Authoritative user direction, 28 September 2026. Supersedes the earlier internal
 
 ## Editing experience
 
-- Template-first, freedom-second. Start from a PassFlow event template inside an existing organizer-selected Figma file.
-- Simple Mode: starter templates and Insert PassFlow Block. Advanced Mode: blank start and manual binding assignment.
-- Blocks: Hero, About, Tickets, Schedule, Speakers, Sponsors, Venue, FAQ, CTA, Footer.
+Updated 4 October 2026 (user direction): Figma is the whole frontend; PassFlow is the backend.
+
+- Figma owns all visible content, including text. PassFlow does not inject event name, date, venue or description into a Figma website; organizers type them in Figma.
+- PassFlow owns Register and My Pass actions, the live ticket list (the only live block, because prices and availability change), auth, registration, tickets, credentials, SEO metadata, analytics and publishing.
+- Links and motion come from native Figma prototype interactions, read at sync time:
+  - On click → Open link (https only) becomes a link; On click → Scroll to becomes an in-page anchor.
+  - While hovering / Mouse enter → Change to a component variant becomes a CSS hover (fill, text color, stroke, opacity, duration, easing).
+- Templates: Blank (empty Desktop 1440 and Mobile 390 frames), Minimal and Festival. Starters include a sticky navbar and hover button variants as working examples.
+- The plugin binds only Register, My Pass, live Tickets and a fallback Custom Link. Older text bindings still render for existing drafts.
+- Drafts may sync while incomplete. Publishing requires a Register action or live Tickets list and valid scroll targets.
 - Keep desktop and mobile frames separate, with a documented mobile fallback.
 - Preserve stable, versioned plugin metadata for identity and bindings. Visible layer names are hints, not identifiers; renaming must not break sync.
-- Actions include Register, Tickets, Schedule, My Pass, and validated Custom Link.
-- Produce a structured website with dynamic bindings and actions, not a single flattened PNG.
-- Figma owns visual layout, typography and graphics. PassFlow owns live data, auth, registration, tickets, credentials, dynamic states, SEO, analytics and publishing.
-- Keep the internal editor as Quick Setup/basic theme. The unshipped internal section builder must be revised before release, not promoted as the main flow.
+- Produce a structured website, not a single flattened PNG.
+- Keep the internal editor as Quick Setup/basic theme, not the main flow.
 
 ## Connection and synchronization
 
