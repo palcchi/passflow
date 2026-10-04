@@ -27,3 +27,9 @@ fieldset.studio-workspace{border:0;padding:0;margin:0;min-width:0}
 @keyframes figma-enter-up{from{opacity:0;transform:translateY(6cqw)}}
 @keyframes figma-enter-scale{from{opacity:0;transform:scale(.94)}}
 @supports (animation-timeline:view()){@media(prefers-reduced-motion:no-preference){.figma-enter{animation:figma-enter-fade linear both;animation-timeline:view();animation-range:entry 0% entry 45%}.figma-enter-up{animation-name:figma-enter-up}.figma-enter-scale{animation-name:figma-enter-scale}}}
+.design-live-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-top:14px}
+.design-live-card{display:grid;gap:4px;padding:16px 18px;border:1px solid var(--line);border-radius:18px;background:var(--surface)}
+.design-live-card small{color:var(--muted-text);font-size:12px;text-transform:uppercase;letter-spacing:.08em}
+.design-live-card strong{font-size:16px;letter-spacing:-.01em}
+.design-live-card span{color:var(--muted-text);font-size:14px;line-height:1.45}
+.design-live-card a{text-decoration:underline}

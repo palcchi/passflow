@@ -509,14 +509,6 @@ button, a { -webkit-tap-highlight-color:transparent; }
 }
 
 /* ---------- Profile: Figma account (organizers) ---------- */
-.profile-figma { display:grid; gap:14px; }
-.profile-figma-row { display:flex; align-items:center; justify-content:space-between; gap:18px; flex-wrap:wrap; }
-.profile-figma-row h2 { margin-top:4px; font-size:22px; letter-spacing:-.03em; }
-.profile-figma-status { display:inline-flex; align-items:center; gap:7px; margin-top:4px; font-size:13px; color:var(--muted-foreground); }
-.profile-figma-status::before { content:""; width:7px; height:7px; border-radius:50%; background:var(--border); }
-.profile-figma-status[data-connected]::before { background:#3f9f72; }
-.profile-figma .profile-integration-actions { display:flex; gap:10px; flex-wrap:wrap; }
-.profile-figma-note { font-size:12px; line-height:1.6; color:var(--muted-foreground); max-width:60ch; }
 
 /* ---------- Quick Setup: organizer text, font and corners ---------- */
 .event-public-shell { font-family:var(--event-font, inherit); }
