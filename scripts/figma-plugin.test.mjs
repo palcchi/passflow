@@ -7,11 +7,18 @@ import {readFigmaWebsite,validateFigmaWebsite} from '../lib/figma-website.ts';
 
 test('standard plugin templates serialize into valid desktop/mobile HTML documents',async()=>{
   let count=0;
+  const registry=new Map();
   const states=[];
 
   function node(type){
     const metadata=new Map();
     const n={
+      reactions:[],
+      async setReactionsAsync(r){this.reactions=r;},
+      createInstance(){
+        const clone=src=>{const c=node(src===this?'INSTANCE':src.type);for(const k of ['width','height','layoutMode','primaryAxisSizingMode','counterAxisSizingMode','itemSpacing','paddingTop','paddingRight','paddingBottom','paddingLeft','fills','strokes','strokeWeight','cornerRadius','characters','fontSize','fontName'])if(k in src)c[k]=src[k];for(const ch of src.children)c.appendChild(clone(ch));return c;};
+        const i=clone(this);i.getMainComponentAsync=async()=>this;return i;
+      },
       id:String(++count),
       type,
       name:'Layer',
@@ -62,6 +69,7 @@ test('standard plugin templates serialize into valid desktop/mobile HTML documen
       insertChild(i,child){this.appendChild(child);this.children.splice(this.children.indexOf(child),1);this.children.splice(i,0,child);},
       async exportAsync(){return new Uint8Array([1,2,3]);}
     };
+    registry.set(n.id,n);
     return n;
   }
 
@@ -77,6 +85,9 @@ test('standard plugin templates serialize into valid desktop/mobile HTML documen
     createFrame:()=>node('FRAME'),
     createText:()=>node('TEXT'),
     createEllipse:()=>node('ELLIPSE'),
+    createComponent:()=>node('COMPONENT'),
+    combineAsVariants:(nodes,parent)=>{const set=node('COMPONENT_SET');for(const v of nodes)set.appendChild(v);parent.appendChild(set);return set;},
+    getNodeByIdAsync:async id=>registry.get(id)??null,
     createStar:()=>node('STAR'),
     loadFontAsync:async()=>{},
     viewport:{center:{x:0,y:0},scrollAndZoomIntoView(){}},
@@ -90,7 +101,7 @@ test('standard plugin templates serialize into valid desktop/mobile HTML documen
   const source=fs.readFileSync('figma-plugin-standard/code.ts','utf8');
   const compiled=ts.transpileModule(source,{compilerOptions:{target:ts.ScriptTarget.ES2020,module:ts.ModuleKind.None}}).outputText;
   const context=vm.createContext({figma,__html__:'',setTimeout:()=>1,clearTimeout(){},fetch:()=>{throw Error('Unexpected network request');}});
-  vm.runInContext(compiled+'\nglobalThis.testApi={template,serialize,findFrames,sync};',context);
+  vm.runInContext(compiled+'\nglobalThis.testApi={template,serialize,findFrames,sync,pageTemplate};',context);
 
   await context.testApi.template('minimal');
   const frames=context.testApi.findFrames();
@@ -124,10 +135,7 @@ test('standard plugin templates serialize into valid desktop/mobile HTML documen
   assert.deepEqual(validateFigmaWebsite(document),[]);
   assert.equal(frames.desktop.children.length,11);
   assert.equal(frames.mobile.children.length,11);
-  assert.ok(document.desktop.nodes.some(n=>n.parentId&&n.binding==='eventName'));
-  assert.ok(document.desktop.nodes.some(n=>n.binding==='venueMap'));
-  assert.ok(document.desktop.nodes.some(n=>n.binding==='speakers'));
-  assert.ok(document.desktop.nodes.some(n=>n.binding==='sponsors'));
+  assert.deepEqual([...new Set(document.desktop.nodes.filter(n=>n.binding&&n.binding!=='customLink').map(n=>n.binding))].sort(),['register','tickets'],'only Register and live Tickets are bound');
 
   const before=document.desktop.nodes.filter(n=>n.binding).map(n=>[n.id,n.binding]);
   for(const section of frames.desktop.children)for(const child of section.children)child.name='Entirely renamed';
@@ -138,7 +146,27 @@ test('standard plugin templates serialize into valid desktop/mobile HTML documen
   assert.equal(states.at(-1).state,'Disconnected');
 
   assert.ok(document.desktop.nodes.some(n=>n.sticky&&n.parentId===null),'desktop navbar is sticky');
-  for(const style of ['editorial','festival']){
+  const hoverButton=document.desktop.nodes.find(n=>n.binding==='register'&&n.hover);
+  assert.ok(hoverButton,'register button carries a hover state');
+  assert.equal(hoverButton.hover.ms,180);
+  assert.equal(hoverButton.hover.fill,'#4a4a45');
+  assert.ok(document.desktop.nodes.some(n=>n.binding==='customLink'&&n.href.startsWith('#s')),'nav links scroll to sections');
+  assert.ok(document.desktop.nodes.some(n=>n.anchor),'scroll targets get anchors');
+  assert.ok(document.desktop.nodes.some(n=>n.href==='https://maps.google.com/?q=Jakarta'),'prototype Open link becomes a link');
+  assert.ok(!document.desktop.nodes.some(n=>['eventName','eventDate','venue','eventDescription'].includes(n.binding)),'text is static');
+  await context.testApi.pageTemplate('minimal','ticket');
+  await context.testApi.pageTemplate('minimal','agenda');
+  await assert.rejects(()=>context.testApi.pageTemplate('minimal','claim'),/lowercase/);
+  await assert.rejects(()=>context.testApi.pageTemplate('minimal','agenda'),/already exists/);
+  const all=context.testApi.findFrames();
+  assert.deepEqual(JSON.parse(JSON.stringify(all.pages.map(p=>p.slug).sort())),['agenda','ticket']);
+  const pages=[];
+  for(const p of all.pages){reflow(p.desktop);reflow(p.mobile);pages.push({slug:p.slug,desktop:await context.testApi.serialize(p.desktop,[]),mobile:await context.testApi.serialize(p.mobile,[])});}
+  const multi=readFigmaWebsite({schema:3,source:'figma',desktop:await context.testApi.serialize(all.desktop,[]),mobile:await context.testApi.serialize(all.mobile,[]),pages});
+  assert.ok(multi,'multi-page document parses');
+  assert.deepEqual(validateFigmaWebsite(multi),[]);
+  assert.ok(multi.pages.find(p=>p.slug==='agenda').desktop.nodes.some(n=>n.href==='page:home'),'navbar brand navigates home');
+  for(const style of ['festival']){
     page.children.length=0;
     await context.testApi.template(style);
     const f=context.testApi.findFrames();reflow(f.desktop);reflow(f.mobile);
@@ -146,6 +174,12 @@ test('standard plugin templates serialize into valid desktop/mobile HTML documen
     assert.ok(d,style);
     assert.deepEqual(validateFigmaWebsite(d),[],style);
     assert.ok(d.mobile.nodes.some(n=>n.sticky),style+' mobile navbar is sticky');
-    if(style==='festival')assert.equal(d.desktop.nodes.find(n=>n.binding==='eventName'&&n.fontSize>100).fontWeight,900);
+    if(style==='festival')assert.equal(d.desktop.nodes.find(n=>n.type==='text'&&n.fontSize>100).fontWeight,900);
   }
+  page.children.length=0;
+  await context.testApi.template('blank');
+  const blank=context.testApi.findFrames();
+  const empty=readFigmaWebsite({schema:3,source:'figma',desktop:await context.testApi.serialize(blank.desktop,[]),mobile:await context.testApi.serialize(blank.mobile,[])});
+  assert.ok(empty,'blank frames sync as drafts');
+  assert.match(validateFigmaWebsite(empty).join(' '),/registration action/,'publishing still needs a Register button');
 });

@@ -2,6 +2,7 @@ import { WebsiteRenderer } from "@/components/studio-renderer";
 import { readStudioDocument } from "@/lib/studio/model";
 import {readFigmaWebsite} from '@/lib/figma-website';
 import {FigmaWebsiteRenderer} from '@/components/figma-website-renderer';
+import {figmaWebsiteData} from '@/lib/figma-published';
 import {getAppOrigin} from '@/lib/supabase/config';
 import type { CSSProperties } from "react";
 import Link from "next/link";
@@ -23,7 +24,6 @@ import { Sticker } from "@/components/flow-brand-art";
 import { KineticText } from "@/components/magicui/kinetic-text";
 import { FlowMark } from "@/components/flow-art";
 import { eventInk } from "@/lib/event-colors";
-import {readWebsiteContent} from '@/lib/event-website-content';
 import type {Metadata} from 'next';
 
 type EventPageProps = {
@@ -76,10 +76,7 @@ export default async function PublicEventPage({ params }: EventPageProps) {
   const { data: website } = supabase ? await supabase.from("event_studio_documents").select("document").eq("event_id",event.id).eq("kind","website").eq("status","published").is("ticket_type_id",null).maybeSingle() : {data:null};
   const websiteDocument = readStudioDocument(website?.document);
   const figmaWebsite=readFigmaWebsite(website?.document);
-  if(figmaWebsite){
-    const [tickets,content]=supabase?await Promise.all([supabase.from('ticket_types').select('id,name,price,currency').eq('event_id',event.id),supabase.from('event_website_content').select('content').eq('event_id',event.id).maybeSingle()]):[{data:[]},{data:null}];
-    return <main><FigmaWebsiteRenderer document={figmaWebsite} data={{name:event.name,description:event.description,date:event.dateLabel,venue:event.venue,logo:event.logoUrl??undefined,banner:event.heroImageUrl??event.posterUrl??undefined,claimUrl:`${getAppOrigin()??''}/e/${event.slug}/claim`,ctaLabel,tickets:tickets.data??[],...readWebsiteContent(content.data?.content)}}/></main>;
-  }
+  if(figmaWebsite&&supabase)return <main><FigmaWebsiteRenderer document={figmaWebsite} data={await figmaWebsiteData(supabase,event,ctaLabel)}/></main>;
   if(websiteDocument) return <main><WebsiteRenderer document={websiteDocument} data={{event_name:event.name,event_date:event.dateLabel,venue:event.venue,description:event.description,banner:event.heroImageUrl??'',logo:event.logoUrl??''}} claimUrl={`/e/${event.slug}/claim`}/></main>;
   const { data: eventDesign } = supabase ? await supabase.from("event_designs").select("name,preview_url,template")
     .eq("event_id", event.id).eq("status", "published").eq("kind", "event_page").is("ticket_type_id", null).order("updated_at", { ascending: false }).limit(1).maybeSingle() : { data: null };

@@ -56,18 +56,15 @@ async function font(wanted, fallback) {
 }
 async function theme(style) {
     const body = await font(inter('Regular'), inter('Regular')), bodyMedium = await font(inter('Medium'), body), bodyBold = await font(inter('Semi Bold'), body);
-    if (style === 'editorial')
-        return { bg: '#f4f1ea', surface: '#fbf9f4', alt: '#ebe6da', ink: '#1c1b18', muted: '#6f6a5f', accent: '#1f3a5f', accentInk: '#ffffff', kicker: '#a4482f', line: '#d6cebd', radius: 8, buttonRadius: 6,
-            display: await font({ family: 'Playfair Display', style: 'Regular' }, inter('Light')), body, bodyMedium, bodyBold, upper: false, tracking: -1, heroSize: [96, 46], stickers: ['#e2553f', '#f2b544'] };
     if (style === 'festival')
-        return { bg: '#0f0f10', surface: '#1c1c1f', alt: '#161618', ink: '#f6f5f0', muted: '#a3a29b', accent: '#ff5c35', accentInk: '#0f0f10', kicker: '#c6f432', line: '#2e2e33', radius: 28, buttonRadius: 999,
+        return { bg: '#0f0f10', surface: '#1c1c1f', alt: '#161618', ink: '#f6f5f0', muted: '#a3a29b', accent: '#ff5c35', accentInk: '#0f0f10', accentHover: '#ff8a66', kicker: '#c6f432', line: '#2e2e33', radius: 28, buttonRadius: 999,
             display: await font(inter('Black'), inter('Bold')), body, bodyMedium, bodyBold, upper: true, tracking: -3, heroSize: [132, 54], stickers: ['#ff5c35', '#c6f432', '#7c5cff'] };
-    return { bg: '#ffffff', surface: '#ffffff', alt: '#f5f5f3', ink: '#242421', muted: '#74736d', accent: '#242421', accentInk: '#ffffff', kicker: '#74736d', line: '#e6e5df', radius: 24, buttonRadius: 999,
+    return { bg: '#ffffff', surface: '#ffffff', alt: '#f5f5f3', ink: '#242421', muted: '#74736d', accent: '#242421', accentInk: '#ffffff', accentHover: '#4a4a45', kicker: '#74736d', line: '#e6e5df', radius: 24, buttonRadius: 999,
         display: await font(inter('Bold'), bodyBold), body, bodyMedium, bodyBold, upper: false, tracking: -3, heroSize: [96, 46], stickers: ['#ff6b4a', '#4f7cff', '#ffc93c'] };
 }
-function box(name, dir, o = {}) {
+function box(name, dir, o = {}, node) {
     var _a, _b, _c, _d, _e;
-    const f = figma.createFrame();
+    const f = (node !== null && node !== void 0 ? node : figma.createFrame());
     f.name = name;
     f.layoutMode = dir;
     f.primaryAxisSizingMode = 'AUTO';
@@ -93,18 +90,18 @@ function box(name, dir, o = {}) {
 function fillW(node, width) {
     node.resize(Math.max(1, width), Math.max(1, node.height));
     node.layoutSizingHorizontal = 'FILL';
-    if (node.type === 'FRAME')
-        node.layoutSizingVertical = 'HUG';
-    else
+    if (node.type === 'TEXT')
         node.textAutoResize = 'HEIGHT';
+    else
+        node.layoutSizingVertical = 'HUG';
 }
 function fixW(node, width) {
     node.resize(Math.max(1, width), Math.max(1, node.height));
     node.layoutSizingHorizontal = 'FIXED';
-    if (node.type === 'FRAME')
-        node.layoutSizingVertical = 'HUG';
-    else
+    if (node.type === 'TEXT')
         node.textAutoResize = 'HEIGHT';
+    else
+        node.layoutSizingVertical = 'HUG';
 }
 function txt(parent, chars, o) {
     const n = figma.createText();
@@ -122,24 +119,99 @@ function txt(parent, chars, o) {
         n.opacity = o.opacity;
     parent.appendChild(n);
     n.textAutoResize = 'WIDTH_AND_HEIGHT';
-    if (o.binding)
-        bind(n, o.binding, o.href);
     return n;
 }
-function button(parent, t, label, kind, binding, href, size) {
-    const fill = kind === 'primary' ? t.accent : kind === 'inverse' ? t.accentInk : undefined;
-    const ink = kind === 'primary' ? t.accentInk : kind === 'inverse' ? t.accent : t.ink;
-    const b = box(label, 'HORIZONTAL', { fill, stroke: kind === 'secondary' ? t.ink : undefined, pad: [Math.round(size * 0.85), Math.round(size * 1.5)], radius: t.buttonRadius, align: 'CENTER', cross: 'CENTER' });
-    parent.appendChild(b);
-    txt(b, label, { size, font: t.bodyBold, color: ink });
-    bind(b, binding, href);
-    return b;
+function firstText(node) {
+    if (node.type === 'TEXT')
+        return node;
+    if ('children' in node)
+        for (const child of node.children) {
+            const found = firstText(child);
+            if (found)
+                return found;
+        }
+    return null;
 }
-function chip(parent, t, label, binding, fill, ink) {
-    const c = box(label, 'HORIZONTAL', { fill, stroke: fill === t.bg ? t.line : undefined, pad: [9, 16], radius: t.buttonRadius, cross: 'CENTER' });
-    parent.appendChild(c);
-    txt(c, label, { size: 14, font: t.bodyMedium, color: ink, binding });
-    return c;
+const ease = { type: 'EASE_OUT' };
+// Buttons are a component set (State=Default/Hover) wired with "While hovering → Change to",
+// the same native pattern designers use; PassFlow turns it into a CSS hover.
+async function buttons(t, style, x, y) {
+    const make = (kind, state) => {
+        const hover = state === 'Hover';
+        const fill = kind === 'primary' ? (hover ? t.accentHover : t.accent) : kind === 'inverse' ? (hover ? t.alt : t.accentInk) : (hover ? t.ink : undefined);
+        const ink = kind === 'primary' ? t.accentInk : kind === 'inverse' ? t.accent : (hover ? t.bg : t.ink);
+        const c = box('State=' + state, 'HORIZONTAL', { fill, stroke: kind === 'secondary' ? t.ink : undefined, pad: [15, 26], radius: t.buttonRadius, align: 'CENTER', cross: 'CENTER' }, figma.createComponent());
+        figma.currentPage.appendChild(c);
+        txt(c, 'Button', { size: 17, font: t.bodyBold, color: ink });
+        return c;
+    };
+    const result = {};
+    let offset = 0;
+    for (const kind of ['primary', 'secondary', 'inverse']) {
+        const name = 'PassFlow ' + style + ' · ' + kind + ' button';
+        const existing = figma.currentPage.children.find(n => n.type === 'COMPONENT_SET' && n.name === name);
+        const reuse = existing === null || existing === void 0 ? void 0 : existing.children.find(n => n.type === 'COMPONENT' && n.name === 'State=Default');
+        if (reuse) {
+            result[kind] = reuse;
+            continue;
+        }
+        const base = make(kind, 'Default'), hover = make(kind, 'Hover');
+        await base.setReactionsAsync([{ trigger: { type: 'ON_HOVER' }, actions: [{ type: 'NODE', destinationId: hover.id, navigation: 'CHANGE_TO', transition: { type: 'SMART_ANIMATE', easing: ease, duration: .18 } }] }]);
+        const set = figma.combineAsVariants([base, hover], figma.currentPage);
+        set.name = name;
+        set.layoutMode = 'HORIZONTAL';
+        set.itemSpacing = 16;
+        set.paddingTop = 16;
+        set.paddingBottom = 16;
+        set.paddingLeft = 16;
+        set.paddingRight = 16;
+        set.x = x;
+        set.y = y + offset;
+        offset += 110;
+        result[kind] = base;
+    }
+    return result;
+}
+function button(parent, b, label, kind, size) {
+    const i = b[kind].createInstance();
+    parent.appendChild(i);
+    const text = firstText(i);
+    if (text) {
+        text.characters = label;
+        text.fontSize = size;
+    }
+    if (size < 16) {
+        i.paddingTop = 10;
+        i.paddingBottom = 10;
+        i.paddingLeft = 18;
+        i.paddingRight = 18;
+    }
+    return i;
+}
+function register(node) {
+    node.setSharedPluginData(NS, 'binding', 'register');
+    node.setSharedPluginData(NS, 'schema', SCHEMA);
+    if (!node.getSharedPluginData(NS, 'id'))
+        node.setSharedPluginData(NS, 'id', node.id);
+}
+// Marks a layer that should "Scroll to" a section; wired once the target section exists.
+function scrollTo(node, block) { node.setSharedPluginData(NS, 'scrollTo', block); }
+async function wireScrolls(frame) {
+    const targets = new Map(frame.children.map(c => [c.getSharedPluginData(NS, 'block'), c]));
+    const visit = async (node) => {
+        const target = targets.get(node.getSharedPluginData(NS, 'scrollTo'));
+        if (target && 'setReactionsAsync' in node)
+            await node.setReactionsAsync([{ trigger: { type: 'ON_CLICK' }, actions: [{ type: 'NODE', destinationId: target.id, navigation: 'SCROLL_TO', transition: { type: 'SMART_ANIMATE', easing: ease, duration: .4 } }] }]);
+        if ('children' in node)
+            for (const child of node.children)
+                await visit(child);
+    };
+    for (const child of frame.children)
+        await visit(child);
+}
+async function openLink(node, url) {
+    if ('setReactionsAsync' in node)
+        await node.setReactionsAsync([{ trigger: { type: 'ON_CLICK' }, actions: [{ type: 'URL', url, openInNewTab: true }] }]);
 }
 function sticker(parent, kind, color, size, x, y) {
     const s = kind === 'star' ? figma.createStar() : figma.createEllipse();
@@ -165,8 +237,16 @@ function card(parent, t, name, width, dir = 'VERTICAL') {
     fillW(c, width);
     return c;
 }
-async function block(parent, name, style) {
+function chip(parent, t, label, fill, ink) {
+    const c = box(label, 'HORIZONTAL', { fill, stroke: fill === t.bg ? t.line : undefined, pad: [9, 16], radius: t.buttonRadius, cross: 'CENTER' });
+    parent.appendChild(c);
+    txt(c, label, { size: 14, font: t.bodyMedium, color: ink });
+}
+async function block(parent, name, style, b, title = '') {
+    if (style === 'blank')
+        throw Error('Pick Minimal or Festival to insert ready-made sections.');
     const t = await theme(style), w = parent.width, mobile = w < 600, pad = mobile ? 24 : 96, cw = w - pad * 2, D = (s) => t.upper ? s.toUpperCase() : s;
+    b = b !== null && b !== void 0 ? b : await buttons(t, style, parent.x - 420, parent.y);
     if (name === 'Navbar') {
         const nav = box('Navbar', 'HORIZONTAL', { fill: t.bg, pad: [mobile ? 12 : 16, pad], align: 'SPACE_BETWEEN', cross: 'CENTER' });
         parent.insertChild(0, nav);
@@ -174,14 +254,14 @@ async function block(parent, name, style) {
         nav.setSharedPluginData(NS, 'sticky', 'true');
         nav.setSharedPluginData(NS, 'block', 'navbar');
         nav.setSharedPluginData(NS, 'schema', SCHEMA);
-        txt(nav, 'Event name', { size: mobile ? 16 : 18, font: t.bodyBold, color: t.ink, binding: 'eventName' });
-        if (!mobile) {
+        txt(nav, 'Your event', { size: mobile ? 16 : 18, font: t.bodyBold, color: t.ink });
+        if (!mobile && pageOf(parent) === 'home') {
             const links = box('Links', 'HORIZONTAL', { gap: 32, cross: 'CENTER' });
             nav.appendChild(links);
-            for (const [label, target] of [['Tickets', 'tickets'], ['Schedule', 'schedule'], ['Speakers', 'speakers'], ['Venue', 'venueMap']])
-                txt(links, label, { size: 15, font: t.bodyMedium, color: t.muted, binding: 'customLink', href: '#' + target });
+            for (const [label, target] of [['Tickets', 'tickets'], ['Schedule', 'schedule'], ['Speakers', 'speakers'], ['Venue', 'venue']])
+                scrollTo(txt(links, label, { size: 15, font: t.bodyMedium, color: t.muted }), target);
         }
-        button(nav, t, 'Register', 'primary', 'register', '', mobile ? 13 : 14);
+        register(button(nav, b, 'Register', 'primary', mobile ? 13 : 14));
         return;
     }
     const fill = ['Tickets', 'Speakers', 'Venue', 'Footer'].includes(name) ? t.alt : t.bg;
@@ -191,25 +271,31 @@ async function block(parent, name, style) {
     fillW(sec, w);
     sec.setSharedPluginData(NS, 'block', name.toLowerCase());
     sec.setSharedPluginData(NS, 'schema', SCHEMA);
+    if (name === 'Page header') {
+        const ticket = pageOf(parent) === 'ticket';
+        kicker(sec, t, ticket ? 'Tickets' : 'Your event');
+        fillW(txt(sec, D(title), { size: mobile ? 44 : 80, font: t.display, color: t.ink, lh: .98, ls: t.tracking }), cw);
+        fillW(txt(sec, ticket ? 'Choose a pass below. Sign-up takes about a minute.' : 'Write this page in Figma. Link to it from any button with Prototype → Navigate to.', { size: mobile ? 17 : 21, font: t.body, color: t.muted, lh: 1.5 }), cw);
+        return;
+    }
     if (name === 'Hero') {
         const center = style === 'minimal', align = center ? 'CENTER' : 'LEFT';
         if (center)
             sec.counterAxisAlignItems = 'CENTER';
         const meta = box('Event details', 'HORIZONTAL', { gap: 10, cross: 'CENTER' });
         sec.appendChild(meta);
-        chip(meta, t, '27 September 2026', 'eventDate', style === 'festival' ? t.accent : t.bg, style === 'festival' ? t.accentInk : t.ink);
-        chip(meta, t, 'Event venue', 'venue', style === 'festival' ? t.kicker : t.bg, style === 'festival' ? t.accentInk : t.ink);
-        const title = txt(sec, D('Your event starts here'), { size: t.heroSize[mobile ? 1 : 0], font: t.display, color: t.ink, lh: style === 'editorial' ? 1.02 : 0.94, ls: t.tracking, align, binding: 'eventName' });
-        fillW(title, cw);
-        const desc = txt(sec, 'A purposeful gathering. A space for new ideas, new people and a day worth remembering.', { size: mobile ? 17 : 22, font: t.body, color: t.muted, lh: 1.5, align, binding: 'eventDescription' });
+        chip(meta, t, '27 September 2026', style === 'festival' ? t.accent : t.bg, style === 'festival' ? t.accentInk : t.ink);
+        chip(meta, t, 'Jakarta', style === 'festival' ? t.kicker : t.bg, style === 'festival' ? t.accentInk : t.ink);
+        fillW(txt(sec, D('Your event starts here'), { size: t.heroSize[mobile ? 1 : 0], font: t.display, color: t.ink, lh: .94, ls: t.tracking, align }), cw);
+        const desc = txt(sec, 'A purposeful gathering. A space for new ideas, new people and a day worth remembering.', { size: mobile ? 17 : 22, font: t.body, color: t.muted, lh: 1.5, align });
         if (mobile)
             fillW(desc, cw);
         else
             fixW(desc, 640);
         const actions = box('Actions', 'HORIZONTAL', { gap: 12, cross: 'CENTER' });
         sec.appendChild(actions);
-        button(actions, t, 'Register now', 'primary', 'register', '', mobile ? 15 : 17);
-        button(actions, t, 'See schedule', 'secondary', 'customLink', '#schedule', mobile ? 15 : 17);
+        register(button(actions, b, 'Register now', 'primary', mobile ? 15 : 17));
+        scrollTo(button(actions, b, 'See schedule', 'secondary', mobile ? 15 : 17), 'schedule');
         if (!mobile || style === 'festival') {
             const size = mobile ? 34 : 60;
             t.stickers.forEach((c, i) => sticker(sec, i === 1 ? 'star' : 'circle', c, Math.round(size * (i ? 0.7 : 1)), w - pad - size * (1 + i * 1.25), (mobile ? 20 : 64) + i * Math.round(size * 0.55)));
@@ -222,7 +308,7 @@ async function block(parent, name, style) {
         sec.appendChild(row);
         fillW(row, cw);
         const h = txt(row, D('Why this gathering matters'), { size: mobile ? 32 : 48, font: t.display, color: t.ink, lh: 1.05, ls: t.tracking });
-        const p = txt(row, 'Tell people what they will experience, who it is for and why it is worth showing up. Edit this text freely in Figma.', { size: mobile ? 17 : 21, font: t.body, color: t.muted, lh: 1.55 });
+        const p = txt(row, 'Tell people what they will experience, who it is for and why it is worth showing up.', { size: mobile ? 17 : 21, font: t.body, color: t.muted, lh: 1.55 });
         if (mobile) {
             fillW(h, cw);
             fillW(p, cw);
@@ -233,19 +319,29 @@ async function block(parent, name, style) {
         }
         return;
     }
-    if (name === 'Tickets' || name === 'Schedule') {
-        const tickets = name === 'Tickets';
-        kicker(sec, t, tickets ? 'Tickets' : 'Schedule');
-        heading(sec, t, tickets ? 'Choose your pass' : 'How the day unfolds', mobile, cw);
-        const list = box(tickets ? 'Live tickets' : 'Live schedule', 'VERTICAL', { gap: 10 });
+    if (name === 'Tickets') {
+        kicker(sec, t, 'Tickets');
+        heading(sec, t, 'Choose your pass', mobile, cw);
+        // The only live block: prices and availability come from PassFlow.
+        const list = box('Live tickets · from PassFlow', 'VERTICAL', { gap: 10 });
         sec.appendChild(list);
         fillW(list, cw);
-        bind(list, tickets ? 'tickets' : 'schedule');
-        const rows = tickets ? [['Early bird', 'IDR 150,000'], ['Regular', 'IDR 250,000'], ['VIP', 'IDR 500,000']] : [['09:00', 'Doors open'], ['10:00', 'Opening keynote'], ['13:00', 'Sessions and workshops']];
-        for (const [a, b] of rows) {
-            const c = card(list, t, a, cw, 'HORIZONTAL');
-            txt(c, tickets ? a : b, { size: mobile ? 16 : 18, font: t.bodyBold, color: t.ink });
-            txt(c, tickets ? b : a, { size: mobile ? 15 : 16, font: t.body, color: t.muted });
+        bind(list, 'tickets');
+        for (const [a, c] of [['Early bird', 'IDR 150,000'], ['Regular', 'IDR 250,000'], ['VIP', 'IDR 500,000']]) {
+            const row = card(list, t, a, cw, 'HORIZONTAL');
+            txt(row, a, { size: mobile ? 16 : 18, font: t.bodyBold, color: t.ink });
+            txt(row, c, { size: mobile ? 15 : 16, font: t.body, color: t.muted });
+        }
+        txt(sec, 'Live ticket names, prices and availability replace these placeholders.', { size: 13, font: t.body, color: t.muted });
+        return;
+    }
+    if (name === 'Schedule') {
+        kicker(sec, t, 'Schedule');
+        heading(sec, t, 'How the day unfolds', mobile, cw);
+        for (const [time, title] of [['09:00', 'Doors open'], ['10:00', 'Opening keynote'], ['13:00', 'Sessions and workshops'], ['17:00', 'Closing and networking']]) {
+            const row = card(sec, t, title, cw, 'HORIZONTAL');
+            txt(row, title, { size: mobile ? 16 : 18, font: t.bodyBold, color: t.ink });
+            txt(row, time, { size: mobile ? 15 : 16, font: t.body, color: t.muted });
         }
         return;
     }
@@ -255,7 +351,6 @@ async function block(parent, name, style) {
         const grid = box('Speaker grid', mobile ? 'VERTICAL' : 'HORIZONTAL', { gap: 16 });
         sec.appendChild(grid);
         fillW(grid, cw);
-        bind(grid, 'speakers');
         const cardW = mobile ? cw : (cw - 32) / 3;
         for (let i = 0; i < 3; i++) {
             const c = card(grid, t, 'Speaker ' + (i + 1), cardW);
@@ -274,8 +369,7 @@ async function block(parent, name, style) {
         const row = box('Sponsor logos', 'HORIZONTAL', { gap: 12 });
         sec.appendChild(row);
         fillW(row, cw);
-        bind(row, 'sponsors');
-        const n = mobile ? 3 : 4, tileW = (cw - 12 * (n - 1)) / n;
+        const n = mobile ? 2 : 4, tileW = (cw - 12 * (n - 1)) / n;
         for (let i = 0; i < n; i++) {
             const c = card(row, t, 'Sponsor ' + (i + 1), tileW);
             txt(c, 'Logo', { size: 15, font: t.bodyMedium, color: t.muted });
@@ -294,19 +388,16 @@ async function block(parent, name, style) {
         else
             fixW(left, leftW);
         kicker(left, t, 'Venue');
-        const h = txt(left, D('Getting there'), { size: mobile ? 34 : 56, font: t.display, color: t.ink, lh: 1.04, ls: t.tracking });
-        fillW(h, leftW);
-        const v = txt(left, 'Event venue', { size: mobile ? 19 : 22, font: t.bodyBold, color: t.ink, binding: 'venue' });
-        fillW(v, leftW);
-        const note = txt(left, 'Arrival details, entrances and accessibility notes can live here.', { size: 16, font: t.body, color: t.muted, lh: 1.5 });
-        fillW(note, leftW);
-        const map = box('Venue map', 'VERTICAL', { fill: t.surface, stroke: t.line, radius: t.radius, align: 'CENTER', cross: 'CENTER' });
+        fillW(txt(left, D('Getting there'), { size: mobile ? 34 : 56, font: t.display, color: t.ink, lh: 1.04, ls: t.tracking }), leftW);
+        fillW(txt(left, 'Venue name, City', { size: mobile ? 19 : 22, font: t.bodyBold, color: t.ink }), leftW);
+        fillW(txt(left, 'Arrival details, entrances and accessibility notes can live here.', { size: 16, font: t.body, color: t.muted, lh: 1.5 }), leftW);
+        await openLink(button(left, b, 'Open in Maps', 'secondary', 15), 'https://maps.google.com/?q=Jakarta');
+        const map = box('Map artwork', 'VERTICAL', { fill: t.surface, stroke: t.line, radius: t.radius, align: 'CENTER', cross: 'CENTER' });
         row.appendChild(map);
         map.resize(mobile ? cw : cw - leftW - 48, mobile ? 220 : 320);
         map.layoutSizingHorizontal = 'FILL';
         map.layoutSizingVertical = 'FIXED';
-        bind(map, 'venueMap');
-        txt(map, 'Open in Maps', { size: 16, font: t.bodyBold, color: t.ink });
+        txt(map, 'Place a map image here', { size: 15, font: t.body, color: t.muted });
         return;
     }
     if (name === 'FAQ') {
@@ -326,52 +417,137 @@ async function block(parent, name, style) {
         fillW(c, cw);
         fillW(txt(c, D('Ready to be there?'), { size: mobile ? 36 : 64, font: t.display, color: t.accentInk, lh: 1.02, ls: t.tracking, align: 'CENTER' }), cw - inner * 2);
         fillW(txt(c, 'Seats are limited. Secure your pass in a minute.', { size: mobile ? 16 : 19, font: t.body, color: t.accentInk, opacity: .75, align: 'CENTER' }), cw - inner * 2);
-        button(c, t, 'Register now', 'inverse', 'register', '', mobile ? 15 : 17);
+        register(button(c, b, 'Register now', 'inverse', mobile ? 15 : 17));
         return;
     }
     if (name === 'Footer') {
         const row = box('Footer row', mobile ? 'VERTICAL' : 'HORIZONTAL', { gap: 8, align: mobile ? 'MIN' : 'SPACE_BETWEEN', cross: mobile ? 'MIN' : 'CENTER' });
         sec.appendChild(row);
         fillW(row, cw);
+        txt(row, '© 2026 Your event', { size: 14, font: t.body, color: t.muted });
         txt(row, 'Made with PassFlow', { size: 14, font: t.body, color: t.muted });
-        txt(row, '27 September 2026', { size: 14, font: t.body, color: t.muted, binding: 'eventDate' });
     }
 }
 async function template(style) {
-    const t = await theme(style), created = [];
+    var _a;
+    const t = style === 'blank' ? null : await theme(style), created = [];
+    const origin = { x: Math.round(figma.viewport.center.x - 980), y: Math.round(figma.viewport.center.y) };
+    const b = t ? await buttons(t, style, origin.x - 420, origin.y) : undefined;
     for (const role of ['desktop', 'mobile']) {
         const frame = figma.createFrame();
         figma.currentPage.appendChild(frame);
         frame.name = 'PassFlow Website · ' + (role === 'desktop' ? 'Desktop 1440' : 'Mobile 390');
-        frame.resize(role === 'desktop' ? 1440 : 390, 100);
-        frame.layoutMode = 'VERTICAL';
-        frame.primaryAxisSizingMode = 'AUTO';
-        frame.counterAxisSizingMode = 'FIXED';
-        frame.itemSpacing = 0;
-        frame.fills = [solid(t.bg)];
+        frame.fills = [solid((_a = t === null || t === void 0 ? void 0 : t.bg) !== null && _a !== void 0 ? _a : '#ffffff')];
         frame.setSharedPluginData(NS, 'frame', role);
         frame.setSharedPluginData(NS, 'documentId', documentId);
         frame.setSharedPluginData(NS, 'schema', SCHEMA);
         frame.setSharedPluginData(NS, 'templateStyle', style);
-        for (const name of blocks)
-            await block(frame, name, style);
-        frame.x = figma.viewport.center.x + (role === 'desktop' ? -980 : 620);
-        frame.y = figma.viewport.center.y;
+        if (t && b) {
+            frame.resize(role === 'desktop' ? 1440 : 390, 100);
+            frame.layoutMode = 'VERTICAL';
+            frame.primaryAxisSizingMode = 'AUTO';
+            frame.counterAxisSizingMode = 'FIXED';
+            frame.itemSpacing = 0;
+            for (const name of blocks)
+                await block(frame, name, style, b);
+            await wireScrolls(frame);
+        }
+        else
+            frame.resize(role === 'desktop' ? 1440 : 390, role === 'desktop' ? 1024 : 844);
+        frame.x = origin.x + (role === 'desktop' ? 0 : 1600);
+        frame.y = origin.y;
         created.push(frame);
     }
     figma.currentPage.selection = created;
     figma.viewport.scrollAndZoomIntoView(created);
     dirty = true;
-    status('Changes detected', 'Starter ' + style + ' template inserted. Rename layers freely; bindings live in metadata.');
+    status('Changes detected', style === 'blank' ? 'Blank Desktop and Mobile frames are ready. Design freely, then mark a Register button.' : 'Starter ' + style + ' website inserted. Edit any text; links and hovers come from Figma prototype interactions.');
+    selectionState();
+}
+const reservedPages = ['home', 'claim', 'calendar', 'opengraph-image', 'admin', 'api', 'e'];
+const pageSlugOk = (v) => /^[a-z0-9](?:[a-z0-9-]{0,38}[a-z0-9])?$/.test(v) && !reservedPages.includes(v);
+const pageOf = (n) => ('getSharedPluginData' in n ? n.getSharedPluginData(NS, 'page') : '') || 'home';
+function eventFrames() {
+    return figma.currentPage.children.filter(n => n.type === 'FRAME' && n.getSharedPluginData(NS, 'documentId') === documentId);
+}
+// Home is required; extra pages ("ticket" or custom slugs) each need a Desktop frame and may have a Mobile one.
+async function pageTemplate(style, slug) {
+    var _a;
+    if (!pageSlugOk(slug))
+        throw Error('Name the page in lowercase, like ticket, agenda or faq.');
+    const frames = eventFrames();
+    if (frames.some(f => pageOf(f) === slug))
+        throw Error('The "' + slug + '" page already exists on this Figma page.');
+    const t = style === 'blank' ? null : await theme(style);
+    const top = Math.round(Math.max(figma.viewport.center.y, ...frames.map(f => f.y + f.height)) + 200);
+    const left = Math.round(frames.length ? Math.min(...frames.map(f => f.x)) : figma.viewport.center.x - 980);
+    const b = t ? await buttons(t, style, left - 420, top) : undefined;
+    const title = slug === 'ticket' ? 'Get your pass' : slug.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+    const created = [];
+    for (const role of ['desktop', 'mobile']) {
+        const frame = figma.createFrame();
+        figma.currentPage.appendChild(frame);
+        frame.name = 'PassFlow ' + (slug === 'ticket' ? 'Ticket page' : 'Page · ' + slug) + ' · ' + (role === 'desktop' ? 'Desktop 1440' : 'Mobile 390');
+        frame.fills = [solid((_a = t === null || t === void 0 ? void 0 : t.bg) !== null && _a !== void 0 ? _a : '#ffffff')];
+        frame.setSharedPluginData(NS, 'frame', role);
+        frame.setSharedPluginData(NS, 'page', slug);
+        frame.setSharedPluginData(NS, 'documentId', documentId);
+        frame.setSharedPluginData(NS, 'schema', SCHEMA);
+        frame.setSharedPluginData(NS, 'templateStyle', style);
+        if (t && b) {
+            frame.resize(role === 'desktop' ? 1440 : 390, 100);
+            frame.layoutMode = 'VERTICAL';
+            frame.primaryAxisSizingMode = 'AUTO';
+            frame.counterAxisSizingMode = 'FIXED';
+            frame.itemSpacing = 0;
+            await block(frame, 'Navbar', style, b);
+            await block(frame, 'Page header', style, b, title);
+            if (slug !== 'ticket')
+                await block(frame, 'Footer', style, b);
+            // The event name in the navbar goes back to Home, using Figma's own Navigate to.
+            const home = frames.find(f => pageOf(f) === 'home' && f.getSharedPluginData(NS, 'frame') === role), brand = firstText(frame.children[0]);
+            if (home && brand)
+                await brand.setReactionsAsync([{ trigger: { type: 'ON_CLICK' }, actions: [{ type: 'NODE', destinationId: home.id, navigation: 'NAVIGATE', transition: null }] }]);
+        }
+        else
+            frame.resize(role === 'desktop' ? 1440 : 390, slug === 'ticket' ? 480 : role === 'desktop' ? 1024 : 844);
+        frame.x = left + (role === 'desktop' ? 0 : 1600);
+        frame.y = top;
+        created.push(frame);
+    }
+    figma.currentPage.selection = created;
+    figma.viewport.scrollAndZoomIntoView(created);
+    dirty = true;
+    status('Changes detected', slug === 'ticket' ? 'Ticket page added. It shows above the PassFlow sign-up form.' : '"' + slug + '" page added at /e/your-event/' + slug + '. Link to it with Prototype → Navigate to.');
     selectionState();
 }
 function findFrames() {
-    const all = figma.currentPage.children.filter(n => n.type === 'FRAME' && n.getSharedPluginData(NS, 'documentId') === documentId);
-    const desktop = all.filter(n => n.getSharedPluginData(NS, 'frame') === 'desktop');
-    const mobile = all.filter(n => n.getSharedPluginData(NS, 'frame') === 'mobile');
-    if (desktop.length !== 1 || mobile.length > 1)
-        throw Error('Keep exactly one Desktop frame and at most one Mobile frame for this event on the current page.');
-    return { desktop: desktop[0], mobile: mobile[0] };
+    var _a;
+    const groups = new Map();
+    for (const f of eventFrames()) {
+        const role = f.getSharedPluginData(NS, 'frame');
+        if (role !== 'desktop' && role !== 'mobile')
+            continue;
+        const g = (_a = groups.get(pageOf(f))) !== null && _a !== void 0 ? _a : { desktop: [], mobile: [] };
+        g[role].push(f);
+        groups.set(pageOf(f), g);
+    }
+    const home = groups.get('home');
+    if (!home || home.desktop.length !== 1 || home.mobile.length > 1)
+        throw Error('Keep exactly one Home Desktop frame and at most one Home Mobile frame on the current page.');
+    const pages = [];
+    for (const [slug, g] of groups) {
+        if (slug === 'home')
+            continue;
+        if (!pageSlugOk(slug))
+            throw Error('Page "' + slug + '" needs a lowercase name like agenda or ticket.');
+        if (g.desktop.length !== 1 || g.mobile.length > 1)
+            throw Error('Page "' + slug + '" needs exactly one Desktop frame and at most one Mobile frame.');
+        pages.push({ slug, desktop: g.desktop[0], mobile: g.mobile[0] });
+    }
+    if (pages.length > 8)
+        throw Error('Use at most 8 extra pages.');
+    return { desktop: home.desktop[0], mobile: home.mobile[0], pages };
 }
 function contractWarnings(frame, label) {
     const found = new Set();
@@ -386,14 +562,9 @@ function contractWarnings(frame, label) {
     for (const child of frame.children)
         visit(child);
     const warnings = [];
-    if (!found.has('eventName'))
-        warnings.push(label + ': Event Name is required.');
+    // Drafts may be unfinished; PassFlow enforces this only when publishing.
     if (!found.has('register') && !found.has('tickets'))
-        warnings.push(label + ': add a Register action or Tickets block.');
-    if (!found.has('eventDate'))
-        warnings.push(label + ': Event Date is recommended.');
-    if (!found.has('venue'))
-        warnings.push(label + ': Venue is recommended.');
+        warnings.push(label + ': mark a Register button (or add live Tickets) before publishing.');
     return warnings;
 }
 function fontWeight(style) {
@@ -411,11 +582,61 @@ function webFamily(family) {
         return 'Georgia';
     return family === 'Arial' ? 'Arial' : 'Inter';
 }
+const anchorOf = (id) => 's' + id.replace(/[^a-zA-Z0-9]/g, '-');
+function cssEase(e) {
+    var _a;
+    if (!e)
+        return 'ease-out';
+    if (e.type === 'CUSTOM_CUBIC_BEZIER' && e.easingFunctionCubicBezier) {
+        const b = e.easingFunctionCubicBezier;
+        return 'cubic-bezier(' + [b.x1, b.y1, b.x2, b.y2].map(v => +v.toFixed(3)).join(',') + ')';
+    }
+    return (_a = { EASE_IN: 'ease-in', EASE_OUT: 'ease-out', EASE_IN_AND_OUT: 'ease-in-out', LINEAR: 'linear' }[e.type]) !== null && _a !== void 0 ? _a : 'ease-out';
+}
+// Links and hovers are read from Figma's own prototype interactions, so designers need no extra steps.
+async function interactions(node, warnings) {
+    var _a, _b, _c, _d, _e, _f, _g;
+    let reactions = 'reactions' in node ? node.reactions : [];
+    if (!reactions.length && node.type === 'INSTANCE')
+        reactions = (_b = (_a = (await node.getMainComponentAsync())) === null || _a === void 0 ? void 0 : _a.reactions) !== null && _b !== void 0 ? _b : [];
+    const out = { url: '', scrollTo: '', hover: null };
+    for (const r of reactions) {
+        const trigger = (_c = r.trigger) === null || _c === void 0 ? void 0 : _c.type;
+        for (const a of (_d = r.actions) !== null && _d !== void 0 ? _d : (r.action ? [r.action] : [])) {
+            if (trigger === 'ON_CLICK' || trigger === 'ON_PRESS') {
+                if (a.type === 'URL') {
+                    const url = /^[a-z][a-z0-9+.-]*:/i.test(a.url) ? a.url : 'https://' + a.url;
+                    if (/^https:\/\//i.test(url))
+                        out.url = url;
+                    else
+                        warnings.push('Links must start with https://. "' + a.url.slice(0, 60) + '" was skipped.');
+                }
+                if (a.type === 'NODE' && a.navigation === 'SCROLL_TO' && a.destinationId)
+                    out.scrollTo = a.destinationId;
+                if (a.type === 'NODE' && a.navigation === 'NAVIGATE' && a.destinationId) {
+                    const dest = await figma.getNodeByIdAsync(a.destinationId);
+                    if (dest && dest.type === 'FRAME' && dest.getSharedPluginData(NS, 'documentId') === documentId)
+                        out.url = 'page:' + pageOf(dest);
+                    else
+                        warnings.push('A Navigate to link points to a frame that is not a PassFlow page. Mark that frame as a page first.');
+                }
+            }
+            if ((trigger === 'ON_HOVER' || trigger === 'MOUSE_ENTER') && a.type === 'NODE' && a.navigation === 'CHANGE_TO' && a.destinationId) {
+                const dest = await figma.getNodeByIdAsync(a.destinationId);
+                if (dest && dest.type === 'COMPONENT') {
+                    const label = firstText(dest), strokes = Array.isArray(dest.strokes) ? dest.strokes : [];
+                    out.hover = { fill: hex(dest.fills, ''), color: label ? hex(label.fills, '') : '', stroke: strokes.length ? hex(strokes, '') : '', opacity: dest.opacity, ms: Math.round(((_f = (_e = a.transition) === null || _e === void 0 ? void 0 : _e.duration) !== null && _f !== void 0 ? _f : .2) * 1000), ease: cssEase((_g = a.transition) === null || _g === void 0 ? void 0 : _g.easing) };
+                }
+            }
+        }
+    }
+    return out;
+}
 async function serialize(frame, warnings) {
     const bounds = frame.absoluteBoundingBox;
     if (!bounds)
         throw Error('The frame has no bounds.');
-    const nodes = [];
+    const nodes = [], byFigmaId = new Map(), scrollTargets = new Set();
     let visited = 0;
     async function visit(node, parentId, parentBox) {
         var _a;
@@ -426,7 +647,14 @@ async function serialize(frame, warnings) {
         const box = node.absoluteBoundingBox;
         if (!box || !box.width || !box.height)
             return;
-        const raw = node.getSharedPluginData(NS, 'binding'), binding = bindings.includes(raw) ? raw : null;
+        const raw = node.getSharedPluginData(NS, 'binding'), act = await interactions(node, warnings);
+        let binding = bindings.includes(raw) ? raw : null, href = binding ? node.getSharedPluginData(NS, 'href') : '';
+        if (!binding && (act.url || act.scrollTo)) {
+            binding = 'customLink';
+            href = act.url || '#' + anchorOf(act.scrollTo);
+        }
+        if (act.scrollTo && !act.url)
+            scrollTargets.add(act.scrollTo);
         const paints = 'fills' in node ? node.fills : undefined;
         const textNode = node.type === 'TEXT' ? node : null;
         if ('effects' in node && node.effects.some(effect => effect.visible))
@@ -462,8 +690,9 @@ async function serialize(frame, warnings) {
             sticky: parentId === null && node.getSharedPluginData(NS, 'sticky') === 'true',
             radius: 'cornerRadius' in node && typeof node.cornerRadius === 'number' ? node.cornerRadius : 0,
             align: (textNode === null || textNode === void 0 ? void 0 : textNode.textAlignHorizontal) === 'CENTER' ? 'center' : (textNode === null || textNode === void 0 ? void 0 : textNode.textAlignHorizontal) === 'RIGHT' ? 'right' : binding === 'register' || binding === 'myPass' || (binding === 'customLink' && !textNode) ? 'center' : 'left',
-            image: '', binding, href: node.getSharedPluginData(NS, 'href')
+            image: '', binding, href, anchor: '', hover: act.hover
         };
+        byFigmaId.set(node.id, output);
         if ('rotation' in node && Math.abs(node.rotation) > .1 && binding)
             throw Error('Rotated dynamic layers are not supported. Remove rotation before syncing.');
         if (textNode) {
@@ -472,7 +701,8 @@ async function serialize(frame, warnings) {
             nodes.push(output);
             return;
         }
-        if (binding) {
+        // Live widgets are drawn by PassFlow, so their placeholder children are not exported.
+        if (binding && ['tickets', 'schedule', 'speakers', 'sponsors', 'venueMap', 'logo', 'banner'].includes(binding)) {
             nodes.push(output);
             return;
         }
@@ -493,6 +723,11 @@ async function serialize(frame, warnings) {
     }
     for (const child of frame.children)
         await visit(child, null, bounds);
+    for (const target of scrollTargets) {
+        const n = byFigmaId.get(target);
+        if (n)
+            n.anchor = anchorOf(target);
+    }
     if (nodes.length > 500)
         throw Error('Use at most 500 exported layers per frame.');
     if (frame.layoutMode !== 'NONE')
@@ -540,10 +775,10 @@ async function sync() {
             warnings.push(...contractWarnings(frames.mobile, 'Mobile'));
         else
             warnings.push('No Mobile frame: PassFlow will use a readable fallback on phones.');
-        const critical = warnings.filter(w => /required|Register action or Tickets/.test(w));
-        if (critical.length)
-            throw Error(critical.join(' '));
-        const document = { schema: 3, source: 'figma', desktop: await serialize(frames.desktop, warnings), mobile: frames.mobile ? await serialize(frames.mobile, warnings) : null, warnings: [...new Set(warnings)] };
+        const pages = [];
+        for (const p of frames.pages)
+            pages.push({ slug: p.slug, desktop: await serialize(p.desktop, warnings), mobile: p.mobile ? await serialize(p.mobile, warnings) : null });
+        const document = { schema: 3, source: 'figma', desktop: await serialize(frames.desktop, warnings), mobile: frames.mobile ? await serialize(frames.mobile, warnings) : null, pages, warnings: [...new Set(warnings)] };
         if (JSON.stringify(document).length > 850000)
             throw Error('Design exceeds 850 KB. Reduce image sizes.');
         const result = await api('sync', { documentId, revision: session.revision, document }, session.token);
@@ -665,11 +900,17 @@ figma.ui.onmessage = async (message) => {
                 throw Error('Select one top-level frame.');
             if (node.parent !== figma.currentPage)
                 throw Error('Responsive frames must be top-level on the current page.');
+            const page = (message.page || 'home').trim().toLowerCase();
+            if (page !== 'home' && !pageSlugOk(page))
+                throw Error('Use a lowercase page name like agenda, faq or ticket.');
             node.setSharedPluginData(NS, 'frame', message.role);
+            node.setSharedPluginData(NS, 'page', page === 'home' ? '' : page);
             node.setSharedPluginData(NS, 'documentId', documentId);
             node.setSharedPluginData(NS, 'schema', SCHEMA);
-            status('Changes detected', message.role + ' frame assigned.');
+            status('Changes detected', (page === 'home' ? 'Home' : page === 'ticket' ? 'Ticket page' : '"' + page + '" page') + ' ' + message.role + ' frame assigned.');
         }
+        if (message.type === 'page')
+            await pageTemplate(message.style, (message.page || '').trim().toLowerCase());
         if (message.type === 'block') {
             if (!blocks.includes(message.block))
                 throw Error('Choose a supported block.');
@@ -677,7 +918,8 @@ figma.ui.onmessage = async (message) => {
             if ((frame === null || frame === void 0 ? void 0 : frame.type) !== 'FRAME')
                 throw Error('Select a website frame first.');
             await block(frame, message.block, message.style);
-            status('Changes detected', message.block + ' block inserted.');
+            await wireScrolls(frame);
+            status('Changes detected', message.block + ' section added.');
         }
         selectionState();
         schedule();
