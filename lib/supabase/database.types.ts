@@ -28,7 +28,7 @@ export type Database = {
       }
       event_subdomains: {Row:{event_id:string;label:string;updated_at:string};Insert:never;Update:never;Relationships:[]}
       figma_plugin_links: {
-        Row: {id:string;event_id:string;document_id:string;file_name:string;file_key:string|null;draft_id:string|null;created_at:string;expires_at:string;revoked_at:string|null;last_synced_at:string|null;external_change_at:string|null}
+        Row: {id:string;event_id:string;document_id:string;file_name:string;file_key:string|null;draft_id:string|null;created_at:string;expires_at:string;revoked_at:string|null;last_synced_at:string|null;external_change_at:string|null;created_by:string|null;token_hash:string}
         Insert: never
         Update: {revoked_at?:string|null}
         Relationships: []
@@ -36,7 +36,7 @@ export type Database = {
       event_studio_documents: {
         Row: { id: string; event_id: string; ticket_type_id: string | null; kind: string; name: string; status: string; revision: number; document: Json; created_by: string | null; created_at: string; updated_at: string; published_at:string|null;publication_number:number|null }
         Insert: { event_id: string; kind: string; name: string; document: Json; id?: string; ticket_type_id?: string | null; status?: string; revision?: number; created_by?: string | null; created_at?: string; updated_at?: string;published_at?:string|null;publication_number?:number|null }
-        Update: { name?: string; document?: Json; status?: string; revision?: number;published_at?:string|null;publication_number?:number|null }
+        Update: { name?: string; document?: Json; status?: string; revision?: number;updated_at?:string;published_at?:string|null;publication_number?:number|null }
         Relationships: []
       }
       access_rules: {

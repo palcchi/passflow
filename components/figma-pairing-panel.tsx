@@ -4,9 +4,10 @@ import {useRouter} from 'next/navigation';
 import {createPairingCode,revokePluginLink} from '@/app/admin/figma-pairing-actions';
 import {publishStudio,retireStudio,restoreFigmaPublication} from '@/app/admin/studio-actions';
 type Connection={id:string;file_name:string;expires_at:string;revoked_at:string|null;last_synced_at:string|null;external_change_at:string|null};
-type Version={id:string;name:string;status:string;revision:number;updated_at:string;publication_number:number|null;published_at:string|null};
+type Version={id:string;kind:string;name:string;status:string;revision:number;updated_at:string;publication_number:number|null;published_at:string|null};
 type Result={error?:string;success?:boolean;code?:string};
 
+const kindLabel:Record<string,string>={website:'Website',digital:'Digital pass',id_card:'ID card',wristband:'Wristband'};
 const when=(iso:string)=>new Date(iso).toLocaleString('en-GB',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit',timeZone:'UTC'})+' UTC';
 
 export function FigmaPairingPanel({eventId,connections,versions,ready,now}:{eventId:string;connections:Connection[];versions:Version[];ready:boolean;now:number}){
@@ -29,9 +30,8 @@ export function FigmaPairingPanel({eventId,connections,versions,ready,now}:{even
       <p>Figma is your website: every word, color and hover effect. PassFlow runs sign-up, live tickets and QR passes. Edits sync to a private draft and nothing goes live until you publish here.</p>
       <ol className="figma-steps">
         <li>
-          <strong>Install the PassFlow plugin</strong>
-          <span>On a computer: Figma Desktop → Plugins → Development → Import plugin from manifest.</span>
-          <a className="button button-ghost" href="/figma-plugin-standard.zip" download>Download plugin</a>
+          <strong>Open the PassFlow plugin in Figma</strong>
+          <span>In any Figma Design file: Actions → Plugins → search “PassFlow”, then run it.</span>
         </li>
         <li>
           <strong>Pair this event</strong>
@@ -55,17 +55,17 @@ export function FigmaPairingPanel({eventId,connections,versions,ready,now}:{even
     {message&&<p role="status" className="studio-notice">{message}</p>}
 
     <section className="event-admin-section">
-      <h3>Website versions</h3>
-      {!versions.length&&<p>No drafts yet. Insert a style in the plugin to create the first one.</p>}
+      <h3>Website & pass versions</h3>
+      {!versions.length&&<p>No drafts yet. Insert a style or a pass in the plugin to create the first one.</p>}
       {versions.map(v=>{
         const label=v.status==='published'?'Live':v.status==='draft'?'Draft':'Archived';
         return <div key={v.id} className="resource-record">
           <div className="figma-version-head"><strong>{v.name}</strong><span className={'figma-badge figma-badge-'+(v.status==='published'?'on':v.status==='draft'?'warn':'muted')}>{label}</span></div>
-          <p>Updated {when(v.updated_at)} · revision {v.revision}{v.publication_number?' · publication '+v.publication_number:''}</p>
+          <p>{kindLabel[v.kind]??v.kind} · updated {when(v.updated_at)} · revision {v.revision}{v.publication_number?' · publication '+v.publication_number:''}</p>
           <div className="resource-toolbar">
             <a className="button button-ghost" href={`/admin/events/${eventId}/design/preview/${v.id}`}>Preview</a>
-            {v.status==='draft'&&<button className="button button-dark" disabled={pending} onClick={()=>{if(confirm('Publish this version? Only the website design changes. Tickets and QR passes stay the same.'))run(()=>publishStudio(eventId,v.id,v.revision),'Published. Your website is live.');}}>Publish</button>}
-            {v.status!=='draft'&&<button className="button button-ghost" disabled={pending} onClick={()=>run(()=>restoreFigmaPublication(eventId,v.id),'Copied to a new draft.')}>Copy to draft</button>}
+            {v.status==='draft'&&<button className="button button-dark" disabled={pending} onClick={()=>{if(confirm(v.kind==='website'?'Publish this version? Only the website design changes. Tickets and QR passes stay the same.':'Publish this '+(kindLabel[v.kind]??'pass')+' design? Attendees see it on their pass and it is used for printing. QR codes stay the same.'))run(()=>publishStudio(eventId,v.id,v.revision),'Published. Your website is live.');}}>Publish</button>}
+            {v.status!=='draft'&&v.kind==='website'&&<button className="button button-ghost" disabled={pending} onClick={()=>run(()=>restoreFigmaPublication(eventId,v.id),'Copied to a new draft.')}>Copy to draft</button>}
             {v.status==='published'&&<button className="button button-ghost" disabled={pending} onClick={()=>{if(confirm('Unpublish and return to the basic event page?'))run(()=>retireStudio(eventId,v.id,v.revision,false),'Unpublished.');}}>Unpublish</button>}
           </div>
         </div>;

@@ -156,8 +156,9 @@ async function buttons(t, style, x, y) {
             continue;
         }
         const base = make(kind, 'Default'), hover = make(kind, 'Hover');
-        await base.setReactionsAsync([{ trigger: { type: 'ON_HOVER' }, actions: [{ type: 'NODE', destinationId: hover.id, navigation: 'CHANGE_TO', transition: { type: 'SMART_ANIMATE', easing: ease, duration: .18 } }] }]);
+        // Figma rejects Change to until both states are variants of the same set, so combine first.
         const set = figma.combineAsVariants([base, hover], figma.currentPage);
+        await base.setReactionsAsync([{ trigger: { type: 'ON_HOVER' }, actions: [{ type: 'NODE', destinationId: hover.id, navigation: 'CHANGE_TO', transition: { type: 'SMART_ANIMATE', easing: ease, duration: .18 } }] }]);
         set.name = name;
         set.layoutMode = 'HORIZONTAL';
         set.itemSpacing = 16;
@@ -201,7 +202,7 @@ async function wireScrolls(frame) {
     const visit = async (node) => {
         const target = targets.get(node.getSharedPluginData(NS, 'scrollTo'));
         if (target && 'setReactionsAsync' in node)
-            await node.setReactionsAsync([{ trigger: { type: 'ON_CLICK' }, actions: [{ type: 'NODE', destinationId: target.id, navigation: 'SCROLL_TO', transition: { type: 'SMART_ANIMATE', easing: ease, duration: .4 } }] }]);
+            await node.setReactionsAsync([...node.reactions.filter(r => { var _a; return ((_a = r.trigger) === null || _a === void 0 ? void 0 : _a.type) !== 'ON_CLICK'; }), { trigger: { type: 'ON_CLICK' }, actions: [{ type: 'NODE', destinationId: target.id, navigation: 'SCROLL_TO', transition: { type: 'SCROLL_ANIMATE', easing: ease, duration: .4 } }] }]);
         if ('children' in node)
             for (const child of node.children)
                 await visit(child);
@@ -211,7 +212,7 @@ async function wireScrolls(frame) {
 }
 async function openLink(node, url) {
     if ('setReactionsAsync' in node)
-        await node.setReactionsAsync([{ trigger: { type: 'ON_CLICK' }, actions: [{ type: 'URL', url, openInNewTab: true }] }]);
+        await node.setReactionsAsync([...node.reactions.filter(r => { var _a; return ((_a = r.trigger) === null || _a === void 0 ? void 0 : _a.type) !== 'ON_CLICK'; }), { trigger: { type: 'ON_CLICK' }, actions: [{ type: 'URL', url, openInNewTab: true }] }]);
 }
 function sticker(parent, kind, color, size, x, y) {
     const s = kind === 'star' ? figma.createStar() : figma.createEllipse();
@@ -521,6 +522,148 @@ async function pageTemplate(style, slug) {
     status('Changes detected', slug === 'ticket' ? 'Ticket page added. It shows above the PassFlow sign-up form.' : '"' + slug + '" page added at /e/your-event/' + slug + '. Link to it with Prototype → Navigate to.');
     selectionState();
 }
+// ---------- Passes: ID card, digital pass, wristband. Designed at 4 px per mm. ----------
+const PX = 4;
+const passSizes = { id_card: { w: 54, h: 85.6, label: 'ID card' }, digital: { w: 70, h: 120, label: 'Digital pass' }, wristband: { w: 240, h: 25, label: 'Wristband' } };
+const passFields = ['name', 'photo', 'category', 'code', 'qr'];
+// Attendee text gets a fixed one-line box; PassFlow shrinks long names to fit it.
+function markPass(node, field) {
+    node.setSharedPluginData(NS, 'passField', field);
+    node.setSharedPluginData(NS, 'schema', SCHEMA);
+    if (node.type === 'TEXT' && typeof node.fontSize === 'number') {
+        node.textAutoResize = 'NONE';
+        node.resize(node.width, Math.ceil(node.fontSize * 1.3));
+    }
+    return node;
+}
+function qrPlaceholder(parent, x, y, size) {
+    const qr = rect(parent, x, y, size, size, '#ecece8', 1);
+    qr.name = 'QR code · filled by PassFlow';
+    qr.strokes = [solid('#c9c8c1')];
+    qr.strokeWeight = 1;
+    qr.dashPattern = [4, 4];
+    return markPass(qr, 'qr');
+}
+function rect(parent, x, y, w, h, fill, radius = 0) {
+    const r = figma.createRectangle();
+    parent.appendChild(r);
+    r.x = x * PX;
+    r.y = y * PX;
+    r.resize(w * PX, h * PX);
+    r.fills = [solid(fill)];
+    r.cornerRadius = radius * PX;
+    return r;
+}
+function label(parent, chars, x, y, w, size, font, color, align = 'LEFT') {
+    const n = figma.createText();
+    parent.appendChild(n);
+    n.fontName = font;
+    n.characters = chars;
+    n.fontSize = size * PX;
+    n.fills = [solid(color)];
+    n.textAlignHorizontal = align;
+    n.x = x * PX;
+    n.y = y * PX;
+    n.resize(w * PX, n.height);
+    n.textAutoResize = 'HEIGHT';
+    return n;
+}
+async function passTemplate(style, kind) {
+    var _a;
+    const size = passSizes[kind];
+    if (!size)
+        throw Error('Choose ID card, Digital pass or Wristband.');
+    const existing = eventFrames().find(f => f.getSharedPluginData(NS, 'pass') === kind);
+    if (existing)
+        throw Error('This page already has a ' + size.label + ' frame.');
+    const t = style === 'blank' ? null : await theme(style);
+    const frame = figma.createFrame();
+    figma.currentPage.appendChild(frame);
+    frame.name = 'PassFlow ' + size.label + ' · ' + size.w + '×' + size.h + ' mm';
+    frame.resize(size.w * PX, size.h * PX);
+    frame.fills = [solid((_a = t === null || t === void 0 ? void 0 : t.bg) !== null && _a !== void 0 ? _a : '#ffffff')];
+    frame.cornerRadius = kind === 'wristband' ? 0 : 3 * PX;
+    frame.clipsContent = true;
+    frame.setSharedPluginData(NS, 'pass', kind);
+    frame.setSharedPluginData(NS, 'documentId', documentId);
+    frame.setSharedPluginData(NS, 'schema', SCHEMA);
+    const others = eventFrames().filter(f => f !== frame);
+    frame.x = Math.round(others.length ? Math.max(...others.map(f => f.x + f.width)) + 200 : figma.viewport.center.x);
+    frame.y = Math.round(others.length ? Math.min(...others.map(f => f.y)) : figma.viewport.center.y);
+    if (t) {
+        const accent = style === 'festival' ? t.accent : t.ink, ink = style === 'festival' ? t.ink : t.ink;
+        if (kind === 'wristband') {
+            rect(frame, 0, 0, 6, size.h, accent);
+            label(frame, t.upper ? 'YOUR EVENT' : 'Your event', 10, 3.5, 110, 6, t.display, ink);
+            markPass(label(frame, 'Full name', 10, 12, 110, 4.2, t.bodyBold, ink), 'name');
+            markPass(label(frame, 'VIP', 125, 4, 50, 3.2, t.bodyMedium, t.muted), 'category');
+            markPass(label(frame, 'PF-000001', 125, 13, 50, 3, t.body, t.muted), 'code');
+            qrPlaceholder(frame, size.w - 22, 3.5, 18);
+        }
+        else {
+            const card = kind === 'id_card';
+            rect(frame, 0, 0, size.w, card ? 22 : 28, accent);
+            label(frame, t.upper ? 'YOUR EVENT' : 'Your event', 5, card ? 6 : 8, size.w - 10, card ? 5 : 6, t.display, style === 'festival' ? t.accentInk : t.accentInk);
+            label(frame, '27 September 2026 · Jakarta', 5, card ? 14.5 : 18, size.w - 10, 2.4, t.body, style === 'festival' ? t.accentInk : t.accentInk);
+            const photo = figma.createEllipse();
+            frame.appendChild(photo);
+            photo.name = 'Attendee photo';
+            photo.resize(18 * PX, 18 * PX);
+            photo.x = 5 * PX;
+            photo.y = (card ? 26 : 33) * PX;
+            photo.fills = [solid(t.alt)];
+            markPass(photo, 'photo');
+            markPass(label(frame, 'Full name', 25, card ? 29 : 36, size.w - 30, card ? 3.8 : 4.6, t.bodyBold, t.ink), 'name');
+            markPass(label(frame, 'VIP', 25, card ? 36 : 44, size.w - 30, 2.8, t.bodyMedium, t.muted), 'category');
+            const qrSize = card ? 24 : 30, qrY = size.h - qrSize - (card ? 8 : 12);
+            qrPlaceholder(frame, (size.w - qrSize) / 2, qrY, qrSize);
+            markPass(label(frame, 'PF-000001', 5, qrY + qrSize + 1.5, size.w - 10, 2.4, t.body, t.muted, 'CENTER'), 'code');
+        }
+    }
+    figma.currentPage.selection = [frame];
+    figma.viewport.scrollAndZoomIntoView([frame]);
+    dirty = true;
+    status('Changes detected', size.label + ' added. Design freely; keep the QR square, at least 15 mm and clear of other layers.');
+    selectionState();
+}
+// A pass becomes a print-resolution background plus attendee layers placed in millimetres.
+async function exportPass(frame, kind, warnings) {
+    const box = frame.absoluteBoundingBox;
+    if (!box)
+        throw Error('The pass frame has no bounds.');
+    const w = frame.width / PX, h = frame.height / PX, label = passSizes[kind].label;
+    const dynamic = frame.findAll(n => n.visible && passFields.includes(n.getSharedPluginData(NS, 'passField')));
+    const layers = dynamic.slice(0, 58).map(n => {
+        var _a;
+        const b = (_a = n.absoluteBoundingBox) !== null && _a !== void 0 ? _a : box, field = n.getSharedPluginData(NS, 'passField'), t = n.type === 'TEXT' ? n : null;
+        return { id: n.id, type: field === 'qr' ? 'qr' : field === 'photo' ? 'image' : 'text', field: field === 'qr' ? 'text' : field, text: '', src: '',
+            x: (b.x - box.x) / PX, y: (b.y - box.y) / PX, width: b.width / PX, height: b.height / PX,
+            fontSize: t && typeof t.fontSize === 'number' ? t.fontSize / PX : 4, color: hex(t === null || t === void 0 ? void 0 : t.fills, '#171717'), fill: '#ffffff', radius: 0,
+            align: (t === null || t === void 0 ? void 0 : t.textAlignHorizontal) === 'CENTER' ? 'center' : (t === null || t === void 0 ? void 0 : t.textAlignHorizontal) === 'RIGHT' ? 'right' : 'left', locked: false, hidden: false };
+    });
+    const qr = layers.filter(l => l.type === 'qr');
+    if (qr.length !== 1)
+        warnings.push(label + ': mark exactly one QR code before publishing.');
+    else if (qr[0].width < 15 || Math.abs(qr[0].width - qr[0].height) > .05)
+        warnings.push(label + ': the QR must be square and at least 15 mm.');
+    const clone = frame.clone();
+    try {
+        for (const n of clone.findAll(n => passFields.includes(n.getSharedPluginData(NS, 'passField'))))
+            n.visible = false;
+        let png = await clone.exportAsync({ format: 'PNG', constraint: { type: 'SCALE', value: 3 } }), src = 'data:image/png;base64,' + figma.base64Encode(png);
+        if (src.length > 450000) {
+            png = await clone.exportAsync({ format: 'JPG', constraint: { type: 'SCALE', value: 2 } });
+            src = 'data:image/jpeg;base64,' + figma.base64Encode(png);
+        }
+        if (src.length > 450000)
+            throw Error(label + ' artwork exceeds 450 KB. Simplify large images.');
+        layers.unshift({ id: 'figma-background', type: 'image', field: 'text', text: '', src, x: 0, y: 0, width: w, height: h, fontSize: 4, color: '#171717', fill: '#ffffff', radius: 0, align: 'left', locked: true, hidden: false });
+    }
+    finally {
+        clone.remove();
+    }
+    return { schema: 1, width: w, height: h, background: hex(frame.fills), foreground: '#171717', accent: '#635bff', font: 'sans', layers, sections: [] };
+}
 function findFrames() {
     var _a;
     const groups = new Map();
@@ -532,9 +675,21 @@ function findFrames() {
         g[role].push(f);
         groups.set(pageOf(f), g);
     }
+    const passes = [];
+    for (const f of figma.currentPage.children)
+        if (f.type === 'FRAME' && f.getSharedPluginData(NS, 'documentId') === documentId) {
+            const kind = f.getSharedPluginData(NS, 'pass');
+            if (!passSizes[kind])
+                continue;
+            if (passes.some(p => p.kind === kind))
+                throw Error('Keep one ' + passSizes[kind].label + ' frame per event on this page.');
+            passes.push({ kind, frame: f });
+        }
     const home = groups.get('home');
+    if (!home && passes.length && groups.size === 0)
+        return { desktop: undefined, mobile: undefined, pages: [], passes };
     if (!home || home.desktop.length !== 1 || home.mobile.length > 1)
-        throw Error('Keep exactly one Home Desktop frame and at most one Home Mobile frame on the current page.');
+        throw Error(home || groups.size ? 'Keep exactly one Home Desktop frame and at most one Home Mobile frame on the current page.' : 'Insert a website template or a pass first.');
     const pages = [];
     for (const [slug, g] of groups) {
         if (slug === 'home')
@@ -547,7 +702,7 @@ function findFrames() {
     }
     if (pages.length > 8)
         throw Error('Use at most 8 extra pages.');
-    return { desktop: home.desktop[0], mobile: home.mobile[0], pages };
+    return { desktop: home.desktop[0], mobile: home.mobile[0], pages, passes };
 }
 function contractWarnings(frame, label) {
     const found = new Set();
@@ -770,18 +925,24 @@ async function sync() {
     status('Syncing');
     try {
         const frames = findFrames(), warnings = [];
-        warnings.push(...contractWarnings(frames.desktop, 'Desktop'));
-        if (frames.mobile)
-            warnings.push(...contractWarnings(frames.mobile, 'Mobile'));
-        else
-            warnings.push('No Mobile frame: PassFlow will use a readable fallback on phones.');
-        const pages = [];
-        for (const p of frames.pages)
-            pages.push({ slug: p.slug, desktop: await serialize(p.desktop, warnings), mobile: p.mobile ? await serialize(p.mobile, warnings) : null });
-        const document = { schema: 3, source: 'figma', desktop: await serialize(frames.desktop, warnings), mobile: frames.mobile ? await serialize(frames.mobile, warnings) : null, pages, warnings: [...new Set(warnings)] };
-        if (JSON.stringify(document).length > 850000)
-            throw Error('Design exceeds 850 KB. Reduce image sizes.');
-        const result = await api('sync', { documentId, revision: session.revision, document }, session.token);
+        let document = null;
+        if (frames.desktop) {
+            warnings.push(...contractWarnings(frames.desktop, 'Desktop'));
+            if (frames.mobile)
+                warnings.push(...contractWarnings(frames.mobile, 'Mobile'));
+            else
+                warnings.push('No Mobile frame: PassFlow will use a readable fallback on phones.');
+            const pages = [];
+            for (const p of frames.pages)
+                pages.push({ slug: p.slug, desktop: await serialize(p.desktop, warnings), mobile: p.mobile ? await serialize(p.mobile, warnings) : null });
+            document = { schema: 3, source: 'figma', desktop: await serialize(frames.desktop, warnings), mobile: frames.mobile ? await serialize(frames.mobile, warnings) : null, pages, warnings: [...new Set(warnings)] };
+            if (JSON.stringify(document).length > 850000)
+                throw Error('Design exceeds 850 KB. Reduce image sizes.');
+        }
+        const passes = [];
+        for (const p of frames.passes)
+            passes.push({ kind: p.kind, document: await exportPass(p.frame, p.kind, warnings) });
+        const result = await api('sync', { documentId, revision: session.revision, document, passes }, session.token);
         session.revision = result.revision;
         session.draftId = result.draftId;
         await figma.clientStorage.setAsync(storageKey, session);
@@ -911,6 +1072,22 @@ figma.ui.onmessage = async (message) => {
         }
         if (message.type === 'page')
             await pageTemplate(message.style, (message.page || '').trim().toLowerCase());
+        if (message.type === 'pass')
+            await passTemplate(message.style, message.kind);
+        if (message.type === 'passField') {
+            const node = figma.currentPage.selection[0];
+            if (figma.currentPage.selection.length !== 1 || !node)
+                throw Error('Select one layer inside a pass frame.');
+            let top = node;
+            while (top && top.parent !== figma.currentPage)
+                top = top.parent;
+            if (!top || top.type !== 'FRAME' || !top.getSharedPluginData(NS, 'pass'))
+                throw Error('That layer is not inside a PassFlow pass frame.');
+            if (message.field && !passFields.includes(message.field))
+                throw Error('Choose a valid attendee field.');
+            node.setSharedPluginData(NS, 'passField', message.field);
+            status('Changes detected', message.field ? 'Layer now shows the attendee ' + message.field + '.' : 'Attendee field removed; the layer is static artwork again.');
+        }
         if (message.type === 'block') {
             if (!blocks.includes(message.block))
                 throw Error('Choose a supported block.');
