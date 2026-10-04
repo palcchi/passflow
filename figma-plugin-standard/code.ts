@@ -433,10 +433,10 @@ async function passTemplate(style:TemplateStyle,kind:PassKind){
     const accent=style==='festival'?t.accent:t.ink,ink=style==='festival'?t.ink:t.ink;
     if(kind==='wristband'){
       rect(frame,0,0,6,size.h,accent);
-      label(frame,t.upper?'YOUR EVENT':'Your event',10,3.5,110,6,t.display,ink);
-      markPass(label(frame,'Full name',10,12,110,4.2,t.bodyBold,ink),'name');
-      markPass(label(frame,'VIP',125,4,50,3.2,t.bodyMedium,t.muted),'category');
-      markPass(label(frame,'PF-000001',125,13,50,3,t.body,t.muted),'code');
+      // Wristbands are printed unclaimed, before anyone owns them: only the QR and its code are known.
+      label(frame,t.upper?'YOUR EVENT':'Your event',10,4,150,6.5,t.display,ink);
+      label(frame,'27 September 2026 · Jakarta',10,14,150,3.2,t.body,t.muted);
+      markPass(label(frame,'PF-000001',size.w-60,10,34,3,t.body,t.muted,'RIGHT'),'code');
       qrPlaceholder(frame,size.w-22,3.5,18);
     }else{
       const card=kind==='id_card';
@@ -468,6 +468,7 @@ async function exportPass(frame:FrameNode,kind:PassKind,warnings:string[]){
       fontSize:t&&typeof t.fontSize==='number'?t.fontSize/PX:4,color:hex(t?.fills,'#171717'),fill:'#ffffff',radius:0,
       align:t?.textAlignHorizontal==='CENTER'?'center':t?.textAlignHorizontal==='RIGHT'?'right':'left',locked:false,hidden:false};
   });
+  if(kind==='wristband'&&layers.some(l=>['name','photo','category'].includes(l.field)))warnings.push('Wristband: name, photo and category print blank, because wristbands are printed before attendees claim them. Use the QR and code only.');
   const qr=layers.filter(l=>l.type==='qr');
   if(qr.length!==1)warnings.push(label+': mark exactly one QR code before publishing.');
   else if(qr[0].width<15||Math.abs(qr[0].width-qr[0].height)>.05)warnings.push(label+': the QR must be square and at least 15 mm.');

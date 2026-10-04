@@ -180,7 +180,7 @@ test('standard plugin templates serialize into valid desktop/mobile HTML documen
     assert.deepEqual(JSON.parse(JSON.stringify(warnings)),[],kind+' has no QR warnings');
     assert.deepEqual(validateStudio(pass,kind),[],kind+' passes PassFlow print validation');
     assert.equal(pass.layers[0].id,'figma-background');
-    assert.deepEqual(JSON.parse(JSON.stringify(pass.layers.slice(1).map(l=>l.type==='qr'?'qr':l.field).sort())),kind==='id_card'?['category','code','name','photo','qr']:['category','code','name','qr']);
+    assert.deepEqual(JSON.parse(JSON.stringify(pass.layers.slice(1).map(l=>l.type==='qr'?'qr':l.field).sort())),kind==='id_card'?['category','code','name','photo','qr']:['code','qr']);
     assert.ok(frame.findAll(n=>n.getSharedPluginData('passflow','passField')).every(n=>n.visible),'original frame keeps attendee layers visible');
   }
   await assert.rejects(()=>context.testApi.passTemplate('minimal','id_card'),/already has/);
