@@ -15,12 +15,15 @@ export async function proxy(request: NextRequest) {
     const publicClient=createClient<Database>(config.url,config.key,{auth:{persistSession:false,autoRefreshToken:false}});
     const {data:slug,error}=await publicClient.rpc('resolve_event_subdomain',{p_label:label});
     if(error||!slug||!/^[a-zA-Z0-9_-]+$/.test(slug))return unavailable();
-    if(request.nextUrl.pathname!=='/'){
+    // Extra Figma pages (/agenda) and /calendar stay on the event host; sign-up and anything else moves to
+    // the canonical app origin, where auth cookies live.
+    const path=request.nextUrl.pathname,page=/^\/([a-z0-9](?:[a-z0-9-]{0,38}[a-z0-9])?)$/.exec(path)?.[1];
+    if(path!=='/'&&(!page||page==='claim')){
       const canonical=new URL('https://'+eventRootDomain);
-      canonical.pathname=request.nextUrl.pathname;canonical.search=request.nextUrl.search;
+      canonical.pathname='/e/'+slug+path;canonical.search=request.nextUrl.search;
       return NextResponse.redirect(canonical,307);
     }
-    const url=request.nextUrl.clone();url.pathname='/e/'+slug;
+    const url=request.nextUrl.clone();url.pathname='/e/'+slug+(page?'/'+page:'');
     const headers=new Headers(request.headers);headers.set('x-passflow-path',url.pathname);
     const response=NextResponse.rewrite(url,{request:{headers}});response.headers.set('Cache-Control','private, no-store');return response;
   }
