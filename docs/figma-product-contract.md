@@ -11,12 +11,15 @@ Updated 4 October 2026 (user direction): Figma is the whole frontend; PassFlow i
 - Links and motion come from native Figma prototype interactions, read at sync time:
   - On click → Open link (https only) becomes a link; On click → Scroll to becomes an in-page anchor.
   - While hovering / Mouse enter → Change to a component variant becomes a CSS hover (fill, text color, stroke, opacity, duration, easing).
-- Templates: Blank (empty Desktop 1440 and Mobile 390 frames), Minimal and Festival. Starters include a sticky navbar and hover button variants as working examples.
+- Templates: Blank, Minimal and Festival, each with Desktop 1440, Tablet 834 and Mobile 390 frames. Starters include a sticky navbar, hover button variants and scroll-entrance animations as working examples.
+- Visual parity: any Google font family, alpha colours, frame photo fills, linear/radial gradients, drop/inner shadows and mixed-style text carry over. Sync uploads images to the public event-assets bucket (content-hash paths). Blurs, masks and angular/diamond gradients are flagged for review.
+- Motion: hover from "While hovering → Change to" variants, plus per-layer entrance animations (fade, slide up, scale) on CSS scroll timelines. Animations are skipped under reduced motion.
 - The plugin binds only Register, My Pass, live Tickets and a fallback Custom Link. Older text bindings still render for existing drafts.
 - Pages: frames carry a page name. Home is required. "ticket" renders above the PassFlow sign-up form at /e/[slug]/claim, where the form itself stays PassFlow-owned. Other lowercase names render at /e/[slug]/[page], with up to 8 extra pages. Route names (claim, calendar, api, admin and similar) are reserved. Prototype Navigate to a page frame becomes a link to that page.
-- Passes: ID card (54×85.6 mm), digital pass (70×120 mm) and wristband (240×25 mm) frames, designed at 4 px per mm, sync as private pass drafts. Only marked attendee layers (name, photo, ticket category, code, QR) are dynamic. Wristbands are printed unclaimed and claimed later by QR, so they carry only the QR and credential code. Everything else exports as a background at about 300 dpi. Publishing runs the existing print validation (exactly one QR, square, at least 15 mm, clear of other layers).
+- Passes (optionally per ticket category): ID card (54×85.6 mm), digital pass (70×120 mm) and wristband (240×25 mm) frames, designed at 4 px per mm, sync as private pass drafts. Only marked attendee layers (name, photo, ticket category, code, QR) are dynamic. Wristbands are printed unclaimed and claimed later by QR, so they carry only the QR and credential code. Everything else exports as a background at about 300 dpi. Publishing runs the existing print validation (exactly one QR, square, at least 15 mm, clear of other layers).
+- The legacy account OAuth/URL sync was retired on 4 October 2026. Event subdomains serve extra pages at /<page>.
 - Drafts may sync while incomplete. Publishing requires a Register action or live Tickets list and valid scroll targets.
-- Keep desktop and mobile frames separate, with a documented mobile fallback.
+- Keep desktop, tablet and mobile frames separate. Each owns a width range (≥1200, 768–1199, <768); missing frames fall back to the nearest one, and Home without phone or tablet frames shows a readable fallback.
 - Preserve stable, versioned plugin metadata for identity and bindings. Visible layer names are hints, not identifiers; renaming must not break sync.
 - Produce a structured website, not a single flattened PNG.
 - Keep the internal editor as Quick Setup/basic theme, not the main flow.
