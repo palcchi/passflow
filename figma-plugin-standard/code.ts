@@ -14,7 +14,8 @@ type Message=
   |{type:'template';style:TemplateStyle}
   |{type:'block';block:string;style:TemplateStyle}
   |{type:'assign';binding:Binding;href:string}
-  |{type:'frame';role:FrameRole}
+  |{type:'frame';role:FrameRole;page:string}
+  |{type:'page';page:string;style:TemplateStyle}
   |{type:'sync'|'disconnect'|'reload'|'confirm'};
 
 const bindings:Binding[]=['eventName','eventDescription','eventDate','venue','venueMap','logo','banner','tickets','register','myPass','schedule','speakers','sponsors','customLink'];
@@ -184,7 +185,7 @@ function chip(parent:FrameNode,t:Theme,label:string,fill:string,ink:string){
   const c=box(label,'HORIZONTAL',{fill,stroke:fill===t.bg?t.line:undefined,pad:[9,16],radius:t.buttonRadius,cross:'CENTER'});
   parent.appendChild(c);txt(c,label,{size:14,font:t.bodyMedium,color:ink});
 }
-async function block(parent:FrameNode,name:string,style:TemplateStyle,b?:Buttons){
+async function block(parent:FrameNode,name:string,style:TemplateStyle,b?:Buttons,title=''){
   if(style==='blank')throw Error('Pick Minimal or Festival to insert ready-made sections.');
   const t=await theme(style),w=parent.width,mobile=w<600,pad=mobile?24:96,cw=w-pad*2,D=(s:string)=>t.upper?s.toUpperCase():s;
   b=b??await buttons(t,style,parent.x-420,parent.y);
@@ -194,7 +195,7 @@ async function block(parent:FrameNode,name:string,style:TemplateStyle,b?:Buttons
     parent.insertChild(0,nav);fillW(nav,w);
     nav.setSharedPluginData(NS,'sticky','true');nav.setSharedPluginData(NS,'block','navbar');nav.setSharedPluginData(NS,'schema',SCHEMA);
     txt(nav,'Your event',{size:mobile?16:18,font:t.bodyBold,color:t.ink});
-    if(!mobile){
+    if(!mobile&&pageOf(parent)==='home'){
       const links=box('Links','HORIZONTAL',{gap:32,cross:'CENTER'});nav.appendChild(links);
       for(const [label,target] of [['Tickets','tickets'],['Schedule','schedule'],['Speakers','speakers'],['Venue','venue']])scrollTo(txt(links,label,{size:15,font:t.bodyMedium,color:t.muted}),target);
     }
@@ -208,6 +209,13 @@ async function block(parent:FrameNode,name:string,style:TemplateStyle,b?:Buttons
   parent.appendChild(sec);fillW(sec,w);
   sec.setSharedPluginData(NS,'block',name.toLowerCase());sec.setSharedPluginData(NS,'schema',SCHEMA);
 
+  if(name==='Page header'){
+    const ticket=pageOf(parent)==='ticket';
+    kicker(sec,t,ticket?'Tickets':'Your event');
+    fillW(txt(sec,D(title),{size:mobile?44:80,font:t.display,color:t.ink,lh:.98,ls:t.tracking}),cw);
+    fillW(txt(sec,ticket?'Choose a pass below. Sign-up takes about a minute.':'Write this page in Figma. Link to it from any button with Prototype → Navigate to.',{size:mobile?17:21,font:t.body,color:t.muted,lh:1.5}),cw);
+    return;
+  }
   if(name==='Hero'){
     const center=style==='minimal',align=center?'CENTER':'LEFT';
     if(center)sec.counterAxisAlignItems='CENTER';
@@ -338,12 +346,69 @@ async function template(style:TemplateStyle){
   status('Changes detected',style==='blank'?'Blank Desktop and Mobile frames are ready. Design freely, then mark a Register button.':'Starter '+style+' website inserted. Edit any text; links and hovers come from Figma prototype interactions.');
   selectionState();
 }
+const reservedPages=['home','claim','calendar','opengraph-image','admin','api','e'];
+const pageSlugOk=(v:string)=>/^[a-z0-9](?:[a-z0-9-]{0,38}[a-z0-9])?$/.test(v)&&!reservedPages.includes(v);
+const pageOf=(n:BaseNode)=>('getSharedPluginData' in n?n.getSharedPluginData(NS,'page'):'')||'home';
+function eventFrames(){
+  return figma.currentPage.children.filter(n=>n.type==='FRAME'&&n.getSharedPluginData(NS,'documentId')===documentId) as FrameNode[];
+}
+// Home is required; extra pages ("ticket" or custom slugs) each need a Desktop frame and may have a Mobile one.
+async function pageTemplate(style:TemplateStyle,slug:string){
+  if(!pageSlugOk(slug))throw Error('Name the page in lowercase, like ticket, agenda or faq.');
+  const frames=eventFrames();
+  if(frames.some(f=>pageOf(f)===slug))throw Error('The "'+slug+'" page already exists on this Figma page.');
+  const t=style==='blank'?null:await theme(style);
+  const top=Math.round(Math.max(figma.viewport.center.y,...frames.map(f=>f.y+f.height))+200);
+  const left=Math.round(frames.length?Math.min(...frames.map(f=>f.x)):figma.viewport.center.x-980);
+  const b=t?await buttons(t,style,left-420,top):undefined;
+  const title=slug==='ticket'?'Get your pass':slug.split('-').map(w=>w.charAt(0).toUpperCase()+w.slice(1)).join(' ');
+  const created:FrameNode[]=[];
+  for(const role of ['desktop','mobile'] as const){
+    const frame=figma.createFrame();
+    figma.currentPage.appendChild(frame);
+    frame.name='PassFlow '+(slug==='ticket'?'Ticket page':'Page · '+slug)+' · '+(role==='desktop'?'Desktop 1440':'Mobile 390');
+    frame.fills=[solid(t?.bg??'#ffffff')];
+    frame.setSharedPluginData(NS,'frame',role);
+    frame.setSharedPluginData(NS,'page',slug);
+    frame.setSharedPluginData(NS,'documentId',documentId);
+    frame.setSharedPluginData(NS,'schema',SCHEMA);
+    frame.setSharedPluginData(NS,'templateStyle',style);
+    if(t&&b){
+      frame.resize(role==='desktop'?1440:390,100);
+      frame.layoutMode='VERTICAL';frame.primaryAxisSizingMode='AUTO';frame.counterAxisSizingMode='FIXED';frame.itemSpacing=0;
+      await block(frame,'Navbar',style,b);
+      await block(frame,'Page header',style,b,title);
+      if(slug!=='ticket')await block(frame,'Footer',style,b);
+      // The event name in the navbar goes back to Home, using Figma's own Navigate to.
+      const home=frames.find(f=>pageOf(f)==='home'&&f.getSharedPluginData(NS,'frame')===role),brand=firstText(frame.children[0]);
+      if(home&&brand)await brand.setReactionsAsync([{trigger:{type:'ON_CLICK'},actions:[{type:'NODE',destinationId:home.id,navigation:'NAVIGATE',transition:null}]}]);
+    }else frame.resize(role==='desktop'?1440:390,slug==='ticket'?480:role==='desktop'?1024:844);
+    frame.x=left+(role==='desktop'?0:1600);frame.y=top;
+    created.push(frame);
+  }
+  figma.currentPage.selection=created;
+  figma.viewport.scrollAndZoomIntoView(created);
+  dirty=true;
+  status('Changes detected',slug==='ticket'?'Ticket page added. It shows above the PassFlow sign-up form.':'"'+slug+'" page added at /e/your-event/'+slug+'. Link to it with Prototype → Navigate to.');
+  selectionState();
+}
 function findFrames(){
-  const all=figma.currentPage.children.filter(n=>n.type==='FRAME'&&n.getSharedPluginData(NS,'documentId')===documentId) as FrameNode[];
-  const desktop=all.filter(n=>n.getSharedPluginData(NS,'frame')==='desktop');
-  const mobile=all.filter(n=>n.getSharedPluginData(NS,'frame')==='mobile');
-  if(desktop.length!==1||mobile.length>1)throw Error('Keep exactly one Desktop frame and at most one Mobile frame for this event on the current page.');
-  return {desktop:desktop[0],mobile:mobile[0]};
+  const groups=new Map<string,{desktop:FrameNode[];mobile:FrameNode[]}>();
+  for(const f of eventFrames()){
+    const role=f.getSharedPluginData(NS,'frame');if(role!=='desktop'&&role!=='mobile')continue;
+    const g=groups.get(pageOf(f))??{desktop:[],mobile:[]};g[role].push(f);groups.set(pageOf(f),g);
+  }
+  const home=groups.get('home');
+  if(!home||home.desktop.length!==1||home.mobile.length>1)throw Error('Keep exactly one Home Desktop frame and at most one Home Mobile frame on the current page.');
+  const pages:{slug:string;desktop:FrameNode;mobile?:FrameNode}[]=[];
+  for(const [slug,g] of groups){
+    if(slug==='home')continue;
+    if(!pageSlugOk(slug))throw Error('Page "'+slug+'" needs a lowercase name like agenda or ticket.');
+    if(g.desktop.length!==1||g.mobile.length>1)throw Error('Page "'+slug+'" needs exactly one Desktop frame and at most one Mobile frame.');
+    pages.push({slug,desktop:g.desktop[0],mobile:g.mobile[0]});
+  }
+  if(pages.length>8)throw Error('Use at most 8 extra pages.');
+  return {desktop:home.desktop[0],mobile:home.mobile[0],pages};
 }
 function contractWarnings(frame:FrameNode,label:string){
   const found=new Set<string>();
@@ -389,6 +454,11 @@ async function interactions(node:SceneNode,warnings:string[]){
           if(/^https:\/\//i.test(url))out.url=url;else warnings.push('Links must start with https://. "'+a.url.slice(0,60)+'" was skipped.');
         }
         if(a.type==='NODE'&&a.navigation==='SCROLL_TO'&&a.destinationId)out.scrollTo=a.destinationId;
+        if(a.type==='NODE'&&a.navigation==='NAVIGATE'&&a.destinationId){
+          const dest=await figma.getNodeByIdAsync(a.destinationId);
+          if(dest&&dest.type==='FRAME'&&dest.getSharedPluginData(NS,'documentId')===documentId)out.url='page:'+pageOf(dest);
+          else warnings.push('A Navigate to link points to a frame that is not a PassFlow page. Mark that frame as a page first.');
+        }
       }
       if((trigger==='ON_HOVER'||trigger==='MOUSE_ENTER')&&a.type==='NODE'&&a.navigation==='CHANGE_TO'&&a.destinationId){
         const dest=await figma.getNodeByIdAsync(a.destinationId);
@@ -492,7 +562,9 @@ async function sync(){
     warnings.push(...contractWarnings(frames.desktop,'Desktop'));
     if(frames.mobile)warnings.push(...contractWarnings(frames.mobile,'Mobile'));
     else warnings.push('No Mobile frame: PassFlow will use a readable fallback on phones.');
-    const document={schema:3,source:'figma',desktop:await serialize(frames.desktop,warnings),mobile:frames.mobile?await serialize(frames.mobile,warnings):null,warnings:[...new Set(warnings)]};
+    const pages=[];
+    for(const p of frames.pages)pages.push({slug:p.slug,desktop:await serialize(p.desktop,warnings),mobile:p.mobile?await serialize(p.mobile,warnings):null});
+    const document={schema:3,source:'figma',desktop:await serialize(frames.desktop,warnings),mobile:frames.mobile?await serialize(frames.mobile,warnings):null,pages,warnings:[...new Set(warnings)]};
     if(JSON.stringify(document).length>850000)throw Error('Design exceeds 850 KB. Reduce image sizes.');
     const result=await api('sync',{documentId,revision:session.revision,document},session.token);
     session.revision=result.revision;session.draftId=result.draftId;
@@ -582,11 +654,15 @@ figma.ui.onmessage=async(message:Message)=>{
       const node=figma.currentPage.selection[0];
       if(figma.currentPage.selection.length!==1||node?.type!=='FRAME')throw Error('Select one top-level frame.');
       if(node.parent!==figma.currentPage)throw Error('Responsive frames must be top-level on the current page.');
+      const page=(message.page||'home').trim().toLowerCase();
+      if(page!=='home'&&!pageSlugOk(page))throw Error('Use a lowercase page name like agenda, faq or ticket.');
       node.setSharedPluginData(NS,'frame',message.role);
+      node.setSharedPluginData(NS,'page',page==='home'?'':page);
       node.setSharedPluginData(NS,'documentId',documentId);
       node.setSharedPluginData(NS,'schema',SCHEMA);
-      status('Changes detected',message.role+' frame assigned.');
+      status('Changes detected',(page==='home'?'Home':page==='ticket'?'Ticket page':'"'+page+'" page')+' '+message.role+' frame assigned.');
     }
+    if(message.type==='page')await pageTemplate(message.style,(message.page||'').trim().toLowerCase());
     if(message.type==='block'){
       if(!blocks.includes(message.block))throw Error('Choose a supported block.');
       const frame=figma.currentPage.selection[0];

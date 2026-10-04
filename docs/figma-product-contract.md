@@ -13,6 +13,7 @@ Updated 4 October 2026 (user direction): Figma is the whole frontend; PassFlow i
   - While hovering / Mouse enter → Change to a component variant becomes a CSS hover (fill, text color, stroke, opacity, duration, easing).
 - Templates: Blank (empty Desktop 1440 and Mobile 390 frames), Minimal and Festival. Starters include a sticky navbar and hover button variants as working examples.
 - The plugin binds only Register, My Pass, live Tickets and a fallback Custom Link. Older text bindings still render for existing drafts.
+- Pages: frames carry a page name. Home is required. "ticket" renders above the PassFlow sign-up form at /e/[slug]/claim, where the form itself stays PassFlow-owned. Other lowercase names render at /e/[slug]/[page], with up to 8 extra pages. Route names (claim, calendar, api, admin and similar) are reserved. Prototype Navigate to a page frame becomes a link to that page.
 - Drafts may sync while incomplete. Publishing requires a Register action or live Tickets list and valid scroll targets.
 - Keep desktop and mobile frames separate, with a documented mobile fallback.
 - Preserve stable, versioned plugin metadata for identity and bindings. Visible layer names are hints, not identifiers; renaming must not break sync.

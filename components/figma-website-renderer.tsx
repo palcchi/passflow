@@ -1,6 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 import type {CSSProperties,ReactNode} from 'react';
-import {websiteLink,type FigmaWebsite,type WebsiteFrame,type WebsiteNode} from '@/lib/figma-website';
+import {websiteLink,type FigmaWebsite,type WebsiteFrame,type WebsiteNode,type WebsitePage} from '@/lib/figma-website';
 
 export type WebsiteData={
   name:string;
@@ -117,16 +117,18 @@ function Frame({frame,data,preview,prefix}:{frame:WebsiteFrame;data:WebsiteData;
     }
 
     if(n.binding==='register'||n.binding==='myPass'||n.binding==='customLink'){
-      const href=n.binding==='customLink'
-        ? (n.href.startsWith('#')?'#'+prefix+'-'+n.href.slice(1):n.href)
-        : data.claimUrl;
+      const home=data.claimUrl.replace(/\/claim$/,'');
+      const href=n.binding!=='customLink'?data.claimUrl
+        :n.href.startsWith('#')?'#'+prefix+'-'+n.href.slice(1)
+        :n.href==='page:home'?home:n.href==='page:ticket'?data.claimUrl
+        :n.href.startsWith('page:')?home+'/'+n.href.slice(5):n.href;
       // Buttons designed in Figma keep their own layers; drafts from before v3 have none, so fall back to a label.
       const label=nested?.length?nested:n.binding==='register'&&!n.text
         ? data.ctaLabel
         : n.binding==='myPass'&&!n.text
           ? 'View my pass'
           : value;
-      const external=n.binding==='customLink'&&!n.href.startsWith('#');
+      const external=n.binding==='customLink'&&n.href.startsWith('https:');
       return <a
         key={n.id}
         id={id}
@@ -149,6 +151,14 @@ function Frame({frame,data,preview,prefix}:{frame:WebsiteFrame;data:WebsiteData;
   return <div className="figma-live-frame" style={{aspectRatio:frame.width+'/'+frame.height,background:frame.background}}>
     {nav&&<div className="figma-live-nav"><div style={{position:'relative',aspectRatio:frame.width+'/'+nav.height}}>{render(nav,nav.width,nav.height,true)}</div></div>}
     {(children.get(null)??[]).filter(n=>n!==nav).map(n=>render(n,frame.width,frame.height))}
+  </div>;
+}
+
+// Extra pages and the ticket-page header: phones without a Mobile frame get the Desktop frame scaled down.
+export function FigmaPageRenderer({page,data,preview=false}:{page:WebsitePage;data:WebsiteData;preview?:boolean}){
+  return <div className="figma-live-website">
+    <div className={page.mobile?'figma-live-desktop':undefined}><Frame frame={page.desktop} data={data} preview={preview} prefix={page.slug+'-desktop'}/></div>
+    {page.mobile&&<div className="figma-live-mobile"><Frame frame={page.mobile} data={data} preview={preview} prefix={page.slug+'-mobile'}/></div>}
   </div>;
 }
 

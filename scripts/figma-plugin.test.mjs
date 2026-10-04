@@ -101,7 +101,7 @@ test('standard plugin templates serialize into valid desktop/mobile HTML documen
   const source=fs.readFileSync('figma-plugin-standard/code.ts','utf8');
   const compiled=ts.transpileModule(source,{compilerOptions:{target:ts.ScriptTarget.ES2020,module:ts.ModuleKind.None}}).outputText;
   const context=vm.createContext({figma,__html__:'',setTimeout:()=>1,clearTimeout(){},fetch:()=>{throw Error('Unexpected network request');}});
-  vm.runInContext(compiled+'\nglobalThis.testApi={template,serialize,findFrames,sync};',context);
+  vm.runInContext(compiled+'\nglobalThis.testApi={template,serialize,findFrames,sync,pageTemplate};',context);
 
   await context.testApi.template('minimal');
   const frames=context.testApi.findFrames();
@@ -154,6 +154,18 @@ test('standard plugin templates serialize into valid desktop/mobile HTML documen
   assert.ok(document.desktop.nodes.some(n=>n.anchor),'scroll targets get anchors');
   assert.ok(document.desktop.nodes.some(n=>n.href==='https://maps.google.com/?q=Jakarta'),'prototype Open link becomes a link');
   assert.ok(!document.desktop.nodes.some(n=>['eventName','eventDate','venue','eventDescription'].includes(n.binding)),'text is static');
+  await context.testApi.pageTemplate('minimal','ticket');
+  await context.testApi.pageTemplate('minimal','agenda');
+  await assert.rejects(()=>context.testApi.pageTemplate('minimal','claim'),/lowercase/);
+  await assert.rejects(()=>context.testApi.pageTemplate('minimal','agenda'),/already exists/);
+  const all=context.testApi.findFrames();
+  assert.deepEqual(JSON.parse(JSON.stringify(all.pages.map(p=>p.slug).sort())),['agenda','ticket']);
+  const pages=[];
+  for(const p of all.pages){reflow(p.desktop);reflow(p.mobile);pages.push({slug:p.slug,desktop:await context.testApi.serialize(p.desktop,[]),mobile:await context.testApi.serialize(p.mobile,[])});}
+  const multi=readFigmaWebsite({schema:3,source:'figma',desktop:await context.testApi.serialize(all.desktop,[]),mobile:await context.testApi.serialize(all.mobile,[]),pages});
+  assert.ok(multi,'multi-page document parses');
+  assert.deepEqual(validateFigmaWebsite(multi),[]);
+  assert.ok(multi.pages.find(p=>p.slug==='agenda').desktop.nodes.some(n=>n.href==='page:home'),'navbar brand navigates home');
   for(const style of ['festival']){
     page.children.length=0;
     await context.testApi.template(style);
