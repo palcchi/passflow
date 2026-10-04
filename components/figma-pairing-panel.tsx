@@ -5,14 +5,80 @@ import {createPairingCode,revokePluginLink} from '@/app/admin/figma-pairing-acti
 import {publishStudio,retireStudio,restoreFigmaPublication} from '@/app/admin/studio-actions';
 type Connection={id:string;file_name:string;expires_at:string;revoked_at:string|null;last_synced_at:string|null;external_change_at:string|null};
 type Version={id:string;name:string;status:string;revision:number;updated_at:string;publication_number:number|null;published_at:string|null};
+type Result={error?:string;success?:boolean;code?:string};
+
+const when=(iso:string)=>new Date(iso).toLocaleString('en-GB',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit',timeZone:'UTC'})+' UTC';
+
 export function FigmaPairingPanel({eventId,connections,versions,ready,now}:{eventId:string;connections:Connection[];versions:Version[];ready:boolean;now:number}){
-  const [pending,startTransition]=useTransition(),[code,setCode]=useState(''),[message,setMessage]=useState('');
+  const [pending,startTransition]=useTransition(),[code,setCode]=useState(''),[message,setMessage]=useState(''),[copied,setCopied]=useState(false);
   const router=useRouter();
   useEffect(()=>{if(!ready)return;const timer=setInterval(()=>{if(document.visibilityState==='visible')router.refresh();},15000);return ()=>clearInterval(timer);},[ready,router]);
-  function run(work:()=>Promise<{error?:string;success?:boolean;code?:string}>){startTransition(async()=>{try{const result=await work();setMessage(result.error??(result.code?'Code valid for 10 minutes. Creating another invalidates this code.':'Saved.'));if(result.code)setCode(result.code);}catch{setMessage('Connection interrupted. Please try again.');}});}
-  return <div className="event-admin-stack"><section className="event-admin-section"><h2>Event website, designed in Figma.</h2><p>Open an existing Figma file, run PassFlow, then pair this event. Start with a template or choose Advanced Mode. Sync updates a draft, never the live site.</p><ol><li>Open your Figma file and the standard PassFlow plugin.</li><li>Generate a code below and enter it under Pair Event.</li><li>Insert a starter template, edit, preview and publish here.</li></ol><div className="resource-toolbar"><button className="button button-dark" disabled={pending||!ready} onClick={()=>run(()=>createPairingCode(eventId))}>Generate pairing code</button><a className="button button-ghost" href="/figma-plugin-standard.zip" download>Download standard plugin</a></div>{code&&<p><strong style={{fontFamily:'monospace',fontSize:24,userSelect:'all'}}>{code}</strong></p>}{!ready&&<p role="status">Pairing requires the database migration and server configuration. No connection is active yet.</p>}<p className="text-sm">The older account plugin does not support this pairing flow. The download includes development-install instructions.</p></section>
+  function run(work:()=>Promise<Result>,done='Saved.'){
+    startTransition(async()=>{
+      try{const result=await work();setMessage(result.error??(result.code?'':done));if(result.code){setCode(result.code);setCopied(false);}}
+      catch{setMessage('Connection interrupted. Please try again.');}
+    });
+  }
+  async function copy(){try{await navigator.clipboard.writeText(code);setCopied(true);}catch{setMessage('Copy failed. Select the code and copy it manually.');}}
+  const linkState=(c:Connection)=>c.revoked_at?['Revoked','muted']:Date.parse(c.expires_at)<now?['Expired','muted']:c.external_change_at?['Changed outside plugin','warn']:c.last_synced_at?['Synced','on']:['Waiting for first sync','warn'];
+
+  return <div className="event-admin-stack">
+    <section className="event-admin-section">
+      <span className="section-kicker">Website from Figma</span>
+      <h2>Design your event website in Figma.</h2>
+      <p>Pick a starter style in the PassFlow plugin, edit it freely, and it syncs to a private draft. Nothing goes live until you publish here.</p>
+      <ol className="figma-steps">
+        <li>
+          <strong>Install the PassFlow plugin</strong>
+          <span>On a computer: Figma Desktop → Plugins → Development → Import plugin from manifest.</span>
+          <a className="button button-ghost" href="/figma-plugin-standard.zip" download>Download plugin</a>
+        </li>
+        <li>
+          <strong>Pair this event</strong>
+          <span>Paste the code into the plugin. It works once and expires after 10 minutes.</span>
+          {code
+            ? <div className="figma-code"><output aria-label="Pairing code">{code}</output><button className="button button-dark" onClick={copy}>{copied?'Copied':'Copy'}</button><button className="button button-ghost" disabled={pending} onClick={()=>run(()=>createPairingCode(eventId))}>New code</button></div>
+            : <button className="button button-dark" disabled={pending||!ready} onClick={()=>run(()=>createPairingCode(eventId))}>{pending?'Creating…':'Get pairing code'}</button>}
+          {!ready&&<span role="status">Pairing is not available on this server yet. Ask the PassFlow admin to finish the server setup.</span>}
+        </li>
+        <li>
+          <strong>Choose a style and edit</strong>
+          <span>Minimal, Editorial or Festival. Each comes with a sticky navbar, tickets, schedule, speakers, venue and FAQ.</span>
+        </li>
+        <li>
+          <strong>Preview and publish</strong>
+          <span>Your drafts appear below. Publishing only changes the website, never tickets or QR passes.</span>
+        </li>
+      </ol>
+    </section>
+
     {message&&<p role="status" className="studio-notice">{message}</p>}
-    <section className="event-admin-section"><h3>Paired files</h3>{!connections.length&&<p>No paired files yet.</p>}{connections.map(c=><div key={c.id} className="resource-record"><strong>{c.file_name}</strong><p>{c.revoked_at?'Revoked':Date.parse(c.expires_at)<now?'Expired':c.external_change_at?'Changes detected outside the plugin':c.last_synced_at?'Synced':'Connected, awaiting first sync'}</p>{c.last_synced_at&&<small>Last sync (UTC): {new Date(c.last_synced_at).toLocaleString('en-GB',{timeZone:'UTC'})}</small>}{!c.revoked_at&&<button className="button button-ghost" disabled={pending} onClick={()=>{if(confirm('Revoke this plugin connection? Existing published designs remain live.'))run(()=>revokePluginLink(eventId,c.id));}}>Revoke connection</button>}</div>)}</section>
-    <section className="event-admin-section"><h3>Drafts & published versions</h3>{!versions.length&&<p>Insert a template and sync from Figma to create the first draft.</p>}{versions.map(v=><div key={v.id} className="resource-record"><strong>{v.name}</strong><p>{v.status} · revision {v.revision}{v.publication_number?' · publication '+v.publication_number:''}{v.published_at?' · '+new Date(v.published_at).toLocaleString('en-GB'):''}</p><div className="resource-toolbar"><a className="button button-ghost" href={`/admin/events/${eventId}/design/preview/${v.id}`}>Preview</a>{v.status==='draft'&&<button className="button button-dark" disabled={pending} onClick={()=>{if(confirm('Publish this reviewed version? Only the live website design changes. Tickets and QR credentials stay unchanged.'))run(()=>publishStudio(eventId,v.id,v.revision));}}>Publish</button>}{v.status!=='draft'&&<button className="button button-ghost" disabled={pending} onClick={()=>run(()=>restoreFigmaPublication(eventId,v.id))}>Restore to draft</button>}{v.status==='published'&&<button className="button button-ghost" disabled={pending} onClick={()=>{if(confirm('Unpublish and return to the fallback event page?'))run(()=>retireStudio(eventId,v.id,v.revision,false));}}>Unpublish</button>}</div></div>)}</section>
+
+    <section className="event-admin-section">
+      <h3>Website versions</h3>
+      {!versions.length&&<p>No drafts yet. Insert a style in the plugin to create the first one.</p>}
+      {versions.map(v=>{
+        const label=v.status==='published'?'Live':v.status==='draft'?'Draft':'Archived';
+        return <div key={v.id} className="resource-record">
+          <div className="figma-version-head"><strong>{v.name}</strong><span className={'figma-badge figma-badge-'+(v.status==='published'?'on':v.status==='draft'?'warn':'muted')}>{label}</span></div>
+          <p>Updated {when(v.updated_at)} · revision {v.revision}{v.publication_number?' · publication '+v.publication_number:''}</p>
+          <div className="resource-toolbar">
+            <a className="button button-ghost" href={`/admin/events/${eventId}/design/preview/${v.id}`}>Preview</a>
+            {v.status==='draft'&&<button className="button button-dark" disabled={pending} onClick={()=>{if(confirm('Publish this version? Only the website design changes. Tickets and QR passes stay the same.'))run(()=>publishStudio(eventId,v.id,v.revision),'Published. Your website is live.');}}>Publish</button>}
+            {v.status!=='draft'&&<button className="button button-ghost" disabled={pending} onClick={()=>run(()=>restoreFigmaPublication(eventId,v.id),'Copied to a new draft.')}>Copy to draft</button>}
+            {v.status==='published'&&<button className="button button-ghost" disabled={pending} onClick={()=>{if(confirm('Unpublish and return to the basic event page?'))run(()=>retireStudio(eventId,v.id,v.revision,false),'Unpublished.');}}>Unpublish</button>}
+          </div>
+        </div>;
+      })}
+    </section>
+
+    {connections.length>0&&<section className="event-admin-section">
+      <h3>Connected Figma files</h3>
+      {connections.map(c=>{const [label,tone]=linkState(c);return <div key={c.id} className="resource-record">
+        <div className="figma-version-head"><strong>{c.file_name}</strong><span className={'figma-badge figma-badge-'+tone}>{label}</span></div>
+        {c.last_synced_at&&<p>Last sync {when(c.last_synced_at)}</p>}
+        {!c.revoked_at&&<button className="button button-ghost" disabled={pending} onClick={()=>{if(confirm('Disconnect this Figma file? Published designs stay live.'))run(()=>revokePluginLink(eventId,c.id),'Disconnected.');}}>Disconnect</button>}
+      </div>;})}
+    </section>}
   </div>;
 }

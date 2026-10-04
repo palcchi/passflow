@@ -45,7 +45,7 @@ test('standard plugin templates serialize into valid desktop/mobile HTML documen
           child.y=this.paddingTop||0;
         }
         this.children.push(child);
-        if(this.primaryAxisSizingMode==='AUTO'){
+        if(this.primaryAxisSizingMode==='AUTO'&&this.layoutSizingHorizontal!=='FILL'&&this.layoutSizingHorizontal!=='FIXED'){
           if(this.layoutMode==='VERTICAL'){
             this.height=(this.paddingTop||0)+(this.paddingBottom||0)+this.children.reduce((sum,item)=>sum+item.height,0)+Math.max(0,this.children.length-1)*(this.itemSpacing||0);
           }else if(this.layoutMode==='HORIZONTAL'){
@@ -58,7 +58,9 @@ test('standard plugin templates serialize into valid desktop/mobile HTML documen
       setSharedPluginData(ns,key,value){metadata.set(ns+key,value);},
       on(){},
       off(){},
-      async loadAsync(){}
+      async loadAsync(){},
+      insertChild(i,child){this.appendChild(child);this.children.splice(this.children.indexOf(child),1);this.children.splice(i,0,child);},
+      async exportAsync(){return new Uint8Array([1,2,3]);}
     };
     return n;
   }
@@ -74,6 +76,8 @@ test('standard plugin templates serialize into valid desktop/mobile HTML documen
     fileKey:undefined,
     createFrame:()=>node('FRAME'),
     createText:()=>node('TEXT'),
+    createEllipse:()=>node('ELLIPSE'),
+    createStar:()=>node('STAR'),
     loadFontAsync:async()=>{},
     viewport:{center:{x:0,y:0},scrollAndZoomIntoView(){}},
     ui:{postMessage:m=>states.push(m)},
@@ -91,16 +95,19 @@ test('standard plugin templates serialize into valid desktop/mobile HTML documen
   await context.testApi.template('minimal');
   const frames=context.testApi.findFrames();
 
-  function reflow(parent){
-    for(const child of parent.children??[])if(child.children?.length)reflow(child);
-    if(parent.layoutMode==='VERTICAL'){
-      let y=parent.paddingTop||0;
-      for(const child of parent.children){child.x=parent.paddingLeft||0;child.y=y;y+=child.height+(parent.itemSpacing||0);}
-      if(parent.primaryAxisSizingMode==='AUTO')parent.height=y-(parent.children.length?(parent.itemSpacing||0):0)+(parent.paddingBottom||0);
-    }else if(parent.layoutMode==='HORIZONTAL'){
-      let x=parent.paddingLeft||0;
-      for(const child of parent.children){child.x=x;child.y=parent.paddingTop||0;x+=child.width+(parent.itemSpacing||0);}
-      if(parent.primaryAxisSizingMode==='AUTO')parent.width=x-(parent.children.length?(parent.itemSpacing||0):0)+(parent.paddingRight||0);
+  function reflow(p){
+    for(const c of p.children??[])if(c.children?.length)reflow(c);
+    const flow=(p.children??[]).filter(c=>c.layoutPositioning!=='ABSOLUTE');
+    const pt=p.paddingTop||0,pb=p.paddingBottom||0,pl=p.paddingLeft||0,pr=p.paddingRight||0,g=p.itemSpacing||0;
+    const hugW=p.layoutSizingHorizontal!=='FILL'&&p.layoutSizingHorizontal!=='FIXED';
+    if(p.layoutMode==='VERTICAL'){
+      let y=pt;for(const c of flow){c.x=pl;c.y=y;y+=c.height+g;}
+      if(p.primaryAxisSizingMode==='AUTO')p.height=(flow.length?y-g:y)+pb;
+      if(p.counterAxisSizingMode==='AUTO'&&hugW)p.width=Math.max(0,...flow.map(c=>c.width))+pl+pr;
+    }else if(p.layoutMode==='HORIZONTAL'){
+      let x=pl;for(const c of flow){c.x=x;c.y=pt;x+=c.width+g;}
+      if(p.primaryAxisSizingMode==='AUTO'&&hugW)p.width=(flow.length?x-g:x)+pr;
+      if(p.counterAxisSizingMode==='AUTO'||p.layoutSizingVertical==='HUG')p.height=Math.max(0,...flow.map(c=>c.height))+pt+pb;
     }
   }
   reflow(frames.desktop);
@@ -129,4 +136,16 @@ test('standard plugin templates serialize into valid desktop/mobile HTML documen
 
   await context.testApi.sync();
   assert.equal(states.at(-1).state,'Disconnected');
+
+  assert.ok(document.desktop.nodes.some(n=>n.sticky&&n.parentId===null),'desktop navbar is sticky');
+  for(const style of ['editorial','festival']){
+    page.children.length=0;
+    await context.testApi.template(style);
+    const f=context.testApi.findFrames();reflow(f.desktop);reflow(f.mobile);
+    const d=readFigmaWebsite({schema:3,source:'figma',desktop:await context.testApi.serialize(f.desktop,[]),mobile:await context.testApi.serialize(f.mobile,[])});
+    assert.ok(d,style);
+    assert.deepEqual(validateFigmaWebsite(d),[],style);
+    assert.ok(d.mobile.nodes.some(n=>n.sticky),style+' mobile navbar is sticky');
+    if(style==='festival')assert.equal(d.desktop.nodes.find(n=>n.binding==='eventName'&&n.fontSize>100).fontWeight,900);
+  }
 });
