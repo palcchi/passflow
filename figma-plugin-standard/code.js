@@ -1,9 +1,14 @@
 const ORIGIN = 'https://passflow.my.id';
 const NS = 'passflow';
 const SCHEMA = 'passflow.website.v1';
+const frameWidths = { desktop: 1440, tablet: 834, mobile: 390 };
+const frameLabel = (role) => role.charAt(0).toUpperCase() + role.slice(1) + ' ' + frameWidths[role];
+const frameOffset = { desktop: 0, tablet: 1600, mobile: 2600 };
 const bindings = ['eventName', 'eventDescription', 'eventDate', 'venue', 'venueMap', 'logo', 'banner', 'tickets', 'register', 'myPass', 'schedule', 'speakers', 'sponsors', 'customLink'];
 const blocks = ['Navbar', 'Hero', 'About', 'Tickets', 'Schedule', 'Speakers', 'Sponsors', 'Venue', 'FAQ', 'CTA', 'Footer'];
 let session = null;
+let tickets = [];
+function setTickets(list) { tickets = Array.isArray(list) ? list.filter(t => t && typeof t.id === 'string' && typeof t.name === 'string').slice(0, 50) : []; figma.ui.postMessage({ type: 'tickets', tickets }); }
 let mutating = false, syncing = false, dirty = false, blocked = false, confirmed = false, commandPending = false;
 let timer = null;
 let documentId = figma.root.getSharedPluginData(NS, 'documentId');
@@ -246,7 +251,7 @@ function chip(parent, t, label, fill, ink) {
 async function block(parent, name, style, b, title = '') {
     if (style === 'blank')
         throw Error('Pick Minimal or Festival to insert ready-made sections.');
-    const t = await theme(style), w = parent.width, mobile = w < 600, pad = mobile ? 24 : 96, cw = w - pad * 2, D = (s) => t.upper ? s.toUpperCase() : s;
+    const t = await theme(style), w = parent.width, mobile = w < 600, tablet = !mobile && w < 1100, stack = mobile || tablet, pad = mobile ? 24 : tablet ? 56 : 96, cw = w - pad * 2, D = (s) => t.upper ? s.toUpperCase() : s;
     b = b !== null && b !== void 0 ? b : await buttons(t, style, parent.x - 420, parent.y);
     if (name === 'Navbar') {
         const nav = box('Navbar', 'HORIZONTAL', { fill: t.bg, pad: [mobile ? 12 : 16, pad], align: 'SPACE_BETWEEN', cross: 'CENTER' });
@@ -272,6 +277,9 @@ async function block(parent, name, style, b, title = '') {
     fillW(sec, w);
     sec.setSharedPluginData(NS, 'block', name.toLowerCase());
     sec.setSharedPluginData(NS, 'schema', SCHEMA);
+    // Starter sections ease in on scroll; designers change or clear it under Advanced.
+    if (name !== 'Footer')
+        sec.setSharedPluginData(NS, 'enter', name === 'Hero' || name === 'Page header' ? 'fade' : 'up');
     if (name === 'Page header') {
         const ticket = pageOf(parent) === 'ticket';
         kicker(sec, t, ticket ? 'Tickets' : 'Your event');
@@ -287,7 +295,7 @@ async function block(parent, name, style, b, title = '') {
         sec.appendChild(meta);
         chip(meta, t, '27 September 2026', style === 'festival' ? t.accent : t.bg, style === 'festival' ? t.accentInk : t.ink);
         chip(meta, t, 'Jakarta', style === 'festival' ? t.kicker : t.bg, style === 'festival' ? t.accentInk : t.ink);
-        fillW(txt(sec, D('Your event starts here'), { size: t.heroSize[mobile ? 1 : 0], font: t.display, color: t.ink, lh: .94, ls: t.tracking, align }), cw);
+        fillW(txt(sec, D('Your event starts here'), { size: mobile ? t.heroSize[1] : tablet ? Math.round(t.heroSize[0] * .72) : t.heroSize[0], font: t.display, color: t.ink, lh: .94, ls: t.tracking, align }), cw);
         const desc = txt(sec, 'A purposeful gathering. A space for new ideas, new people and a day worth remembering.', { size: mobile ? 17 : 22, font: t.body, color: t.muted, lh: 1.5, align });
         if (mobile)
             fillW(desc, cw);
@@ -305,12 +313,12 @@ async function block(parent, name, style, b, title = '') {
     }
     if (name === 'About') {
         kicker(sec, t, 'About');
-        const row = box('About row', mobile ? 'VERTICAL' : 'HORIZONTAL', { gap: mobile ? 14 : 80 });
+        const row = box('About row', stack ? 'VERTICAL' : 'HORIZONTAL', { gap: stack ? 14 : 80 });
         sec.appendChild(row);
         fillW(row, cw);
         const h = txt(row, D('Why this gathering matters'), { size: mobile ? 32 : 48, font: t.display, color: t.ink, lh: 1.05, ls: t.tracking });
         const p = txt(row, 'Tell people what they will experience, who it is for and why it is worth showing up.', { size: mobile ? 17 : 21, font: t.body, color: t.muted, lh: 1.55 });
-        if (mobile) {
+        if (stack) {
             fillW(h, cw);
             fillW(p, cw);
         }
@@ -378,13 +386,13 @@ async function block(parent, name, style, b, title = '') {
         return;
     }
     if (name === 'Venue') {
-        const row = box('Venue row', mobile ? 'VERTICAL' : 'HORIZONTAL', { gap: mobile ? 20 : 48 });
+        const row = box('Venue row', stack ? 'VERTICAL' : 'HORIZONTAL', { gap: stack ? 20 : 48 });
         sec.appendChild(row);
         fillW(row, cw);
         const left = box('Venue details', 'VERTICAL', { gap: 14 });
         row.appendChild(left);
-        const leftW = mobile ? cw : 440;
-        if (mobile)
+        const leftW = stack ? cw : 440;
+        if (stack)
             fillW(left, cw);
         else
             fixW(left, leftW);
@@ -395,7 +403,7 @@ async function block(parent, name, style, b, title = '') {
         await openLink(button(left, b, 'Open in Maps', 'secondary', 15), 'https://maps.google.com/?q=Jakarta');
         const map = box('Map artwork', 'VERTICAL', { fill: t.surface, stroke: t.line, radius: t.radius, align: 'CENTER', cross: 'CENTER' });
         row.appendChild(map);
-        map.resize(mobile ? cw : cw - leftW - 48, mobile ? 220 : 320);
+        map.resize(stack ? cw : cw - leftW - 48, mobile ? 220 : 320);
         map.layoutSizingHorizontal = 'FILL';
         map.layoutSizingVertical = 'FIXED';
         txt(map, 'Place a map image here', { size: 15, font: t.body, color: t.muted });
@@ -434,17 +442,17 @@ async function template(style) {
     const t = style === 'blank' ? null : await theme(style), created = [];
     const origin = { x: Math.round(figma.viewport.center.x - 980), y: Math.round(figma.viewport.center.y) };
     const b = t ? await buttons(t, style, origin.x - 420, origin.y) : undefined;
-    for (const role of ['desktop', 'mobile']) {
+    for (const role of ['desktop', 'tablet', 'mobile']) {
         const frame = figma.createFrame();
         figma.currentPage.appendChild(frame);
-        frame.name = 'PassFlow Website · ' + (role === 'desktop' ? 'Desktop 1440' : 'Mobile 390');
+        frame.name = 'PassFlow Website · ' + frameLabel(role);
         frame.fills = [solid((_a = t === null || t === void 0 ? void 0 : t.bg) !== null && _a !== void 0 ? _a : '#ffffff')];
         frame.setSharedPluginData(NS, 'frame', role);
         frame.setSharedPluginData(NS, 'documentId', documentId);
         frame.setSharedPluginData(NS, 'schema', SCHEMA);
         frame.setSharedPluginData(NS, 'templateStyle', style);
         if (t && b) {
-            frame.resize(role === 'desktop' ? 1440 : 390, 100);
+            frame.resize(frameWidths[role], 100);
             frame.layoutMode = 'VERTICAL';
             frame.primaryAxisSizingMode = 'AUTO';
             frame.counterAxisSizingMode = 'FIXED';
@@ -454,8 +462,8 @@ async function template(style) {
             await wireScrolls(frame);
         }
         else
-            frame.resize(role === 'desktop' ? 1440 : 390, role === 'desktop' ? 1024 : 844);
-        frame.x = origin.x + (role === 'desktop' ? 0 : 1600);
+            frame.resize(frameWidths[role], role === 'mobile' ? 844 : 1024);
+        frame.x = origin.x + frameOffset[role];
         frame.y = origin.y;
         created.push(frame);
     }
@@ -485,10 +493,10 @@ async function pageTemplate(style, slug) {
     const b = t ? await buttons(t, style, left - 420, top) : undefined;
     const title = slug === 'ticket' ? 'Get your pass' : slug.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
     const created = [];
-    for (const role of ['desktop', 'mobile']) {
+    for (const role of ['desktop', 'tablet', 'mobile']) {
         const frame = figma.createFrame();
         figma.currentPage.appendChild(frame);
-        frame.name = 'PassFlow ' + (slug === 'ticket' ? 'Ticket page' : 'Page · ' + slug) + ' · ' + (role === 'desktop' ? 'Desktop 1440' : 'Mobile 390');
+        frame.name = 'PassFlow ' + (slug === 'ticket' ? 'Ticket page' : 'Page · ' + slug) + ' · ' + frameLabel(role);
         frame.fills = [solid((_a = t === null || t === void 0 ? void 0 : t.bg) !== null && _a !== void 0 ? _a : '#ffffff')];
         frame.setSharedPluginData(NS, 'frame', role);
         frame.setSharedPluginData(NS, 'page', slug);
@@ -496,7 +504,7 @@ async function pageTemplate(style, slug) {
         frame.setSharedPluginData(NS, 'schema', SCHEMA);
         frame.setSharedPluginData(NS, 'templateStyle', style);
         if (t && b) {
-            frame.resize(role === 'desktop' ? 1440 : 390, 100);
+            frame.resize(frameWidths[role], 100);
             frame.layoutMode = 'VERTICAL';
             frame.primaryAxisSizingMode = 'AUTO';
             frame.counterAxisSizingMode = 'FIXED';
@@ -511,8 +519,8 @@ async function pageTemplate(style, slug) {
                 await brand.setReactionsAsync([{ trigger: { type: 'ON_CLICK' }, actions: [{ type: 'NODE', destinationId: home.id, navigation: 'NAVIGATE', transition: null }] }]);
         }
         else
-            frame.resize(role === 'desktop' ? 1440 : 390, slug === 'ticket' ? 480 : role === 'desktop' ? 1024 : 844);
-        frame.x = left + (role === 'desktop' ? 0 : 1600);
+            frame.resize(frameWidths[role], slug === 'ticket' ? 480 : role === 'mobile' ? 844 : 1024);
+        frame.x = left + frameOffset[role];
         frame.y = top;
         created.push(frame);
     }
@@ -568,23 +576,27 @@ function label(parent, chars, x, y, w, size, font, color, align = 'LEFT') {
     n.textAutoResize = 'HEIGHT';
     return n;
 }
-async function passTemplate(style, kind) {
+async function passTemplate(style, kind, ticketTypeId = '') {
     var _a;
     const size = passSizes[kind];
     if (!size)
         throw Error('Choose ID card, Digital pass or Wristband.');
-    const existing = eventFrames().find(f => f.getSharedPluginData(NS, 'pass') === kind);
+    const ticket = ticketTypeId ? tickets.find(t => t.id === ticketTypeId) : null;
+    if (ticketTypeId && !ticket)
+        throw Error('That ticket category is not available. Reopen the plugin to refresh categories.');
+    const existing = eventFrames().find(f => f.getSharedPluginData(NS, 'pass') === kind && f.getSharedPluginData(NS, 'ticketType') === ticketTypeId);
     if (existing)
-        throw Error('This page already has a ' + size.label + ' frame.');
+        throw Error('This page already has a ' + size.label + ' frame' + (ticket ? ' for ' + ticket.name : ' for all attendees') + '.');
     const t = style === 'blank' ? null : await theme(style);
     const frame = figma.createFrame();
     figma.currentPage.appendChild(frame);
-    frame.name = 'PassFlow ' + size.label + ' · ' + size.w + '×' + size.h + ' mm';
+    frame.name = 'PassFlow ' + size.label + (ticket ? ' · ' + ticket.name : '') + ' · ' + size.w + '×' + size.h + ' mm';
     frame.resize(size.w * PX, size.h * PX);
     frame.fills = [solid((_a = t === null || t === void 0 ? void 0 : t.bg) !== null && _a !== void 0 ? _a : '#ffffff')];
     frame.cornerRadius = kind === 'wristband' ? 0 : 3 * PX;
     frame.clipsContent = true;
     frame.setSharedPluginData(NS, 'pass', kind);
+    frame.setSharedPluginData(NS, 'ticketType', ticketTypeId);
     frame.setSharedPluginData(NS, 'documentId', documentId);
     frame.setSharedPluginData(NS, 'schema', SCHEMA);
     const others = eventFrames().filter(f => f !== frame);
@@ -653,12 +665,12 @@ async function exportPass(frame, kind, warnings) {
         for (const n of clone.findAll(n => passFields.includes(n.getSharedPluginData(NS, 'passField'))))
             n.visible = false;
         let png = await clone.exportAsync({ format: 'PNG', constraint: { type: 'SCALE', value: 3 } }), src = 'data:image/png;base64,' + figma.base64Encode(png);
-        if (src.length > 450000) {
-            png = await clone.exportAsync({ format: 'JPG', constraint: { type: 'SCALE', value: 2 } });
+        if (src.length > 6500000) {
+            png = await clone.exportAsync({ format: 'JPG', constraint: { type: 'SCALE', value: 3 } });
             src = 'data:image/jpeg;base64,' + figma.base64Encode(png);
         }
-        if (src.length > 450000)
-            throw Error(label + ' artwork exceeds 450 KB. Simplify large images.');
+        if (src.length > 6500000)
+            throw Error(label + ' artwork exceeds 5 MB. Simplify large images.');
         layers.unshift({ id: 'figma-background', type: 'image', field: 'text', text: '', src, x: 0, y: 0, width: w, height: h, fontSize: 4, color: '#171717', fill: '#ffffff', radius: 0, align: 'left', locked: true, hidden: false });
     }
     finally {
@@ -671,9 +683,9 @@ function findFrames() {
     const groups = new Map();
     for (const f of eventFrames()) {
         const role = f.getSharedPluginData(NS, 'frame');
-        if (role !== 'desktop' && role !== 'mobile')
+        if (!frameWidths[role])
             continue;
-        const g = (_a = groups.get(pageOf(f))) !== null && _a !== void 0 ? _a : { desktop: [], mobile: [] };
+        const g = (_a = groups.get(pageOf(f))) !== null && _a !== void 0 ? _a : { desktop: [], tablet: [], mobile: [] };
         g[role].push(f);
         groups.set(pageOf(f), g);
     }
@@ -683,28 +695,29 @@ function findFrames() {
             const kind = f.getSharedPluginData(NS, 'pass');
             if (!passSizes[kind])
                 continue;
-            if (passes.some(p => p.kind === kind))
-                throw Error('Keep one ' + passSizes[kind].label + ' frame per event on this page.');
-            passes.push({ kind, frame: f });
+            const ticketTypeId = f.getSharedPluginData(NS, 'ticketType');
+            if (passes.some(p => p.kind === kind && p.ticketTypeId === ticketTypeId))
+                throw Error('Keep one ' + passSizes[kind].label + ' frame per ticket category on this page.');
+            passes.push({ kind, ticketTypeId, frame: f });
         }
     const home = groups.get('home');
     if (!home && passes.length && groups.size === 0)
-        return { desktop: undefined, mobile: undefined, pages: [], passes };
-    if (!home || home.desktop.length !== 1 || home.mobile.length > 1)
-        throw Error(home || groups.size ? 'Keep exactly one Home Desktop frame and at most one Home Mobile frame on the current page.' : 'Insert a website template or a pass first.');
+        return { desktop: undefined, tablet: undefined, mobile: undefined, pages: [], passes };
+    if (!home || home.desktop.length !== 1 || home.tablet.length > 1 || home.mobile.length > 1)
+        throw Error(home || groups.size ? 'Keep exactly one Home Desktop frame and at most one Home Tablet and Mobile frame on the current page.' : 'Insert a website template or a pass first.');
     const pages = [];
     for (const [slug, g] of groups) {
         if (slug === 'home')
             continue;
         if (!pageSlugOk(slug))
             throw Error('Page "' + slug + '" needs a lowercase name like agenda or ticket.');
-        if (g.desktop.length !== 1 || g.mobile.length > 1)
-            throw Error('Page "' + slug + '" needs exactly one Desktop frame and at most one Mobile frame.');
-        pages.push({ slug, desktop: g.desktop[0], mobile: g.mobile[0] });
+        if (g.desktop.length !== 1 || g.tablet.length > 1 || g.mobile.length > 1)
+            throw Error('Page "' + slug + '" needs exactly one Desktop frame and at most one Tablet and Mobile frame.');
+        pages.push({ slug, desktop: g.desktop[0], tablet: g.tablet[0], mobile: g.mobile[0] });
     }
     if (pages.length > 8)
         throw Error('Use at most 8 extra pages.');
-    return { desktop: home.desktop[0], mobile: home.mobile[0], pages, passes };
+    return { desktop: home.desktop[0], tablet: home.tablet[0], mobile: home.mobile[0], pages, passes };
 }
 function contractWarnings(frame, label) {
     const found = new Set();
@@ -732,12 +745,54 @@ function fontWeight(style) {
     return 400;
 }
 // The web renderer accepts a short font whitelist; map Figma families onto the closest one.
-function webFamily(family) {
-    if (/mono|code/i.test(family))
-        return 'monospace';
-    if (/serif|playfair|georgia|garamond|times|lora|merriweather|baskerville|bodoni|caslon/i.test(family) && !/sans/i.test(family))
-        return 'Georgia';
-    return family === 'Arial' ? 'Arial' : 'Inter';
+// Families are passed through and loaded from Google Fonts on the web; odd names fall back to Inter.
+function webFamily(family) { return /^[A-Za-z0-9][A-Za-z0-9 \-]{0,39}$/.test(family) ? family : 'Inter'; }
+function hexA(paints, fallback = '') {
+    var _a;
+    const p = Array.isArray(paints) ? paints.find(p => p.type === 'SOLID' && p.visible !== false) : undefined;
+    if (!p || p.type !== 'SOLID')
+        return fallback;
+    const base = '#' + [p.color.r, p.color.g, p.color.b].map(v => Math.round(v * 255).toString(16).padStart(2, '0')).join(''), a = (_a = p.opacity) !== null && _a !== void 0 ? _a : 1;
+    return a < 1 ? base + Math.round(a * 255).toString(16).padStart(2, '0') : base;
+}
+const rgba = (c, alpha = 1) => '#' + [c.r, c.g, c.b, c.a * alpha].map(v => Math.round(Math.max(0, Math.min(1, v)) * 255).toString(16).padStart(2, '0')).join('');
+function gradientOf(paints) {
+    const g = paints.find(p => p.visible !== false && (p.type === 'GRADIENT_LINEAR' || p.type === 'GRADIENT_RADIAL'));
+    if (!g || (g.type !== 'GRADIENT_LINEAR' && g.type !== 'GRADIENT_RADIAL'))
+        return null;
+    // The gradient runs along +x in gradient space; mapped back to the layer, its direction is (d,-c).
+    const [, [c, d]] = g.gradientTransform;
+    return { type: g.type === 'GRADIENT_RADIAL' ? 'radial' : 'linear', angle: Math.round(Math.atan2(d, c) * 180 / Math.PI), stops: g.gradientStops.slice(0, 8).map(s => { var _a; return ({ color: rgba(s.color, (_a = g.opacity) !== null && _a !== void 0 ? _a : 1), pos: s.position }); }) };
+}
+async function bgOf(paints, warnings) {
+    var _a;
+    const p = paints.find(p => p.type === 'IMAGE' && p.visible !== false);
+    if (!p || p.type !== 'IMAGE' || !p.imageHash)
+        return null;
+    const bytes = await ((_a = figma.getImageByHash(p.imageHash)) === null || _a === void 0 ? void 0 : _a.getBytesAsync());
+    if (!bytes)
+        return null;
+    const mime = bytes[0] === 0x89 ? 'png' : bytes[0] === 0xff ? 'jpeg' : bytes[0] === 0x52 ? 'webp' : '';
+    if (!mime || bytes.length > 5 * 1024 * 1024) {
+        warnings.push('A background image is larger than 5 MB or not PNG/JPG/WebP and was skipped.');
+        return null;
+    }
+    return { image: 'data:image/' + mime + ';base64,' + figma.base64Encode(bytes), fit: p.scaleMode === 'FIT' ? 'contain' : 'cover' };
+}
+function shadowsOf(node) {
+    var _a;
+    if (!('effects' in node))
+        return [];
+    const out = [];
+    for (const e of node.effects)
+        if (e.visible && (e.type === 'DROP_SHADOW' || e.type === 'INNER_SHADOW'))
+            out.push({ x: e.offset.x, y: e.offset.y, blur: e.radius, spread: (_a = e.spread) !== null && _a !== void 0 ? _a : 0, color: rgba(e.color), inset: e.type === 'INNER_SHADOW' });
+    return out.slice(0, 4);
+}
+function spansOf(t) {
+    if (t.fontName !== figma.mixed && t.fontSize !== figma.mixed && t.fills !== figma.mixed && t.textDecoration !== figma.mixed)
+        return [];
+    return t.getStyledTextSegments(['fontName', 'fontSize', 'fills', 'textDecoration']).slice(0, 80).map(s => ({ start: s.start, end: s.end, weight: fontWeight(s.fontName.style), color: hexA(s.fills, ''), size: s.fontSize, italic: /italic|oblique/i.test(s.fontName.style), underline: s.textDecoration === 'UNDERLINE' }));
 }
 const anchorOf = (id) => 's' + id.replace(/[^a-zA-Z0-9]/g, '-');
 function cssEase(e) {
@@ -814,19 +869,22 @@ async function serialize(frame, warnings) {
             scrollTargets.add(act.scrollTo);
         const paints = 'fills' in node ? node.fills : undefined;
         const textNode = node.type === 'TEXT' ? node : null;
-        if ('effects' in node && node.effects.some(effect => effect.visible))
-            warnings.push('Layer effects are simplified. Review shadows and blurs in Preview.');
+        if ('effects' in node && node.effects.some(effect => effect.visible && (effect.type === 'LAYER_BLUR' || effect.type === 'BACKGROUND_BLUR')))
+            warnings.push('Blur effects are not reproduced on the web. Review them in Preview.');
         if ('rotation' in node && Math.abs(node.rotation) > .1 && !binding)
             warnings.push('Rotated artwork is simplified. Review its position in Preview.');
         const children = 'children' in node ? node.children : null;
-        if (children && Array.isArray(paints) && paints.some(p => p.type === 'IMAGE' || p.type.startsWith('GRADIENT')))
-            warnings.push('Image/gradient fills on containers are simplified. Use an image layer for detailed artwork.');
+        if (Array.isArray(paints) && paints.some(p => p.visible !== false && (p.type === 'VIDEO' || p.type === 'GRADIENT_ANGULAR' || p.type === 'GRADIENT_DIAMOND')))
+            warnings.push('Video, angular and diamond fills are simplified. Review them in Preview.');
         if ('clipsContent' in node && node.clipsContent)
             warnings.push('Clipped content is simplified. Review masks in Preview.');
         // Bound containers (buttons, live lists) take their typography from the first text inside them.
         const inner = textNode !== null && textNode !== void 0 ? textNode : (binding && 'findOne' in node ? node.findOne(n => n.type === 'TEXT') : children === null || children === void 0 ? void 0 : children.find(n => n.type === 'TEXT'));
         const typo = (inner === null || inner === void 0 ? void 0 : inner.type) === 'TEXT' ? inner : null;
-        const size = typo && typeof typo.fontSize === 'number' ? typo.fontSize : 20;
+        // Mixed text: the first character's style is the base; spans carry the rest.
+        const baseFont = typo ? (typo.fontName !== figma.mixed ? typo.fontName : typo.characters.length ? typo.getRangeFontName(0, 1) : null) : null;
+        const baseSize = typo ? (typeof typo.fontSize === 'number' ? typo.fontSize : typo.characters.length ? typo.getRangeFontSize(0, 1) : 20) : 20;
+        const size = baseSize;
         const lh = typo === null || typo === void 0 ? void 0 : typo.lineHeight, ls = typo === null || typo === void 0 ? void 0 : typo.letterSpacing;
         const strokes = 'strokes' in node && Array.isArray(node.strokes) ? node.strokes : [];
         const strokeWidth = 'strokeWeight' in node && typeof node.strokeWeight === 'number' && strokes.some(p => p.visible !== false) ? node.strokeWeight : 0;
@@ -835,26 +893,29 @@ async function serialize(frame, warnings) {
             id: nodes.some(n => n.id === id) ? node.id : id, parentId, type: textNode ? 'text' : 'box',
             x: box.x - parentBox.x, y: box.y - parentBox.y, width: box.width, height: box.height,
             text: textNode || binding ? (_a = typo === null || typo === void 0 ? void 0 : typo.characters) !== null && _a !== void 0 ? _a : '' : '',
-            fill: hex(paints), hasFill: Array.isArray(paints) && paints.some(p => p.visible !== false),
-            color: hex(typo === null || typo === void 0 ? void 0 : typo.fills, '#171717'),
+            fill: hexA(paints, '#ffffff'), hasFill: Array.isArray(paints) && paints.some(p => p.visible !== false && p.type === 'SOLID'),
+            color: hexA(typo ? (typo.fills !== figma.mixed ? typo.fills : typo.characters.length ? typo.getRangeFills(0, 1) : undefined) : undefined, '#171717'),
             fontSize: size,
-            fontFamily: typo && typo.fontName !== figma.mixed ? webFamily(typo.fontName.family) : 'Inter',
-            fontWeight: typo && typo.fontName !== figma.mixed ? fontWeight(typo.fontName.style) : 400,
+            fontFamily: baseFont ? webFamily(baseFont.family) : 'Inter',
+            fontWeight: baseFont ? fontWeight(baseFont.style) : 400,
+            italic: !!baseFont && /italic|oblique/i.test(baseFont.style),
             lineHeight: lh && lh !== figma.mixed && typeof lh === 'object' ? Math.min(3, Math.max(.7, lh.unit === 'PIXELS' ? lh.value / size : lh.unit === 'PERCENT' ? lh.value / 100 : 1.2)) : 1.25,
             letterSpacing: ls && ls !== figma.mixed && typeof ls === 'object' ? (ls.unit === 'PIXELS' ? ls.value : ls.value / 100 * size) : 0,
             opacity: 'opacity' in node && typeof node.opacity === 'number' ? node.opacity : 1,
-            stroke: strokeWidth ? hex(strokes, '') : '', strokeWidth,
+            stroke: strokeWidth ? hexA(strokes, '') : '', strokeWidth,
             sticky: parentId === null && node.getSharedPluginData(NS, 'sticky') === 'true',
             radius: 'cornerRadius' in node && typeof node.cornerRadius === 'number' ? node.cornerRadius : 0,
             align: (textNode === null || textNode === void 0 ? void 0 : textNode.textAlignHorizontal) === 'CENTER' ? 'center' : (textNode === null || textNode === void 0 ? void 0 : textNode.textAlignHorizontal) === 'RIGHT' ? 'right' : binding === 'register' || binding === 'myPass' || (binding === 'customLink' && !textNode) ? 'center' : 'left',
-            image: '', binding, href, anchor: '', hover: act.hover
+            image: '', binding, href, anchor: '', hover: act.hover,
+            bg: children && Array.isArray(paints) ? await bgOf(paints, warnings) : null,
+            gradient: children && Array.isArray(paints) ? gradientOf(paints) : null,
+            shadows: shadowsOf(node), spans: textNode ? spansOf(textNode) : [],
+            enter: node.getSharedPluginData(NS, 'enter')
         };
         byFigmaId.set(node.id, output);
         if ('rotation' in node && Math.abs(node.rotation) > .1 && binding)
             throw Error('Rotated dynamic layers are not supported. Remove rotation before syncing.');
         if (textNode) {
-            if (textNode.fontSize === figma.mixed || textNode.fontName === figma.mixed)
-                warnings.push('Mixed text styles are simplified. Use one style per text layer.');
             nodes.push(output);
             return;
         }
@@ -868,8 +929,8 @@ async function serialize(frame, warnings) {
             const png = await node.exportAsync({ format: 'PNG', constraint: { type: 'SCALE', value: 2 } });
             output.type = 'image';
             output.image = 'data:image/png;base64,' + figma.base64Encode(png);
-            if (output.image.length > 450000)
-                throw Error('An artwork image exceeds 450 KB. Reduce its resolution.');
+            if (output.image.length > 6500000)
+                throw Error('An artwork image exceeds 5 MB. Reduce its resolution.');
             nodes.push(output);
             return;
         }
@@ -889,7 +950,7 @@ async function serialize(frame, warnings) {
         throw Error('Use at most 500 exported layers per frame.');
     if (frame.layoutMode !== 'NONE')
         warnings.push('Auto layout is captured at the current frame size. Compare Desktop and Mobile Preview.');
-    return { width: frame.width, height: frame.height, background: hex(frame.fills), nodes };
+    return { width: frame.width, height: frame.height, background: hexA(frame.fills, '#ffffff').slice(0, 7), nodes };
 }
 async function api(path, body, token) {
     const response = await fetch(ORIGIN + '/api/figma/plugin/' + path, {
@@ -936,14 +997,14 @@ async function sync() {
                 warnings.push('No Mobile frame: PassFlow will use a readable fallback on phones.');
             const pages = [];
             for (const p of frames.pages)
-                pages.push({ slug: p.slug, desktop: await serialize(p.desktop, warnings), mobile: p.mobile ? await serialize(p.mobile, warnings) : null });
-            document = { schema: 3, source: 'figma', desktop: await serialize(frames.desktop, warnings), mobile: frames.mobile ? await serialize(frames.mobile, warnings) : null, pages, warnings: [...new Set(warnings)] };
-            if (JSON.stringify(document).length > 850000)
-                throw Error('Design exceeds 850 KB. Reduce image sizes.');
+                pages.push({ slug: p.slug, desktop: await serialize(p.desktop, warnings), tablet: p.tablet ? await serialize(p.tablet, warnings) : null, mobile: p.mobile ? await serialize(p.mobile, warnings) : null });
+            document = { schema: 3, source: 'figma', desktop: await serialize(frames.desktop, warnings), tablet: frames.tablet ? await serialize(frames.tablet, warnings) : null, mobile: frames.mobile ? await serialize(frames.mobile, warnings) : null, pages, warnings: [...new Set(warnings)] };
+            if (JSON.stringify(document).length > 15000000)
+                throw Error('Design exceeds 15 MB. Reduce image sizes.');
         }
         const passes = [];
         for (const p of frames.passes)
-            passes.push({ kind: p.kind, document: await exportPass(p.frame, p.kind, warnings) });
+            passes.push({ kind: p.kind, ticketTypeId: p.ticketTypeId || null, document: await exportPass(p.frame, p.kind, warnings) });
         const result = await api('sync', { documentId, revision: session.revision, document, passes }, session.token);
         session.revision = result.revision;
         session.draftId = result.draftId;
@@ -1007,6 +1068,10 @@ figma.ui.onmessage = async (message) => {
             blocked = false;
             confirmed = true;
             status('Connected', 'Insert a starter template, or assign existing frames in Advanced Mode.');
+            try {
+                setTickets((await api('sync', { documentId }, paired.token)).tickets);
+            }
+            catch ( /* categories refresh on next open */_b) { /* categories refresh on next open */ }
             return;
         }
         if (message.type === 'disconnect') {
@@ -1033,6 +1098,7 @@ figma.ui.onmessage = async (message) => {
             const state = await api('sync', { documentId }, session.token);
             session.revision = state.revision;
             session.draftId = state.draftId;
+            setTickets(state.tickets);
             await figma.clientStorage.setAsync(storageKey, session);
             blocked = false;
             status('Connected', 'Draft revision refreshed. Retry sync when ready.');
@@ -1056,8 +1122,8 @@ figma.ui.onmessage = async (message) => {
             status('Changes detected', 'Binding saved in metadata. Renaming this layer will not break it.');
         }
         if (message.type === 'frame') {
-            if (!['desktop', 'mobile'].includes(message.role))
-                throw Error('Choose Desktop or Mobile.');
+            if (!frameWidths[message.role])
+                throw Error('Choose Desktop, Tablet or Mobile.');
             const node = figma.currentPage.selection[0];
             if (figma.currentPage.selection.length !== 1 || (node === null || node === void 0 ? void 0 : node.type) !== 'FRAME')
                 throw Error('Select one top-level frame.');
@@ -1075,7 +1141,16 @@ figma.ui.onmessage = async (message) => {
         if (message.type === 'page')
             await pageTemplate(message.style, (message.page || '').trim().toLowerCase());
         if (message.type === 'pass')
-            await passTemplate(message.style, message.kind);
+            await passTemplate(message.style, message.kind, message.ticketTypeId || '');
+        if (message.type === 'enter') {
+            const node = figma.currentPage.selection[0];
+            if (figma.currentPage.selection.length !== 1 || !node)
+                throw Error('Select one layer or section.');
+            if (!['', 'fade', 'up', 'scale'].includes(message.value))
+                throw Error('Choose a valid animation.');
+            node.setSharedPluginData(NS, 'enter', message.value);
+            status('Changes detected', message.value ? 'Entrance animation set: ' + message.value + '.' : 'Entrance animation removed.');
+        }
         if (message.type === 'passField') {
             const node = figma.currentPage.selection[0];
             if (figma.currentPage.selection.length !== 1 || !node)
@@ -1122,6 +1197,7 @@ void figma.clientStorage.getAsync(storageKey).then(async (stored) => {
         const result = await api('sync', { documentId }, session.token);
         session.revision = result.revision;
         session.draftId = result.draftId;
+        setTickets(result.tickets);
         await figma.clientStorage.setAsync(storageKey, session);
         status('Confirm event', 'Confirm this file should update ' + session.eventName + '. Copied files should be paired again for another event.');
     }

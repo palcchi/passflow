@@ -3,12 +3,15 @@ const NS='passflow';
 const SCHEMA='passflow.website.v1';
 
 type Binding='eventName'|'eventDescription'|'eventDate'|'venue'|'venueMap'|'logo'|'banner'|'tickets'|'register'|'myPass'|'schedule'|'speakers'|'sponsors'|'customLink';
-type FrameRole='desktop'|'mobile';
+type FrameRole='desktop'|'tablet'|'mobile';
+const frameWidths:Record<FrameRole,number>={desktop:1440,tablet:834,mobile:390};
+const frameLabel=(role:FrameRole)=>role.charAt(0).toUpperCase()+role.slice(1)+' '+frameWidths[role];
+const frameOffset:Record<FrameRole,number>={desktop:0,tablet:1600,mobile:2600};
 type TemplateStyle='blank'|'minimal'|'festival';
 type PassKind='id_card'|'digital'|'wristband';
 type PassField='name'|'photo'|'category'|'code'|'qr';
 type Session={token:string;documentId:string;eventId:string;eventName:string;revision:number;draftId?:string};
-type NodeOutput={id:string;parentId:string|null;type:'text'|'box'|'image';x:number;y:number;width:number;height:number;text:string;fill:string;hasFill:boolean;color:string;fontSize:number;fontFamily:string;radius:number;align:'left'|'center'|'right';image:string;binding:Binding|null;href:string;fontWeight:number;lineHeight:number;letterSpacing:number;opacity:number;stroke:string;strokeWidth:number;sticky:boolean;anchor:string;hover:HoverOutput|null};
+type NodeOutput={id:string;parentId:string|null;type:'text'|'box'|'image';x:number;y:number;width:number;height:number;text:string;fill:string;hasFill:boolean;color:string;fontSize:number;fontFamily:string;radius:number;align:'left'|'center'|'right';image:string;binding:Binding|null;href:string;fontWeight:number;lineHeight:number;letterSpacing:number;opacity:number;stroke:string;strokeWidth:number;sticky:boolean;anchor:string;hover:HoverOutput|null;italic:boolean;bg:{image:string;fit:string}|null;gradient:{type:string;angle:number;stops:{color:string;pos:number}[]}|null;shadows:{x:number;y:number;blur:number;spread:number;color:string;inset:boolean}[];spans:{start:number;end:number;weight:number;color:string;size:number;italic:boolean;underline:boolean}[];enter:string};
 type HoverOutput={fill:string;color:string;stroke:string;opacity:number;ms:number;ease:string};
 type FrameOutput={width:number;height:number;background:string;nodes:NodeOutput[]};
 type Message=
@@ -18,13 +21,16 @@ type Message=
   |{type:'assign';binding:Binding;href:string}
   |{type:'frame';role:FrameRole;page:string}
   |{type:'page';page:string;style:TemplateStyle}
-  |{type:'pass';kind:PassKind;style:TemplateStyle}
+  |{type:'pass';kind:PassKind;style:TemplateStyle;ticketTypeId:string}
+  |{type:'enter';value:string}
   |{type:'passField';field:PassField|''}
   |{type:'sync'|'disconnect'|'reload'|'confirm'};
 
 const bindings:Binding[]=['eventName','eventDescription','eventDate','venue','venueMap','logo','banner','tickets','register','myPass','schedule','speakers','sponsors','customLink'];
 const blocks=['Navbar','Hero','About','Tickets','Schedule','Speakers','Sponsors','Venue','FAQ','CTA','Footer'];
 let session:Session|null=null;
+let tickets:{id:string;name:string}[]=[];
+function setTickets(list:unknown){tickets=Array.isArray(list)?list.filter(t=>t&&typeof t.id==='string'&&typeof t.name==='string').slice(0,50):[];figma.ui.postMessage({type:'tickets',tickets});}
 let mutating=false,syncing=false,dirty=false,blocked=false,confirmed=false,commandPending=false;
 let timer:ReturnType<typeof setTimeout>|null=null;
 
@@ -192,7 +198,7 @@ function chip(parent:FrameNode,t:Theme,label:string,fill:string,ink:string){
 }
 async function block(parent:FrameNode,name:string,style:TemplateStyle,b?:Buttons,title=''){
   if(style==='blank')throw Error('Pick Minimal or Festival to insert ready-made sections.');
-  const t=await theme(style),w=parent.width,mobile=w<600,pad=mobile?24:96,cw=w-pad*2,D=(s:string)=>t.upper?s.toUpperCase():s;
+  const t=await theme(style),w=parent.width,mobile=w<600,tablet=!mobile&&w<1100,stack=mobile||tablet,pad=mobile?24:tablet?56:96,cw=w-pad*2,D=(s:string)=>t.upper?s.toUpperCase():s;
   b=b??await buttons(t,style,parent.x-420,parent.y);
 
   if(name==='Navbar'){
@@ -213,6 +219,8 @@ async function block(parent:FrameNode,name:string,style:TemplateStyle,b?:Buttons
   const sec=box(name,'VERTICAL',{fill,gap:mobile?18:26,pad:[py,pad]});
   parent.appendChild(sec);fillW(sec,w);
   sec.setSharedPluginData(NS,'block',name.toLowerCase());sec.setSharedPluginData(NS,'schema',SCHEMA);
+  // Starter sections ease in on scroll; designers change or clear it under Advanced.
+  if(name!=='Footer')sec.setSharedPluginData(NS,'enter',name==='Hero'||name==='Page header'?'fade':'up');
 
   if(name==='Page header'){
     const ticket=pageOf(parent)==='ticket';
@@ -227,7 +235,7 @@ async function block(parent:FrameNode,name:string,style:TemplateStyle,b?:Buttons
     const meta=box('Event details','HORIZONTAL',{gap:10,cross:'CENTER'});sec.appendChild(meta);
     chip(meta,t,'27 September 2026',style==='festival'?t.accent:t.bg,style==='festival'?t.accentInk:t.ink);
     chip(meta,t,'Jakarta',style==='festival'?t.kicker:t.bg,style==='festival'?t.accentInk:t.ink);
-    fillW(txt(sec,D('Your event starts here'),{size:t.heroSize[mobile?1:0],font:t.display,color:t.ink,lh:.94,ls:t.tracking,align}),cw);
+    fillW(txt(sec,D('Your event starts here'),{size:mobile?t.heroSize[1]:tablet?Math.round(t.heroSize[0]*.72):t.heroSize[0],font:t.display,color:t.ink,lh:.94,ls:t.tracking,align}),cw);
     const desc=txt(sec,'A purposeful gathering. A space for new ideas, new people and a day worth remembering.',{size:mobile?17:22,font:t.body,color:t.muted,lh:1.5,align});
     if(mobile)fillW(desc,cw);else fixW(desc,640);
     const actions=box('Actions','HORIZONTAL',{gap:12,cross:'CENTER'});sec.appendChild(actions);
@@ -241,10 +249,10 @@ async function block(parent:FrameNode,name:string,style:TemplateStyle,b?:Buttons
   }
   if(name==='About'){
     kicker(sec,t,'About');
-    const row=box('About row',mobile?'VERTICAL':'HORIZONTAL',{gap:mobile?14:80});sec.appendChild(row);fillW(row,cw);
+    const row=box('About row',stack?'VERTICAL':'HORIZONTAL',{gap:stack?14:80});sec.appendChild(row);fillW(row,cw);
     const h=txt(row,D('Why this gathering matters'),{size:mobile?32:48,font:t.display,color:t.ink,lh:1.05,ls:t.tracking});
     const p=txt(row,'Tell people what they will experience, who it is for and why it is worth showing up.',{size:mobile?17:21,font:t.body,color:t.muted,lh:1.55});
-    if(mobile){fillW(h,cw);fillW(p,cw);}else{fixW(h,440);fillW(p,cw-520);}
+    if(stack){fillW(h,cw);fillW(p,cw);}else{fixW(h,440);fillW(p,cw-520);}
     return;
   }
   if(name==='Tickets'){
@@ -286,16 +294,16 @@ async function block(parent:FrameNode,name:string,style:TemplateStyle,b?:Buttons
     return;
   }
   if(name==='Venue'){
-    const row=box('Venue row',mobile?'VERTICAL':'HORIZONTAL',{gap:mobile?20:48});sec.appendChild(row);fillW(row,cw);
+    const row=box('Venue row',stack?'VERTICAL':'HORIZONTAL',{gap:stack?20:48});sec.appendChild(row);fillW(row,cw);
     const left=box('Venue details','VERTICAL',{gap:14});row.appendChild(left);
-    const leftW=mobile?cw:440;if(mobile)fillW(left,cw);else fixW(left,leftW);
+    const leftW=stack?cw:440;if(stack)fillW(left,cw);else fixW(left,leftW);
     kicker(left,t,'Venue');
     fillW(txt(left,D('Getting there'),{size:mobile?34:56,font:t.display,color:t.ink,lh:1.04,ls:t.tracking}),leftW);
     fillW(txt(left,'Venue name, City',{size:mobile?19:22,font:t.bodyBold,color:t.ink}),leftW);
     fillW(txt(left,'Arrival details, entrances and accessibility notes can live here.',{size:16,font:t.body,color:t.muted,lh:1.5}),leftW);
     await openLink(button(left,b,'Open in Maps','secondary',15),'https://maps.google.com/?q=Jakarta');
     const map=box('Map artwork','VERTICAL',{fill:t.surface,stroke:t.line,radius:t.radius,align:'CENTER',cross:'CENTER'});row.appendChild(map);
-    map.resize(mobile?cw:cw-leftW-48,mobile?220:320);map.layoutSizingHorizontal='FILL';map.layoutSizingVertical='FIXED';
+    map.resize(stack?cw:cw-leftW-48,mobile?220:320);map.layoutSizingHorizontal='FILL';map.layoutSizingVertical='FIXED';
     txt(map,'Place a map image here',{size:15,font:t.body,color:t.muted});
     return;
   }
@@ -326,22 +334,22 @@ async function template(style:TemplateStyle){
   const t=style==='blank'?null:await theme(style),created:FrameNode[]=[];
   const origin={x:Math.round(figma.viewport.center.x-980),y:Math.round(figma.viewport.center.y)};
   const b=t?await buttons(t,style,origin.x-420,origin.y):undefined;
-  for(const role of ['desktop','mobile'] as const){
+  for(const role of ['desktop','tablet','mobile'] as const){
     const frame=figma.createFrame();
     figma.currentPage.appendChild(frame);
-    frame.name='PassFlow Website · '+(role==='desktop'?'Desktop 1440':'Mobile 390');
+    frame.name='PassFlow Website · '+frameLabel(role);
     frame.fills=[solid(t?.bg??'#ffffff')];
     frame.setSharedPluginData(NS,'frame',role);
     frame.setSharedPluginData(NS,'documentId',documentId);
     frame.setSharedPluginData(NS,'schema',SCHEMA);
     frame.setSharedPluginData(NS,'templateStyle',style);
     if(t&&b){
-      frame.resize(role==='desktop'?1440:390,100);
+      frame.resize(frameWidths[role],100);
       frame.layoutMode='VERTICAL';frame.primaryAxisSizingMode='AUTO';frame.counterAxisSizingMode='FIXED';frame.itemSpacing=0;
       for(const name of blocks)await block(frame,name,style,b);
       await wireScrolls(frame);
-    }else frame.resize(role==='desktop'?1440:390,role==='desktop'?1024:844);
-    frame.x=origin.x+(role==='desktop'?0:1600);
+    }else frame.resize(frameWidths[role],role==='mobile'?844:1024);
+    frame.x=origin.x+frameOffset[role];
     frame.y=origin.y;
     created.push(frame);
   }
@@ -368,10 +376,10 @@ async function pageTemplate(style:TemplateStyle,slug:string){
   const b=t?await buttons(t,style,left-420,top):undefined;
   const title=slug==='ticket'?'Get your pass':slug.split('-').map(w=>w.charAt(0).toUpperCase()+w.slice(1)).join(' ');
   const created:FrameNode[]=[];
-  for(const role of ['desktop','mobile'] as const){
+  for(const role of ['desktop','tablet','mobile'] as const){
     const frame=figma.createFrame();
     figma.currentPage.appendChild(frame);
-    frame.name='PassFlow '+(slug==='ticket'?'Ticket page':'Page · '+slug)+' · '+(role==='desktop'?'Desktop 1440':'Mobile 390');
+    frame.name='PassFlow '+(slug==='ticket'?'Ticket page':'Page · '+slug)+' · '+frameLabel(role);
     frame.fills=[solid(t?.bg??'#ffffff')];
     frame.setSharedPluginData(NS,'frame',role);
     frame.setSharedPluginData(NS,'page',slug);
@@ -379,7 +387,7 @@ async function pageTemplate(style:TemplateStyle,slug:string){
     frame.setSharedPluginData(NS,'schema',SCHEMA);
     frame.setSharedPluginData(NS,'templateStyle',style);
     if(t&&b){
-      frame.resize(role==='desktop'?1440:390,100);
+      frame.resize(frameWidths[role],100);
       frame.layoutMode='VERTICAL';frame.primaryAxisSizingMode='AUTO';frame.counterAxisSizingMode='FIXED';frame.itemSpacing=0;
       await block(frame,'Navbar',style,b);
       await block(frame,'Page header',style,b,title);
@@ -387,8 +395,8 @@ async function pageTemplate(style:TemplateStyle,slug:string){
       // The event name in the navbar goes back to Home, using Figma's own Navigate to.
       const home=frames.find(f=>pageOf(f)==='home'&&f.getSharedPluginData(NS,'frame')===role),brand=firstText(frame.children[0]);
       if(home&&brand)await brand.setReactionsAsync([{trigger:{type:'ON_CLICK'},actions:[{type:'NODE',destinationId:home.id,navigation:'NAVIGATE',transition:null}]}]);
-    }else frame.resize(role==='desktop'?1440:390,slug==='ticket'?480:role==='desktop'?1024:844);
-    frame.x=left+(role==='desktop'?0:1600);frame.y=top;
+    }else frame.resize(frameWidths[role],slug==='ticket'?480:role==='mobile'?844:1024);
+    frame.x=left+frameOffset[role];frame.y=top;
     created.push(frame);
   }
   figma.currentPage.selection=created;
@@ -418,15 +426,17 @@ function label(parent:FrameNode,chars:string,x:number,y:number,w:number,size:num
   const n=figma.createText();parent.appendChild(n);n.fontName=font;n.characters=chars;n.fontSize=size*PX;n.fills=[solid(color)];n.textAlignHorizontal=align;
   n.x=x*PX;n.y=y*PX;n.resize(w*PX,n.height);n.textAutoResize='HEIGHT';return n;
 }
-async function passTemplate(style:TemplateStyle,kind:PassKind){
+async function passTemplate(style:TemplateStyle,kind:PassKind,ticketTypeId=''){
   const size=passSizes[kind];if(!size)throw Error('Choose ID card, Digital pass or Wristband.');
-  const existing=eventFrames().find(f=>f.getSharedPluginData(NS,'pass')===kind);
-  if(existing)throw Error('This page already has a '+size.label+' frame.');
+  const ticket=ticketTypeId?tickets.find(t=>t.id===ticketTypeId):null;
+  if(ticketTypeId&&!ticket)throw Error('That ticket category is not available. Reopen the plugin to refresh categories.');
+  const existing=eventFrames().find(f=>f.getSharedPluginData(NS,'pass')===kind&&f.getSharedPluginData(NS,'ticketType')===ticketTypeId);
+  if(existing)throw Error('This page already has a '+size.label+' frame'+(ticket?' for '+ticket.name:' for all attendees')+'.');
   const t=style==='blank'?null:await theme(style);
   const frame=figma.createFrame();figma.currentPage.appendChild(frame);
-  frame.name='PassFlow '+size.label+' · '+size.w+'×'+size.h+' mm';
+  frame.name='PassFlow '+size.label+(ticket?' · '+ticket.name:'')+' · '+size.w+'×'+size.h+' mm';
   frame.resize(size.w*PX,size.h*PX);frame.fills=[solid(t?.bg??'#ffffff')];frame.cornerRadius=kind==='wristband'?0:3*PX;frame.clipsContent=true;
-  frame.setSharedPluginData(NS,'pass',kind);frame.setSharedPluginData(NS,'documentId',documentId);frame.setSharedPluginData(NS,'schema',SCHEMA);
+  frame.setSharedPluginData(NS,'pass',kind);frame.setSharedPluginData(NS,'ticketType',ticketTypeId);frame.setSharedPluginData(NS,'documentId',documentId);frame.setSharedPluginData(NS,'schema',SCHEMA);
   const others=eventFrames().filter(f=>f!==frame);
   frame.x=Math.round(others.length?Math.max(...others.map(f=>f.x+f.width))+200:figma.viewport.center.x);frame.y=Math.round(others.length?Math.min(...others.map(f=>f.y)):figma.viewport.center.y);
   if(t){
@@ -476,36 +486,37 @@ async function exportPass(frame:FrameNode,kind:PassKind,warnings:string[]){
   try{
     for(const n of clone.findAll(n=>passFields.includes(n.getSharedPluginData(NS,'passField') as PassField)))n.visible=false;
     let png=await clone.exportAsync({format:'PNG',constraint:{type:'SCALE',value:3}}),src='data:image/png;base64,'+figma.base64Encode(png);
-    if(src.length>450000){png=await clone.exportAsync({format:'JPG',constraint:{type:'SCALE',value:2}});src='data:image/jpeg;base64,'+figma.base64Encode(png);}
-    if(src.length>450000)throw Error(label+' artwork exceeds 450 KB. Simplify large images.');
+    if(src.length>6500000){png=await clone.exportAsync({format:'JPG',constraint:{type:'SCALE',value:3}});src='data:image/jpeg;base64,'+figma.base64Encode(png);}
+    if(src.length>6500000)throw Error(label+' artwork exceeds 5 MB. Simplify large images.');
     layers.unshift({id:'figma-background',type:'image',field:'text',text:'',src,x:0,y:0,width:w,height:h,fontSize:4,color:'#171717',fill:'#ffffff',radius:0,align:'left',locked:true,hidden:false});
   }finally{clone.remove();}
   return {schema:1,width:w,height:h,background:hex(frame.fills),foreground:'#171717',accent:'#635bff',font:'sans',layers,sections:[]};
 }
 function findFrames(){
-  const groups=new Map<string,{desktop:FrameNode[];mobile:FrameNode[]}>();
+  const groups=new Map<string,Record<FrameRole,FrameNode[]>>();
   for(const f of eventFrames()){
-    const role=f.getSharedPluginData(NS,'frame');if(role!=='desktop'&&role!=='mobile')continue;
-    const g=groups.get(pageOf(f))??{desktop:[],mobile:[]};g[role].push(f);groups.set(pageOf(f),g);
+    const role=f.getSharedPluginData(NS,'frame') as FrameRole;if(!frameWidths[role])continue;
+    const g=groups.get(pageOf(f))??{desktop:[],tablet:[],mobile:[]};g[role].push(f);groups.set(pageOf(f),g);
   }
-  const passes:{kind:PassKind;frame:FrameNode}[]=[];
+  const passes:{kind:PassKind;ticketTypeId:string;frame:FrameNode}[]=[];
   for(const f of figma.currentPage.children)if(f.type==='FRAME'&&f.getSharedPluginData(NS,'documentId')===documentId){
     const kind=f.getSharedPluginData(NS,'pass') as PassKind;if(!passSizes[kind])continue;
-    if(passes.some(p=>p.kind===kind))throw Error('Keep one '+passSizes[kind].label+' frame per event on this page.');
-    passes.push({kind,frame:f});
+    const ticketTypeId=f.getSharedPluginData(NS,'ticketType');
+    if(passes.some(p=>p.kind===kind&&p.ticketTypeId===ticketTypeId))throw Error('Keep one '+passSizes[kind].label+' frame per ticket category on this page.');
+    passes.push({kind,ticketTypeId,frame:f});
   }
   const home=groups.get('home');
-  if(!home&&passes.length&&groups.size===0)return {desktop:undefined,mobile:undefined,pages:[],passes};
-  if(!home||home.desktop.length!==1||home.mobile.length>1)throw Error(home||groups.size?'Keep exactly one Home Desktop frame and at most one Home Mobile frame on the current page.':'Insert a website template or a pass first.');
-  const pages:{slug:string;desktop:FrameNode;mobile?:FrameNode}[]=[];
+  if(!home&&passes.length&&groups.size===0)return {desktop:undefined,tablet:undefined,mobile:undefined,pages:[],passes};
+  if(!home||home.desktop.length!==1||home.tablet.length>1||home.mobile.length>1)throw Error(home||groups.size?'Keep exactly one Home Desktop frame and at most one Home Tablet and Mobile frame on the current page.':'Insert a website template or a pass first.');
+  const pages:{slug:string;desktop:FrameNode;tablet?:FrameNode;mobile?:FrameNode}[]=[];
   for(const [slug,g] of groups){
     if(slug==='home')continue;
     if(!pageSlugOk(slug))throw Error('Page "'+slug+'" needs a lowercase name like agenda or ticket.');
-    if(g.desktop.length!==1||g.mobile.length>1)throw Error('Page "'+slug+'" needs exactly one Desktop frame and at most one Mobile frame.');
-    pages.push({slug,desktop:g.desktop[0],mobile:g.mobile[0]});
+    if(g.desktop.length!==1||g.tablet.length>1||g.mobile.length>1)throw Error('Page "'+slug+'" needs exactly one Desktop frame and at most one Tablet and Mobile frame.');
+    pages.push({slug,desktop:g.desktop[0],tablet:g.tablet[0],mobile:g.mobile[0]});
   }
   if(pages.length>8)throw Error('Use at most 8 extra pages.');
-  return {desktop:home.desktop[0] as FrameNode|undefined,mobile:home.mobile[0] as FrameNode|undefined,pages,passes};
+  return {desktop:home.desktop[0] as FrameNode|undefined,tablet:home.tablet[0] as FrameNode|undefined,mobile:home.mobile[0] as FrameNode|undefined,pages,passes};
 }
 function contractWarnings(frame:FrameNode,label:string){
   const found=new Set<string>();
@@ -526,10 +537,39 @@ function fontWeight(style:string){
   return 400;
 }
 // The web renderer accepts a short font whitelist; map Figma families onto the closest one.
-function webFamily(family:string){
-  if(/mono|code/i.test(family))return 'monospace';
-  if(/serif|playfair|georgia|garamond|times|lora|merriweather|baskerville|bodoni|caslon/i.test(family)&&!/sans/i.test(family))return 'Georgia';
-  return family==='Arial'?'Arial':'Inter';
+// Families are passed through and loaded from Google Fonts on the web; odd names fall back to Inter.
+function webFamily(family:string){return /^[A-Za-z0-9][A-Za-z0-9 \-]{0,39}$/.test(family)?family:'Inter';}
+function hexA(paints:ReadonlyArray<Paint>|typeof figma.mixed|undefined,fallback=''){
+  const p=Array.isArray(paints)?paints.find(p=>p.type==='SOLID'&&p.visible!==false):undefined;
+  if(!p||p.type!=='SOLID')return fallback;
+  const base='#'+[p.color.r,p.color.g,p.color.b].map(v=>Math.round(v*255).toString(16).padStart(2,'0')).join(''),a=p.opacity??1;
+  return a<1?base+Math.round(a*255).toString(16).padStart(2,'0'):base;
+}
+const rgba=(c:RGBA,alpha=1)=>'#'+[c.r,c.g,c.b,c.a*alpha].map(v=>Math.round(Math.max(0,Math.min(1,v))*255).toString(16).padStart(2,'0')).join('');
+function gradientOf(paints:ReadonlyArray<Paint>){
+  const g=paints.find(p=>p.visible!==false&&(p.type==='GRADIENT_LINEAR'||p.type==='GRADIENT_RADIAL'));
+  if(!g||(g.type!=='GRADIENT_LINEAR'&&g.type!=='GRADIENT_RADIAL'))return null;
+  // The gradient runs along +x in gradient space; mapped back to the layer, its direction is (d,-c).
+  const [,[c,d]]=g.gradientTransform;
+  return {type:g.type==='GRADIENT_RADIAL'?'radial':'linear',angle:Math.round(Math.atan2(d,c)*180/Math.PI),stops:g.gradientStops.slice(0,8).map(s=>({color:rgba(s.color,g.opacity??1),pos:s.position}))};
+}
+async function bgOf(paints:ReadonlyArray<Paint>,warnings:string[]){
+  const p=paints.find(p=>p.type==='IMAGE'&&p.visible!==false);
+  if(!p||p.type!=='IMAGE'||!p.imageHash)return null;
+  const bytes=await figma.getImageByHash(p.imageHash)?.getBytesAsync();if(!bytes)return null;
+  const mime=bytes[0]===0x89?'png':bytes[0]===0xff?'jpeg':bytes[0]===0x52?'webp':'';
+  if(!mime||bytes.length>5*1024*1024){warnings.push('A background image is larger than 5 MB or not PNG/JPG/WebP and was skipped.');return null;}
+  return {image:'data:image/'+mime+';base64,'+figma.base64Encode(bytes),fit:p.scaleMode==='FIT'?'contain':'cover'};
+}
+function shadowsOf(node:SceneNode){
+  if(!('effects' in node))return [];
+  const out=[];
+  for(const e of node.effects)if(e.visible&&(e.type==='DROP_SHADOW'||e.type==='INNER_SHADOW'))out.push({x:e.offset.x,y:e.offset.y,blur:e.radius,spread:e.spread??0,color:rgba(e.color),inset:e.type==='INNER_SHADOW'});
+  return out.slice(0,4);
+}
+function spansOf(t:TextNode){
+  if(t.fontName!==figma.mixed&&t.fontSize!==figma.mixed&&t.fills!==figma.mixed&&t.textDecoration!==figma.mixed)return [];
+  return t.getStyledTextSegments(['fontName','fontSize','fills','textDecoration']).slice(0,80).map(s=>({start:s.start,end:s.end,weight:fontWeight(s.fontName.style),color:hexA(s.fills,''),size:s.fontSize,italic:/italic|oblique/i.test(s.fontName.style),underline:s.textDecoration==='UNDERLINE'}));
 }
 const anchorOf=(id:string)=>'s'+id.replace(/[^a-zA-Z0-9]/g,'-');
 function cssEase(e:Easing|undefined){
@@ -581,15 +621,18 @@ async function serialize(frame:FrameNode,warnings:string[]):Promise<FrameOutput>
     if(act.scrollTo&&!act.url)scrollTargets.add(act.scrollTo);
     const paints='fills' in node?node.fills:undefined;
     const textNode=node.type==='TEXT'?node:null;
-    if('effects' in node&&node.effects.some(effect=>effect.visible))warnings.push('Layer effects are simplified. Review shadows and blurs in Preview.');
+    if('effects' in node&&node.effects.some(effect=>effect.visible&&(effect.type==='LAYER_BLUR'||effect.type==='BACKGROUND_BLUR')))warnings.push('Blur effects are not reproduced on the web. Review them in Preview.');
     if('rotation' in node&&Math.abs(node.rotation)>.1&&!binding)warnings.push('Rotated artwork is simplified. Review its position in Preview.');
     const children='children' in node?node.children:null;
-    if(children&&Array.isArray(paints)&&paints.some(p=>p.type==='IMAGE'||p.type.startsWith('GRADIENT')))warnings.push('Image/gradient fills on containers are simplified. Use an image layer for detailed artwork.');
+    if(Array.isArray(paints)&&paints.some(p=>p.visible!==false&&(p.type==='VIDEO'||p.type==='GRADIENT_ANGULAR'||p.type==='GRADIENT_DIAMOND')))warnings.push('Video, angular and diamond fills are simplified. Review them in Preview.');
     if('clipsContent' in node&&node.clipsContent)warnings.push('Clipped content is simplified. Review masks in Preview.');
     // Bound containers (buttons, live lists) take their typography from the first text inside them.
     const inner=textNode??(binding&&'findOne' in node?node.findOne(n=>n.type==='TEXT'):children?.find(n=>n.type==='TEXT'));
     const typo=inner?.type==='TEXT'?inner:null;
-    const size=typo&&typeof typo.fontSize==='number'?typo.fontSize:20;
+    // Mixed text: the first character's style is the base; spans carry the rest.
+    const baseFont=typo?(typo.fontName!==figma.mixed?typo.fontName:typo.characters.length?typo.getRangeFontName(0,1) as FontName:null):null;
+    const baseSize=typo?(typeof typo.fontSize==='number'?typo.fontSize:typo.characters.length?typo.getRangeFontSize(0,1) as number:20):20;
+    const size=baseSize;
     const lh=typo?.lineHeight,ls=typo?.letterSpacing;
     const strokes='strokes' in node&&Array.isArray(node.strokes)?node.strokes:[];
     const strokeWidth='strokeWeight' in node&&typeof node.strokeWeight==='number'&&strokes.some(p=>p.visible!==false)?node.strokeWeight:0;
@@ -598,24 +641,28 @@ async function serialize(frame:FrameNode,warnings:string[]):Promise<FrameOutput>
       id:nodes.some(n=>n.id===id)?node.id:id,parentId,type:textNode?'text':'box',
       x:box.x-parentBox.x,y:box.y-parentBox.y,width:box.width,height:box.height,
       text:textNode||binding?typo?.characters??'':'',
-      fill:hex(paints),hasFill:Array.isArray(paints)&&paints.some(p=>p.visible!==false),
-      color:hex(typo?.fills,'#171717'),
+      fill:hexA(paints,'#ffffff'),hasFill:Array.isArray(paints)&&paints.some(p=>p.visible!==false&&p.type==='SOLID'),
+      color:hexA(typo?(typo.fills!==figma.mixed?typo.fills:typo.characters.length?typo.getRangeFills(0,1) as ReadonlyArray<Paint>:undefined):undefined,'#171717'),
       fontSize:size,
-      fontFamily:typo&&typo.fontName!==figma.mixed?webFamily(typo.fontName.family):'Inter',
-      fontWeight:typo&&typo.fontName!==figma.mixed?fontWeight(typo.fontName.style):400,
+      fontFamily:baseFont?webFamily(baseFont.family):'Inter',
+      fontWeight:baseFont?fontWeight(baseFont.style):400,
+      italic:!!baseFont&&/italic|oblique/i.test(baseFont.style),
       lineHeight:lh&&lh!==figma.mixed&&typeof lh==='object'?Math.min(3,Math.max(.7,lh.unit==='PIXELS'?lh.value/size:lh.unit==='PERCENT'?lh.value/100:1.2)):1.25,
       letterSpacing:ls&&ls!==figma.mixed&&typeof ls==='object'?(ls.unit==='PIXELS'?ls.value:ls.value/100*size):0,
       opacity:'opacity' in node&&typeof node.opacity==='number'?node.opacity:1,
-      stroke:strokeWidth?hex(strokes,''):'',strokeWidth,
+      stroke:strokeWidth?hexA(strokes,''):'',strokeWidth,
       sticky:parentId===null&&node.getSharedPluginData(NS,'sticky')==='true',
       radius:'cornerRadius' in node&&typeof node.cornerRadius==='number'?node.cornerRadius:0,
       align:textNode?.textAlignHorizontal==='CENTER'?'center':textNode?.textAlignHorizontal==='RIGHT'?'right':binding==='register'||binding==='myPass'||(binding==='customLink'&&!textNode)?'center':'left',
-      image:'',binding,href,anchor:'',hover:act.hover
+      image:'',binding,href,anchor:'',hover:act.hover,
+      bg:children&&Array.isArray(paints)?await bgOf(paints,warnings):null,
+      gradient:children&&Array.isArray(paints)?gradientOf(paints):null,
+      shadows:shadowsOf(node),spans:textNode?spansOf(textNode):[],
+      enter:node.getSharedPluginData(NS,'enter')
     };
     byFigmaId.set(node.id,output);
     if('rotation' in node&&Math.abs(node.rotation)>.1&&binding)throw Error('Rotated dynamic layers are not supported. Remove rotation before syncing.');
     if(textNode){
-      if(textNode.fontSize===figma.mixed||textNode.fontName===figma.mixed)warnings.push('Mixed text styles are simplified. Use one style per text layer.');
       nodes.push(output);return;
     }
     // Live widgets are drawn by PassFlow, so their placeholder children are not exported.
@@ -624,7 +671,7 @@ async function serialize(frame:FrameNode,warnings:string[]):Promise<FrameOutput>
     if(raster){
       const png=await node.exportAsync({format:'PNG',constraint:{type:'SCALE',value:2}});
       output.type='image';output.image='data:image/png;base64,'+figma.base64Encode(png);
-      if(output.image.length>450000)throw Error('An artwork image exceeds 450 KB. Reduce its resolution.');
+      if(output.image.length>6500000)throw Error('An artwork image exceeds 5 MB. Reduce its resolution.');
       nodes.push(output);return;
     }
     nodes.push(output);
@@ -634,7 +681,7 @@ async function serialize(frame:FrameNode,warnings:string[]):Promise<FrameOutput>
   for(const target of scrollTargets){const n=byFigmaId.get(target);if(n)n.anchor=anchorOf(target);}
   if(nodes.length>500)throw Error('Use at most 500 exported layers per frame.');
   if(frame.layoutMode!=='NONE')warnings.push('Auto layout is captured at the current frame size. Compare Desktop and Mobile Preview.');
-  return {width:frame.width,height:frame.height,background:hex(frame.fills),nodes};
+  return {width:frame.width,height:frame.height,background:hexA(frame.fills,'#ffffff').slice(0,7),nodes};
 }
 async function api(path:string,body:unknown,token?:string){
   const response=await fetch(ORIGIN+'/api/figma/plugin/'+path,{
@@ -662,12 +709,12 @@ async function sync(){
       if(frames.mobile)warnings.push(...contractWarnings(frames.mobile,'Mobile'));
       else warnings.push('No Mobile frame: PassFlow will use a readable fallback on phones.');
       const pages=[];
-      for(const p of frames.pages)pages.push({slug:p.slug,desktop:await serialize(p.desktop,warnings),mobile:p.mobile?await serialize(p.mobile,warnings):null});
-      document={schema:3,source:'figma',desktop:await serialize(frames.desktop,warnings),mobile:frames.mobile?await serialize(frames.mobile,warnings):null,pages,warnings:[...new Set(warnings)]};
-      if(JSON.stringify(document).length>850000)throw Error('Design exceeds 850 KB. Reduce image sizes.');
+      for(const p of frames.pages)pages.push({slug:p.slug,desktop:await serialize(p.desktop,warnings),tablet:p.tablet?await serialize(p.tablet,warnings):null,mobile:p.mobile?await serialize(p.mobile,warnings):null});
+      document={schema:3,source:'figma',desktop:await serialize(frames.desktop,warnings),tablet:frames.tablet?await serialize(frames.tablet,warnings):null,mobile:frames.mobile?await serialize(frames.mobile,warnings):null,pages,warnings:[...new Set(warnings)]};
+      if(JSON.stringify(document).length>15000000)throw Error('Design exceeds 15 MB. Reduce image sizes.');
     }
     const passes=[];
-    for(const p of frames.passes)passes.push({kind:p.kind,document:await exportPass(p.frame,p.kind,warnings)});
+    for(const p of frames.passes)passes.push({kind:p.kind,ticketTypeId:p.ticketTypeId||null,document:await exportPass(p.frame,p.kind,warnings)});
     const result=await api('sync',{documentId,revision:session.revision,document,passes},session.token);
     session.revision=result.revision;session.draftId=result.draftId;
     await figma.clientStorage.setAsync(storageKey,session);
@@ -719,6 +766,7 @@ figma.ui.onmessage=async(message:Message)=>{
       figma.root.setSharedPluginData(NS,'schema',SCHEMA);
       blocked=false;confirmed=true;
       status('Connected','Insert a starter template, or assign existing frames in Advanced Mode.');
+      try{setTickets((await api('sync',{documentId},paired.token)).tickets);}catch{/* categories refresh on next open */}
       return;
     }
     if(message.type==='disconnect'){
@@ -735,7 +783,7 @@ figma.ui.onmessage=async(message:Message)=>{
     if(message.type==='reload'){
       if(!session)return;
       const state=await api('sync',{documentId},session.token);
-      session.revision=state.revision;session.draftId=state.draftId;
+      session.revision=state.revision;session.draftId=state.draftId;setTickets(state.tickets);
       await figma.clientStorage.setAsync(storageKey,session);
       blocked=false;status('Connected','Draft revision refreshed. Retry sync when ready.');
       return;
@@ -752,7 +800,7 @@ figma.ui.onmessage=async(message:Message)=>{
       status('Changes detected','Binding saved in metadata. Renaming this layer will not break it.');
     }
     if(message.type==='frame'){
-      if(!['desktop','mobile'].includes(message.role))throw Error('Choose Desktop or Mobile.');
+      if(!frameWidths[message.role])throw Error('Choose Desktop, Tablet or Mobile.');
       const node=figma.currentPage.selection[0];
       if(figma.currentPage.selection.length!==1||node?.type!=='FRAME')throw Error('Select one top-level frame.');
       if(node.parent!==figma.currentPage)throw Error('Responsive frames must be top-level on the current page.');
@@ -765,7 +813,14 @@ figma.ui.onmessage=async(message:Message)=>{
       status('Changes detected',(page==='home'?'Home':page==='ticket'?'Ticket page':'"'+page+'" page')+' '+message.role+' frame assigned.');
     }
     if(message.type==='page')await pageTemplate(message.style,(message.page||'').trim().toLowerCase());
-    if(message.type==='pass')await passTemplate(message.style,message.kind);
+    if(message.type==='pass')await passTemplate(message.style,message.kind,message.ticketTypeId||'');
+    if(message.type==='enter'){
+      const node=figma.currentPage.selection[0];
+      if(figma.currentPage.selection.length!==1||!node)throw Error('Select one layer or section.');
+      if(!['','fade','up','scale'].includes(message.value))throw Error('Choose a valid animation.');
+      node.setSharedPluginData(NS,'enter',message.value);
+      status('Changes detected',message.value?'Entrance animation set: '+message.value+'.':'Entrance animation removed.');
+    }
     if(message.type==='passField'){
       const node=figma.currentPage.selection[0];
       if(figma.currentPage.selection.length!==1||!node)throw Error('Select one layer inside a pass frame.');
@@ -801,7 +856,7 @@ void figma.clientStorage.getAsync(storageKey).then(async stored=>{
   session=stored as Session;
   try{
     const result=await api('sync',{documentId},session.token);
-    session.revision=result.revision;session.draftId=result.draftId;
+    session.revision=result.revision;session.draftId=result.draftId;setTickets(result.tickets);
     await figma.clientStorage.setAsync(storageKey,session);
     status('Confirm event','Confirm this file should update '+session.eventName+'. Copied files should be paired again for another event.');
   }catch{

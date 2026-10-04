@@ -17,8 +17,23 @@ export type WebsiteData={
   sponsors?:{name:string;url:string}[];
 };
 
-// Figma family → web stack; the site loads Geist, so a bare "Inter" fell back to the browser serif.
-const fontStacks:Record<string,string>={Inter:'Inter, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif',Arial:'Arial, Helvetica, sans-serif',Georgia:'Georgia, "Times New Roman", serif',monospace:'ui-monospace, SFMono-Regular, Menlo, monospace'};
+// Any Figma family is loaded from Google Fonts; system families and the fallbacks cover the rest.
+const sans='-apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif',serif='Georgia, "Times New Roman", serif';
+const systemFonts=['Arial','Georgia','monospace','Helvetica','Helvetica Neue','Times New Roman','SF Pro','SF Pro Display','SF Pro Text','New York','Menlo','Courier New'];
+const fontStack=(family:string)=>family==='monospace'?'ui-monospace, SFMono-Regular, Menlo, monospace':'"'+family+'", '+(/serif|playfair|georgia|garamond|times|lora|merriweather|baskerville|bodoni|caslon|new york/i.test(family)&&!/sans/i.test(family)?serif:sans);
+function FontLinks({frames}:{frames:(WebsiteFrame|null)[]}){
+  const weights=new Map<string,Set<number>>();
+  for(const f of frames)for(const n of f?.nodes??[])if(n.type==='text'&&!systemFonts.includes(n.fontFamily)){
+    const set=weights.get(n.fontFamily)??new Set<number>();set.add(n.fontWeight);for(const s of n.spans)set.add(s.weight);weights.set(n.fontFamily,set);
+  }
+  // One stylesheet per family, so a weight a family lacks only affects that family.
+  return <>{[...weights].slice(0,8).map(([family,set])=><link key={family} rel="stylesheet" precedence="figma-fonts" href={'https://fonts.googleapis.com/css2?family='+encodeURIComponent(family).replace(/%20/g,'+')+':wght@'+[...set].sort((a,b)=>a-b).join(';')+'&display=swap'}/>)}</>;
+}
+const cq=(px:number,frame:WebsiteFrame)=>(px/frame.width*100)+'cqw';
+function gradientCss(g:NonNullable<WebsiteNode['gradient']>){
+  const stops=g.stops.map(s=>s.color+' '+Math.round(s.pos*100)+'%').join(', ');
+  return g.type==='radial'?'radial-gradient(circle at center, '+stops+')':'linear-gradient('+Math.round(g.angle)+'deg, '+stops+')';
+}
 
 function venueMapUrl(venue:string){
   return 'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(venue);
@@ -49,11 +64,18 @@ function Frame({frame,data,preview,prefix}:{frame:WebsiteFrame;data:WebsiteData;
       width:(n.width/parentWidth*100)+'%',
       height:(n.height/parentHeight*100)+'%',
       color:n.color,
-      background:n.type==='box'&&n.hasFill?n.fill:undefined,
+      backgroundColor:n.type==='box'&&n.hasFill?n.fill:undefined,
+      backgroundImage:[n.bg?'url("'+n.bg.image+'")':'',n.gradient?gradientCss(n.gradient):''].filter(Boolean).join(', ')||undefined,
+      backgroundSize:n.bg?(n.bg.fit==='fill'?'100% 100%':n.bg.fit):undefined,
+      backgroundPosition:n.bg?'center':undefined,
+      backgroundRepeat:n.bg?'no-repeat':undefined,
+      boxShadow:n.type!=='text'&&n.shadows.length?n.shadows.map(s=>(s.inset?'inset ':'')+cq(s.x,frame)+' '+cq(s.y,frame)+' '+cq(s.blur,frame)+' '+cq(s.spread,frame)+' '+s.color).join(', '):undefined,
+      textShadow:n.type==='text'&&n.shadows.length?n.shadows.filter(s=>!s.inset).map(s=>cq(s.x,frame)+' '+cq(s.y,frame)+' '+cq(s.blur,frame)+' '+s.color).join(', ')||undefined:undefined,
       borderRadius:(n.radius/frame.width*100)+'cqw',
       fontSize:(n.fontSize/frame.width*100)+'cqw',
-      fontFamily:fontStacks[n.fontFamily]??fontStacks.Inter,
+      fontFamily:fontStack(n.fontFamily),
       fontWeight:n.fontWeight,
+      fontStyle:n.italic?'italic':undefined,
       letterSpacing:n.letterSpacing?(n.letterSpacing/frame.width*100)+'cqw':undefined,
       opacity:n.opacity<1?n.opacity:undefined,
       border:n.stroke&&n.strokeWidth?(n.strokeWidth/frame.width*100)+'cqw solid '+n.stroke:undefined,
@@ -66,7 +88,22 @@ function Frame({frame,data,preview,prefix}:{frame:WebsiteFrame;data:WebsiteData;
       ...(n.hover?{'--hb':n.hover.fill,'--hc':n.hover.color,'--hs':n.hover.stroke,'--ho':n.hover.opacity,'--hm':n.hover.ms+'ms','--he':n.hover.ease}:{})
     } as CSSProperties;
     // Hover comes from a Figma "While hovering → Change to" variant; CSS vars carry the target state.
-    const hover=n.hover?{className:'figma-hover','data-hc':n.hover.color?'':undefined,'data-hs':n.hover.stroke?'':undefined}:{};
+    // Entrance animations ride on CSS scroll timelines; they are skipped where unsupported or reduced motion is set.
+    const className=[n.hover?'figma-hover':'',n.enter?'figma-enter figma-enter-'+n.enter:''].filter(Boolean).join(' ')||undefined;
+    const hover={className,'data-hc':n.hover?.color?'':undefined,'data-hs':n.hover?.stroke?'':undefined};
+    // Mixed text styles from Figma become inline spans over the plain text.
+    const rich=(text:string)=>{
+      if(!n.spans.length||text!==n.text)return text;
+      const out:ReactNode[]=[];let at=0;
+      for(const s of [...n.spans].sort((a,b)=>a.start-b.start)){
+        if(s.start<at)continue;
+        if(s.start>at)out.push(text.slice(at,s.start));
+        out.push(<span key={s.start} style={{fontWeight:s.weight,color:s.color||undefined,fontSize:s.size?cq(s.size,frame):undefined,fontStyle:s.italic?'italic':undefined,textDecoration:s.underline?'underline':undefined}}>{text.slice(s.start,s.end)}</span>);
+        at=s.end;
+      }
+      if(at<text.length)out.push(text.slice(at));
+      return out;
+    };
     const id=n.anchor?prefix+'-'+n.anchor:['tickets','schedule','speakers','sponsors','venueMap'].includes(n.binding??'')?prefix+'-'+n.binding:undefined;
     const value=n.binding&&n.binding in values?values[n.binding]:n.text;
 
@@ -143,9 +180,9 @@ function Frame({frame,data,preview,prefix}:{frame:WebsiteFrame;data:WebsiteData;
       </a>;
     }
 
-    if(n.type==='image')return n.image?<img key={n.id} src={n.image} alt={n.text} style={{...style,objectFit:'contain'}}/>:null;
-    if((n.binding==='eventName'||n.id===headingId)&&!inNav)return <h1 key={n.id} id={id} {...hover} style={{...style,margin:0}}>{value}</h1>;
-    return <div key={n.id} id={id} {...hover} style={style}>{n.type==='text'?value:nested}</div>;
+    if(n.type==='image')return n.image?<img key={n.id} {...hover} src={n.image} alt={n.text} loading="lazy" decoding="async" style={{...style,objectFit:'contain'}}/>:null;
+    if((n.binding==='eventName'||n.id===headingId)&&!inNav)return <h1 key={n.id} id={id} {...hover} style={{...style,margin:0}}>{rich(value)}</h1>;
+    return <div key={n.id} id={id} {...hover} style={style}>{n.type==='text'?rich(value):nested}</div>;
   }
 
   return <div className="figma-live-frame" style={{aspectRatio:frame.width+'/'+frame.height,background:frame.background}}>
@@ -154,24 +191,27 @@ function Frame({frame,data,preview,prefix}:{frame:WebsiteFrame;data:WebsiteData;
   </div>;
 }
 
-// Extra pages and the ticket-page header: phones without a Mobile frame get the Desktop frame scaled down.
-export function FigmaPageRenderer({page,data,preview=false}:{page:WebsitePage;data:WebsiteData;preview?:boolean}){
+// Each frame owns the widths it covers: desktop ≥1200, tablet 768–1199, mobile <768. Missing frames hand
+// their range to the nearest one, so nothing renders twice.
+function Responsive({desktop,tablet,mobile,fallback,data,preview,prefix}:{desktop:WebsiteFrame;tablet:WebsiteFrame|null;mobile:WebsiteFrame|null;fallback?:ReactNode;data:WebsiteData;preview:boolean;prefix:string}){
+  const coverMobile=!mobile&&!fallback;
   return <div className="figma-live-website">
-    <div className={page.mobile?'figma-live-desktop':undefined}><Frame frame={page.desktop} data={data} preview={preview} prefix={page.slug+'-desktop'}/></div>
-    {page.mobile&&<div className="figma-live-mobile"><Frame frame={page.mobile} data={data} preview={preview} prefix={page.slug+'-mobile'}/></div>}
+    <FontLinks frames={[desktop,tablet,mobile]}/>
+    <div className={'figma-live-desktop fw fw-d'+(tablet?'':' fw-t')+(coverMobile&&!tablet?' fw-m':'')}><Frame frame={desktop} data={data} preview={preview} prefix={prefix+'desktop'}/></div>
+    {tablet&&<div className={'figma-live-tablet fw fw-t'+(coverMobile?' fw-m':'')}><Frame frame={tablet} data={data} preview={preview} prefix={prefix+'tablet'}/></div>}
+    {mobile?<div className="figma-live-mobile fw fw-m"><Frame frame={mobile} data={data} preview={preview} prefix={prefix+'mobile'}/></div>:fallback&&<div className="figma-live-mobile figma-live-fallback fw fw-m">{fallback}</div>}
   </div>;
 }
 
+export function FigmaPageRenderer({page,data,preview=false}:{page:WebsitePage;data:WebsiteData;preview?:boolean}){
+  return <Responsive desktop={page.desktop} tablet={page.tablet} mobile={page.mobile} data={data} preview={preview} prefix={page.slug+'-'}/>;
+}
+
 export function FigmaWebsiteRenderer({document,data,preview=false}:{document:FigmaWebsite;data:WebsiteData;preview?:boolean}){
-  return <div className="figma-live-website">
-    <div className="figma-live-desktop"><Frame frame={document.desktop} data={data} preview={preview} prefix="desktop"/></div>
-    {document.mobile
-      ? <div className="figma-live-mobile"><Frame frame={document.mobile} data={data} preview={preview} prefix="mobile"/></div>
-      : <div className="figma-live-mobile figma-live-fallback">
-          <h1>{data.name}</h1>
-          <p>{data.description}</p>
-          <p>{data.date} · {data.venue}</p>
-          <a className="button button-dark" href={preview?undefined:data.claimUrl} aria-disabled={preview}>{data.ctaLabel}</a>
-        </div>}
-  </div>;
+  return <Responsive desktop={document.desktop} tablet={document.tablet} mobile={document.mobile} data={data} preview={preview} prefix="" fallback={document.tablet?undefined:<>
+    <h1>{data.name}</h1>
+    <p>{data.description}</p>
+    <p>{data.date} · {data.venue}</p>
+    <a className="button button-dark" href={preview?undefined:data.claimUrl} aria-disabled={preview}>{data.ctaLabel}</a>
+  </>}/>;
 }

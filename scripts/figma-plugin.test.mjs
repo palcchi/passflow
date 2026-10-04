@@ -106,7 +106,7 @@ test('standard plugin templates serialize into valid desktop/mobile HTML documen
   const source=fs.readFileSync('figma-plugin-standard/code.ts','utf8');
   const compiled=ts.transpileModule(source,{compilerOptions:{target:ts.ScriptTarget.ES2020,module:ts.ModuleKind.None}}).outputText;
   const context=vm.createContext({figma,__html__:'',setTimeout:()=>1,clearTimeout(){},fetch:()=>{throw Error('Unexpected network request');}});
-  vm.runInContext(compiled+'\nglobalThis.testApi={template,serialize,findFrames,sync,pageTemplate,passTemplate,exportPass};',context);
+  vm.runInContext(compiled+'\nglobalThis.testApi={template,serialize,findFrames,sync,pageTemplate,passTemplate,exportPass,setTickets};',context);
 
   await context.testApi.template('minimal');
   const frames=context.testApi.findFrames();
@@ -151,6 +151,12 @@ test('standard plugin templates serialize into valid desktop/mobile HTML documen
   assert.equal(states.at(-1).state,'Disconnected');
 
   assert.ok(document.desktop.nodes.some(n=>n.sticky&&n.parentId===null),'desktop navbar is sticky');
+  assert.ok(frames.tablet,'template includes a tablet frame');
+  reflow(frames.tablet);
+  const tablet=readFigmaWebsite({schema:3,source:'figma',desktop:exported.desktop,tablet:await context.testApi.serialize(frames.tablet,[]),mobile:exported.mobile});
+  assert.ok(tablet&&tablet.tablet&&tablet.tablet.width===834,'tablet frame syncs');
+  assert.deepEqual(validateFigmaWebsite(tablet),[]);
+  assert.ok(document.desktop.nodes.some(n=>n.enter==='up')&&document.desktop.nodes.some(n=>n.enter==='fade'),'sections carry entrance animations');
   const hoverButton=document.desktop.nodes.find(n=>n.binding==='register'&&n.hover);
   assert.ok(hoverButton,'register button carries a hover state');
   assert.equal(hoverButton.hover.ms,180);
@@ -184,6 +190,11 @@ test('standard plugin templates serialize into valid desktop/mobile HTML documen
     assert.ok(frame.findAll(n=>n.getSharedPluginData('passflow','passField')).every(n=>n.visible),'original frame keeps attendee layers visible');
   }
   await assert.rejects(()=>context.testApi.passTemplate('minimal','id_card'),/already has/);
+  context.testApi.setTickets([{id:'11111111-1111-4111-8111-111111111111',name:'VIP'}]);
+  await context.testApi.passTemplate('minimal','id_card','11111111-1111-4111-8111-111111111111');
+  assert.ok(context.testApi.findFrames().passes.some(p=>p.kind==='id_card'&&p.ticketTypeId==='11111111-1111-4111-8111-111111111111'),'per-category ID card');
+  await assert.rejects(()=>context.testApi.passTemplate('minimal','id_card','11111111-1111-4111-8111-111111111111'),/for VIP/);
+  await assert.rejects(()=>context.testApi.passTemplate('minimal','digital','22222222-2222-4222-8222-222222222222'),/not available/);
   for(const style of ['festival']){
     page.children.length=0;
     await context.testApi.template(style);

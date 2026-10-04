@@ -97,8 +97,8 @@ footer{position:sticky;bottom:0;background:var(--paper);padding:12px 18px 14px;b
       <label class="style minimal"><input type="radio" name="style" value="minimal" checked><div class="card"><div class="preview"><div class="bar"></div><div class="big">Aa</div><div class="pill"></div></div><div class="style-name">Minimal</div></div></label>
       <label class="style festival"><input type="radio" name="style" value="festival"><div class="card"><div class="preview"><div class="bar"></div><div class="big">Aa</div><div class="pill"></div></div><div class="style-name">Festival</div></div></label>
     </div>
-    <button id="template" class="primary">Insert Desktop + Mobile website</button>
-    <p class="hint" id="styleHint">A sticky navbar and 10 sections with hover buttons. Every word is yours to edit.</p>
+    <button id="template" class="primary">Insert website</button>
+    <p class="hint" id="styleHint">Desktop, Tablet and Mobile frames with a sticky navbar and 10 sections with hover buttons. Every word is yours to edit.</p>
   </section>
 
   <section class="step">
@@ -121,7 +121,7 @@ footer{position:sticky;bottom:0;background:var(--paper);padding:12px 18px 14px;b
     <label class="field" id="pageNameWrap" hidden>Page name (lowercase, used in the link)
       <input id="pageName" placeholder="agenda" maxlength="40" autocomplete="off" spellcheck="false">
     </label>
-    <button id="addPage">Add Desktop + Mobile page</button>
+    <button id="addPage">Add page</button>
     <p class="hint">Uses the style above. Link to a page from any button with Prototype → Navigate to.</p>
   </section>
 
@@ -129,6 +129,9 @@ footer{position:sticky;bottom:0;background:var(--paper);padding:12px 18px 14px;b
     <div class="step-title"><span class="num" id="n5">5</span>Add a pass</div>
     <label class="field">Format
       <select id="passKind"><option value="id_card">ID card · 54 × 85.6 mm</option><option value="digital">Digital pass · 70 × 120 mm</option><option value="wristband">Wristband · 240 × 25 mm</option></select>
+    </label>
+    <label class="field">For
+      <select id="passTicket"><option value="">All attendees</option></select>
     </label>
     <button id="addPass">Add pass frame</button>
     <p class="hint">Uses the style above. Design it freely; attendee name, photo, category, code and QR are filled in per person.</p>
@@ -152,7 +155,7 @@ footer{position:sticky;bottom:0;background:var(--paper);padding:12px 18px 14px;b
     <div class="selection"><strong id="selected">Nothing selected</strong><span id="selectedBinding">No PassFlow binding</span></div>
     <div class="row">
       <label class="field">Frame
-        <select id="frameRole"><option value="desktop">Desktop</option><option value="mobile">Mobile</option></select>
+        <select id="frameRole"><option value="desktop">Desktop</option><option value="tablet">Tablet</option><option value="mobile">Mobile</option></select>
       </label>
       <label class="field">Page
         <input id="framePage" value="home" maxlength="40" list="pageNames" autocomplete="off" spellcheck="false">
@@ -172,6 +175,10 @@ footer{position:sticky;bottom:0;background:var(--paper);padding:12px 18px 14px;b
       <input id="href" placeholder="https://… or #tickets">
     </label>
     <button id="assign">Connect layer</button>
+    <label class="field">Entrance animation (selected layer)
+      <select id="enter"><option value="up">Slide up</option><option value="fade">Fade in</option><option value="scale">Scale in</option><option value="">None</option></select>
+    </label>
+    <button id="setEnter">Set animation</button>
     <label class="field">Pass layer shows
       <select id="passField"><option value="name">Attendee name</option><option value="photo">Attendee photo</option><option value="category">Ticket category</option><option value="code">Attendee code</option><option value="qr">QR code (square, 15 mm+)</option><option value="">Nothing · static artwork</option></select>
     </label>
@@ -213,14 +220,15 @@ function updateStatus(m){
 $('pair').onclick=()=>send({type:'pair',code:$('code').value});
 $('code').onkeydown=e=>{if(e.key==='Enter')send({type:'pair',code:$('code').value})};
 $('template').onclick=()=>send({type:'template',style:style()});
-const styleHints={blank:'Empty Desktop 1440 and Mobile 390 frames. Draw anything, then mark your Register button.',minimal:'Clean white layout, a sticky navbar and 10 sections with hover buttons. Every word is yours to edit.',festival:'Bold dark layout with loud type and color, a sticky navbar and hover buttons. Every word is yours to edit.'};
+const styleHints={blank:'Empty Desktop 1440, Tablet 834 and Mobile 390 frames. Draw anything, then mark your Register button.',minimal:'Clean white layout in Desktop, Tablet and Mobile, with a sticky navbar, hover buttons and scroll animations. Every word is yours to edit.',festival:'Bold dark layout with loud type and color, a sticky navbar, hover buttons and scroll animations. Every word is yours to edit.'};
 for(const r of document.querySelectorAll('input[name=style]'))r.onchange=()=>{$('styleHint').textContent=styleHints[style()];};
 $('insert').onclick=()=>send({type:'block',block:$('block').value,style:style()});
 $('advancedToggle').onchange=e=>{$('advanced').hidden=!e.target.checked};
 $('binding').onchange=()=>{$('hrefWrap').hidden=$('binding').value!=='customLink'};
 $('assign').onclick=()=>send({type:'assign',binding:$('binding').value,href:$('href').value});
 $('frame').onclick=()=>send({type:'frame',role:$('frameRole').value,page:$('framePage').value});
-$('addPass').onclick=()=>send({type:'pass',kind:$('passKind').value,style:style()});
+$('addPass').onclick=()=>send({type:'pass',kind:$('passKind').value,style:style(),ticketTypeId:$('passTicket').value});
+$('setEnter').onclick=()=>send({type:'enter',value:$('enter').value});
 $('markPass').onclick=()=>send({type:'passField',field:$('passField').value});
 $('pageKind').onchange=()=>{$('pageNameWrap').hidden=$('pageKind').value!=='custom'};
 $('addPage').onclick=()=>send({type:'page',style:style(),page:$('pageKind').value==='ticket'?'ticket':$('pageName').value});
@@ -233,6 +241,7 @@ $('open').onclick=()=>{if(eventId)openUrl('https://passflow.my.id/admin/events/'
 window.onmessage=e=>{
   const m=e.data.pluginMessage;if(!m)return;
   if(m.type==='status')updateStatus(m);
+  if(m.type==='tickets'){const sel=$('passTicket'),keep=sel.value;sel.replaceChildren(new Option('All attendees',''),...m.tickets.map(t=>new Option(t.name,t.id)));sel.value=m.tickets.some(t=>t.id===keep)?keep:'';}
   if(m.type==='selection'){
     $('selected').textContent=m.name||'Nothing selected';
     $('selectedBinding').textContent=m.binding?'Connected to: '+m.binding:(m.frameRole?'Frame: '+m.frameRole:'No PassFlow binding');

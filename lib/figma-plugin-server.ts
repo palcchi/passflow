@@ -14,10 +14,10 @@ export const pluginHeaders={'Access-Control-Allow-Origin':'*','Access-Control-Al
 export const pluginResponse=(data:unknown,status=200)=>Response.json(data,{status,headers:pluginHeaders});
 export async function pluginBody(request:Request){
   if(!request.headers.get('content-type')?.startsWith('application/json'))throw new Error('invalid_content_type');
-  if(Number(request.headers.get('content-length')??0)>950000)throw new Error('payload_too_large');
+  if(Number(request.headers.get('content-length')??0)>16000000)throw new Error('payload_too_large');
   const reader=request.body?.getReader();if(!reader)throw new Error('invalid_body');
   const chunks:Uint8Array[]=[];let size=0;
-  while(true){const {done,value}=await reader.read();if(done)break;size+=value.byteLength;if(size>950000){await reader.cancel();throw new Error('payload_too_large');}chunks.push(value);}
+  while(true){const {done,value}=await reader.read();if(done)break;size+=value.byteLength;if(size>16000000){await reader.cancel();throw new Error('payload_too_large');}chunks.push(value);}
   const value=JSON.parse(Buffer.concat(chunks).toString('utf8'));
   if(!value||typeof value!=='object'||Array.isArray(value))throw new Error('invalid_body');
   return value as Record<string,unknown>;
