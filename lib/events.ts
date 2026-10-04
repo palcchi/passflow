@@ -49,7 +49,7 @@ export type EventTheme = {
   foreground: string;
   surface: string;
   headerStyle?: "minimal" | "editorial" | "split";
-  /** Quick Setup text and style; empty text falls back to PassFlow defaults. */
+  /** Default page text and style; empty text falls back to PassFlow defaults. */
   tagline?: string;
   ctaLabel?: string;
   font?: "sans" | "serif" | "mono";

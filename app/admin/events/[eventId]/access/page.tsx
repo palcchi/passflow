@@ -6,6 +6,7 @@ import { getManagedEvent } from "@/lib/events";
 import { requireOrganizerMembership } from "@/lib/auth/session";
 import { QrCodeGenerator } from "@/components/qr-code-generator";
 import { SmartSelect } from "@/components/form-fields";
+import { QrDeliveryEditor } from "@/components/qr-delivery-editor";
 import {
   createAccessRule,
   createStation,
@@ -79,6 +80,7 @@ export default async function EventAccessPage({ params, searchParams }: Props) {
 
   return (
     <>
+      <QrDeliveryEditor event={event} />
       <section className="event-admin-section event-claim-mode-section">
         {error === "claim_mode_locked" && <p role="alert" className="camera-feedback">Claim mode cannot change after attendees have registered. Existing passes stay valid.</p>}
         <div className="event-admin-section-head">

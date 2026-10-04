@@ -26,17 +26,11 @@ export default async function EventDesignPage({params}:{params:Promise<{eventId:
     <section className="event-admin-section">
       <span className="section-kicker">What attendees see now</span>
       <div className="design-live-grid">
-        <div className="design-live-card"><small>Event website</small><strong>{figmaSite?'Figma design':'Quick Setup page'}</strong><span>{figmaSite?liveSite!.name:'Basic page from event details and theme.'}</span></div>
-        <div className="design-live-card"><small>Credential</small><strong>{modeLabel[event.qrConfig.mode]??event.qrConfig.mode}</strong><span>Change in <Link href={`/admin/events/${eventId}/access`}>Access</Link>.</span></div>
-        <div className="design-live-card"><small>Pass designs</small><strong>{livePasses.length?livePasses.length+' live':'Default layout'}</strong><span>{livePasses.length?livePasses.map(p=>passLabel[p.kind]+' · '+ticketName(p.ticket_type_id)).join(', '):'Publish a pass from Figma or the simple layout.'}</span></div>
+        <div className="design-live-card"><small>Event website</small><strong>{figmaSite?'Figma design':'PassFlow default page'}</strong><span>{figmaSite?liveSite!.name:'Event details, banner and Register, until a Figma design is published.'}</span></div>
+        <div className="design-live-card"><small>Credential</small><strong>{modeLabel[event.qrConfig.mode]??event.qrConfig.mode}</strong><span>Change in <Link href={`/admin/events/${eventId}/access`}>Access</Link>. Banner, logo and accent are in <Link href={`/admin/events/${eventId}/settings`}>Settings</Link>.</span></div>
+        <div className="design-live-card"><small>Pass designs</small><strong>{livePasses.length?livePasses.length+' live':'Default layout'}</strong><span>{livePasses.length?livePasses.map(p=>passLabel[p.kind]+' · '+ticketName(p.ticket_type_id)).join(', '):'Standard QR pass until you publish one from Figma.'}</span></div>
       </div>
     </section>
     <FigmaPairingPanel now={now} eventId={eventId} connections={links.data??[]} versions={versions.data??[]} ready={!links.error&&!versions.error&&!!process.env.SUPABASE_SERVICE_ROLE_KEY}/>
-    <section className="event-admin-section">
-      <span className="section-kicker">Without Figma</span>
-      <h3>Quick Setup and simple pass layout</h3>
-      <p>Colors, tagline, button text and banner for a basic event page, and a simple pass with QR, name and logo. A published Figma design takes priority.</p>
-      <div className="resource-toolbar"><Link className="button button-ghost" href={`/admin/events/${eventId}/appearance`}>Open Quick Setup</Link><Link className="button button-ghost" href={`/admin/events/${eventId}/design/studio`}>Simple pass layout</Link></div>
-    </section>
   </div>;
 }

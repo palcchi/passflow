@@ -38,9 +38,8 @@ export function EventAdminNav({ eventId }: { eventId: string }) {
       <div className="event-section-dock-scroll" ref={scrollRef}>
         {items.map(({ key, label, suffix }) => {
           const href = base + suffix;
-          // Quick Setup lives under Design, so it keeps the Design tab highlighted.
           const routeIsActive = suffix
-            ? pathname === href || pathname.startsWith(href + "/") || (key === "design" && pathname === base + "/appearance")
+            ? pathname === href || pathname.startsWith(href + "/")
             : pathname === base;
           const active = pendingHref ? pendingHref === href : routeIsActive;
           return (

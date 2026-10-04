@@ -4,6 +4,7 @@ import { requireOrganizerMembership } from "@/lib/auth/session";
 import { DateTimeField, FormattedNumberInput } from "@/components/form-fields";
 import { deleteEvent, setEventStatus, updateEvent } from "@/app/admin/actions";
 import { EventSubdomainPanel } from "@/components/event-subdomain-panel";
+import { EventBranding } from "@/components/event-branding";
 
 type Props = { params: Promise<{ eventId: string }>; searchParams: Promise<{ error?: string }> };
 
@@ -54,7 +55,7 @@ export default async function EventSettingsPage({ params, searchParams }: Props)
         <p role="status"><strong>{event.status === "published" ? "Live" : event.status === "archived" ? "Archived" : "Draft"}</strong>
           {event.publishedVersion ? ` · published version ${event.publishedVersion}` : " · never published"}
           {event.hasDraftChanges ? " · unpublished changes saved" : ""}</p>
-        <p>Basics and Quick Setup changes are saved as a draft while live. Public pages, registration and passes use the published settings until you publish. Tickets, gates and access rules are operational changes and apply immediately.</p>
+        <p>Basics and branding changes are saved as a draft while live. Public pages, registration and passes use the published settings until you publish. Tickets, gates and access rules are operational changes and apply immediately.</p>
 
         <form action={updateEvent} className="event-admin-form-grid">
           <input type="hidden" name="eventId" value={event.id} />
@@ -121,6 +122,7 @@ export default async function EventSettingsPage({ params, searchParams }: Props)
         </form>)}</div></div>}
       </section>
 
+      <EventBranding event={event} />
       <EventSubdomainPanel eventId={eventId} current={address?.label ?? ""} suggestion={event.slug} enabled={process.env.PASSFLOW_EVENT_SUBDOMAINS_ENABLED === "true"} />
       <section className="event-admin-danger-zone">
         <div className="event-admin-danger-copy">
