@@ -37,9 +37,27 @@ export default async function HomePage() {
       <div className="hero-corner-note"><span>↗</span>No paper tickets.<br/>No long queues.</div>
     </section>
     <div className="editorial-marquee" aria-hidden="true"><VelocityScroll defaultVelocity={0.35}>REGISTER · GET YOUR PASS · SCAN IN · ENJOY THE EVENT · </VelocityScroll></div>
+    <section className="landing-proof" aria-label="PassFlow benefits">
+      <div><strong>One account</strong><span>for every event</span></div>
+      <div><strong>Instant QR</strong><span>digital passes</span></div>
+      <div><strong>Figma-ready</strong><span>event experiences</span></div>
+      <div><strong>Live check-in</strong><span>for your crew</span></div>
+    </section>
     <section className="editorial-section" id="events" aria-labelledby="recent-events">
       <div className="editorial-section-heading"><div><span className="section-kicker">NEWLY PUBLISHED</span><h2 id="recent-events">Upcoming events.<br/><span>Find your next one.</span></h2></div><Link className="studio-text-link" href="/events">All events<ArrowUpRight size={15}/></Link></div>
       {recent.events.length ? <div className="class-event-grid">{recent.events.map(event => <EventClassCard event={event} key={event.id}/>)}</div> : <div className="landing-empty"><FolderArtwork color="blue" label="Coming together"/><div><h3>{recent.unavailable ? "The event collection is temporarily unavailable." : "No events are published yet."}</h3><p>{recent.unavailable ? "Please check the event collection again shortly." : "Published events appear here automatically. Check back soon."}</p></div></div>}
+    </section>
+    <section className="editorial-section landing-how" aria-labelledby="how-title">
+      <div className="editorial-section-heading"><div><span className="section-kicker">HOW IT WORKS</span><h2 id="how-title">From discovery<br/><span>to entry in three steps.</span></h2></div></div>
+      <ol className="landing-steps">
+        <li><span>01</span><div><h3>Discover an event</h3><p>Browse published events and find the one worth making room for.</p></div></li>
+        <li><span>02</span><div><h3>Register once</h3><p>Use one PassFlow account to save your details and get your ticket instantly.</p></div></li>
+        <li><span>03</span><div><h3>Show your pass</h3><p>Open your personal QR pass at the door. No printing, no queue anxiety.</p></div></li>
+      </ol>
+    </section>
+    <section className="editorial-section landing-figma" aria-labelledby="figma-title">
+      <div><span className="section-kicker">DESIGNED IN FIGMA</span><h2 id="figma-title">Your event should<br/><span>look like your event.</span></h2><p>Bring your approved Figma design into PassFlow. You keep control of the visual system; we handle registration, tickets, QR passes, SEO, and publishing.</p><Link className="button button-dark" href="/organizer">See how Figma fits in<ArrowUpRight size={15}/></Link></div>
+      <div className="figma-mini-preview" aria-hidden="true"><span className="figma-mini-top"/><span className="figma-mini-title">A pass<br/>people keep.</span><span className="figma-mini-ticket"><b>PASSFLOW</b><strong>ADMIT ONE</strong><small>SCAN TO ENTER</small></span></div>
     </section>
     <section className="editorial-section organizer-invitation" id="organizer" aria-labelledby="organizer-title">
       <div><span className="section-kicker">PASSFLOW FOR ORGANIZERS</span><h2 id="organizer-title">Hosting an event?<br/><span>Run it on PassFlow.</span></h2><p>Registration, ticket types, crew access, and live check-in in one organizer workspace.</p><ShinyButton href="/organizer">Explore organizer tools<ArrowUpRight size={15}/></ShinyButton></div>
