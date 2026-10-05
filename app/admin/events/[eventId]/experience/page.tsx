@@ -1,13 +1,9 @@
-import { ActionFeedbackForm } from "@/components/action-feedback-form";
+import { FormDialog } from "@/components/form-dialog";
 import { ResourceManager } from "@/components/resource-manager";
 import { requireOrganizerMembership } from "@/lib/auth/session";
 import { createActivity, createBenefit } from "@/app/admin/actions";
 
 type Props = { params: Promise<{ eventId: string }> };
-
-function inputClass() {
-  return "event-admin-input";
-}
 
 export default async function EventExperiencePage({ params }: Props) {
   const { eventId } = await params;
@@ -70,37 +66,16 @@ export default async function EventExperiencePage({ params }: Props) {
               <h2>Checkpoints</h2>
               <p>Track attendee participation across activities within the event.</p>
             </div>
+            <FormDialog trigger="Add activity" title="Add activity" description="A session or booth where crew scan attendees to record participation." action={createActivity} submitLabel="Add activity">
+              <input type="hidden" name="eventId" value={eventId} />
+              <label>Name<input name="name" placeholder="Workshop A" required maxLength={100} /></label>
+              <label>Code <small>Optional, made from the name</small><input name="code" placeholder="WORKSHOP_A" maxLength={40} /></label>
+              <label>Description <small>Optional</small><textarea name="description" maxLength={500} /></label>
+            </FormDialog>
           </div>
 
-          <div className="event-admin-stack">
-            <ResourceManager eventId={eventId} kind="activity" records={activities} />
-          </div>
+          <ResourceManager eventId={eventId} kind="activity" records={activities} />
 
-          <ActionFeedbackForm
-            action={createActivity}
-            className="event-admin-stack event-admin-subform"
-          >
-            <input type="hidden" name="eventId" value={eventId} />
-            <input
-              className={inputClass()}
-              name="name"
-              placeholder="Workshop A"
-              required
-            />
-            <input
-              className={inputClass()}
-              name="code"
-              placeholder="WORKSHOP_A"
-            />
-            <input
-              className={inputClass()}
-              name="description"
-              placeholder="Add a short description (optional)"
-            />
-            <button className="button button-ghost" type="submit">
-              Add activity
-            </button>
-          </ActionFeedbackForm>
         </div>
 
         <div className="event-admin-section">
@@ -110,37 +85,16 @@ export default async function EventExperiencePage({ params }: Props) {
               <h2>One-time claims</h2>
               <p>Manage benefits that can only be claimed once per attendee.</p>
             </div>
+            <FormDialog trigger="Add benefit" title="Add benefit" description="Something each attendee can claim once, like merch or a drink." action={createBenefit} submitLabel="Add benefit">
+              <input type="hidden" name="eventId" value={eventId} />
+              <label>Name<input name="name" placeholder="Merchandise Pack" required maxLength={100} /></label>
+              <label>Code <small>Optional, made from the name</small><input name="code" placeholder="MERCH_PACK" maxLength={40} /></label>
+              <label>Description <small>Optional</small><textarea name="description" maxLength={500} /></label>
+            </FormDialog>
           </div>
 
-          <div className="event-admin-stack">
-            <ResourceManager eventId={eventId} kind="benefit" records={benefits} />
-          </div>
+          <ResourceManager eventId={eventId} kind="benefit" records={benefits} />
 
-          <ActionFeedbackForm
-            action={createBenefit}
-            className="event-admin-stack event-admin-subform"
-          >
-            <input type="hidden" name="eventId" value={eventId} />
-            <input
-              className={inputClass()}
-              name="name"
-              placeholder="Merchandise Pack"
-              required
-            />
-            <input
-              className={inputClass()}
-              name="code"
-              placeholder="MERCH_PACK"
-            />
-            <input
-              className={inputClass()}
-              name="description"
-              placeholder="Add a short description (optional)"
-            />
-            <button className="button button-ghost" type="submit">
-              Add benefit
-            </button>
-          </ActionFeedbackForm>
         </div>
       </section>
     </>

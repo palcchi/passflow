@@ -22,6 +22,7 @@ jobs:
       - run: node --experimental-strip-types --test scripts/auth-unit.test.mjs scripts/customize-actions.test.mjs scripts/studio-model.test.mjs
       - run: node scripts/management-lifecycle.test.mjs
       - run: node scripts/phase1-credential.test.mjs
+      - run: node scripts/delete-credentials.test.mjs
       - run: node scripts/event-lifecycle.test.mjs
       - run: node scripts/figma-plugin.test.mjs
       - run: node scripts/figma-website.test.mjs

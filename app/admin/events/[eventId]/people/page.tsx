@@ -3,6 +3,7 @@ import { Search } from "lucide-react";
 import { PeopleRecordEditor } from "@/components/people-record-editor";
 import { requireOrganizerMembership } from "@/lib/auth/session";
 import { CsvImportForm } from "@/components/csv-import-form";
+import { FormDialog, PopupPanel } from "@/components/form-dialog";
 import { AvatarCircles } from "@/components/magicui/avatar-circles";
 import { FormattedNumberInput, SmartSelect } from "@/components/form-fields";
 import {
@@ -16,10 +17,6 @@ type Props = {
   params: Promise<{ eventId: string }>;
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
-
-function inputClass() {
-  return "event-admin-input";
-}
 
 export default async function EventPeoplePage({ params, searchParams }: Props) {
   const { eventId } = await params;
@@ -83,7 +80,20 @@ export default async function EventPeoplePage({ params, searchParams }: Props) {
             <h2>Tickets & pass categories</h2>
             <p>Configure the pass categories available to attendees for this event.</p>
           </div>
-          <span className="event-admin-section-count">{tickets.length} types</span>
+          <div className="event-admin-head-actions">
+            <span className="event-admin-section-count">{tickets.length} types</span>
+          <FormDialog trigger="Add ticket type" title="Add ticket type" description="A pass category attendees can register for. Access rules and Figma pass designs can target it." action={createTicketType} submitLabel="Add ticket type">
+                          <input type="hidden" name="eventId" value={eventId} />
+              <label>Name<input name="name" placeholder="VIP Access" required maxLength={100} /></label>
+              <label>Code <small>Optional, made from the name</small><input name="code" placeholder="VIP" maxLength={40} /></label>
+              <div className="record-row">
+                <label>Capacity <small>Blank is unlimited</small><FormattedNumberInput name="capacity" min={0} placeholder="250" /></label>
+                <label>Price<FormattedNumberInput name="price" min={0} placeholder="150,000" /></label>
+              </div>
+              <label>Currency<SmartSelect name="currency" value="IDR" options={[{ value: "IDR", label: "IDR · Rupiah" }, { value: "USD", label: "USD · US Dollar" }, { value: "SGD", label: "SGD · Singapore Dollar" }]} /></label>
+              <label>Description <small>Optional</small><textarea name="description" maxLength={500} /></label>
+              </FormDialog>
+          </div>
         </div>
 
         <div className="event-admin-card-grid">
@@ -108,31 +118,11 @@ export default async function EventPeoplePage({ params, searchParams }: Props) {
           {!tickets.length && (
             <div className="event-admin-empty-card">
               <strong>No pass categories yet</strong>
-              <span>Create the first pass category using the form below.</span>
+              <span>Add the first pass category with “Add ticket type”.</span>
             </div>
           )}
         </div>
 
-        <form action={createTicketType} className="event-admin-inline-form event-admin-inline-form-3">
-          <input type="hidden" name="eventId" value={eventId} />
-          <input className={inputClass()} name="name" placeholder="VIP Access" required />
-          <input className={inputClass()} name="code" placeholder="VIP" />
-          <FormattedNumberInput name="capacity" min={0} className={inputClass()} placeholder="250" />
-          <FormattedNumberInput name="price" min={0} className={inputClass()} placeholder="150,000" />
-          <SmartSelect
-            name="currency"
-            value="IDR"
-            options={[
-              { value: "IDR", label: "IDR · Rupiah" },
-              { value: "USD", label: "USD · US Dollar" },
-              { value: "SGD", label: "SGD · Singapore Dollar" },
-            ]}
-          />
-          <input className={inputClass()} name="description" placeholder="Describe this pass (optional)" />
-          <button className="button button-dark event-admin-inline-submit" type="submit">
-            Add ticket type
-          </button>
-        </form>
       </section>
 
       <section className="event-admin-section liquid-panel">
@@ -150,6 +140,16 @@ export default async function EventPeoplePage({ params, searchParams }: Props) {
               }))}
               extra={Math.max(0, attendees.length - 3)}
             />
+            <FormDialog trigger="Add attendee" title="Add attendee" description="Register someone manually. To add many at once, import a CSV." action={createAttendee} submitLabel="Add attendee">
+                              <input type="hidden" name="eventId" value={eventId} />
+                <label>Full name<input name="name" placeholder="Attendee full name" required maxLength={100} /></label>
+                <label>Email<input name="email" type="email" placeholder="attendee@company.com" /></label>
+                <label>Phone<input name="phone" type="tel" placeholder="+62 812 3456 7890" maxLength={40} /></label>
+                <label>Pass category<SmartSelect name="ticketTypeId" value="" options={[{ value: "", label: "No pass type" }, ...tickets.map((ticket) => ({ value: ticket.id, label: ticket.name }))]} /></label>
+                </FormDialog>
+            <PopupPanel trigger="Import CSV" title="Import attendees" description="Upload a CSV with name, email, phone and pass category columns.">
+              <CsvImportForm eventId={eventId} />
+            </PopupPanel>
             <a className="button button-ghost" href={`/admin/events/${eventId}/export/attendees`}>
               Export CSV
             </a>
@@ -203,25 +203,7 @@ export default async function EventPeoplePage({ params, searchParams }: Props) {
           {!attendees.length && <div className="event-admin-table-empty">No attendees have registered yet.</div>}
         </div>
 
-        <form action={createAttendee} className="event-admin-inline-form event-admin-inline-form-4">
-          <input type="hidden" name="eventId" value={eventId} />
-          <input className={inputClass()} name="name" placeholder="Enter attendee full name" required />
-          <input className={inputClass()} name="email" type="email" placeholder="attendee@company.com" />
-          <input className={inputClass()} name="phone" placeholder="+62 812 3456 7890" />
-          <SmartSelect
-            name="ticketTypeId"
-            value=""
-            options={[
-              { value: "", label: "No pass type" },
-              ...tickets.map((ticket) => ({ value: ticket.id, label: ticket.name })),
-            ]}
-          />
-          <button className="button button-dark event-admin-inline-submit" type="submit">Add attendee</button>
-        </form>
 
-        <div className="event-admin-import-shell">
-          <CsvImportForm eventId={eventId} />
-        </div>
       </section>
 
       <section className="event-admin-section liquid-panel">
@@ -231,9 +213,20 @@ export default async function EventPeoplePage({ params, searchParams }: Props) {
             <h2>Event team</h2>
             <p>Create limited event access for crew members and staff.</p>
           </div>
-          <span className="event-admin-section-count">
-            {crew.filter((member) => member.status === "active").length} active
-          </span>
+          <div className="event-admin-head-actions">
+            <span className="event-admin-section-count">
+              {crew.filter((member) => member.status === "active").length} active
+            </span>
+          <PopupPanel key={typeof query.invite === "string" ? query.invite : "invite"} trigger="Invite crew" title="Invite crew" description="Creates a 7-day link with limited access to this event.">
+            <form action={createCrewInvitation}>
+              <input type="hidden" name="eventId" value={eventId} />
+              <label>Job title<input name="jobTitle" placeholder="Gate Operations" required maxLength={100} /></label>
+              <label>Access<SmartSelect name="accessRole" value="crew" options={[{ value: "crew", label: "Crew" }, { value: "lead", label: "Lead" }, { value: "scanner", label: "Scanner" }]} /></label>
+              <label>Email <small>Optional</small><input name="email" type="email" placeholder="crew@company.com" /></label>
+              <div className="record-actions"><span/><button type="submit">Create invitation</button></div>
+            </form>
+          </PopupPanel>
+          </div>
         </div>
 
         {typeof query.invite === "string" && (
@@ -272,21 +265,6 @@ export default async function EventPeoplePage({ params, searchParams }: Props) {
           )}
         </div>
 
-        <form action={createCrewInvitation} className="event-admin-inline-form event-admin-inline-form-4">
-          <input type="hidden" name="eventId" value={eventId} />
-          <input className={inputClass()} name="jobTitle" placeholder="Gate Operations" required />
-          <SmartSelect
-            name="accessRole"
-            value="crew"
-            options={[
-              { value: "crew", label: "Crew" },
-              { value: "lead", label: "Lead" },
-              { value: "scanner", label: "Scanner" },
-            ]}
-          />
-          <input className={inputClass()} name="email" type="email" placeholder="crew@company.com (optional)" />
-          <button className="button button-dark event-admin-inline-submit" type="submit">Create crew invitation</button>
-        </form>
       </section>
     </>
   );

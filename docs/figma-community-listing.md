@@ -23,7 +23,7 @@ PassFlow turns the event website and passes you design in Figma into a live even
 - Everything you see is yours: type your own text, use any Google font, photos, gradients and shadows.
 - Links and motion use Figma itself. On click → Open link or Scroll to, Navigate to another page frame, and While hovering → Change to a variant become real links and hover effects. Sections can ease in on scroll.
 - Add a ticket page and extra pages such as Agenda or FAQ.
-- Design ID cards, digital passes and wristbands. Mark the attendee name, photo, category, code and QR. PassFlow fills them in per person and prints at about 300 dpi. Wristbands are printed unclaimed and claimed later by scanning the QR.
+- Design ID cards, digital passes and wristbands at any size. Mark the attendee name, photo, category, code and QR. PassFlow fills them in per person, prints at about 300 dpi and saves each card as PNG or JPG. Wristbands are printed unclaimed and claimed later by scanning the QR.
 - Edits sync to a private draft. Nothing goes live until you preview and publish in PassFlow.
 
 Pair a file with a 10-minute code from PassFlow → Event → Design.

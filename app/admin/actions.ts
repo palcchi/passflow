@@ -370,16 +370,30 @@ export async function generateQrBatch(input: QrBatchInput) {
   };
 }
 
-export async function revokeCredential(formData: FormData) {
+// Revoke keeps the audit trail; delete only removes codes nobody has claimed yet (printed by mistake, damaged).
+export async function manageCredentials(formData: FormData) {
   const eventId = text(formData, "eventId", 60);
-  const credentialId = text(formData, "credentialId", 60);
+  const operation = text(formData, "operation", 10);
+  const ids = formData.getAll("credentialId").map(String).filter((id) => /^[0-9a-f-]{36}$/i.test(id)).slice(0, 1000);
+  if (!ids.length || !["revoke", "delete"].includes(operation)) return { error: "Select at least one QR code." };
   const { supabase } = await managedContext(eventId);
-  await supabase
+  if (operation === "delete") {
+    const { data, error } = await supabase.rpc("delete_unclaimed_credentials", { p_event_id: eventId, p_ids: ids });
+    if (error) return { error: "QR codes could not be deleted. Try again." };
+    revalidateEvent(eventId);
+    const kept = ids.length - (data ?? 0);
+    return { message: `${data ?? 0} deleted.${kept ? ` ${kept} claimed or revoked code${kept === 1 ? " was" : "s were"} kept for the audit trail; revoke instead.` : ""}` };
+  }
+  const { data, error } = await supabase
     .from("qr_credentials")
     .update({ status: "revoked", revoked_at: new Date().toISOString() })
-    .eq("id", credentialId)
-    .eq("event_id", eventId);
+    .eq("event_id", eventId)
+    .in("id", ids)
+    .in("status", ["active", "unclaimed"])
+    .select("id");
+  if (error) return { error: "QR codes could not be revoked. Try again." };
   revalidateEvent(eventId);
+  return { message: `${data.length} revoked. They no longer open any gate.` };
 }
 
 export async function createZone(formData: FormData) {
@@ -521,10 +535,6 @@ export async function saveEventQrConfig(formData: FormData) {
   const allowed = ["digital", "id_card_portrait", "id_card_landscape", "wristband"] as const;
   const modeValue = text(formData, "mode", 30);
   const mode = allowed.includes(modeValue as (typeof allowed)[number]) ? modeValue : "digital";
-  const clamp = (key: string, fallback: number, min: number, max: number) => {
-    const value = Number(text(formData, key, 20).replace(/[^0-9.-]/g, ""));
-    return Number.isFinite(value) ? Math.min(max, Math.max(min, value)) : fallback;
-  };
   const [{ data: current, error: readError }, { data: draft }] = await Promise.all([
     supabase.from("events").select("qr_config,slug").eq("id", eventId).single(),
     supabase.from("event_config_drafts").select("config").eq("event_id", eventId).maybeSingle(),
@@ -542,17 +552,11 @@ export async function saveEventQrConfig(formData: FormData) {
           : mode === "wristband"
             ? "claim"
             : "automatic",
-      template_url: typeof existing.template_url === "string" ? existing.template_url : null,
-      width_mm: clamp("widthMm", 85.6, 20, 500),
-      height_mm: clamp("heightMm", 54, 20, 500),
-      qr_x: clamp("qrX", 68, 0, 100),
-      qr_y: clamp("qrY", 50, 0, 100),
-      qr_size: clamp("qrSize", 22, 5, 80),
     },
   } as Json });
   if (error) return { ok: false, message: error.message.includes("claim_mode_locked") ? "Claim mode cannot change after attendees have registered." : "QR settings could not be saved. Please try again." };
   revalidateEvent(eventId, current?.slug);
-  return { ok: true, message: "Pass and QR settings saved to draft. Publish in Settings to update the live event." };
+  return { ok: true, message: "Format saved to draft. Publish in Settings to update the live event." };
 }
 
 export async function saveClaimMode(formData: FormData) {
@@ -631,7 +635,7 @@ export async function uploadEventAsset(formData: FormData) {
   const assetType = text(formData, "assetType", 20);
   const file = formData.get("file");
 
-  if (!eventId || !["logo", "hero", "poster", "qr_template"].includes(assetType)) {
+  if (!eventId || !["logo", "hero", "poster"].includes(assetType)) {
     return { ok: false, message: "The asset or event is invalid." };
   }
   if (!(file instanceof File) || file.size === 0) {
@@ -671,26 +675,6 @@ export async function uploadEventAsset(formData: FormData) {
   if (assetError) {
     await supabase.storage.from("event-assets").remove([path]).catch(() => undefined);
     return { ok: false, message: "The file was uploaded, but its asset metadata could not be saved." };
-  }
-
-  if (assetType === "qr_template") {
-    const [{ data: current }, { data: draft }] = await Promise.all([
-      supabase.from("events").select("qr_config,slug").eq("id", eventId).single(),
-      supabase.from("event_config_drafts").select("config").eq("event_id", eventId).maybeSingle(),
-    ]);
-    const effective = draft?.config && typeof draft.config === "object" && !Array.isArray(draft.config) ? draft.config.qr_config : current?.qr_config;
-    const existing =
-      effective && typeof effective === "object" && !Array.isArray(effective)
-        ? (effective as Record<string, unknown>)
-        : {};
-    const { error: updateError } = await supabase.rpc("stage_event_config", { p_event_id: eventId,
-      p_patch: { qr_config: { ...existing, template_url: publicUrl } as Json } });
-
-    if (updateError) {
-      return { ok: false, message: "The template was uploaded, but the event could not be updated." };
-    }
-    revalidateEvent(eventId, current?.slug);
-    return { ok: true, message: "QR template updated successfully.", publicUrl };
   }
 
   const column =

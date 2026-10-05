@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { FormDialog } from "@/components/form-dialog";
 import Link from "next/link";
 import { manageEventResource } from "@/app/admin/resource-actions";
 
@@ -14,54 +15,43 @@ export function ResourceManager({ eventId, kind, records, zones = [] }: Props) {
   const pages = Math.max(1, Math.ceil(filtered.length / 10));
   const current = Math.min(page, pages - 1);
   return <div className="resource-manager">
-    <div className="resource-toolbar">
+    {records.length > 5 && <div className="resource-toolbar">
       <input className="event-admin-input" aria-label={`Search ${kind}s`} placeholder={`Search ${kind === "station" ? "gates" : `${kind}s`}…`} value={query} onChange={e => { setQuery(e.target.value); setPage(0); }} />
       {records.some(r => r.is_active !== undefined) && <select className="event-admin-input" aria-label="Filter status" value={status} onChange={e => { setStatus(e.target.value); setPage(0); }}><option value="all">All statuses</option><option value="active">Active</option><option value="inactive">Inactive</option></select>}
-    </div>
+    </div>}
     {filtered.slice(current * 10, (current + 1) * 10).map(r => <ResourceEditor key={r.id} eventId={eventId} kind={kind} record={r} zones={zones} />)}
-    {!filtered.length && <p className="event-admin-table-empty">No matching records.</p>}
+    {!filtered.length && <p className="event-admin-table-empty">{records.length ? "No matching records." : "Nothing here yet."}</p>}
     {pages > 1 && <div className="resource-toolbar"><button className="button button-ghost" disabled={!current} onClick={() => setPage(current - 1)}>Previous</button><span>{current + 1} / {pages} · {filtered.length} records</span><button className="button button-ghost" disabled={current === pages - 1} onClick={() => setPage(current + 1)}>Next</button></div>}
   </div>;
 }
 function ResourceEditor({ eventId, kind, record: r, zones }: Omit<Props, "records"> & { record: Resource }) {
-  const [pending, startTransition] = useTransition();
-  const [message, setMessage] = useState("");
-  const [failed, setFailed] = useState(false);
   const config = r.config && typeof r.config === "object" ? r.config as Record<string, unknown> : {};
-  function submit(form: FormData) {
-    setMessage("");
+  async function action(form: FormData) {
     if (form.get("operation") === "delete") {
-      if (!window.confirm(`Delete “${r.name}”? Records with dependencies or history cannot be deleted.`)) return;
+      if (!window.confirm(`Delete “${r.name}”? Records with dependencies or history cannot be deleted.`)) return { keepOpen: true };
       form.set("confirmation", "yes");
     }
-    startTransition(async () => {
-      try { const result = await manageEventResource(form); setFailed(Boolean(result.error)); setMessage(result.error ?? "Changes saved."); }
-      catch { setFailed(true); setMessage("Connection interrupted. Try again."); }
-    });
+    return manageEventResource(form);
   }
-  return <details className="resource-record"><summary><span><strong>{r.name}</strong><small>{r.code ?? r.mode?.replaceAll("_", " ")}{r.is_active !== undefined ? ` · ${r.is_active ? "Active" : "Inactive"}` : ""}</small></span><span>Edit</span></summary>
-    <form action={submit} className="event-admin-stack">
+  return <div className="resource-record">
+    <span><strong>{r.name}</strong><small>{r.code ?? r.mode?.replaceAll("_", " ")}{r.is_active !== undefined ? ` · ${r.is_active ? "Active" : "Inactive"}` : ""}</small>
+      {kind === "station" && <Link className="resource-record-link" href={`/scan/${r.id}`}>Open scanner ↗</Link>}</span>
+    <FormDialog trigger="Manage" triggerClassName="record-edit-button" title={`Manage ${r.name}`} description={r.code ? `Code ${r.code} stays fixed to keep station links and history.` : undefined} action={action} submitLabel="Save changes"
+      secondary={<>
+        <button formNoValidate className="record-danger" name="operation" value="delete">Delete</button>
+        {r.is_active !== undefined && <button formNoValidate name="operation" value={r.is_active ? "deactivate" : "activate"}>{r.is_active ? "Deactivate" : "Activate"}</button>}
+      </>}>
       <input type="hidden" name="eventId" value={eventId}/><input type="hidden" name="id" value={r.id}/><input type="hidden" name="kind" value={kind}/>
-      <fieldset disabled={pending} className="resource-fields">
-        <label>Name<input className="event-admin-input" name="name" defaultValue={r.name} maxLength={100} required /></label>
-        {kind !== "station" && <label>Description<textarea className="event-admin-input" name="description" defaultValue={r.description ?? ""} maxLength={500}/></label>}
-        {kind === "station" && <>
-          <label>Scanner mode<select className="event-admin-input" name="mode" defaultValue={r.mode}><option value="check_in">Check-in</option><option value="zone_access">Zone access</option><option value="activity">Activity</option><option value="claim">Benefit claim</option></select></label>
-          <label>Access zone<select className="event-admin-input" name="zone_id" defaultValue={r.zone_id ?? ""}><option value="">No zone</option>{zones?.map(z => <option key={z.id} value={z.id}>{z.name}</option>)}</select></label>
-          <label>Activity code<input className="event-admin-input" name="activity_code" defaultValue={String(config.activity_code ?? "")}/></label>
-          <label>Benefit code<input className="event-admin-input" name="benefit_code" defaultValue={String(config.benefit_code ?? "")}/></label>
-          <Link className="event-admin-text-action" href={`/scan/${r.id}`}>Open scanner</Link>
-        </>}
-        {r.code && <small>Code: {r.code}. Codes stay fixed to preserve station links and history.</small>}
-        <div className="resource-toolbar">
-          <button className="button button-dark" name="operation" value="update">{pending ? "Saving…" : "Save changes"}</button>
-          {r.is_active !== undefined && <button formNoValidate className="button button-ghost" name="operation" value={r.is_active ? "deactivate" : "activate"}>{r.is_active ? "Deactivate" : "Activate"}</button>}
-          <button formNoValidate className="event-admin-danger-link" name="operation" value="delete">Delete</button>
-        </div>
-      </fieldset>
-      {message && <p role={failed ? "alert" : "status"}>{message}</p>}
-    </form>
-  </details>;
+      <label>Name<input name="name" defaultValue={r.name} maxLength={100} required /></label>
+      {kind !== "station" && <label>Description<textarea name="description" defaultValue={r.description ?? ""} maxLength={500}/></label>}
+      {kind === "station" && <>
+        <label>Scanner mode<select name="mode" defaultValue={r.mode}><option value="check_in">Check-in</option><option value="zone_access">Zone access</option><option value="activity">Activity</option><option value="claim">Benefit claim</option></select></label>
+        <label>Access zone<select name="zone_id" defaultValue={r.zone_id ?? ""}><option value="">No zone</option>{zones?.map(z => <option key={z.id} value={z.id}>{z.name}</option>)}</select></label>
+        <label>Activity code<input name="activity_code" defaultValue={String(config.activity_code ?? "")}/></label>
+        <label>Benefit code<input name="benefit_code" defaultValue={String(config.benefit_code ?? "")}/></label>
+      </>}
+    </FormDialog>
+  </div>;
 }
 
 export function DeleteAccessRule({eventId,id}:{eventId:string;id:string}) {

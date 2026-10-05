@@ -190,6 +190,10 @@ test('standard plugin templates serialize into valid desktop/mobile HTML documen
     assert.ok(frame.findAll(n=>n.getSharedPluginData('passflow','passField')).every(n=>n.visible),'original frame keeps attendee layers visible');
   }
   await assert.rejects(()=>context.testApi.passTemplate('minimal','id_card'),/already has/);
+  await context.testApi.passTemplate('minimal','digital','',100,150);
+  const custom=readStudioDocument(await context.testApi.exportPass(context.testApi.findFrames().passes.find(p=>p.kind==='digital').frame,'digital',[]));
+  assert.deepEqual([custom.width,custom.height],[100,150],'custom pass size is kept');
+  assert.deepEqual(validateStudio(custom,'digital'),[],'custom size passes print validation');
   context.testApi.setTickets([{id:'11111111-1111-4111-8111-111111111111',name:'VIP'}]);
   await context.testApi.passTemplate('minimal','id_card','11111111-1111-4111-8111-111111111111');
   assert.ok(context.testApi.findFrames().passes.some(p=>p.kind==='id_card'&&p.ticketTypeId==='11111111-1111-4111-8111-111111111111'),'per-category ID card');

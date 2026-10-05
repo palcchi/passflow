@@ -1,18 +1,28 @@
 import { attendeePhotoColumns, attendeePhotoUrls } from "@/lib/attendee-photos";
 import { PassRenderer } from "@/components/studio-renderer";
 import { selectStudioDesign } from "@/lib/studio/select";
+import { defaultDocument, newLayer, type StudioDocument } from "@/lib/studio/model";
 import Link from "next/link";
-import Image from "next/image";
 import { notFound } from "next/navigation";
 import QRCode from "qrcode";
 import { ArrowLeft } from "lucide-react";
 import { getManagedEvent } from "@/lib/events";
 import { requireOrganizerMembership } from "@/lib/auth/session";
 import { PrintButton } from "@/components/print-button";
+import { DownloadAll, ExportCard } from "@/components/pass-export";
 
-const labels = { digital: "Digital pass", id_card_portrait: "ID card portrait", id_card_landscape: "ID card landscape", wristband: "Wristband" } as const;
+const kinds = [["id_card", "ID cards"], ["digital", "Digital passes"], ["wristband", "Wristbands"]] as const;
+type Kind = (typeof kinds)[number][0];
 
-export default async function WristbandPrintPage({ params, searchParams }: { params: Promise<{ eventId: string }>; searchParams: Promise<{ page?: string; kind?: string }> }) {
+// Until a Figma pass is published: event name, attendee name (code on wristbands) and the QR.
+function standardPass(kind: Kind): StudioDocument {
+  const d = defaultDocument(kind);
+  if (kind === "wristband") d.layers = d.layers.map((l) => l.field === "name" ? { ...l, field: "code" } : l);
+  else d.layers.push({ ...newLayer("text", "code"), field: "code", x: 5, y: 76, width: 44, height: 6, fontSize: 3, align: "center" });
+  return d;
+}
+
+export default async function PassExportPage({ params, searchParams }: { params: Promise<{ eventId: string }>; searchParams: Promise<{ page?: string; kind?: string }> }) {
   const { eventId } = await params;
   const query = await searchParams;
   const page = Math.max(0, Math.min(10000, Number.parseInt(query.page ?? "0", 10) || 0));
@@ -20,34 +30,48 @@ export default async function WristbandPrintPage({ params, searchParams }: { par
   const event = await getManagedEvent(eventId);
   if (!event) notFound();
   const { supabase } = await requireOrganizerMembership(`/admin/events/${eventId}/wristbands/print`);
-  const { data: credentials, count } = await supabase.from("qr_credentials").select("id, code, display_code, status, attendee_id, attendees(name,email,ticket_type_id,ticket_types(name))", {count:"exact"}).eq("event_id", eventId).in("status", ["active", "unclaimed"]).order("display_code", { ascending: true }).range(page * pageSize, (page + 1) * pageSize - 1);
-  const {data:studioDesigns} = await supabase.from("event_studio_documents").select("kind,ticket_type_id,document").eq("event_id",eventId).eq("status","published");
-  const printKind = ["digital","id_card","wristband"].includes(query.kind ?? "") ? query.kind! : event.qrConfig.mode === "wristband" ? "wristband" : event.qrConfig.mode === "digital" ? "digital" : "id_card";
-  const sourceCredentials = printKind === "id_card"
-    ? (credentials ?? []).filter((qr) => qr.attendee_id)
-    : (credentials ?? []);
-  const qrCodes = await Promise.all(sourceCredentials.map(async (qr) => ({ ...qr, src: await QRCode.toDataURL(`PF1:${qr.code}`, { margin: 4, width: 600, errorCorrectionLevel: "M" }) })));
-  const attendeeIds=sourceCredentials.flatMap(qr=>qr.attendee_id?[qr.attendee_id]:[]);
-  const {data:profiles}=attendeeIds.length?await supabase.from('attendee_profiles').select(attendeePhotoColumns).in('attendee_id',attendeeIds):{data:[]};
-  const photos=await attendeePhotoUrls(supabase,profiles,600);
-  const config = event.qrConfig;
-  const physical = config.mode !== "digital";
-  const width = physical ? config.widthMm : 86;
-  const height = physical ? config.heightMm : 54;
+  const kind: Kind = kinds.some(([k]) => k === query.kind) ? query.kind as Kind : event.qrConfig.mode === "wristband" ? "wristband" : event.qrConfig.mode === "digital" ? "digital" : "id_card";
+  // ID cards and digital passes carry a name, so only claimed codes print; wristbands print unclaimed.
+  let credentialQuery = supabase.from("qr_credentials").select("id, code, display_code, status, attendee_id, attendees(name,ticket_type_id,ticket_types(name))", { count: "exact" }).eq("event_id", eventId).in("status", ["active", "unclaimed"]);
+  if (kind !== "wristband") credentialQuery = credentialQuery.not("attendee_id", "is", null);
+  const [{ data: credentials, count }, { data: studioDesigns }] = await Promise.all([
+    credentialQuery.order("display_code", { ascending: true }).range(page * pageSize, (page + 1) * pageSize - 1),
+    supabase.from("event_studio_documents").select("kind,ticket_type_id,document").eq("event_id", eventId).eq("status", "published"),
+  ]);
+  const rows = credentials ?? [];
+  const qrCodes = await Promise.all(rows.map((qr) => QRCode.toDataURL(`PF1:${qr.code}`, { margin: 4, width: 600, errorCorrectionLevel: "M" })));
+  const attendeeIds = rows.flatMap((qr) => qr.attendee_id ? [qr.attendee_id] : []);
+  const { data: profiles } = attendeeIds.length ? await supabase.from("attendee_profiles").select(attendeePhotoColumns).in("attendee_id", attendeeIds) : { data: [] };
+  const photos = await attendeePhotoUrls(supabase, profiles, 600);
+  const fromFigma = (studioDesigns ?? []).some((d) => d.kind === kind);
+  const fallback = standardPass(kind);
+  const total = count ?? 0;
 
   return <main className="qr-export-page">
-    <header className="qr-export-toolbar print:hidden"><Link href={`/admin/events/${eventId}/access`} className="back-link"><ArrowLeft size={16}/> Back to event</Link><div className="flex items-center gap-2"><span className="soft-badge">{labels[config.mode]}</span><Link className="button button-ghost" href={`/admin/events/${eventId}/design`}>Edit design</Link><PrintButton /></div></header>
-    <nav className="print:hidden resource-toolbar" aria-label="Print batches">{["digital","id_card","wristband"].map(kind=><Link key={kind} className="button button-ghost" href={`?kind=${kind}`}>{kind.replace('_',' ')}</Link>)}{page>0&&<Link href={`?kind=${printKind}&page=${page-1}`}>Previous batch</Link>}<span>Batch {page+1} · {count??0} valid credentials</span>{(page+1)*pageSize<(count??0)&&<Link href={`?kind=${printKind}&page=${page+1}`}>Next batch</Link>}</nav>
-    <div className={`qr-export-sheet qr-export-${config.mode}`}>
-      <div className="qr-export-heading print:hidden"><p className="section-kicker">PassFlow export</p><h1>{event.name}</h1><p>{labels[config.mode]} · {qrCodes.length} QR credential</p></div>
-      <div className="qr-export-grid">{qrCodes.map((qr) => { const attendee = Array.isArray(qr.attendees) ? qr.attendees[0] : qr.attendees; const document=selectStudioDesign(studioDesigns??[],[printKind],attendee?.ticket_type_id);
-        if(document) return <article key={qr.id} className="studio-print-card" style={{width:`${document.width}mm`,height:`${document.height}mm`,breakInside:'avoid'}}><PassRenderer document={document} qr={qr.src} data={{name:attendee?.name??'',category:(Array.isArray(attendee?.ticket_types)?attendee.ticket_types[0]:attendee?.ticket_types)?.name??'',event_name:event.name,event_date:event.dateLabel,venue:event.venue,code:qr.display_code??'',logo:event.logoUrl??'',photo:photos.get(qr.attendee_id??'')??''}}/></article>;
-        return <article className="qr-export-card" key={qr.id} style={{ width: `${width}mm`, minHeight: `${height}mm` }}>
-        {config.templateUrl && <Image className="qr-export-template" src={config.templateUrl} alt="" fill unoptimized sizes={`${width}mm`} />}
-        <div className="qr-export-qr" style={{ left: `${config.qrX}%`, top: `${config.qrY}%`, width: `${config.qrSize}%` }}><Image src={qr.src} width={480} height={480} unoptimized alt={`QR ${qr.display_code ?? "credential"}`} /></div>
-        <div className="qr-export-copy"><strong>{attendee?.name ?? event.name}</strong><span>{attendee?.email ?? qr.display_code ?? qr.id.slice(0, 8)}</span></div><small className="qr-export-status">{qr.status}</small>
-      </article>; })}</div>
+    <header className="qr-export-toolbar print:hidden">
+      <Link href={`/admin/events/${eventId}/access`} className="back-link"><ArrowLeft size={16}/> Back to Access</Link>
+      <div className="qr-export-actions"><DownloadAll/><PrintButton/></div>
+    </header>
+    <div className="qr-export-heading print:hidden">
+      <p className="section-kicker">Preview & export</p>
+      <h1>{event.name}</h1>
+      <p>{fromFigma ? "Your published Figma design" : "Standard PassFlow layout. Publish a pass from Figma to use your own design and size."} · {total} {total === 1 ? "code" : "codes"}</p>
+      <nav className="qr-export-tabs" aria-label="Pass type">{kinds.map(([k, label]) => <Link key={k} href={`?kind=${k}`} aria-current={k === kind ? "page" : undefined}>{label}</Link>)}</nav>
     </div>
-    <style>{`@page{margin:10mm}.studio-print-card{flex-shrink:0;overflow:hidden;print-color-adjust:exact;-webkit-print-color-adjust:exact}.qr-export-page{min-height:100vh;background:#f5f4ef;color:#242421;padding:20px}.qr-export-toolbar{max-width:1200px;margin:0 auto 20px;display:flex;justify-content:space-between;align-items:center}.qr-export-sheet{max-width:1200px;margin:0 auto}.qr-export-heading{margin-bottom:20px}.qr-export-heading h1{font-size:32px;margin:4px 0}.qr-export-heading p{margin:0;color:#74736d}.qr-export-grid{display:flex;flex-wrap:wrap;gap:10mm;align-items:flex-start}.qr-export-card{position:relative;overflow:hidden;border:1px solid #deddd6;border-radius:4mm;background:#fff;break-inside:avoid;page-break-inside:avoid;box-shadow:0 8px 24px rgba(0,0,0,.08)}.qr-export-template{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}.qr-export-qr{position:absolute;transform:translate(-50%,-50%);aspect-ratio:1;z-index:2}.qr-export-qr img{width:100%;height:100%;display:block;background:#fff;padding:2mm;border-radius:2mm}.qr-export-copy{position:absolute;z-index:3;left:7%;right:7%;bottom:7%;display:grid;gap:1mm;color:#111;text-shadow:0 1px 1px rgba(255,255,255,.85)}.qr-export-copy strong{font-size:11pt}.qr-export-copy span{font-size:7pt}.qr-export-status{position:absolute;right:5%;top:5%;z-index:3;font-size:6pt;text-transform:uppercase;letter-spacing:.12em}.qr-export-wristband .qr-export-grid{gap:6mm}.qr-export-wristband .qr-export-card{border-radius:2mm}.qr-export-digital .qr-export-card{border-radius:6mm}@media print{.qr-export-page{padding:0;background:#fff}.qr-export-grid{gap:5mm}.qr-export-card{box-shadow:none}.qr-export-heading{display:none}}`}</style>
+    <div className="qr-export-grid">{rows.map((qr, i) => {
+      const attendee = Array.isArray(qr.attendees) ? qr.attendees[0] : qr.attendees;
+      const document = selectStudioDesign(studioDesigns ?? [], [kind], attendee?.ticket_type_id) ?? fallback;
+      const category = (Array.isArray(attendee?.ticket_types) ? attendee.ticket_types[0] : attendee?.ticket_types)?.name ?? "";
+      return <ExportCard key={qr.id} fileName={[qr.display_code, attendee?.name].filter(Boolean).join(" ").replace(/[^\w\- ]+/g, "").trim() || qr.id.slice(0, 8)} widthMm={document.width} heightMm={document.height}>
+        <PassRenderer document={document} qr={qrCodes[i]} data={{ name: attendee?.name ?? "", category, event_name: event.name, event_date: event.dateLabel, venue: event.venue, code: qr.display_code ?? "", logo: event.logoUrl ?? "", photo: photos.get(qr.attendee_id ?? "") ?? "" }}/>
+      </ExportCard>;
+    })}</div>
+    {!rows.length && <p className="event-admin-table-empty print:hidden">{kind === "wristband" ? "No QR codes yet. Generate a batch in Access." : "No claimed passes yet. Cards print once attendees register."}</p>}
+    <nav className="qr-export-pager print:hidden" aria-label="Batches">
+      {page > 0 && <Link className="button button-ghost" href={`?kind=${kind}&page=${page - 1}`}>Previous batch</Link>}
+      {total > pageSize && <span>Batch {page + 1} of {Math.ceil(total / pageSize)}</span>}
+      {(page + 1) * pageSize < total && <Link className="button button-ghost" href={`?kind=${kind}&page=${page + 1}`}>Next batch</Link>}
+    </nav>
+    <style>{`@page{margin:8mm}.qr-export-page{min-height:100vh;background:var(--background);color:var(--foreground);padding:24px 20px 60px}.qr-export-toolbar,.qr-export-heading,.qr-export-grid,.qr-export-pager{max-width:1200px;margin-inline:auto}.qr-export-toolbar{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:28px}.qr-export-actions,.pass-export-all{display:flex;align-items:center;gap:10px}.pass-export-all select{min-height:44px;border:1px solid var(--border);border-radius:999px;padding:0 14px;background:var(--card);color:var(--foreground)}.qr-export-heading{margin-bottom:28px}.qr-export-heading h1{font-size:clamp(32px,4vw,48px);letter-spacing:-.04em;margin:6px 0 8px}.qr-export-heading p{margin:0;color:var(--muted-foreground)}.qr-export-tabs{display:flex;gap:6px;margin-top:20px;flex-wrap:wrap}.qr-export-tabs a{padding:8px 14px;border-radius:999px;border:1px solid var(--border);font-size:13px;color:var(--muted-foreground);text-decoration:none}.qr-export-tabs a[aria-current]{background:var(--foreground);border-color:var(--foreground);color:var(--background)}.qr-export-grid{display:flex;flex-wrap:wrap;gap:24px 10mm;align-items:flex-start}.pass-export-card{margin:0;max-width:100%;break-inside:avoid;page-break-inside:avoid}.pass-export-art{overflow:hidden;border-radius:2mm;background:#fff;box-shadow:0 0 0 1px var(--border),0 10px 30px rgba(0,0,0,.06);print-color-adjust:exact;-webkit-print-color-adjust:exact}.pass-export-card figcaption{display:flex;align-items:center;gap:6px;margin-top:8px;font-size:12px;color:var(--muted-foreground)}.pass-export-card figcaption span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.pass-export-card figcaption button{padding:4px 10px;border-radius:999px;border:1px solid var(--border);background:var(--card);color:var(--foreground);font-size:11px;font-weight:600}.qr-export-pager{display:flex;align-items:center;gap:12px;margin-top:32px}@media(max-width:640px){.qr-export-toolbar{flex-wrap:wrap}}@media print{.qr-export-page{padding:0;background:#fff}.qr-export-grid{gap:4mm}.pass-export-art{box-shadow:none;border-radius:0}}`}</style>
   </main>;
 }

@@ -810,6 +810,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      delete_unclaimed_credentials: { Args: { p_event_id: string; p_ids: string[] }; Returns: number }
       stage_event_config: { Args: { p_event_id: string; p_patch: Json }; Returns: Json }
       transition_event: { Args: { p_event_id: string; p_action: string; p_version?: number | null }; Returns: Json }
       mark_figma_external_change: {Args:{p_file_key:string;p_at:string};Returns:undefined}
