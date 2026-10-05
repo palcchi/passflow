@@ -18,7 +18,6 @@ const errors: Record<string, string> = {
   invalid: "The email or password is incorrect.",
   unverified: "Your email has not been verified. Request a new verification email below.",
   expired: "Your session has expired. Please sign in again.",
-  "figma-session": "Your PassFlow session could not be restored after returning from Figma. Sign in using the same browser, then reconnect from Profile.",
   callback: "The confirmation link is invalid or has expired.",
   signout: "We could not sign you out. Please try again.",
   reset: "Your new password has been saved.",
@@ -29,7 +28,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
   if (await getAuthContext()) redirect(next);
   const ready = !!getSupabaseConfig() && !!getAppOrigin();
   const message = typeof params.error === "string" ? errors[params.error] : null;
-  return <AuthShell title="Welcome back." description="Sign in to manage your events, passes, and account." kicker="MAKE YOURSELF AT HOME">
+  return <AuthShell title="Welcome back." description="Sign in to manage your events, passes, and account." kicker="SIGN IN">
     {message && <p role={params.error === "reset" ? "status" : "alert"} className="auth-notice">{message}</p>}
     {params.notice === "signed-out" && <p role="status" className="auth-notice">You have been signed out.</p>}
     {params.notice === "verification-sent" && <p role="status" className="auth-notice">A new verification link has been sent.</p>}
@@ -38,7 +37,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
       <input type="hidden" name="next" value={next}/>
       <label className="auth-field" htmlFor="login-email">Email<div className="auth-input"><Mail size={17} aria-hidden="true"/><input id="login-email" required name="email" type="email" autoComplete="email" inputMode="email" placeholder="you@company.com"/></div></label>
       <div className="auth-field"><span aria-hidden="true">Password</span><PasswordField autoComplete="current-password"/></div>
-      <AuthSubmit disabled={!ready}>Sign in to PassFlow ↗</AuthSubmit>
+      <AuthSubmit disabled={!ready}>Sign in</AuthSubmit>
     </form>
     <div className="auth-divider">or</div>
     <form action={signInWithGoogle}><input type="hidden" name="next" value={next}/><AuthSubmit disabled={!ready} variant="outline"><GoogleIcon className="size-4"/>Continue with Google</AuthSubmit></form>

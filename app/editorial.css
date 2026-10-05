@@ -486,7 +486,7 @@ button, a { -webkit-tap-highlight-color:transparent; }
 .editorial-nav-links { margin-left:auto; margin-right:6px; }
 .hero-fan { --step:100px; --w:148px; --h:196px; position:relative; height:calc(var(--h) + 76px); margin:6px auto 0; }
 .hero-fan-card { position:absolute; left:50%; top:30px; width:var(--w); height:var(--h); margin-left:calc(var(--w) / -2); padding:14px; display:flex; flex-direction:column; justify-content:space-between; border-radius:22px; overflow:hidden; text-align:left; box-shadow:inset 0 0 0 1px #0000000d, 0 22px 40px -18px #00000059; transform:translateX(calc(var(--o) * var(--step))) translateY(calc(var(--a) * 6px)) rotate(calc(var(--o) * 3.5deg)); transition:translate 200ms ease, scale 200ms ease, box-shadow 200ms ease; }
-.hero-fan-card:hover { z-index:20!important; translate:0 -18px; scale:1.05; box-shadow:inset 0 0 0 1px #0000000d, 0 32px 50px -18px #00000066; }
+@media (hover:hover) and (pointer:fine) { .hero-fan-card:hover { z-index:20!important; translate:0 -18px; scale:1.05; box-shadow:inset 0 0 0 1px #0000000d, 0 32px 50px -18px #00000066; } }
 .hero-fan-card img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
 .hero-fan-meta { display:grid; gap:2px; font-size:8px; font-weight:600; letter-spacing:.12em; opacity:.85; }
 .hero-fan-meta b { letter-spacing:-.01em; font-size:10px; }
@@ -603,3 +603,14 @@ button, a { -webkit-tap-highlight-color:transparent; }
 .event-ticket-list span { color:var(--muted-foreground); }
 @media (prefers-reduced-motion:reduce) { .event-ticket-list a { transition:none; } }
 @media (max-width:767px) { .event-ticket-list { padding-inline:16px; } }
+.editorial-footer-links { display:flex; gap:20px; }
+.editorial-footer-links a { color:inherit; text-decoration:none; }
+.editorial-footer-links a:hover { text-decoration:underline; }
+.auth-mobile-art { display:none; }
+@media (max-width:760px) {
+  .auth-mobile-art { display:flex; gap:6px; margin:6px 0 -6px; }
+  .auth-mobile-art .brand-sticker { position:static; width:30px; height:30px; transform:none; }
+  .auth-mobile-art .brand-sticker:nth-child(1) { rotate:-8deg; }
+  .auth-mobile-art .brand-sticker:nth-child(3) { rotate:10deg; }
+  .editorial-footer { flex-wrap:wrap; justify-content:center; text-align:center; gap:12px; }
+}

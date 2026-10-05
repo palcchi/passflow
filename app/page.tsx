@@ -33,7 +33,7 @@ export default async function HomePage() {
       <h1>Every event.<span>One <em>pass.</em></span></h1>
       <HeroCardFan events={recent.events}/>
       <p className="editorial-hero-description">Find events worth showing up for, register in seconds, and walk in with a personal QR pass that is always in your pocket.</p>
-      <div className="editorial-hero-actions"><ShinyButton href={session ? "/account" : "/register"}>{session ? "Open dashboard" : "Create free account"}<ArrowUpRight size={16}/></ShinyButton><a href="#events">Browse events ↓</a></div>
+      <div className="editorial-hero-actions"><ShinyButton href={session ? "/account" : "/register"}>{session ? "Open dashboard" : "Create free account"}<ArrowUpRight size={16}/></ShinyButton><a href="#events" className="button button-ghost">Browse events</a></div>
       <div className="hero-corner-note"><span>↗</span>No paper tickets.<br/>No long queues.</div>
     </section>
     <div className="editorial-marquee" aria-hidden="true"><VelocityScroll defaultVelocity={0.35}>REGISTER · GET YOUR PASS · SCAN IN · ENJOY THE EVENT · </VelocityScroll></div>
@@ -62,11 +62,11 @@ export default async function HomePage() {
     <section className="editorial-section organizer-invitation" id="organizer" aria-labelledby="organizer-title">
       <div><span className="section-kicker">PASSFLOW FOR ORGANIZERS</span><h2 id="organizer-title">Hosting an event?<br/><span>Run it on PassFlow.</span></h2><p>Registration, ticket types, crew access, and live check-in in one organizer workspace.</p><ShinyButton href="/organizer">Explore organizer tools<ArrowUpRight size={15}/></ShinyButton></div>
       <div className="invitation-list">
-        <div><Sticker kind="arrow"/><div><h3>Branded event pages.</h3><p>Publish an event website and digital pass in your own colors, or bring a design from Figma.</p></div></div>
+        <div><Sticker kind="arrow"/><div><h3>Designed in Figma.</h3><p>Your event site, ticket page and passes, exactly as designed. PassFlow runs sign-up, tickets and QR.</p></div></div>
         <div><Sticker kind="smile"/><div><h3>Attendees & crew.</h3><p>Manage registrations, import guest lists, and invite crew with role-based access.</p></div></div>
         <div><Sticker kind="check"/><div><h3>QR check-in at the door.</h3><p>Every attendee gets a personal QR pass; your crew scans it with any phone camera.</p></div></div>
       </div>
     </section>
-    <footer className="editorial-footer"><Link href="/" className="brand-lockup">PassFlow<span className="brand-dot"/></Link><span>Event registration, QR tickets & check-in. © PassFlow</span><Link href={session ? "/profile" : "/login"}>{session ? "Your account" : "Sign in"} ↗</Link></footer>
+    <footer className="editorial-footer"><Link href="/" className="brand-lockup">PassFlow<span className="brand-dot"/></Link><nav className="editorial-footer-links" aria-label="Footer"><Link href="/events">Discover</Link><Link href="/organizer">For organizers</Link><Link href={session ? "/account" : "/login"}>{session ? "Dashboard" : "Sign in"}</Link></nav><span>© PassFlow · Event registration, QR tickets & check-in</span></footer>
   </main>;
 }
