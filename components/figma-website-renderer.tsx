@@ -75,8 +75,9 @@ function Frame({frame,data,preview,prefix}:{frame:WebsiteFrame;data:WebsiteData;
       fontSize:(n.fontSize/frame.width*100)+'cqw',
       fontFamily:fontStack(n.fontFamily),
       fontWeight:n.fontWeight,
-      fontStyle:n.italic?'italic':undefined,
-      letterSpacing:n.letterSpacing?(n.letterSpacing/frame.width*100)+'cqw':undefined,
+      fontStyle:n.italic?'italic':'normal',
+      // Typography is set on every node: CSS inherits letter-spacing and font-style, so a container must never pass a heading's tracking down.
+      letterSpacing:n.letterSpacing?(n.letterSpacing/frame.width*100)+'cqw':'normal',
       opacity:n.opacity<1?n.opacity:undefined,
       border:n.stroke&&n.strokeWidth?(n.strokeWidth/frame.width*100)+'cqw solid '+n.stroke:undefined,
       boxSizing:'border-box',

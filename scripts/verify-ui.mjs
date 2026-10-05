@@ -22,7 +22,7 @@ try {
       if (route === "/admin" || route === "/account" || route === "/profile" || route === "/events" || route.includes("/claim") || route.startsWith("/admin/events/") || route.includes("/design") || route.startsWith("/scan/")) {
         assert.equal(new URL(page.url()).pathname, "/login", `Anonymous access must redirect: ${route}`);
         assert.equal(new URL(page.url()).searchParams.get("next"), route);
-        assert.equal(await page.getByRole("button", { name: "Sign in to PassFlow" }).isDisabled(), true);
+        assert.equal(await page.getByRole("button", { name: "Sign in", exact: true }).isDisabled(), true);
       }
       await page.screenshot({ path: `verification/${width}-${route.replaceAll("/", "_") || "home"}.png`, fullPage: true });
       if (overflow) failures.push(`${width}px ${route} horizontal overflow`);

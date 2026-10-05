@@ -714,7 +714,7 @@ select { appearance: none; background-image: linear-gradient(45deg, transparent 
   min-height: 42px;
   border-radius: 13px;
   transition:
-    transform 160ms cubic-bezier(.2,.8,.2,1),
+    transform 160ms var(--ease-out),
     box-shadow 160ms ease,
     background 160ms ease,
     border-color 160ms ease,
@@ -740,7 +740,7 @@ select { appearance: none; background-image: linear-gradient(45deg, transparent 
 }
 .smart-select-trigger:hover,
 .date-picker-trigger:hover { border-color: rgba(41,42,37,.25); background: rgba(255,255,255,.94); }
-.smart-select-chevron { transition: transform 160ms cubic-bezier(.2,.8,.2,1); }
+.smart-select-chevron { transition: transform 160ms var(--ease-out); }
 .smart-select-chevron.is-open { transform: rotate(180deg); }
 .smart-select-menu {
   z-index: 90;
@@ -751,9 +751,8 @@ select { appearance: none; background-image: linear-gradient(45deg, transparent 
 .smart-select-option {
   min-height: 42px;
   border-radius: 11px;
-  transition: background 130ms ease, transform 130ms ease;
+  transition: background 130ms ease;
 }
-.smart-select-option:hover { transform: translateX(1px); }
 .smart-select-option[aria-selected="true"] {
   background: linear-gradient(90deg, rgba(242,201,76,.16), rgba(242,201,76,.05));
 }
@@ -2394,13 +2393,13 @@ select { appearance: none; background-image: linear-gradient(45deg, transparent 
   .profile-page-heading h1 {
     color: var(--ink);
     animation:
-      text-slide-up 420ms cubic-bezier(.22,.8,.3,1) both,
+      text-slide-up 420ms var(--ease-out) both,
       text-weight-pulse 7s ease-in-out 700ms infinite;
   }
 
   .profile-page-heading p {
     color: var(--muted-text) !important;
-    animation: text-slide-up 460ms cubic-bezier(.22,.8,.3,1) 70ms both;
+    animation: text-slide-up 460ms var(--ease-out) 70ms both;
   }
 
   .event-admin-metrics {
@@ -2918,8 +2917,8 @@ body {
   display: inline-block;
   color: inherit;
   transition:
-    font-weight 240ms cubic-bezier(.22,.8,.3,1),
-    transform 240ms cubic-bezier(.22,.8,.3,1);
+    font-weight 240ms var(--ease-out),
+    transform 240ms var(--ease-out);
   will-change: font-weight;
 }
 
