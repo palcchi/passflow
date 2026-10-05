@@ -78,6 +78,8 @@ export default async function PublicEventPage({ params }: EventPageProps) {
   if(figmaWebsite&&supabase)return <main><FigmaWebsiteRenderer document={figmaWebsite} data={await figmaWebsiteData(supabase,event,ctaLabel)}/></main>;
   if(websiteDocument) return <main><WebsiteRenderer document={websiteDocument} data={{event_name:event.name,event_date:event.dateLabel,venue:event.venue,description:event.description,banner:event.heroImageUrl??'',logo:event.logoUrl??''}} claimUrl={`/e/${event.slug}/claim`}/></main>;
 
+  // The default page is the only page until a Figma design is published, so it lists the passes on sale.
+  const { data: tickets } = supabase ? await supabase.from("ticket_types").select("id,name,price,currency").eq("event_id", event.id).order("price") : { data: [] };
   return (
     <main className="event-public-shell flow-public-event" style={themeStyle}>
       <nav className="event-public-nav">
@@ -94,15 +96,15 @@ export default async function PublicEventPage({ params }: EventPageProps) {
           {event.logoUrl && <Image src={event.logoUrl} alt={event.name} width={120} height={80} unoptimized className="mb-5 object-contain" />}
           {event.eyebrow && <span className="event-kicker">{event.eyebrow}</span>}
           <KineticText text={event.name}/>
-          <p>{event.description}</p>
+          {event.description && <p>{event.description}</p>}
           <div className="event-meta-row">
             <span>
               <CalendarDays size={17} /> {event.dateLabel}
               {event.startsAt && event.endsAt && <a className="event-calendar-link" href={`/e/${event.slug}/calendar`} download>Add to calendar</a>}
             </span>
-            <span>
+            {event.venue && <span>
               <MapPin size={17} /> {event.venue}
-            </span>
+            </span>}
           </div>
           <div className="event-cta-row">
             <Link href={`/e/${event.slug}/claim`} className="event-primary-button">
@@ -118,6 +120,11 @@ export default async function PublicEventPage({ params }: EventPageProps) {
 
         {event.heroImageUrl || event.posterUrl ? <Image src={(event.heroImageUrl || event.posterUrl)!} alt={event.name} width={1600} height={900} unoptimized className="event-public-cover" /> : <div className="event-public-cover event-public-artwork"><EventArtwork event={event}/></div>}
       </section>
+
+      {!!tickets?.length && <section className="event-ticket-list" aria-labelledby="event-tickets-title">
+        <h2 id="event-tickets-title">Passes</h2>
+        <ul>{tickets.map((t) => <li key={t.id}><Link href={`/e/${event.slug}/claim`}><strong>{t.name}</strong><span>{t.price > 0 ? `${t.currency} ${Number(t.price).toLocaleString("en-US")}` : "Free"}</span><ArrowRight size={16} /></Link></li>)}</ul>
+      </section>}
 
       <section className="event-info-grid">
         <article>

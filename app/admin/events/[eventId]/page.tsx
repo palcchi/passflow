@@ -24,6 +24,8 @@ export default async function EventOverviewPage({ params }: Props) {
     activityCountResult,
     benefitCountResult,
     ticketCountResult,
+    figmaLinkResult,
+    liveDesignResult,
   ] = await Promise.all([
     supabase
       .from("qr_credentials")
@@ -52,6 +54,8 @@ export default async function EventOverviewPage({ params }: Props) {
       .from("ticket_types")
       .select("id", { count: "exact", head: true })
       .eq("event_id", eventId),
+    supabase.from("figma_plugin_links").select("id", { count: "exact", head: true }).eq("event_id", eventId).is("revoked_at", null),
+    supabase.from("event_studio_documents").select("kind").eq("event_id", eventId).eq("status", "published"),
   ]);
 
   const credentials = credentialsResult.data ?? [];
@@ -90,12 +94,16 @@ export default async function EventOverviewPage({ params }: Props) {
     { label: "Denied", value: denied, note: "recent scans" },
   ];
 
-  // Mirrors transition_event's publish checks (basics + a ticket type), plus two recommended steps.
+  // Required steps mirror transition_event's publish checks; the rest follow the Figma-only flow.
   const base = `/admin/events/${eventId}`;
+  const liveKinds = new Set((liveDesignResult.data ?? []).map((item) => item.kind));
   const checklist = [
     { done: !!(event.venue && event.startsAt && event.endsAt), title: "Add venue and dates", href: `${base}/settings`, required: true },
     { done: (ticketCountResult.count ?? 0) > 0, title: "Create a ticket type", href: `${base}/people`, required: true },
-    { done: !!(event.heroImageUrl || event.posterUrl || event.theme.tagline), title: "Set the look in Design", href: `${base}/design`, required: false },
+    { done: !!((event.heroImageUrl || event.posterUrl) && event.logoUrl), title: "Add banner and logo", href: `${base}/settings`, required: false },
+    { done: (figmaLinkResult.count ?? 0) > 0, title: "Pair a Figma file", href: `${base}/design`, required: false },
+    { done: liveKinds.has("website"), title: "Publish your Figma website", href: `${base}/design`, required: false },
+    { done: ["digital", "id_card", "wristband"].some((kind) => liveKinds.has(kind)), title: "Publish a pass design", href: `${base}/design`, required: false },
     { done: activeStations > 0, title: "Set up a scanner station", href: `${base}/access`, required: false },
     { done: event.status === "published", title: "Publish the event", href: `${base}/settings`, required: true },
   ];

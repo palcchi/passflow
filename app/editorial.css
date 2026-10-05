@@ -594,3 +594,12 @@ button, a { -webkit-tap-highlight-color:transparent; }
 .launch-checklist li[data-done] strong { color:var(--muted-foreground); text-decoration:line-through; text-decoration-color:var(--border); }
 .event-calendar-link { margin-left:8px; font-size:12px; font-weight:550; text-decoration:underline; text-underline-offset:3px; color:inherit; }
 .claim-identity .event-calendar-link { display:inline-block; margin:8px 0 0; }
+.event-ticket-list { max-width:1240px; margin:32px auto 0; }
+.event-ticket-list h2 { font-size:clamp(28px,4vw,44px); letter-spacing:-.03em; margin:0 0 16px; }
+.event-ticket-list ul { list-style:none; margin:0; padding:0; display:grid; gap:10px; }
+.event-ticket-list a { display:flex; align-items:center; gap:14px; padding:18px 22px; border-radius:18px; background:var(--event-surface); color:inherit; text-decoration:none; transition:transform .18s cubic-bezier(.2,.8,.2,1), box-shadow .18s ease; }
+.event-ticket-list a:hover { transform:translateY(-1px); box-shadow:0 8px 24px rgba(0,0,0,.06); }
+.event-ticket-list strong { flex:1; font-size:17px; }
+.event-ticket-list span { color:var(--muted-foreground); }
+@media (prefers-reduced-motion:reduce) { .event-ticket-list a { transition:none; } }
+@media (max-width:767px) { .event-ticket-list { padding-inline:16px; } }

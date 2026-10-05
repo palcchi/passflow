@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useMemo, useState, useTransition, type ReactNode } from "react";
 import Image from "next/image";
 import { Check, QrCode } from "lucide-react";
 import type { PassFlowEvent, QrDeliveryMode } from "@/lib/events";
@@ -39,7 +39,8 @@ const modes: Array<{
   },
 ];
 
-export function QrDeliveryEditor({ event }: { event: PassFlowEvent }) {
+// One credential card: format, how attendees receive it (children), then the print layout.
+export function QrDeliveryEditor({ event, children }: { event: PassFlowEvent; children?: ReactNode }) {
   const [mode, setMode] = useState<QrDeliveryMode>(event.qrConfig.mode);
   const [templateUrl, setTemplateUrl] = useState(event.qrConfig.templateUrl);
   const [qrX, setQrX] = useState(event.qrConfig.qrX);
@@ -86,12 +87,9 @@ export function QrDeliveryEditor({ event }: { event: PassFlowEvent }) {
     <section className="qr-editor-section liquid-panel" onChangeCapture={() => {setMessage(null); setSuccess(false);}}>
       <div className="qr-editor-header">
         <div>
-          <span className="section-kicker">QR delivery</span>
-          <h2>One pass, multiple formats.</h2>
-          <p>
-            Pass layout and QR placement are configured here. Credential delivery to attendees
-            is configured separately in Access.
-          </p>
+          <span className="section-kicker">Credential</span>
+          <h2>One QR per attendee, in the format you choose.</h2>
+          <p>Pick the format, how attendees receive their QR, and the print layout. Custom pass artwork comes from Figma.</p>
         </div>
         <div className="qr-editor-header-actions">
           <a className="button button-ghost" href={`/admin/events/${event.id}/wristbands/print`}>
@@ -100,6 +98,7 @@ export function QrDeliveryEditor({ event }: { event: PassFlowEvent }) {
         </div>
       </div>
 
+      <h3 className="credential-step"><span>1</span>Format</h3>
       <div className="qr-mode-grid">
         {modes.map((item) => (
           <button
@@ -121,6 +120,10 @@ export function QrDeliveryEditor({ event }: { event: PassFlowEvent }) {
         ))}
       </div>
 
+      {children && <><h3 className="credential-step"><span>2</span>How attendees receive it</h3>
+        {mode === "wristband" && event.qrConfig.claimMode !== "claim" && <p className="event-admin-note">Wristbands are usually printed before anyone owns them. Choose “Claim after registration” so attendees link theirs by scanning it.</p>}
+        {children}</>}
+      <h3 className="credential-step"><span>{children ? 3 : 2}</span>Print layout <small>Used when no Figma pass is published</small></h3>
       <div className="qr-editor-workspace">
         <fieldset className="qr-control-panel" disabled={pending}><legend className="sr-only">QR size and position</legend>
           <div className="qr-dimension-grid">

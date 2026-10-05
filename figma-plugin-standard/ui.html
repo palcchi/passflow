@@ -50,6 +50,10 @@ button.link:hover:not(:disabled){background:none;color:var(--ink)}
 .blank .preview{background:repeating-linear-gradient(45deg,#fff 0 8px,#f5f5f3 8px 16px);color:#b6b5ae;place-items:center;align-content:center}.blank .big{font-weight:300}
 .festival .preview{background:#0f0f10;color:#f6f5f0}.festival .big{font-weight:900;text-transform:uppercase}.festival .bar{background:#c6f432}.festival .pill{background:#ff5c35}
 .style-name{padding:7px 8px;font-size:11px;font-weight:600;border-top:1px solid var(--line)}
+.tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;padding:4px;border-radius:12px;background:var(--soft)}
+.tabs button{border:0;border-radius:9px;padding:8px 0;background:transparent;color:var(--muted);font-size:12px}
+.tabs button:hover:not(:disabled){background:transparent;color:var(--ink)}
+.tabs button[aria-selected=true],.tabs button[aria-selected=true]:hover{background:var(--paper);color:var(--ink);box-shadow:0 1px 2px #0000001f}
 .contract{display:grid;gap:3px;font-size:12px;color:var(--muted);padding:12px 14px;border-radius:14px;background:var(--soft)}
 .contract strong{color:var(--ink);font-weight:600}.contract b{color:var(--ink);font-weight:600}
 .toggle{display:flex;align-items:center;justify-content:space-between;gap:12px;cursor:pointer;font-weight:600;font-size:14px}
@@ -82,7 +86,7 @@ footer{position:sticky;bottom:0;background:var(--paper);padding:12px 18px 14px;b
   </section>
 
   <section id="pairing" class="step">
-    <div class="step-title"><span class="num">1</span>Pair your event</div>
+    <div class="step-title">Pair your event</div>
     <label class="field">Pairing code from PassFlow → Event → Design
       <input id="code" placeholder="PF-XXXXXXXXXX" maxlength="20" autocomplete="off" autocapitalize="characters" spellcheck="false">
     </label>
@@ -91,18 +95,26 @@ footer{position:sticky;bottom:0;background:var(--paper);padding:12px 18px 14px;b
   </section>
 
   <section class="step">
-    <div class="step-title"><span class="num" id="n2">2</span>Choose a style</div>
+    <div class="step-title">Style</div>
     <div class="styles" role="radiogroup" aria-label="Template style">
       <label class="style blank"><input type="radio" name="style" value="blank"><div class="card"><div class="preview"><div class="big">+</div></div><div class="style-name">Blank</div></div></label>
       <label class="style minimal"><input type="radio" name="style" value="minimal" checked><div class="card"><div class="preview"><div class="bar"></div><div class="big">Aa</div><div class="pill"></div></div><div class="style-name">Minimal</div></div></label>
       <label class="style festival"><input type="radio" name="style" value="festival"><div class="card"><div class="preview"><div class="bar"></div><div class="big">Aa</div><div class="pill"></div></div><div class="style-name">Festival</div></div></label>
     </div>
-    <button id="template" class="primary">Insert website</button>
     <p class="hint" id="styleHint">Desktop, Tablet and Mobile frames with a sticky navbar and 10 sections with hover buttons. Every word is yours to edit.</p>
   </section>
 
-  <section class="step">
-    <div class="step-title"><span class="num" id="n3">3</span>Add a section</div>
+  <div class="tabs" role="tablist" aria-label="PassFlow tools">
+    <button role="tab" id="tab-website" aria-controls="panel-website" aria-selected="true">Website</button>
+    <button role="tab" id="tab-pages" aria-controls="panel-pages" aria-selected="false" tabindex="-1">Pages</button>
+    <button role="tab" id="tab-passes" aria-controls="panel-passes" aria-selected="false" tabindex="-1">Passes</button>
+    <button role="tab" id="tab-advanced" aria-controls="advanced" aria-selected="false" tabindex="-1">Advanced</button>
+  </div>
+
+  <section class="step" id="panel-website" role="tabpanel" aria-labelledby="tab-website">
+    <button id="template" class="primary">Insert website</button>
+    <hr>
+    <div class="step-title">Add a section</div>
     <label class="field">Section
       <select id="block">
         <option>Navbar</option><option>Hero</option><option>About</option><option>Tickets</option><option>Schedule</option>
@@ -113,8 +125,7 @@ footer{position:sticky;bottom:0;background:var(--paper);padding:12px 18px 14px;b
     <p class="hint" id="insertHint">Select the Desktop or Mobile frame first.</p>
   </section>
 
-  <section class="step">
-    <div class="step-title"><span class="num" id="n4">4</span>Add a page</div>
+  <section class="step" id="panel-pages" role="tabpanel" aria-labelledby="tab-pages" hidden>
     <label class="field">Page
       <select id="pageKind"><option value="ticket">Ticket page · header above the sign-up form</option><option value="custom">New page · e.g. agenda, faq</option></select>
     </label>
@@ -125,8 +136,7 @@ footer{position:sticky;bottom:0;background:var(--paper);padding:12px 18px 14px;b
     <p class="hint">Uses the style above. Link to a page from any button with Prototype → Navigate to.</p>
   </section>
 
-  <section class="step">
-    <div class="step-title"><span class="num" id="n5">5</span>Add a pass</div>
+  <section class="step" id="panel-passes" role="tabpanel" aria-labelledby="tab-passes" hidden>
     <label class="field">Format
       <select id="passKind"><option value="id_card">ID card · 54 × 85.6 mm</option><option value="digital">Digital pass · 70 × 120 mm</option><option value="wristband">Wristband · 240 × 25 mm</option></select>
     </label>
@@ -137,6 +147,7 @@ footer{position:sticky;bottom:0;background:var(--paper);padding:12px 18px 14px;b
     <p class="hint">Uses the style above. Design it freely; attendee name, photo, category, code and QR are filled in per person.</p>
   </section>
 
+  <section id="advanced" class="step" role="tabpanel" aria-labelledby="tab-advanced" hidden>
   <div class="contract">
     <strong>How your site works</strong>
     <span><b>Text and design:</b> exactly what you draw in Figma.</span>
@@ -145,13 +156,6 @@ footer{position:sticky;bottom:0;background:var(--paper);padding:12px 18px 14px;b
     <span><b>Register:</b> select your button → Advanced → Register button. Needed before publishing.</span>
     <span><b>Passes:</b> only attendee layers change per person; everything else prints as designed.</span>
   </div>
-
-  <hr>
-  <label class="toggle">Advanced binding
-    <span class="switch"><input type="checkbox" id="advancedToggle"><span></span></span>
-  </label>
-
-  <section id="advanced" class="step" hidden>
     <div class="selection"><strong id="selected">Nothing selected</strong><span id="selectedBinding">No PassFlow binding</span></div>
     <div class="row">
       <label class="field">Frame
@@ -212,7 +216,6 @@ function updateStatus(m){
   eventId=m.eventId||'';draftId=m.draftId||'';
   connected=!!m.eventName&&!offline.includes(state);
   $('pairing').hidden=connected;
-  $('n2').textContent=connected?'1':'2';$('n3').textContent=connected?'2':'3';$('n4').textContent=connected?'3':'4';$('n5').textContent=connected?'4':'5';
   $('preview').disabled=!eventId||!draftId;$('open').disabled=!eventId;
   $('confirm').hidden=state!=='Confirm event';
   $('dot').className='dot '+(state==='Connected'||state==='Synced'?'on':/paused|Confirm|Changes|Syncing|Working/.test(state)?'warn':/failed|expired|unavailable/.test(state)?'bad':'');
@@ -223,7 +226,10 @@ $('template').onclick=()=>send({type:'template',style:style()});
 const styleHints={blank:'Empty Desktop 1440, Tablet 834 and Mobile 390 frames. Draw anything, then mark your Register button.',minimal:'Clean white layout in Desktop, Tablet and Mobile, with a sticky navbar, hover buttons and scroll animations. Every word is yours to edit.',festival:'Bold dark layout with loud type and color, a sticky navbar, hover buttons and scroll animations. Every word is yours to edit.'};
 for(const r of document.querySelectorAll('input[name=style]'))r.onchange=()=>{$('styleHint').textContent=styleHints[style()];};
 $('insert').onclick=()=>send({type:'block',block:$('block').value,style:style()});
-$('advancedToggle').onchange=e=>{$('advanced').hidden=!e.target.checked};
+// Tabs: arrow keys move focus between tabs, as in a native segmented control.
+const tabs=[...document.querySelectorAll('[role=tab]')];
+function selectTab(tab){for(const t of tabs){const on=t===tab;t.setAttribute('aria-selected',on);t.tabIndex=on?0:-1;$(t.getAttribute('aria-controls')).hidden=!on;}}
+for(const t of tabs){t.onclick=()=>selectTab(t);t.onkeydown=e=>{const i=tabs.indexOf(t),n=e.key==='ArrowRight'?i+1:e.key==='ArrowLeft'?i-1:-9;if(n===-9)return;e.preventDefault();const next=tabs[(n+tabs.length)%tabs.length];selectTab(next);next.focus();};}
 $('binding').onchange=()=>{$('hrefWrap').hidden=$('binding').value!=='customLink'};
 $('assign').onclick=()=>send({type:'assign',binding:$('binding').value,href:$('href').value});
 $('frame').onclick=()=>send({type:'frame',role:$('frameRole').value,page:$('framePage').value});

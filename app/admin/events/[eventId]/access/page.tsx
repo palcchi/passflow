@@ -80,23 +80,8 @@ export default async function EventAccessPage({ params, searchParams }: Props) {
 
   return (
     <>
-      <QrDeliveryEditor event={event} />
-      <section className="event-admin-section event-claim-mode-section">
+      <QrDeliveryEditor event={event}>
         {error === "claim_mode_locked" && <p role="alert" className="camera-feedback">Claim mode cannot change after attendees have registered. Existing passes stay valid.</p>}
-        <div className="event-admin-section-head">
-          <div>
-            <span className="section-kicker">Credential assignment</span>
-            <h2>How attendees receive their QR</h2>
-            <p>
-              Choose whether QR credentials are created automatically at registration or
-              linked after an attendee has registered.
-            </p>
-          </div>
-          <span className="event-admin-section-count">
-            {claimMode === "claim" ? "Claim enabled" : "Automatic"}
-          </span>
-        </div>
-
         <form action={saveClaimMode} className="claim-mode-options">
           <input type="hidden" name="eventId" value={eventId} />
           <button
@@ -126,7 +111,7 @@ export default async function EventAccessPage({ params, searchParams }: Props) {
             </span>
           </button>
         </form>
-      </section>
+      </QrDeliveryEditor>
 
       <section className="event-admin-section">
         <div className="event-admin-section-head event-admin-section-head-wrap">
