@@ -39,3 +39,51 @@ fieldset.studio-workspace{border:0;padding:0;margin:0;min-width:0}
 .credential-step{display:flex;align-items:center;gap:10px;margin:28px 0 12px;font-size:15px;font-weight:600;letter-spacing:-.01em}
 .credential-step span{width:24px;height:24px;border-radius:999px;display:grid;place-items:center;background:var(--ink);color:var(--paper);font-size:12px;font-weight:700}
 .credential-step small{margin-left:4px;font-weight:400;color:var(--muted-text);font-size:13px}
+
+/* Lists with a Manage button + popups for every add/edit form. */
+.resource-record{display:flex;align-items:center;gap:12px;min-height:60px;padding:10px 10px 10px 16px;border-radius:14px}
+.resource-record>span:first-child{flex:1;min-width:0;display:grid;gap:2px}
+.resource-record>span:first-child strong{font-size:14px;font-weight:650;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.resource-record>span:first-child small{font-size:12px;color:var(--muted-foreground);opacity:1;text-transform:capitalize}
+.resource-record .event-admin-danger-link,.resource-record .event-admin-text-action{font-size:13px;white-space:nowrap}
+.resource-record .record-edit-button{min-height:36px;padding:7px 14px;flex:none}
+.resource-manager .resource-toolbar>*{min-height:40px}
+.event-admin-subpanel{padding:16px!important;display:grid;gap:12px;align-content:start}
+.event-admin-subpanel-head{justify-content:space-between;padding-bottom:12px!important}
+.event-admin-subpanel-head strong{font-size:15px!important;font-weight:650}
+.event-admin-subpanel-head small{font-size:12px!important;color:var(--muted-foreground)!important}
+.event-admin-subpanel-head .button,.event-admin-section-head .button,.event-admin-head-actions .button{min-height:38px;padding:8px 16px}
+.event-admin-section-head{align-items:flex-start;gap:16px}
+.event-admin-head-actions{display:flex;align-items:center;flex-wrap:wrap;gap:8px}
+.record-dialog-wide{width:min(640px,calc(100vw - 32px))}
+.record-fields{display:grid;gap:16px;border:0;padding:0;margin:0;min-width:0}
+.record-fields:disabled{opacity:.6}
+.record-dialog label small{font-weight:400;color:var(--muted-foreground)}
+.record-dialog select{width:100%;min-height:46px;padding:0 12px;border:1px solid var(--border);border-radius:12px;background:var(--muted);color:var(--foreground)}
+.record-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.record-actions{align-items:center}
+.record-actions-secondary{display:flex;gap:8px;flex-wrap:wrap}
+.record-actions button:first-child{color:inherit}
+.record-actions-secondary button{background:var(--muted);color:var(--foreground)}
+.record-actions .record-danger,.record-danger{color:#c94439!important}
+.record-body .qr-generator{margin-top:20px}
+.credential-manager{display:grid;gap:12px;margin-top:20px}
+.credential-bulk{display:flex;align-items:center;flex-wrap:wrap;gap:8px;padding:8px 8px 8px 16px;border-radius:14px;background:var(--muted)}
+.credential-bulk strong{flex:1;font-size:13px}
+.credential-bulk .button{min-height:36px;padding:7px 14px}
+.credential-table{width:100%;border-collapse:collapse;font-size:13px}
+.credential-table th{text-align:left;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted-foreground);padding:0 12px 10px}
+.credential-table td{padding:10px 12px;border-top:1px solid var(--border);vertical-align:middle}
+.credential-table th:first-child,.credential-table td:first-child{width:36px;padding-right:0}
+.credential-table tr[data-selected="true"] td{background:color-mix(in srgb,var(--muted) 70%,transparent)}
+.credential-table input[type="checkbox"]{width:16px;height:16px;accent-color:var(--foreground)}
+.credential-table td small{color:var(--muted-foreground)}
+.credential-actions{text-align:right;white-space:nowrap}
+.credential-actions button+button{margin-left:14px}
+.resource-pager{justify-content:space-between;font-size:13px;color:var(--muted-foreground)}
+@media(max-width:640px){.credential-table th:nth-child(4),.credential-table td:nth-child(4){display:none}.record-row{grid-template-columns:1fr}}
+.credential-table td strong{white-space:nowrap;font-variant-numeric:tabular-nums}
+.credential-actions button,.resource-record .event-admin-danger-link,.resource-record button.event-admin-danger-link{font-size:13px!important;font-weight:550}
+.resource-record-link{font-size:12px;font-weight:550;color:var(--foreground);text-decoration:none;margin-top:2px}
+.resource-record-link:hover{text-decoration:underline}
+@media(max-width:640px){.credential-table th,.credential-table td{padding-inline:8px}.credential-actions button+button{margin-left:10px}}

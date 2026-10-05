@@ -48,19 +48,20 @@ test('theme save stages draft and does not revalidate a failed RPC', async () =>
   assert.equal(invalid.writes.length,0);
 });
 
-test('QR save requires current config and retains the draft claim mode and template', async () => {
+test('QR save requires current config, retains the draft claim mode and only changes the format', async () => {
   const missing=setup([{data:null,error:{message:'read rejected'}},{data:null,error:null}]);
   assert.equal((await missing.actions.saveEventQrConfig(form())).ok,false);
   assert.equal(missing.writes.length,0);
   const current={data:{slug:'owned-event',qr_config:{claim_mode:'automatic'}},error:null};
   const draft={data:{config:{qr_config:{claim_mode:'claim',template_url:'https://example.test/pass.png'}}},error:null};
   const saved=setup([current,draft]);
-  const input=form({mode:'wristband',widthMm:'240',heightMm:'25',qrX:'85',qrY:'50',qrSize:'8'});
+  const input=form({mode:'wristband'});
   assert.equal((await saved.actions.saveEventQrConfig(input)).ok,true);
   const patch=saved.writes[0].args.p_patch.qr_config;
   assert.equal(patch.claim_mode,'claim');
   assert.equal(patch.template_url,'https://example.test/pass.png');
-  assert.equal(patch.width_mm,240);
+  assert.equal(patch.mode,'wristband');
+  assert.equal(patch.width_mm,undefined,'layout comes from Figma, not this form');
   const failed=setup([current,draft],{data:null,error:{message:'rejected'}});
   assert.equal((await failed.actions.saveEventQrConfig(input)).ok,false);
   assert.deepEqual(failed.paths,[]);

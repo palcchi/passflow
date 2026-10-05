@@ -576,11 +576,15 @@ function label(parent, chars, x, y, w, size, font, color, align = 'LEFT') {
     n.textAutoResize = 'HEIGHT';
     return n;
 }
-async function passTemplate(style, kind, ticketTypeId = '') {
+// Sizes are only starting points: any width and height works, before or after the frame is created.
+const MIN_MM = 10, MAX_MM = 2000;
+async function passTemplate(style, kind, ticketTypeId = '', w, h) {
     var _a;
-    const size = passSizes[kind];
-    if (!size)
+    const preset = passSizes[kind];
+    if (!preset)
         throw Error('Choose ID card, Digital pass or Wristband.');
+    const mm = (v, d) => Number.isFinite(v) ? Math.min(MAX_MM, Math.max(MIN_MM, Math.round(v * 10) / 10)) : d;
+    const size = { label: preset.label, w: mm(w, preset.w), h: mm(h, preset.h) };
     const ticket = ticketTypeId ? tickets.find(t => t.id === ticketTypeId) : null;
     if (ticketTypeId && !ticket)
         throw Error('That ticket category is not available. Reopen the plugin to refresh categories.');
@@ -607,8 +611,9 @@ async function passTemplate(style, kind, ticketTypeId = '') {
         if (kind === 'wristband') {
             rect(frame, 0, 0, 6, size.h, accent);
             // Wristbands are printed unclaimed, before anyone owns them: only the QR and its code are known.
-            label(frame, t.upper ? 'YOUR EVENT' : 'Your event', 10, 4, 150, 6.5, t.display, ink);
-            label(frame, '27 September 2026 · Jakarta', 10, 14, 150, 3.2, t.body, t.muted);
+            const textW = Math.max(20, size.w - 70);
+            label(frame, t.upper ? 'YOUR EVENT' : 'Your event', 10, 4, textW, 6.5, t.display, ink);
+            label(frame, '27 September 2026 · Jakarta', 10, 14, textW, 3.2, t.body, t.muted);
             markPass(label(frame, 'PF-000001', size.w - 60, 10, 34, 3, t.body, t.muted, 'RIGHT'), 'code');
             qrPlaceholder(frame, size.w - 22, 3.5, 18);
         }
@@ -627,7 +632,7 @@ async function passTemplate(style, kind, ticketTypeId = '') {
             markPass(photo, 'photo');
             markPass(label(frame, 'Full name', 25, card ? 29 : 36, size.w - 30, card ? 3.8 : 4.6, t.bodyBold, t.ink), 'name');
             markPass(label(frame, 'VIP', 25, card ? 36 : 44, size.w - 30, 2.8, t.bodyMedium, t.muted), 'category');
-            const qrSize = card ? 24 : 30, qrY = size.h - qrSize - (card ? 8 : 12);
+            const qrSize = Math.max(15, Math.min(card ? 24 : 30, size.w - 10)), qrY = Math.max(0, size.h - qrSize - (card ? 8 : 12));
             qrPlaceholder(frame, (size.w - qrSize) / 2, qrY, qrSize);
             markPass(label(frame, 'PF-000001', 5, qrY + qrSize + 1.5, size.w - 10, 2.4, t.body, t.muted, 'CENTER'), 'code');
         }
@@ -644,6 +649,10 @@ async function exportPass(frame, kind, warnings) {
     if (!box)
         throw Error('The pass frame has no bounds.');
     const w = frame.width / PX, h = frame.height / PX, label = passSizes[kind].label;
+    if (w < MIN_MM || h < MIN_MM || w > MAX_MM || h > MAX_MM)
+        throw Error(label + ' must be between ' + MIN_MM + ' and ' + MAX_MM + ' mm on each side.');
+    // About 300 dpi (3× at 4 px/mm), lowered for very large frames to stay inside Figma's export limit.
+    const scale = Math.min(3, 4096 / Math.max(frame.width, frame.height));
     const dynamic = frame.findAll(n => n.visible && passFields.includes(n.getSharedPluginData(NS, 'passField')));
     const layers = dynamic.slice(0, 58).map(n => {
         var _a;
@@ -664,9 +673,9 @@ async function exportPass(frame, kind, warnings) {
     try {
         for (const n of clone.findAll(n => passFields.includes(n.getSharedPluginData(NS, 'passField'))))
             n.visible = false;
-        let png = await clone.exportAsync({ format: 'PNG', constraint: { type: 'SCALE', value: 3 } }), src = 'data:image/png;base64,' + figma.base64Encode(png);
+        let png = await clone.exportAsync({ format: 'PNG', constraint: { type: 'SCALE', value: scale } }), src = 'data:image/png;base64,' + figma.base64Encode(png);
         if (src.length > 6500000) {
-            png = await clone.exportAsync({ format: 'JPG', constraint: { type: 'SCALE', value: 3 } });
+            png = await clone.exportAsync({ format: 'JPG', constraint: { type: 'SCALE', value: scale } });
             src = 'data:image/jpeg;base64,' + figma.base64Encode(png);
         }
         if (src.length > 6500000)
@@ -1141,7 +1150,7 @@ figma.ui.onmessage = async (message) => {
         if (message.type === 'page')
             await pageTemplate(message.style, (message.page || '').trim().toLowerCase());
         if (message.type === 'pass')
-            await passTemplate(message.style, message.kind, message.ticketTypeId || '');
+            await passTemplate(message.style, message.kind, message.ticketTypeId || '', Number(message.w), Number(message.h));
         if (message.type === 'enter') {
             const node = figma.currentPage.selection[0];
             if (figma.currentPage.selection.length !== 1 || !node)

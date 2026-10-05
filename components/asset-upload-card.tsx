@@ -4,7 +4,7 @@ import { type CSSProperties, FormEvent, useEffect, useId, useRef, useState, useT
 import { CheckCircle2, ImagePlus, LoaderCircle, UploadCloud, X } from "lucide-react";
 import { uploadEventAsset } from "@/app/admin/actions";
 
-type AssetType = "logo" | "hero" | "poster" | "qr_template";
+type AssetType = "logo" | "hero" | "poster";
 
 export function AssetUploadCard({
   eventId,

@@ -3,6 +3,8 @@ export type StudioKind = typeof studioKinds[number];
 export type Layer = { id: string; type: 'text' | 'image' | 'qr' | 'shape'; field: string; text: string; src: string; x: number; y: number; width: number; height: number; fontSize: number; color: string; fill: string; radius: number; align: 'left' | 'center' | 'right'; locked: boolean; hidden: boolean };
 export type Section = { id: string; type: 'hero' | 'description' | 'schedule' | 'location' | 'gallery' | 'faq' | 'registration'; title: string; body: string; image: string; hidden: boolean };
 export type StudioDocument = { schema: 1; width: number; height: number; background: string; foreground: string; accent: string; font: 'sans' | 'serif' | 'mono'; layers: Layer[]; sections: Section[] };
+// Pass size is the designer's call in Figma; the bounds only stop absurd print jobs (2 m covers banners and lanyards).
+export const MIN_MM = 10, MAX_MM = 2000;
 export const fields = ['text','name','category','code','event_name','event_date','venue','photo','logo'] as const;
 export const safeImage = (value: unknown): string => typeof value === 'string' && value.length < 500000 && (/^https:\/\/[^\s]+$/i.test(value) || /^data:image\/(png|jpeg|webp);base64,[a-z\d+/=]+$/i.test(value)) ? value : '';
 const color = (v: unknown, fallback: string) => typeof v === 'string' && /^#[\da-f]{6}$/i.test(v) ? v : fallback;
@@ -22,13 +24,13 @@ export function readStudioDocument(value: unknown): StudioDocument | null {
   const v = obj(value); if (v.schema !== 1 || !Array.isArray(v.layers) || !Array.isArray(v.sections)) return null;
   const ids = new Set<string>();
   const layers = v.layers.slice(0,60).flatMap(raw => { const l = obj(raw); const id = str(l.id,80); if (!id || ids.has(id) || !['text','image','qr','shape'].includes(String(l.type))) return []; ids.add(id);
-    return [{ id, type: l.type as Layer['type'], field: fields.includes(l.field as typeof fields[number]) ? String(l.field) : 'text', text: str(l.text), src: safeImage(l.src), x: num(l.x,0,500,0), y: num(l.y,0,500,0), width: num(l.width,1,500,20), height: num(l.height,1,500,20), fontSize: num(l.fontSize,1,50,4), color: color(l.color,'#171717'), fill: color(l.fill,'#ffffff'), radius: num(l.radius,0,100,0), align: ['left','center','right'].includes(String(l.align)) ? l.align as Layer['align'] : 'left', locked: l.locked === true, hidden: l.hidden === true }]; });
+    return [{ id, type: l.type as Layer['type'], field: fields.includes(l.field as typeof fields[number]) ? String(l.field) : 'text', text: str(l.text), src: safeImage(l.src), x: num(l.x,0,MAX_MM,0), y: num(l.y,0,MAX_MM,0), width: num(l.width,1,MAX_MM,20), height: num(l.height,1,MAX_MM,20), fontSize: num(l.fontSize,1,200,4), color: color(l.color,'#171717'), fill: color(l.fill,'#ffffff'), radius: num(l.radius,0,100,0), align: ['left','center','right'].includes(String(l.align)) ? l.align as Layer['align'] : 'left', locked: l.locked === true, hidden: l.hidden === true }]; });
   const sections = v.sections.slice(0,30).flatMap((raw,index) => { const s = obj(raw); if (!['hero','description','schedule','location','gallery','faq','registration'].includes(String(s.type))) return []; return [{ id: `section-${index}`, type: s.type as Section['type'], title: str(s.title,200), body: str(s.body,10000), image: safeImage(s.image), hidden: s.hidden === true }]; });
-  return { schema: 1, width: num(v.width,20,500,54), height: num(v.height,20,500,85.6), background: color(v.background,'#ffffff'), foreground: color(v.foreground,'#171717'), accent: color(v.accent,'#635bff'), font: ['sans','serif','mono'].includes(String(v.font)) ? v.font as StudioDocument['font'] : 'sans', layers, sections };
+  return { schema: 1, width: num(v.width,MIN_MM,MAX_MM,54), height: num(v.height,MIN_MM,MAX_MM,85.6), background: color(v.background,'#ffffff'), foreground: color(v.foreground,'#171717'), accent: color(v.accent,'#635bff'), font: ['sans','serif','mono'].includes(String(v.font)) ? v.font as StudioDocument['font'] : 'sans', layers, sections };
 }
 export function validateStudio(doc: StudioDocument, kind: StudioKind): string[] {
   const errors: string[] = [];
-  if (!Number.isFinite(doc.width) || !Number.isFinite(doc.height) || doc.width < 20 || doc.width > 500 || doc.height < 20 || doc.height > 500) errors.push("Dimensions must be between 20 and 500 mm.");
+  if (!Number.isFinite(doc.width) || !Number.isFinite(doc.height) || doc.width < MIN_MM || doc.width > MAX_MM || doc.height < MIN_MM || doc.height > MAX_MM) errors.push(`Dimensions must be between ${MIN_MM} and ${MAX_MM} mm.`);
   if (kind === 'website') {
     if (!doc.sections.some(s => !s.hidden && s.type === 'registration')) errors.push('Add a visible registration section so attendees can register.');
     return errors;

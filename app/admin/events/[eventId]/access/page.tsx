@@ -1,4 +1,3 @@
-import { ActionFeedbackForm } from "@/components/action-feedback-form";
 import { ResourceManager, DeleteAccessRule } from "@/components/resource-manager";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -7,19 +6,16 @@ import { requireOrganizerMembership } from "@/lib/auth/session";
 import { QrCodeGenerator } from "@/components/qr-code-generator";
 import { SmartSelect } from "@/components/form-fields";
 import { QrDeliveryEditor } from "@/components/qr-delivery-editor";
+import { CredentialManager } from "@/components/credential-manager";
+import { FormDialog, PopupPanel } from "@/components/form-dialog";
 import {
   createAccessRule,
   createStation,
   createZone,
-  revokeCredential,
   saveClaimMode,
 } from "@/app/admin/actions";
 
 type Props = { params: Promise<{ eventId: string }>; searchParams: Promise<{ error?: string }> };
-
-function inputClass() {
-  return "event-admin-input";
-}
 
 export default async function EventAccessPage({ params, searchParams }: Props) {
   const { eventId } = await params;
@@ -39,10 +35,10 @@ export default async function EventAccessPage({ params, searchParams }: Props) {
   ] = await Promise.all([
     supabase
       .from("qr_credentials")
-      .select("id,display_code,status,attendee_id,claimed_at,revoked_at")
+      .select("id,display_code,status,claimed_at,revoked_at,attendees(name)")
       .eq("event_id", eventId)
       .order("created_at", { ascending: false })
-      .limit(120),
+      .limit(2000),
     supabase
       .from("ticket_types")
       .select("id,name")
@@ -128,56 +124,16 @@ export default async function EventAccessPage({ params, searchParams }: Props) {
             <span className="event-admin-section-count">{unclaimed} unclaimed</span>
             <span className="event-admin-section-count">{active} active</span>
             <span className="event-admin-section-count">{revoked} revoked</span>
-            <Link
-              className="button button-ghost"
-              href={`/admin/events/${eventId}/wristbands/print`}
-            >
-              Print QR batch
+            <PopupPanel trigger="Generate codes" title="Generate QR codes" description="Create a numbered batch for wristbands or cards you print before anyone owns them.">
+              <QrCodeGenerator eventId={eventId} />
+            </PopupPanel>
+            <Link className="button button-dark" href={`/admin/events/${eventId}/wristbands/print`}>
+              Preview & export
             </Link>
           </div>
         </div>
 
-        <QrCodeGenerator eventId={eventId} />
-
-        <div className="event-admin-credential-grid">
-          {credentials.slice(0, 32).map((qr) => (
-            <div key={qr.id} className="event-admin-credential-card">
-              <div>
-                <strong>{qr.display_code ?? "QR"}</strong>
-                <span
-                  className={`event-admin-state ${qr.status === "active" ? "is-success" : ""}`}
-                >
-                  {qr.status}
-                </span>
-              </div>
-              {qr.status === "active" && (
-                <form action={revokeCredential}>
-                  <input type="hidden" name="eventId" value={eventId} />
-                  <input
-                    type="hidden"
-                    name="credentialId"
-                    value={qr.id}
-                  />
-                  <button
-                    type="submit"
-                    className="event-admin-danger-link"
-                  >
-                    Revoke
-                  </button>
-                </form>
-              )}
-            </div>
-          ))}
-          {!credentials.length && (
-            <div className="event-admin-empty-card">
-              <strong>No QR credentials yet</strong>
-              <span>
-                Generate a batch when using physical credentials, or leave it
-                Automatic mode creates a credential during registration.
-              </span>
-            </div>
-          )}
-        </div>
+        <CredentialManager eventId={eventId} credentials={credentials.map(({ attendees, ...c }) => ({ ...c, owner: (Array.isArray(attendees) ? attendees[0] : attendees)?.name ?? null }))} />
       </section>
 
       <section className="event-admin-section">
@@ -185,170 +141,61 @@ export default async function EventAccessPage({ params, searchParams }: Props) {
           <div>
             <span className="section-kicker">Access control</span>
             <h2>Zones, rules & scanner stations</h2>
-            <p>
-              Configure access zones and scanner stations without unnecessary
-              membantu pekerjaan.
-            </p>
+            <p>Zones are the places you guard, rules decide which pass category may enter, and stations are the phones that scan.</p>
           </div>
         </div>
 
         <div className="event-admin-access-grid">
           <div className="event-admin-subpanel">
             <div className="event-admin-subpanel-head">
-              <div>
-                <strong>Zones</strong>
-                <small>{zones.length} zone</small>
-              </div>
+              <div><strong>Zones</strong><small>{zones.length} {zones.length === 1 ? "zone" : "zones"}</small></div>
+              <FormDialog trigger="Add zone" title="Add zone" description="A place with its own entry, like a VIP lounge or backstage." action={createZone} submitLabel="Add zone">
+                <input type="hidden" name="eventId" value={eventId} />
+                <label>Name<input name="name" placeholder="VIP Lounge" required maxLength={100} /></label>
+                <label>Code <small>Optional, made from the name</small><input name="code" placeholder="VIP_LOUNGE" maxLength={40} /></label>
+              </FormDialog>
             </div>
-            <div className="event-admin-stack">
-              <ResourceManager eventId={eventId} kind="zone" records={zones} />
-            </div>
-            <ActionFeedbackForm
-              action={createZone}
-              className="event-admin-stack event-admin-subform"
-            >
-              <input type="hidden" name="eventId" value={eventId} />
-              <input
-                className={inputClass()}
-                name="name"
-                placeholder="VIP Lounge"
-                required
-              />
-              <input
-                className={inputClass()}
-                name="code"
-                placeholder="VIP_LOUNGE"
-              />
-              <button className="button button-ghost" type="submit">
-                Add zone
-              </button>
-            </ActionFeedbackForm>
+            <ResourceManager eventId={eventId} kind="zone" records={zones} />
           </div>
 
           <div className="event-admin-subpanel">
             <div className="event-admin-subpanel-head">
-              <div>
-                <strong>Access rules</strong>
-                <small>{rules.length} rule</small>
-              </div>
+              <div><strong>Access rules</strong><small>{rules.length} {rules.length === 1 ? "rule" : "rules"}</small></div>
+              <FormDialog trigger="Add rule" title="Add access rule" description="Choose which pass category may enter a zone. Without an allow rule, entry is denied." action={createAccessRule} submitLabel="Save rule">
+                <input type="hidden" name="eventId" value={eventId} />
+                <label>Zone<SmartSelect name="zoneId" value="" options={[{ value: "", label: "Choose a zone" }, ...zones.map((zone) => ({ value: zone.id, label: zone.name }))]} /></label>
+                <label>Pass category<SmartSelect name="ticketTypeId" value="" options={[{ value: "", label: "Choose a category" }, ...tickets.map((ticket) => ({ value: ticket.id, label: ticket.name }))]} /></label>
+                <label>Access<SmartSelect name="allowed" value="true" options={[{ value: "true", label: "Allow" }, { value: "false", label: "Deny" }]} /></label>
+              </FormDialog>
             </div>
-            <div className="event-admin-stack">
+            <div className="resource-manager">
               {rules.map((rule) => (
-                <div className="event-admin-row-card" key={rule.id}>
-                  <strong>
-                    {zones.find((zone) => zone.id === rule.zone_id)?.name ??
-                      "Zone"}
-                  </strong>
+                <div className="resource-record" key={rule.id}>
                   <span>
-                    {ticketName.get(rule.ticket_type_id) ?? "Pass"} ·{" "}
-                    {rule.allowed ? "ALLOW" : "DENY"}
+                    <strong>{zones.find((zone) => zone.id === rule.zone_id)?.name ?? "Zone"}</strong>
+                    <small>{ticketName.get(rule.ticket_type_id) ?? "Pass"} · {rule.allowed ? "Allow" : "Deny"}</small>
                   </span>
                   <DeleteAccessRule eventId={eventId} id={rule.id}/>
                 </div>
               ))}
+              {!rules.length && <p className="event-admin-table-empty">No rules yet. Zones deny everyone until you add one.</p>}
             </div>
-            <ActionFeedbackForm
-              action={createAccessRule}
-              className="event-admin-stack event-admin-subform"
-            >
-              <input type="hidden" name="eventId" value={eventId} />
-              <SmartSelect
-                name="zoneId"
-                value=""
-                options={[
-                  { value: "", label: "Zone" },
-                  ...zones.map((zone) => ({
-                    value: zone.id,
-                    label: zone.name,
-                  })),
-                ]}
-              />
-              <SmartSelect
-                name="ticketTypeId"
-                value=""
-                options={[
-                  { value: "", label: "Pass type" },
-                  ...tickets.map((ticket) => ({
-                    value: ticket.id,
-                    label: ticket.name,
-                  })),
-                ]}
-              />
-              <SmartSelect
-                name="allowed"
-                value="true"
-                options={[
-                  { value: "true", label: "Allow" },
-                  { value: "false", label: "Deny" },
-                ]}
-              />
-              <button className="button button-ghost" type="submit">
-                Save rule
-              </button>
-            </ActionFeedbackForm>
           </div>
 
           <div className="event-admin-subpanel">
             <div className="event-admin-subpanel-head">
-              <div>
-                <strong>Stations</strong>
-                <small>{stations.length} scanner</small>
-              </div>
+              <div><strong>Stations</strong><small>{stations.length} {stations.length === 1 ? "scanner" : "scanners"}</small></div>
+              <FormDialog trigger="Add station" title="Add scanner station" description="A gate or desk where crew scan passes with a phone." action={createStation} submitLabel="Create station">
+                <input type="hidden" name="eventId" value={eventId} />
+                <label>Name<input name="name" placeholder="Main Entrance" required maxLength={100} /></label>
+                <label>Link name <small>Optional</small><input name="slug" placeholder="main-entrance" maxLength={100} /></label>
+                <label>Scanner mode<SmartSelect name="mode" value="check_in" options={[{ value: "check_in", label: "Check-in" }, { value: "zone_access", label: "Zone access" }, { value: "activity", label: "Activity" }, { value: "claim", label: "Benefit claim" }]} /></label>
+                <label>Zone<SmartSelect name="zoneId" value="" options={[{ value: "", label: "No zone" }, ...zones.map((zone) => ({ value: zone.id, label: zone.name }))]} /></label>
+                <label>Activity code <small>For activity mode</small><input name="activityCode" placeholder="WORKSHOP_A" maxLength={40} /></label>
+                <label>Benefit code <small>For benefit claim mode</small><input name="benefitCode" placeholder="MERCH_PACK" maxLength={40} /></label>
+              </FormDialog>
             </div>
-            <div className="event-admin-stack">
-              <ResourceManager eventId={eventId} kind="station" records={stations} zones={zones} />
-            </div>
-            <ActionFeedbackForm
-              action={createStation}
-              className="event-admin-stack event-admin-subform"
-            >
-              <input type="hidden" name="eventId" value={eventId} />
-              <input
-                className={inputClass()}
-                name="name"
-                placeholder="Main Entrance"
-                required
-              />
-              <input
-                className={inputClass()}
-                name="slug"
-                placeholder="main-entrance"
-              />
-              <SmartSelect
-                name="mode"
-                value="check_in"
-                options={[
-                  { value: "check_in", label: "Check-in" },
-                  { value: "zone_access", label: "Zone access" },
-                  { value: "activity", label: "Activity" },
-                  { value: "claim", label: "Benefit claim" },
-                ]}
-              />
-              <SmartSelect
-                name="zoneId"
-                value=""
-                options={[
-                  { value: "", label: "No zone" },
-                  ...zones.map((zone) => ({
-                    value: zone.id,
-                    label: zone.name,
-                  })),
-                ]}
-              />
-              <input
-                className={inputClass()}
-                name="activityCode"
-                placeholder="WORKSHOP_A (optional)"
-              />
-              <input
-                className={inputClass()}
-                name="benefitCode"
-                placeholder="MERCH_PACK (optional)"
-              />
-              <button className="button button-dark" type="submit">
-                Create station
-              </button>
-            </ActionFeedbackForm>
+            <ResourceManager eventId={eventId} kind="station" records={stations} zones={zones} />
           </div>
         </div>
       </section>

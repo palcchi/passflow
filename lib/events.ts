@@ -23,23 +23,11 @@ export type QrClaimMode = "claim" | "automatic";
 export type QrConfig = {
   mode: QrDeliveryMode;
   claimMode: QrClaimMode;
-  templateUrl: string | null;
-  widthMm: number;
-  heightMm: number;
-  qrX: number;
-  qrY: number;
-  qrSize: number;
 };
 
 export const defaultQrConfig: QrConfig = {
   mode: "digital",
   claimMode: "automatic",
-  templateUrl: null,
-  widthMm: 85.6,
-  heightMm: 54,
-  qrX: 68,
-  qrY: 50,
-  qrSize: 22,
 };
 
 export type EventTheme = {
@@ -223,26 +211,6 @@ function mapEvent(
   const qrConfig: QrConfig = {
     mode: qrMode,
     claimMode,
-    templateUrl:
-      typeof qrValue.template_url === "string"
-        ? qrValue.template_url
-        : defaultQrConfig.templateUrl,
-    widthMm:
-      typeof qrValue.width_mm === "number"
-        ? qrValue.width_mm
-        : defaultQrConfig.widthMm,
-    heightMm:
-      typeof qrValue.height_mm === "number"
-        ? qrValue.height_mm
-        : defaultQrConfig.heightMm,
-    qrX:
-      typeof qrValue.qr_x === "number" ? qrValue.qr_x : defaultQrConfig.qrX,
-    qrY:
-      typeof qrValue.qr_y === "number" ? qrValue.qr_y : defaultQrConfig.qrY,
-    qrSize:
-      typeof qrValue.qr_size === "number"
-        ? qrValue.qr_size
-        : defaultQrConfig.qrSize,
   };
 
   return {
