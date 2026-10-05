@@ -49,7 +49,7 @@ button, a { -webkit-tap-highlight-color:transparent; }
 .ticket-bottom span { font-size:8px; letter-spacing:.12em; }
 .ticket-barcode { display:block; width:100%; height:19px; margin-top:7px; background:repeating-linear-gradient(90deg,#292929 0 1px,transparent 1px 3px,#292929 3px 5px,transparent 5px 7px,#292929 7px 8px,transparent 8px 12px); }
 .collection-art { position:relative; width:min(740px,100%); height:294px; margin:28px auto 0; }
-.collection-art > * { position:absolute; transition:transform 450ms cubic-bezier(.2,.8,.2,1); }
+.collection-art > * { position:absolute; transition:transform 450ms var(--ease-out); }
 .collection-left { left:7%; top:60px; transform:rotate(-19deg); }
 .collection-right { right:5%; top:47px; transform:rotate(17deg); }
 .collection-ticket { left:43%; top:2px; transform:rotate(10deg); }
@@ -501,8 +501,8 @@ button, a { -webkit-tap-highlight-color:transparent; }
 :root[data-theme="dark"] .hero-fan-card { box-shadow:inset 0 0 0 1px #ffffff1f, 0 22px 40px -18px #000; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .hero-fan-card { box-shadow:inset 0 0 0 1px #ffffff1f, 0 22px 40px -18px #000; } }
 @media (prefers-reduced-motion: no-preference) {
-  .hero-fan-card { animation:pf-fan-in 900ms cubic-bezier(.22,1,.36,1) calc(260ms + var(--d)) both; }
-  .hero-fan-chip { animation:pf-chip-in 600ms cubic-bezier(.22,1,.36,1) 900ms both, pf-chip-float 5s ease-in-out 1.5s infinite; }
+  .hero-fan-card { animation:pf-fan-in 900ms var(--ease-out) calc(260ms + var(--d)) both; }
+  .hero-fan-chip { animation:pf-chip-in 600ms var(--ease-out) 900ms both, pf-chip-float 5s ease-in-out 1.5s infinite; }
   .hero-fan-chip-right { animation-delay:1050ms, 2.2s; }
 }
 @keyframes pf-fan-in { from { opacity:0; transform:translateY(70px) rotate(0) scale(.85); } }
@@ -597,7 +597,7 @@ button, a { -webkit-tap-highlight-color:transparent; }
 .event-ticket-list { max-width:1240px; margin:32px auto 0; }
 .event-ticket-list h2 { font-size:clamp(28px,4vw,44px); letter-spacing:-.03em; margin:0 0 16px; }
 .event-ticket-list ul { list-style:none; margin:0; padding:0; display:grid; gap:10px; }
-.event-ticket-list a { display:flex; align-items:center; gap:14px; padding:18px 22px; border-radius:18px; background:var(--event-surface); color:inherit; text-decoration:none; transition:transform .18s cubic-bezier(.2,.8,.2,1), box-shadow .18s ease; }
+.event-ticket-list a { display:flex; align-items:center; gap:14px; padding:18px 22px; border-radius:18px; background:var(--event-surface); color:inherit; text-decoration:none; transition:transform .18s var(--ease-out), box-shadow .18s ease; }
 .event-ticket-list a:hover { transform:translateY(-1px); box-shadow:0 8px 24px rgba(0,0,0,.06); }
 .event-ticket-list strong { flex:1; font-size:17px; }
 .event-ticket-list span { color:var(--muted-foreground); }

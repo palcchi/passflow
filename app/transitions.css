@@ -185,7 +185,7 @@ html.theme-switching::view-transition-new(root) {
   ::view-transition-group(passflow-workspace-nav),
   ::view-transition-group(passflow-event-nav) {
     animation-duration: 260ms;
-    animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+    animation-timing-function: var(--ease-out);
   }
 
   ::view-transition-old(passflow-workspace-nav),
@@ -354,7 +354,7 @@ html.theme-switching::view-transition-new(root) {
 
 /* Hover motion only for fine pointers (touch fires false hovers on tap). */
 @media not ((hover: hover) and (pointer: fine)) {
-  .class-event-card:hover, .design-card:hover, .asset-upload-card:hover, .class-event-card:hover .class-event-image, .hero-fan-card:hover, .theme-flip:hover { transform: none; translate: none; scale: none; rotate: none; }
+  .class-event-card:hover, .design-card:hover, .asset-upload-card:hover, .class-event-card:hover .class-event-image, .hero-fan-card:hover, .theme-flip:hover, .event-ticket-list a:hover, .event-overview-action:hover, .organizer-text-link:hover, .kinetic-letter:hover { transform: none; translate: none; scale: none; rotate: none; }
 }
 
 /* Dropdowns grow from their trigger, which sits above them. */
@@ -365,3 +365,9 @@ html.theme-switching::view-transition-new(root) {
   .claim-card[data-celebrate] { animation: pf-pass-in 500ms var(--ease-out) both; }
 }
 @keyframes pf-pass-in { from { opacity: 0; scale: 0.96; translate: 0 12px; } }
+
+/* Client-side save/pair notices appear after an action: a short fade-up so they don't teleport in. */
+@media (prefers-reduced-motion: no-preference) {
+  .studio-notice { transition: opacity 200ms var(--ease-out), translate 200ms var(--ease-out); }
+  @starting-style { .studio-notice { opacity: 0; translate: 0 4px; } }
+}
