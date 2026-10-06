@@ -131,7 +131,7 @@ footer{position:sticky;bottom:0;background:var(--paper);padding:12px 18px 14px;b
 
   <section class="step" id="panel-pages" role="tabpanel" aria-labelledby="tab-pages" hidden>
     <label class="field">Page
-      <select id="pageKind"><option value="ticket">Ticket page · header above the sign-up form</option><option value="custom">New page · e.g. agenda, faq</option></select>
+      <select id="pageKind"><option value="ticket">Ticket page · your design around the sign-up form</option><option value="pass">Pass page · your design around the attendee pass</option><option value="custom">New page · e.g. agenda, faq</option></select>
     </label>
     <label class="field" id="pageNameWrap" hidden>Page name (lowercase, used in the link)
       <input id="pageName" placeholder="agenda" maxlength="40" autocomplete="off" spellcheck="false">
@@ -171,16 +171,20 @@ footer{position:sticky;bottom:0;background:var(--paper);padding:12px 18px 14px;b
       </label>
       <label class="field">Page
         <input id="framePage" value="home" maxlength="40" list="pageNames" autocomplete="off" spellcheck="false">
-        <datalist id="pageNames"><option value="home"><option value="ticket"></datalist>
+        <datalist id="pageNames"><option value="home"><option value="ticket"><option value="pass"></datalist>
       </label>
     </div>
     <button id="frame">Use selected frame</button>
+    <button id="linkBreakpoints">Link breakpoints</button>
+    <p class="hint">Like Framer: Desktop edits flow to Tablet and Mobile, Tablet edits flow to Mobile. Text, colors, images, fonts and visibility follow; size, position and font size stay per breakpoint. Use this after duplicating a frame.</p>
     <label class="field">Connect selected layer to
       <select id="binding">
         <option value="register">Register button → PassFlow sign-up</option>
         <option value="myPass">My Pass button → attendee pass</option>
         <option value="tickets">Live tickets list (prices from PassFlow)</option>
         <option value="customLink">Custom link (if not using Prototype)</option>
+        <option value="formSlot">Form slot · Ticket page sign-up form goes here</option>
+        <option value="passSlot">Pass slot · attendee QR pass goes here</option>
       </select>
     </label>
     <label class="field" id="hrefWrap" hidden>Link
@@ -240,6 +244,7 @@ function selectTab(tab){for(const t of tabs){const on=t===tab;t.setAttribute('ar
 for(const t of tabs){t.onclick=()=>selectTab(t);t.onkeydown=e=>{const i=tabs.indexOf(t),n=e.key==='ArrowRight'?i+1:e.key==='ArrowLeft'?i-1:-9;if(n===-9)return;e.preventDefault();const next=tabs[(n+tabs.length)%tabs.length];selectTab(next);next.focus();};}
 $('binding').onchange=()=>{$('hrefWrap').hidden=$('binding').value!=='customLink'};
 $('assign').onclick=()=>send({type:'assign',binding:$('binding').value,href:$('href').value});
+$('linkBreakpoints').onclick=()=>send({type:'link'});
 $('frame').onclick=()=>send({type:'frame',role:$('frameRole').value,page:$('framePage').value});
 const passPreset={id_card:[54,85.6],digital:[70,120],wristband:[240,25]};
 $('passKind').onchange=()=>{const [w,h]=passPreset[$('passKind').value];$('passW').value=w;$('passH').value=h;};
@@ -247,7 +252,7 @@ $('addPass').onclick=()=>send({type:'pass',kind:$('passKind').value,style:style(
 $('setEnter').onclick=()=>send({type:'enter',value:$('enter').value});
 $('markPass').onclick=()=>send({type:'passField',field:$('passField').value});
 $('pageKind').onchange=()=>{$('pageNameWrap').hidden=$('pageKind').value!=='custom'};
-$('addPage').onclick=()=>send({type:'page',style:style(),page:$('pageKind').value==='ticket'?'ticket':$('pageName').value});
+$('addPage').onclick=()=>send({type:'page',style:style(),page:$('pageKind').value==='custom'?$('pageName').value:$('pageKind').value});
 $('sync').onclick=()=>send({type:'sync'});
 $('disconnect').onclick=()=>{if(confirm('Remove this device\'s connection? The file stays paired in PassFlow until you revoke it there.'))send({type:'disconnect'})};
 $('resume').onclick=()=>send({type:'reload'});

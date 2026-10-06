@@ -156,3 +156,18 @@ fieldset.studio-workspace{border:0;padding:0;margin:0;min-width:0}
 .claim-mode-option[data-active="true"]{border-color:var(--foreground)!important;box-shadow:inset 0 0 0 1px var(--foreground)!important}
 .claim-mode-option strong{font-size:14px!important}
 .claim-mode-option span{font-size:13px!important;line-height:1.55;color:var(--muted-foreground)}
+
+/* Figma slots: PassFlow's live form or pass sits inside the designed page and may grow past the reserved box. */
+.figma-live-frame.has-slot{overflow:visible}
+.figma-slot{z-index:2;font-size:16px;letter-spacing:normal;line-height:1.5;color:var(--foreground)}
+.figma-slot .claim-card,.figma-slot>section,.figma-slot>form{width:100%;max-width:none;margin:0}
+/* Every event site fades in once on load; sections below the fold ease in as they scroll into view. */
+@media (prefers-reduced-motion:no-preference){.figma-live-website{animation:pf-site-in 420ms var(--ease-out) both}}
+@keyframes pf-site-in{from{opacity:0}}
+/* "Made with PassFlow": quiet pill pinned to the corner of every public event page. */
+.made-with-passflow{position:fixed;right:16px;bottom:16px;z-index:60;display:inline-flex;align-items:center;gap:7px;padding:7px 12px 7px 9px;border-radius:999px;background:rgba(255,255,255,.92);color:#1d1d1f;font:500 12px/1 -apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,sans-serif;text-decoration:none;box-shadow:0 0 0 1px rgba(0,0,0,.08),0 6px 18px rgba(0,0,0,.08);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.made-with-passflow svg{width:14px;height:14px}
+.made-with-passflow b{font-weight:650}
+@media (hover:hover) and (pointer:fine){.made-with-passflow{transition:box-shadow 160ms ease}.made-with-passflow:hover{box-shadow:0 0 0 1px rgba(0,0,0,.14),0 8px 22px rgba(0,0,0,.12)}}
+@media print{.made-with-passflow{display:none}}
+@media (prefers-reduced-motion:no-preference){.event-public-shell{animation:pf-site-in 420ms var(--ease-out) both}}

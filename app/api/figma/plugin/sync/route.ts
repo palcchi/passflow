@@ -1,6 +1,6 @@
 import {documentIdValid,pluginBody,pluginHeaders,pluginResponse,pluginServer,secretHash} from '@/lib/figma-plugin-server';
 import {revalidatePath} from 'next/cache';
-import {figmaWebsiteIssues,readFigmaWebsite,type DesignIssue} from '@/lib/figma-website';
+import {figmaWebsiteIssues,readFigmaWebsiteReport,type DesignIssue} from '@/lib/figma-website';
 import {readStudioDocument,studioIssues,type StudioKind} from '@/lib/studio/model';
 import {hoistFigmaImages} from '@/lib/figma-assets';
 import type {Json} from '@/lib/supabase/database.types';
@@ -50,12 +50,16 @@ export async function POST(request:Request){
     }
     try{await hoistFigmaImages(server,eventId,body.document,rawPasses);}
     catch(error){const code=error instanceof Error?error.message:'asset_upload_failed';return pluginResponse({error:code},code==='asset_upload_failed'?503:400);}
-    const document=body.document?readFigmaWebsite(body.document):null;
-    if(body.document&&!document)return pluginResponse({error:'invalid_document'},400);
+    const report=body.document?readFigmaWebsiteReport(body.document):null;
+    if(report&&!report.doc)return pluginResponse({error:'design_issues',issues:[{frame:report.frame,message:report.message,blocking:true}]},422);
+    const document=report?.doc??null;
     const passes:{kind:string;ticketTypeId:string|null;document:NonNullable<ReturnType<typeof readStudioDocument>>}[]=[];
     for(const raw of rawPasses){
       const p=raw&&typeof raw==='object'?raw as Record<string,unknown>:{},doc=readStudioDocument(p.document),ticketTypeId=typeof p.ticketTypeId==='string'&&uuid.test(p.ticketTypeId)?p.ticketTypeId:null;
-      if(!passKinds.includes(p.kind as typeof passKinds[number])||!doc||(p.ticketTypeId&&!ticketTypeId)||passes.some(x=>x.kind===p.kind&&x.ticketTypeId===ticketTypeId)||JSON.stringify(doc).length>750000)return pluginResponse({error:'invalid_pass'},400);
+      if(!passKinds.includes(p.kind as typeof passKinds[number])||(p.ticketTypeId&&!ticketTypeId))return pluginResponse({error:'invalid_pass'},400);
+      const label=passNames[p.kind as string];
+      const problem=!doc?'This pass frame could not be read. Check its size (10 mm to 2 m) and that its layers are visible.':passes.some(x=>x.kind===p.kind&&x.ticketTypeId===ticketTypeId)?'Keep one '+label+' frame per ticket category.':JSON.stringify(doc).length>750000?'This pass is too large. Simplify large images.':'';
+      if(problem||!doc)return pluginResponse({error:'design_issues',issues:[{frame:label,message:problem,blocking:true}]},422);
       passes.push({kind:p.kind as string,ticketTypeId,document:doc});
     }
     const issues:DesignIssue[]=[...(document?figmaWebsiteIssues(document):[]),...passes.flatMap(p=>studioIssues(p.document,p.kind as StudioKind).map(i=>({...i,frame:passNames[p.kind]})))];

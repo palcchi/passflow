@@ -39,7 +39,7 @@ function venueMapUrl(venue:string){
   return 'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(venue);
 }
 
-function Frame({frame,data,preview,prefix}:{frame:WebsiteFrame;data:WebsiteData;preview:boolean;prefix:string}){
+function Frame({frame,data,preview,prefix,slot}:{frame:WebsiteFrame;data:WebsiteData;preview:boolean;prefix:string;slot?:ReactNode}){
   const children=new Map<string|null,WebsiteNode[]>();
   for(const n of frame.nodes)children.set(n.parentId,[...(children.get(n.parentId)??[]),n]);
 
@@ -90,7 +90,9 @@ function Frame({frame,data,preview,prefix}:{frame:WebsiteFrame;data:WebsiteData;
     } as CSSProperties;
     // Hover comes from a Figma "While hovering → Change to" variant; CSS vars carry the target state.
     // Entrance animations ride on CSS scroll timelines; they are skipped where unsupported or reduced motion is set.
-    const className=[n.hover?'figma-hover':'',n.enter?'figma-enter figma-enter-'+n.enter:''].filter(Boolean).join(' ')||undefined;
+    // Every top-level section eases in unless Figma chose a different entrance.
+    const enter=n.enter||(n.parentId===null&&!inNav&&n!==nav?'fade':'');
+    const className=[n.hover?'figma-hover':'',enter?'figma-enter figma-enter-'+enter:''].filter(Boolean).join(' ')||undefined;
     const hover={className,'data-hc':n.hover?.color?'':undefined,'data-hs':n.hover?.stroke?'':undefined};
     // Mixed text styles from Figma become inline spans over the plain text.
     const rich=(text:string)=>{
@@ -113,6 +115,12 @@ function Frame({frame,data,preview,prefix}:{frame:WebsiteFrame;data:WebsiteData;
       return src
         ? <img key={n.id} src={src} alt={n.binding==='logo'?data.name+' logo':data.name+' banner'} style={{...style,objectFit:'cover'}}/>
         : <div key={n.id} style={style}>{nested}</div>;
+    }
+
+    // Slots are where PassFlow renders its live registration form or attendee pass inside a Figma page.
+    // They grow with their content; the designer reserves the space in Figma.
+    if(n.binding==='formSlot'||n.binding==='passSlot'){
+      return <div key={n.id} id={id} className="figma-slot" style={{...style,height:'auto',minHeight:style.height,overflow:'visible',whiteSpace:'normal',textAlign:'left'}}>{slot??nested}</div>;
     }
 
     if(n.binding==='tickets'){
@@ -186,7 +194,8 @@ function Frame({frame,data,preview,prefix}:{frame:WebsiteFrame;data:WebsiteData;
     return <div key={n.id} id={id} {...hover} style={style}>{n.type==='text'?rich(value):nested}</div>;
   }
 
-  return <div className="figma-live-frame" style={{aspectRatio:frame.width+'/'+frame.height,background:frame.background}}>
+  const hasSlot=!!slot&&frame.nodes.some(n=>n.binding==='formSlot'||n.binding==='passSlot');
+  return <div className={'figma-live-frame'+(hasSlot?' has-slot':'')} style={{aspectRatio:frame.width+'/'+frame.height,background:frame.background}}>
     {nav&&<div className="figma-live-nav"><div style={{position:'relative',aspectRatio:frame.width+'/'+nav.height}}>{render(nav,nav.width,nav.height,true)}</div></div>}
     {(children.get(null)??[]).filter(n=>n!==nav).map(n=>render(n,frame.width,frame.height))}
   </div>;
@@ -194,18 +203,18 @@ function Frame({frame,data,preview,prefix}:{frame:WebsiteFrame;data:WebsiteData;
 
 // Each frame owns the widths it covers: desktop ≥1200, tablet 768–1199, mobile <768. Missing frames hand
 // their range to the nearest one, so nothing renders twice.
-function Responsive({desktop,tablet,mobile,fallback,data,preview,prefix}:{desktop:WebsiteFrame;tablet:WebsiteFrame|null;mobile:WebsiteFrame|null;fallback?:ReactNode;data:WebsiteData;preview:boolean;prefix:string}){
+function Responsive({desktop,tablet,mobile,fallback,data,preview,prefix,slot}:{desktop:WebsiteFrame;tablet:WebsiteFrame|null;mobile:WebsiteFrame|null;fallback?:ReactNode;data:WebsiteData;preview:boolean;prefix:string;slot?:ReactNode}){
   const coverMobile=!mobile&&!fallback;
   return <div className="figma-live-website">
     <FontLinks frames={[desktop,tablet,mobile]}/>
-    <div className={'figma-live-desktop fw fw-d'+(tablet?'':' fw-t')+(coverMobile&&!tablet?' fw-m':'')}><Frame frame={desktop} data={data} preview={preview} prefix={prefix+'desktop'}/></div>
-    {tablet&&<div className={'figma-live-tablet fw fw-t'+(coverMobile?' fw-m':'')}><Frame frame={tablet} data={data} preview={preview} prefix={prefix+'tablet'}/></div>}
-    {mobile?<div className="figma-live-mobile fw fw-m"><Frame frame={mobile} data={data} preview={preview} prefix={prefix+'mobile'}/></div>:fallback&&<div className="figma-live-mobile figma-live-fallback fw fw-m">{fallback}</div>}
+    <div className={'figma-live-desktop fw fw-d'+(tablet?'':' fw-t')+(coverMobile&&!tablet?' fw-m':'')}><Frame frame={desktop} data={data} preview={preview} prefix={prefix+'desktop'} slot={slot}/></div>
+    {tablet&&<div className={'figma-live-tablet fw fw-t'+(coverMobile?' fw-m':'')}><Frame frame={tablet} data={data} preview={preview} prefix={prefix+'tablet'} slot={slot}/></div>}
+    {mobile?<div className="figma-live-mobile fw fw-m"><Frame frame={mobile} data={data} preview={preview} prefix={prefix+'mobile'} slot={slot}/></div>:fallback&&<div className="figma-live-mobile figma-live-fallback fw fw-m">{fallback}</div>}
   </div>;
 }
 
-export function FigmaPageRenderer({page,data,preview=false}:{page:WebsitePage;data:WebsiteData;preview?:boolean}){
-  return <Responsive desktop={page.desktop} tablet={page.tablet} mobile={page.mobile} data={data} preview={preview} prefix={page.slug+'-'}/>;
+export function FigmaPageRenderer({page,data,preview=false,slot}:{page:WebsitePage;data:WebsiteData;preview?:boolean;slot?:ReactNode}){
+  return <Responsive desktop={page.desktop} tablet={page.tablet} mobile={page.mobile} data={data} preview={preview} prefix={page.slug+'-'} slot={slot}/>;
 }
 
 export function FigmaWebsiteRenderer({document,data,preview=false}:{document:FigmaWebsite;data:WebsiteData;preview?:boolean}){
