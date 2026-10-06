@@ -2,7 +2,7 @@
 
 import { type CSSProperties, FormEvent, useEffect, useId, useRef, useState, useTransition } from "react";
 import { CheckCircle2, ImagePlus, LoaderCircle, UploadCloud, X } from "lucide-react";
-import { uploadEventAsset } from "@/app/admin/actions";
+import { uploadEventAsset } from "@/app/organizer/events/actions";
 
 type AssetType = "logo" | "hero" | "poster";
 

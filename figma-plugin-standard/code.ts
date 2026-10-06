@@ -24,15 +24,15 @@ type Message=
   |{type:'pass';kind:PassKind;style:TemplateStyle;ticketTypeId:string;w?:number;h?:number}
   |{type:'enter';value:string}
   |{type:'passField';field:PassField|''}
-  |{type:'sync'|'disconnect'|'reload'|'confirm'};
+  |{type:'sync'|'disconnect'|'reload'|'confirm'}
+  |{type:'focus';issue:Issue};
 
 const bindings:Binding[]=['eventName','eventDescription','eventDate','venue','venueMap','logo','banner','tickets','register','myPass','schedule','speakers','sponsors','customLink'];
 const blocks=['Navbar','Hero','About','Tickets','Schedule','Speakers','Sponsors','Venue','FAQ','CTA','Footer'];
 let session:Session|null=null;
 let tickets:{id:string;name:string}[]=[];
 function setTickets(list:unknown){tickets=Array.isArray(list)?list.filter(t=>t&&typeof t.id==='string'&&typeof t.name==='string').slice(0,50):[];figma.ui.postMessage({type:'tickets',tickets});}
-let mutating=false,syncing=false,dirty=false,blocked=false,confirmed=false,commandPending=false;
-let timer:ReturnType<typeof setTimeout>|null=null;
+let mutating=false,syncing=false,blocked=false,confirmed=false,commandPending=false;
 
 let documentId=figma.root.getSharedPluginData(NS,'documentId');
 if(!documentId){
@@ -355,7 +355,6 @@ async function template(style:TemplateStyle){
   }
   figma.currentPage.selection=created;
   figma.viewport.scrollAndZoomIntoView(created);
-  dirty=true;
   status('Changes detected',style==='blank'?'Blank Desktop and Mobile frames are ready. Design freely, then mark a Register button.':'Starter '+style+' website inserted. Edit any text; links and hovers come from Figma prototype interactions.');
   selectionState();
 }
@@ -401,7 +400,6 @@ async function pageTemplate(style:TemplateStyle,slug:string){
   }
   figma.currentPage.selection=created;
   figma.viewport.scrollAndZoomIntoView(created);
-  dirty=true;
   status('Changes detected',slug==='ticket'?'Ticket page added. It shows above the PassFlow sign-up form.':'"'+slug+'" page added at /e/your-event/'+slug+'. Link to it with Prototype → Navigate to.');
   selectionState();
 }
@@ -467,7 +465,6 @@ async function passTemplate(style:TemplateStyle,kind:PassKind,ticketTypeId='',w?
     }
   }
   figma.currentPage.selection=[frame];figma.viewport.scrollAndZoomIntoView([frame]);
-  dirty=true;
   status('Changes detected',size.label+' added. Design freely; keep the QR square, at least 15 mm and clear of other layers.');
   selectionState();
 }
@@ -535,7 +532,7 @@ function contractWarnings(frame:FrameNode,label:string){
   };
   for(const child of frame.children)visit(child);
   const warnings:string[]=[];
-  // Drafts may be unfinished; PassFlow enforces this only when publishing.
+  // PassFlow checks this again on Sync and refuses to publish a broken design.
   if(!found.has('register')&&!found.has('tickets'))warnings.push(label+': mark a Register button (or add live Tickets) before publishing.');
   return warnings;
 }
@@ -700,15 +697,31 @@ async function api(path:string,body:unknown,token?:string){
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- server JSON, fields checked by the API
   let result:any={};
   try{result=await response.json();}catch{}
-  if(!response.ok||result.error)throw Error(result.error||'Request failed');
+  if(!response.ok||result.error){const failure=Error(result.error||'Request failed') as Error&{issues?:Issue[]};failure.issues=result.issues;throw failure;}
   return result;
 }
+type Issue={message:string;frame?:string;nodeId?:string;blocking:boolean};
+// Select the layer an issue points at (falling back to its frame), switching page if needed.
+async function focusIssue(issue:Issue){
+  let node=issue.nodeId?await figma.getNodeByIdAsync(issue.nodeId):null;
+  if(!node&&issue.nodeId)node=figma.currentPage.findOne(n=>n.getSharedPluginData(NS,'id')===issue.nodeId);
+  if(!node&&issue.frame){
+    const f=findFrames(),label=issue.frame,page=/^(.+) page \((Desktop|Tablet|Mobile)\)$/.exec(label);
+    const role=(page?page[2]:label).toLowerCase() as FrameRole;
+    node=page?f.pages.find(p=>p.slug===page[1])?.[role]??null:(f as unknown as Record<string,FrameNode|null>)[role]??f.passes.find(p=>passSizes[p.kind].label===label)?.frame??null;
+  }
+  if(!node||!('visible' in node))return;
+  let page:BaseNode|null=node;while(page&&page.type!=='PAGE')page=page.parent;
+  if(page&&page!==figma.currentPage)await figma.setCurrentPageAsync(page as PageNode);
+  figma.currentPage.selection=[node as SceneNode];figma.viewport.scrollAndZoomIntoView([node as SceneNode]);
+}
+function showIssues(issues:Issue[]){figma.ui.postMessage({type:'issues',issues});}
 async function sync(){
   if(!session){status('Disconnected','Pair an event first.');return;}
   if(!confirmed){status('Confirm event','Confirm this file should update '+session.eventName+'. Pair again if this is a copy for another event.');return;}
-  if(syncing||mutating){dirty=true;return;}
+  if(syncing||mutating)return;
   if(blocked)return;
-  syncing=true;dirty=false;status('Syncing');
+  syncing=true;status('Syncing');
   try{
     const frames=findFrames(),warnings:string[]=[];
     let document=null;
@@ -726,22 +739,32 @@ async function sync(){
     const result=await api('sync',{documentId,revision:session.revision,document,passes},session.token);
     session.revision=result.revision;session.draftId=result.draftId;
     await figma.clientStorage.setAsync(storageKey,session);
-    status('Synced','Draft ready.'+(warnings.length?' '+[...new Set(warnings)].join(' '):''));
+    const serverWarnings:Issue[]=result.warnings??[];
+    showIssues(serverWarnings);
+    status('Live','Your website and passes now show this version.'+(warnings.length?' '+[...new Set(warnings)].join(' '):''));
+    figma.notify(serverWarnings.length?'Live on PassFlow · '+serverWarnings.length+' warning'+(serverWarnings.length===1?'':'s')+' in the plugin':'Live on PassFlow');
   }catch(error){
-    dirty=true;
     const message=error instanceof Error?error.message:'Sync failed';
-    blocked=true;
-    status('Sync paused',message==='revision_conflict'?'Another session changed the draft. Review the current draft, then resume.':message+' Your Figma changes are still intact.');
+    const issues=(error as {issues?:Issue[]}).issues??[];
+    if(message==='design_issues'&&issues.length){
+      // Nothing was written: the live site keeps its previous version until the design is fixed.
+      showIssues(issues);
+      const first=issues.find(i=>i.blocking)??issues[0];
+      figma.notify((first.frame?first.frame+': ':'')+first.message,{error:true,timeout:10000});
+      await focusIssue(first);
+      status('Not published','Fix the selected layer, then press Sync. The website still shows the previous version.');
+    }else{
+      blocked=message==='revision_conflict';
+      figma.notify('Sync failed: '+message,{error:true});
+      status('Sync failed',message==='revision_conflict'?'Another session changed this design. Reconnect, then sync again.':message+' Your Figma changes are still intact.');
+    }
   }finally{
     syncing=false;
-    if(dirty&&!blocked)schedule();
   }
 }
+// Edits never publish by themselves: Sync is the publish button.
 function schedule(){
-  dirty=true;
-  if(confirmed)status('Changes detected');
-  if(timer)clearTimeout(timer);
-  if(session&&confirmed&&!blocked)timer=setTimeout(()=>{void sync();},1500);
+  if(session&&confirmed)status('Changes not live','Press Sync to publish them to the website.');
 }
 
 figma.showUI(__html__,{width:390,height:760,themeColors:true});
@@ -753,7 +776,6 @@ function watchPage(){watchedPage?.off('nodechange',onNodeChange);watchedPage=fig
 watchPage();
 figma.on('currentpagechange',()=>{
   watchPage();
-  if(timer)clearTimeout(timer);
   confirmed=false;
   status(session?'Confirm event':'Disconnected','Current page changed. Confirm the linked event before this page can sync.');
   selectionState();
@@ -778,7 +800,6 @@ figma.ui.onmessage=async(message:Message)=>{
       return;
     }
     if(message.type==='disconnect'){
-      if(timer)clearTimeout(timer);
       session=null;blocked=false;confirmed=false;
       await figma.clientStorage.deleteAsync(storageKey);
       status('Disconnected','Local authorization removed. Revoke the paired file in PassFlow to invalidate it everywhere.');
@@ -793,10 +814,11 @@ figma.ui.onmessage=async(message:Message)=>{
       const state=await api('sync',{documentId},session.token);
       session.revision=state.revision;session.draftId=state.draftId;setTickets(state.tickets);
       await figma.clientStorage.setAsync(storageKey,session);
-      blocked=false;status('Connected','Draft revision refreshed. Retry sync when ready.');
+      blocked=false;status('Connected','Reconnected. Press Sync to publish.');
       return;
     }
     if(message.type==='sync'){blocked=false;await sync();return;}
+    if(message.type==='focus'){await focusIssue(message.issue);return;}
 
     mutating=true;
     if(message.type==='template')await template(message.style);

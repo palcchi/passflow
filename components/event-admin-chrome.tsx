@@ -49,7 +49,7 @@ export function EventAdminChrome({
       <main className="event-admin-shell mx-auto max-w-7xl px-5 pb-24 pt-8 sm:px-8 sm:pt-10">
         <header className="event-admin-hero studio-event-hero">
           <div className="event-admin-hero-main">
-            <Link href="/admin" className="event-admin-back">
+            <Link href="/organizer/events" className="event-admin-back">
               <ArrowLeft size={14} /> Organizer
             </Link>
 

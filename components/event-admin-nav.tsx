@@ -18,7 +18,7 @@ export function EventAdminNav({ eventId }: { eventId: string }) {
   const pathname = usePathname();
   const reduceMotion = useReducedMotion();
   const [pendingHref, setPendingHref] = useState<string | null>(null);
-  const base = `/admin/events/${eventId}`;
+  const base = `/organizer/events/${eventId}`;
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // On narrow screens the dock scrolls sideways; keep the current tab visible.

@@ -87,3 +87,72 @@ fieldset.studio-workspace{border:0;padding:0;margin:0;min-width:0}
 .resource-record-link{font-size:12px;font-weight:550;color:var(--foreground);text-decoration:none;margin-top:2px}
 .resource-record-link:hover{text-decoration:underline}
 @media(max-width:640px){.credential-table th,.credential-table td{padding-inline:8px}.credential-actions button+button{margin-left:10px}}
+
+/* One vertical rhythm for workspace pages: sections are spaced by the parent's gap, never by their own margins. */
+.event-admin-page-content,.flow-workspace .studio-page-shell{display:flex;flex-direction:column;gap:20px}
+.event-admin-page-content>*,.flow-workspace .studio-page-shell>*{margin-block:0!important}
+.event-admin-page-content{padding-top:8px}
+.event-overview-grid{align-items:start;gap:20px!important}
+.event-overview-grid>*{margin:0!important}
+.event-admin-metrics,.flow-workspace .studio-metric-strip{gap:12px!important}
+
+/* Settings: plain-weight values, one status line, aligned address row, compact danger zone. */
+.flow-workspace :is(input,textarea,select):not([type="checkbox"]):not([type="radio"]),.flow-workspace :is(.smart-select-trigger,.date-picker-trigger,.time-picker-trigger){font-weight:450!important;font-size:14px!important}
+.event-admin-note{margin:0;font-size:13px;line-height:1.6;color:var(--muted-foreground)}
+.settings-status{margin:0 0 4px;font-size:14px;color:var(--muted-foreground)}
+.settings-status strong{color:var(--foreground)}
+.event-admin-status-button{min-height:38px;padding:8px 16px!important;border-radius:999px!important;font-size:13px!important;text-transform:none!important;letter-spacing:0!important}
+.subdomain-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:16px}
+.subdomain-field{flex:1;min-width:240px;display:flex;align-items:center;gap:0;border:1px solid var(--border);border-radius:12px;background:var(--card);overflow:hidden}
+.subdomain-field input{flex:1;min-width:0;border:0!important;box-shadow:none!important;background:transparent!important}
+.subdomain-field>span:last-child{padding:0 14px;font-size:14px;color:var(--muted-foreground);white-space:nowrap}
+.event-admin-section .studio-notice,.event-admin-section .event-admin-note{margin-top:12px}
+.event-admin-danger-zone{display:flex!important;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:20px 24px!important}
+.event-admin-danger-copy strong{font-size:14px!important}
+.event-admin-danger-copy p{font-size:13px!important;line-height:1.6!important;max-width:680px}
+.event-admin-danger-zone form{display:flex;gap:8px;flex-wrap:wrap}
+.branding-accent label{font-size:14px;font-weight:600}
+.branding-accent code{font-size:13px;color:var(--muted-foreground)}
+
+/* People + shared section heads. */
+.event-admin-section-head p{font-size:13px!important;line-height:1.6!important;color:var(--muted-foreground)!important;margin-top:4px!important}
+.event-admin-section-head h2{margin:2px 0 0!important}
+.smart-select-trigger strong{font-weight:450!important;font-size:14px!important}
+.event-admin-mini-top{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.event-admin-mini-card h3{margin:10px 0 6px!important;font-size:17px!important}
+.event-admin-mini-card p{font-size:13px!important;min-height:0!important}
+.event-admin-mini-meta span{font-size:12px!important}
+.event-admin-mini-meta strong{font-size:14px!important}
+.event-admin-code,.event-admin-table code{font-size:12px!important;font-family:ui-monospace,"SF Mono",Menlo,monospace}
+.record-edit-button{min-height:34px!important;padding:6px 14px!important;font-size:13px!important}
+.event-admin-table td{padding-block:10px!important;vertical-align:middle}
+.event-admin-table td:last-child,.event-admin-table th:last-child{text-align:right}
+.event-admin-table td strong{font-size:14px!important}
+.event-admin-search{display:flex!important;align-items:center;gap:8px;margin:20px 0 12px!important;max-width:none!important;width:100%}
+.event-admin-search input{flex:1;min-width:0;font-size:14px!important}
+.event-admin-search button{min-height:36px;padding:0 16px;border-radius:999px;font-size:13px}
+.event-admin-section-count{font-size:12px!important;padding:6px 12px!important;border-radius:999px!important;white-space:nowrap}
+.flow-event-progress small,.flow-event-progress span{font-size:12px!important}
+.event-admin-search input{background:transparent!important;border:0!important;box-shadow:none!important}
+/* Metric tiles: one neutral surface; colour is reserved for the organizer's event accent. */
+.flow-workspace .studio-metric,.flow-workspace .studio-metric:first-child,.flow-workspace .studio-metric:nth-child(3){background:var(--card)!important;color:inherit!important}
+.studio-metric small,.event-admin-metric small{font-size:12px!important}
+.event-admin-editor-page,.figma-panel-stack{display:flex!important;flex-direction:column;gap:20px!important;margin:0!important}
+.event-admin-editor-page>*,.figma-panel-stack>*{margin:0!important}
+.event-admin-metrics{grid-template-columns:repeat(auto-fit,minmax(200px,1fr))!important}
+.figma-steps li p,.figma-steps li span{font-size:13px}
+.flow-workspace .event-admin-page-content .event-admin-editor-page{padding:0!important}
+.flow-workspace .event-admin-page-content :is(.event-admin-editor-page,.figma-panel-stack)>.event-admin-section{margin-block:0!important}
+@media(max-width:640px){
+  .event-admin-section-head{flex-direction:column!important;align-items:flex-start!important;gap:12px!important}
+  .event-admin-section-head .event-admin-head-actions{width:100%;justify-content:flex-start!important}
+  .event-admin-section-head :is(.button,.studio-text-link,.record-edit-button){white-space:nowrap}
+  .event-admin-table th:nth-child(3),.event-admin-table td:nth-child(3){display:none}
+  .event-admin-subpanel-head{flex-wrap:wrap}
+}
+/* Claim mode: same selected treatment as the format cards above it. */
+.claim-mode-options{display:grid!important;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px!important;border:0!important;background:none!important}
+.claim-mode-option{border:1px solid var(--border)!important;border-radius:16px!important;background:var(--card)!important;padding:16px 18px!important;text-align:left;box-shadow:none!important}
+.claim-mode-option[data-active="true"]{border-color:var(--foreground)!important;box-shadow:inset 0 0 0 1px var(--foreground)!important}
+.claim-mode-option strong{font-size:14px!important}
+.claim-mode-option span{font-size:13px!important;line-height:1.55;color:var(--muted-foreground)}

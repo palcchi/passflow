@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { FormDialog } from "@/components/form-dialog";
 import Link from "next/link";
-import { manageEventResource } from "@/app/admin/resource-actions";
+import { manageEventResource } from "@/app/organizer/events/resource-actions";
 
 type Resource = { id: string; name: string; code?: string; description?: string | null; is_active?: boolean; mode?: string; zone_id?: string | null; config?: unknown };
 type Props = { eventId: string; kind: "station" | "zone" | "activity" | "benefit"; records: Resource[]; zones?: { id: string; name: string }[] };

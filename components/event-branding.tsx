@@ -1,7 +1,7 @@
 "use client";
 import { useState, useTransition } from "react";
 import type { PassFlowEvent } from "@/lib/events";
-import { saveEventTheme } from "@/app/admin/actions";
+import { saveEventTheme } from "@/app/organizer/events/actions";
 import { AssetUploadCard } from "@/components/asset-upload-card";
 
 // Branding used outside the Figma website: event cards, link previews, the pass page and passes without a Figma design.
@@ -20,9 +20,11 @@ export function EventBranding({ event }: { event: PassFlowEvent }) {
     });
   }
   return <section className="event-admin-section">
-    <span className="section-kicker">Branding</span>
-    <h3>Banner, logo and accent</h3>
-    <p>Shown outside your Figma website: event cards, link previews, the attendee pass page and passes that have no Figma design yet.</p>
+    <div className="event-admin-section-head"><div>
+      <span className="section-kicker">Branding</span>
+      <h2>Banner, logo and accent</h2>
+      <p>Shown outside your Figma website: event cards, link previews, the attendee pass page and passes that have no Figma design yet.</p>
+    </div></div>
     <div className="branding-grid">
       <AssetUploadCard eventId={event.id} assetType="hero" label="Event banner" hint="1600 × 900 · max 5 MB" currentUrl={event.heroImageUrl} compact />
       <AssetUploadCard eventId={event.id} assetType="logo" label="Event logo" currentUrl={event.logoUrl} compact />

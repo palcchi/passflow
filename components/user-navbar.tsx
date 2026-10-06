@@ -63,7 +63,7 @@ export function UserNavbar({
     { href: "/account", label: "Home", icon: LayoutDashboard },
     { href: "/events", label: "Discover", icon: CalendarDays },
     ...(organizer
-      ? [{ href: "/admin", label: "Organizer", icon: Sparkles }]
+      ? [{ href: "/organizer/events", label: "Organizer", icon: Sparkles }]
       : []),
   ];
 

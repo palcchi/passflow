@@ -24,7 +24,7 @@ PassFlow turns the event website and passes you design in Figma into a live even
 - Links and motion use Figma itself. On click → Open link or Scroll to, Navigate to another page frame, and While hovering → Change to a variant become real links and hover effects. Sections can ease in on scroll.
 - Add a ticket page and extra pages such as Agenda or FAQ.
 - Design ID cards, digital passes and wristbands at any size. Mark the attendee name, photo, category, code and QR. PassFlow fills them in per person, prints at about 300 dpi and saves each card as PNG or JPG. Wristbands are printed unclaimed and claimed later by scanning the QR.
-- Edits sync to a private draft. Nothing goes live until you preview and publish in PassFlow.
+- Press Sync and your event site and passes update right away. If something would break, the plugin selects the layer to fix and nothing changes on the site.
 
 Pair a file with a 10-minute code from PassFlow → Event → Design.
 
@@ -34,8 +34,8 @@ Pair a file with a 10-minute code from PassFlow → Event → Design.
 
 ## Network access and data
 
-- **Allowed domain:** `https://passflow.my.id`. This is used to pair an event and to sync drafts. `http://localhost:3000` is listed only for development.
+- **Allowed domain:** `https://passflow.my.id`. This is used to pair an event and to sync designs. `http://localhost:3000` is listed only for development.
 - **What is sent:** the layers of frames marked as PassFlow website, page or pass frames, including text, geometry, colours, exported artwork and images. The file name is sent once, at pairing.
 - **What is stored on the device:** an event-scoped sync token in Figma `clientStorage`. It expires after 30 days and can be revoked in PassFlow at any time.
 - **What is stored in the file:** non-secret metadata (event ID and name, layer bindings) in shared plugin data. No passwords, OAuth tokens or keys are stored in the file or in the plugin source.
-- **Publishing:** the plugin never publishes. Organizers publish in PassFlow.
+- **Publishing:** the plugin publishes only when you press Sync. Edits are never sent automatically.

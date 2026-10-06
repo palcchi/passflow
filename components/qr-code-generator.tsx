@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Check, LoaderCircle, Search, Sparkles } from "lucide-react";
-import { checkQrCodeAvailability, generateQrBatch } from "@/app/admin/actions";
+import { checkQrCodeAvailability, generateQrBatch } from "@/app/organizer/events/actions";
 
 type Availability =
   | {

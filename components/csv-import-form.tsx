@@ -1,7 +1,7 @@
 "use client";
 import { useMemo, useState } from "react";
 import { Upload } from "lucide-react";
-import { importAttendees } from "@/app/admin/actions";
+import { importAttendees } from "@/app/organizer/events/actions";
 export function CsvImportForm({ eventId }: { eventId: string }) {
   const [text, setText] = useState("");
   const preview = useMemo(() => text.split(/\r?\n/).map(row => row.trim()).filter(Boolean).slice(0, 6), [text]);

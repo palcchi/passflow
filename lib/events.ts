@@ -252,7 +252,7 @@ function mapEvent(
 export const getManagedEvent = cache(
   async (id: string): Promise<PassFlowEvent | undefined> => {
     const { requireOrganizer } = await import("@/lib/auth/session");
-    const { supabase } = await requireOrganizer(`/admin/events/${id}`);
+    const { supabase } = await requireOrganizer(`/organizer/events/${id}`);
     const { data: allowed } = await supabase.rpc("is_event_manager", {
       p_event_id: id,
     });

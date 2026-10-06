@@ -18,7 +18,7 @@ Updated 4 October 2026 (user direction): Figma is the whole frontend; PassFlow i
 - Pages: frames carry a page name. Home is required. "ticket" renders above the PassFlow sign-up form at /e/[slug]/claim, where the form itself stays PassFlow-owned. Other lowercase names render at /e/[slug]/[page], with up to 8 extra pages. Route names (claim, calendar, api, admin and similar) are reserved. Prototype Navigate to a page frame becomes a link to that page.
 - Passes (optionally per ticket category): ID card, digital pass and wristband frames at any size from 10 mm to 2 m per side (presets 54×85.6, 70×120 and 240×25 mm), designed at 4 px per mm, sync as private pass drafts. Only marked attendee layers (name, photo, ticket category, code, QR) are dynamic. Wristbands are printed unclaimed and claimed later by QR, so they carry only the QR and credential code. Everything else exports as a background at about 300 dpi. Publishing runs the existing print validation (exactly one QR, square, at least 15 mm, clear of other layers).
 - The legacy account OAuth/URL sync was retired on 4 October 2026. Event subdomains serve extra pages at /<page>.
-- Drafts may sync while incomplete. Publishing requires a Register action or live Tickets list and valid scroll targets.
+- Sync is publish (6 October 2026). Only a missing Register action/live Tickets list or a QR that would not scan blocks a Sync; other problems (layers outside the frame, broken links, duplicate bindings) go live as warnings. Every issue carries the Figma node so the plugin selects it.
 - Keep desktop, tablet and mobile frames separate. Each owns a width range (≥1200, 768–1199, <768); missing frames fall back to the nearest one, and Home without phone or tablet frames shows a readable fallback.
 - Preserve stable, versioned plugin metadata for identity and bindings. Visible layer names are hints, not identifiers; renaming must not break sync.
 - Produce a structured website, not a single flattened PNG.
@@ -26,14 +26,14 @@ Updated 4 October 2026 (user direction): Figma is the whole frontend; PassFlow i
 
 ## Connection and synchronization
 
-Main flow: open Figma file, open PassFlow plugin, pair event, edit, auto-sync draft, preview, explicitly publish.
+Main flow: open Figma file, open PassFlow plugin, pair event, edit, press Sync. The website and passes update immediately.
 
 - Organizer generates a short-lived, single-use pairing code in authenticated PassFlow.
 - Pairing must verify event management permission, expire, rate-limit guesses and be revocable. A short code is not a permanent credential.
 - Store non-secret event/file identity in file plugin metadata; do not expose account tokens or durable credentials in shared document metadata or source.
 - Remember the linked event after pairing. Show Connected, Changes detected, Syncing, Synced, and actionable failure states.
-- While the plugin is open, debounce changes and sync only to a private draft. Serialize writes, detect stale revisions and retain unsynced changes after failures.
-- Sync never publishes. Publishing validates bindings and atomically selects an immutable public version.
+- Edits never publish on their own: the plugin marks them "not live" until the organizer presses Sync. Serialize writes and keep unsynced changes after failures.
+- Sync validates first and writes nothing on a blocking issue. Otherwise the synced row becomes the published version for its kind and ticket category, and older drafts and archived rows for that slot are deleted.
 - Webhooks detect out-of-session changes; they are not the main real-time sync mechanism.
 - The existing account-library plugin surface is constrained by the figma-generative-plugins skill: no authenticated integration on that surface. Propose a standard Figma plugin plus scoped PassFlow pairing endpoints before implementing authenticated sync there.
 

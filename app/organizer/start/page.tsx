@@ -22,7 +22,7 @@ export default async function OrganizerStartPage({ searchParams }: { searchParam
   const { status } = await searchParams;
   const { supabase, user } = await requireUser("/organizer/start");
   const { memberships } = await getMemberships();
-  if (memberships.some((membership) => canManage(membership.role))) redirect("/admin");
+  if (memberships.some((membership) => canManage(membership.role))) redirect("/organizer/events");
 
   const { data: application } = await supabase
     .from("organizer_applications")

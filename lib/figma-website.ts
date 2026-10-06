@@ -63,17 +63,22 @@ export function readFigmaWebsite(value:unknown):FigmaWebsite|null{
  for(const raw of rawPages){const p=obj(raw),d=frame(p.desktop,v.schema),t=optional(p.tablet,v.schema),m=optional(p.mobile,v.schema);if(!pageSlugValid(p.slug)||pages.some(x=>x.slug===p.slug)||!d||t===undefined||m===undefined)return null;pages.push({slug:p.slug,desktop:d,tablet:t,mobile:m});}
  return {schema:v.schema,source:'figma',desktop,tablet,mobile,pages,warnings:Array.isArray(v.warnings)?v.warnings.slice(0,30).map(w=>str(w,300)):[]};
 }
-export function validateFigmaWebsite(doc:FigmaWebsite){const errors:string[]=[];
+// Issues carry the Figma node and frame so the plugin can select the exact layer. Only blocking ones stop a sync going live;
+// the rest render fine (layers clip, broken links do nothing) and come back as warnings.
+export type DesignIssue={message:string;frame?:string;nodeId?:string;blocking:boolean};
+export function figmaWebsiteIssues(doc:FigmaWebsite):DesignIssue[]{const out:DesignIssue[]=[];
+ const add=(frame:string,message:string,blocking:boolean,nodeId?:string)=>{if(!out.some(i=>i.frame===frame&&i.message===message))out.push({frame,message,blocking,nodeId});};
  const pageNames=new Set(['home','ticket',...doc.pages.map(p=>p.slug)]);
  const frames:[string,WebsiteFrame|null,boolean][]=[['Desktop',doc.desktop,true],['Tablet',doc.tablet,true],['Mobile',doc.mobile,true],...doc.pages.flatMap(p=>[[p.slug+' page (Desktop)',p.desktop,false],[p.slug+' page (Tablet)',p.tablet,false],[p.slug+' page (Mobile)',p.mobile,false]] as [string,WebsiteFrame|null,boolean][])];
  for(const [name,f,home] of frames){if(!f)continue;
-  if(home&&!f.nodes.some(n=>n.binding==='register'||n.binding==='tickets'))errors.push(name+' needs a registration action or ticket list.');
-  for(const n of f.nodes)if(n.href.startsWith('page:')&&!pageNames.has(n.href.slice(5)))errors.push(name+': a link navigates to a page that is not synced ('+n.href.slice(5)+').');
-  for(const n of f.nodes){const parent=n.parentId?f.nodes.find(p=>p.id===n.parentId):null,w=parent?.width??f.width,h=parent?.height??f.height;if(n.x<0||n.y<0||n.x+n.width>w+1||n.y+n.height>h+1)errors.push(name+': a layer extends beyond its frame.');}
-  for(const n of f.nodes)if(n.binding==='customLink'&&n.href.startsWith('#')&&!f.nodes.some(t=>'#'+t.anchor===n.href||['tickets','schedule','speakers','sponsors','venueMap'].includes(t.binding??'')&&'#'+t.binding===n.href))errors.push(name+': a link scrolls to a layer that is hidden or missing. Check its Scroll to target.');
+  if(home&&!f.nodes.some(n=>n.binding==='register'||n.binding==='tickets'))add(name,'Mark a button as Register, or add the live ticket list (plugin → Advanced).',true);
+  for(const n of f.nodes)if(n.href.startsWith('page:')&&!pageNames.has(n.href.slice(5)))add(name,'This link opens a page that is not synced ('+n.href.slice(5)+').',false,n.id);
+  for(const n of f.nodes){const parent=n.parentId?f.nodes.find(p=>p.id===n.parentId):null,w=parent?.width??f.width,h=parent?.height??f.height;if(n.x<0||n.y<0||n.x+n.width>w+1||n.y+n.height>h+1)add(name,'This layer sticks out of its frame and will be cut off.',false,n.id);}
+  for(const n of f.nodes)if(n.binding==='customLink'&&n.href.startsWith('#')&&!f.nodes.some(t=>'#'+t.anchor===n.href||['tickets','schedule','speakers','sponsors','venueMap'].includes(t.binding??'')&&'#'+t.binding===n.href))add(name,'This link scrolls to a layer that is hidden or missing. Check its Scroll to target.',false,n.id);
   const byId=new Map(f.nodes.map(n=>[n.id,n])),inNav=(n:WebsiteNode)=>{let top=n;while(top.parentId&&byId.has(top.parentId))top=byId.get(top.parentId)!;return top.sticky;};
-  for(const binding of ['eventName','tickets','schedule','speakers','sponsors','logo','banner'])if(f.nodes.filter(n=>n.binding===binding&&!(binding==='eventName'&&inNav(n))).length>1)errors.push(name+': '+binding+' is assigned more than once.');
-  if(f.nodes.filter(n=>n.sticky).length>1)errors.push(name+': use one sticky navbar.');
+  for(const binding of ['eventName','tickets','schedule','speakers','sponsors','logo','banner']){const dup=f.nodes.filter(n=>n.binding===binding&&!(binding==='eventName'&&inNav(n)));if(dup.length>1)add(name,binding+' is assigned more than once; only the first is used.',false,dup[1].id);}
+  const sticky=f.nodes.filter(n=>n.sticky);if(sticky.length>1)add(name,'Use one sticky navbar.',false,sticky[1].id);
  }
- return [...new Set(errors)];
+ return out;
 }
+export function validateFigmaWebsite(doc:FigmaWebsite){return figmaWebsiteIssues(doc).filter(i=>i.blocking).map(i=>i.frame+': '+i.message);}

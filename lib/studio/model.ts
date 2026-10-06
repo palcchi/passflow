@@ -1,3 +1,4 @@
+import type { DesignIssue } from '@/lib/figma-website';
 export const studioKinds = ['website', 'digital', 'id_card', 'wristband'] as const;
 export type StudioKind = typeof studioKinds[number];
 export type Layer = { id: string; type: 'text' | 'image' | 'qr' | 'shape'; field: string; text: string; src: string; x: number; y: number; width: number; height: number; fontSize: number; color: string; fill: string; radius: number; align: 'left' | 'center' | 'right'; locked: boolean; hidden: boolean };
@@ -28,22 +29,27 @@ export function readStudioDocument(value: unknown): StudioDocument | null {
   const sections = v.sections.slice(0,30).flatMap((raw,index) => { const s = obj(raw); if (!['hero','description','schedule','location','gallery','faq','registration'].includes(String(s.type))) return []; return [{ id: `section-${index}`, type: s.type as Section['type'], title: str(s.title,200), body: str(s.body,10000), image: safeImage(s.image), hidden: s.hidden === true }]; });
   return { schema: 1, width: num(v.width,MIN_MM,MAX_MM,54), height: num(v.height,MIN_MM,MAX_MM,85.6), background: color(v.background,'#ffffff'), foreground: color(v.foreground,'#171717'), accent: color(v.accent,'#635bff'), font: ['sans','serif','mono'].includes(String(v.font)) ? v.font as StudioDocument['font'] : 'sans', layers, sections };
 }
-export function validateStudio(doc: StudioDocument, kind: StudioKind): string[] {
-  const errors: string[] = [];
+// QR problems block (the code would not scan); other layer problems only warn, because the print simply clips them.
+export function studioIssues(doc: StudioDocument, kind: StudioKind): DesignIssue[] {
+  const issues: DesignIssue[] = [];
+  const errors = { push: (message: string, nodeId?: string, blocking = true) => { if (!issues.some(i => i.message === message && i.nodeId === nodeId)) issues.push({ message, nodeId, blocking }); } };
   if (!Number.isFinite(doc.width) || !Number.isFinite(doc.height) || doc.width < MIN_MM || doc.width > MAX_MM || doc.height < MIN_MM || doc.height > MAX_MM) errors.push(`Dimensions must be between ${MIN_MM} and ${MAX_MM} mm.`);
   if (kind === 'website') {
     if (!doc.sections.some(s => !s.hidden && s.type === 'registration')) errors.push('Add a visible registration section so attendees can register.');
-    return errors;
+    return issues;
   }
   const visible = doc.layers.filter(l => !l.hidden);
   if (visible.filter(l => l.type === 'qr').length !== 1) errors.push('Include exactly one visible QR code.');
   for (const l of visible) {
-    if (l.width < 1 || l.height < 1 || l.x < 0 || l.y < 0) errors.push("Layer dimensions must be positive and positions inside the canvas.");
-    if (l.x + l.width > doc.width + .01 || l.y + l.height > doc.height + .01) errors.push(`${l.field === 'text' ? l.type : l.field} extends beyond the print boundary.`);
-    if (l.type === 'qr' && (Math.abs(l.width-l.height)>.01 || l.width < 15)) errors.push('QR must be square and at least 15 mm wide, including its quiet zone.');
-    if (l.type === 'qr' && visible.some(other => other.id !== l.id && (other.type !== 'shape' || doc.layers.indexOf(other) > doc.layers.indexOf(l)) && !(other.type === 'image' && doc.layers.indexOf(other) === 0 && other.x === 0 && other.y === 0 && other.width === doc.width && other.height === doc.height) && other.x < l.x+l.width && other.x+other.width > l.x && other.y < l.y+l.height && other.y+other.height > l.y)) errors.push('Keep text and images clear of the QR code.');
-    if (l.type === 'image' && !l.src && !['photo','logo'].includes(l.field)) errors.push('Choose an image for each image layer.');
+    if (l.width < 1 || l.height < 1 || l.x < 0 || l.y < 0) errors.push("Layer dimensions must be positive and positions inside the canvas.", l.id, l.type === 'qr');
+    if (l.x + l.width > doc.width + .01 || l.y + l.height > doc.height + .01) errors.push(`${l.field === 'text' ? l.type : l.field} extends beyond the print boundary.`, l.id, l.type === 'qr');
+    if (l.type === 'qr' && (Math.abs(l.width-l.height)>.01 || l.width < 15)) errors.push('QR must be square and at least 15 mm wide, including its quiet zone.', l.id);
+    if (l.type === 'qr' && visible.some(other => other.id !== l.id && (other.type !== 'shape' || doc.layers.indexOf(other) > doc.layers.indexOf(l)) && !(other.type === 'image' && doc.layers.indexOf(other) === 0 && other.x === 0 && other.y === 0 && other.width === doc.width && other.height === doc.height) && other.x < l.x+l.width && other.x+other.width > l.x && other.y < l.y+l.height && other.y+other.height > l.y)) errors.push('Keep text and images clear of the QR code.', l.id);
+    if (l.type === 'image' && !l.src && !['photo','logo'].includes(l.field)) errors.push('Choose an image for each image layer.', l.id, false);
   }
-  return [...new Set(errors)];
+  return issues;
+}
+export function validateStudio(doc: StudioDocument, kind: StudioKind): string[] {
+  return studioIssues(doc, kind).filter(i => i.blocking).map(i => i.message);
 }
 export const studioFont = (font: StudioDocument['font']) => font === 'serif' ? 'Georgia, serif' : font === 'mono' ? 'monospace' : 'Arial, sans-serif';

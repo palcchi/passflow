@@ -214,5 +214,5 @@ test('standard plugin templates serialize into valid desktop/mobile HTML documen
   const blank=context.testApi.findFrames();
   const empty=readFigmaWebsite({schema:3,source:'figma',desktop:await context.testApi.serialize(blank.desktop,[]),mobile:await context.testApi.serialize(blank.mobile,[])});
   assert.ok(empty,'blank frames sync as drafts');
-  assert.match(validateFigmaWebsite(empty).join(' '),/registration action/,'publishing still needs a Register button');
+  assert.match(validateFigmaWebsite(empty).join(' '),/Mark a button as Register/,'publishing still needs a Register button');
 });

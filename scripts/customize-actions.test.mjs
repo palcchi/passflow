@@ -5,7 +5,7 @@ import { createRequire } from 'node:module';
 import ts from 'typescript';
 
 const require = createRequire(import.meta.url);
-const source = ts.transpileModule(readFileSync(new URL('../app/admin/actions.ts', import.meta.url), 'utf8'), {
+const source = ts.transpileModule(readFileSync(new URL('../app/organizer/events/actions.ts', import.meta.url), 'utf8'), {
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
 }).outputText;
 
@@ -42,7 +42,7 @@ test('theme save stages draft and does not revalidate a failed RPC', async () =>
   const saved=setup();
   assert.equal((await saved.actions.saveEventTheme(form())).ok,true);
   assert.equal(saved.writes[0].args.p_patch.theme.primary,'#333333');
-  assert.ok(saved.paths.includes('/admin/events/evt_owned'));
+  assert.ok(saved.paths.includes('/organizer/events/evt_owned'));
   const invalid=setup();
   assert.equal((await invalid.actions.saveEventTheme(form({primary:'invalid'}))).ok,false);
   assert.equal(invalid.writes.length,0);

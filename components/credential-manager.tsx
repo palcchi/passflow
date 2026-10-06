@@ -1,6 +1,6 @@
 "use client";
 import { useState, useTransition } from "react";
-import { manageCredentials } from "@/app/admin/actions";
+import { manageCredentials } from "@/app/organizer/events/actions";
 
 type Credential = { id: string; display_code: string | null; status: string; claimed_at: string | null; revoked_at: string | null; owner: string | null };
 const PAGE = 24;
