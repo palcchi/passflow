@@ -6,6 +6,7 @@ const frameLabel = (role) => role.charAt(0).toUpperCase() + role.slice(1) + ' ' 
 const frameOffset = { desktop: 0, tablet: 1600, mobile: 2600 };
 const bindings = ['eventName', 'eventDescription', 'eventDate', 'venue', 'venueMap', 'logo', 'banner', 'tickets', 'register', 'myPass', 'schedule', 'speakers', 'sponsors', 'customLink', 'formSlot', 'passSlot'];
 const blocks = ['Navbar', 'Hero', 'About', 'Tickets', 'Schedule', 'Speakers', 'Sponsors', 'Venue', 'FAQ', 'CTA', 'Footer'];
+const objects = ['Button', 'Register button', 'Ticket list'];
 let session = null;
 let tickets = [];
 function setTickets(list) { tickets = Array.isArray(list) ? list.filter(t => t && typeof t.id === 'string' && typeof t.name === 'string').slice(0, 50) : []; figma.ui.postMessage({ type: 'tickets', tickets }); }
@@ -265,7 +266,7 @@ function slotBox(parent, binding, width, height, t) {
     slot.primaryAxisAlignItems = 'CENTER';
     slot.counterAxisAlignItems = 'CENTER';
     if (parent.layoutMode !== 'NONE') {
-        slot.layoutSizingHorizontal = 'FILL';
+        slot.layoutSizingHorizontal = 'FIXED';
         slot.layoutSizingVertical = 'FIXED';
     }
     if (t)
@@ -314,7 +315,8 @@ async function block(parent, name, style, b, title = '') {
     }
     if (name === 'Form slot' || name === 'Pass slot') {
         sec.setSharedPluginData(NS, 'enter', '');
-        slotBox(sec, name === 'Form slot' ? 'formSlot' : 'passSlot', cw, mobile ? 560 : 640, t);
+        sec.counterAxisAlignItems = 'CENTER';
+        slotBox(sec, name === 'Form slot' ? 'formSlot' : 'passSlot', Math.min(cw, 560), mobile ? 560 : 640, t);
         return;
     }
     if (name === 'Hero') {
@@ -565,6 +567,12 @@ async function pageTemplate(style, slug) {
     figma.currentPage.selection = created;
     figma.viewport.scrollAndZoomIntoView(created);
     linkBreakpoints();
+    // The Pass page and the digital pass card belong together: the card is what PassFlow places in the Pass slot.
+    if (slug === 'pass' && !eventFrames().some(f => f.getSharedPluginData(NS, 'pass') === 'digital' && !f.getSharedPluginData(NS, 'ticketType'))) {
+        await passTemplate(style, 'digital');
+        status('Changes detected', 'Pass page added with its Digital pass card. Design the card; PassFlow places it, with the attendee name and QR, in the Pass slot.');
+        return;
+    }
     status('Changes detected', slug === 'ticket' ? 'Ticket page added. The sign-up form appears in its Form slot.' : slug === 'pass' ? 'Pass page added. The attendee QR pass appears in its Pass slot.' : '"' + slug + '" page added at /e/your-event/' + slug + '. Link to it with Prototype → Navigate to.');
     selectionState();
 }
@@ -1228,7 +1236,7 @@ figma.on('currentpagechange', () => {
 });
 selectionState();
 figma.ui.onmessage = async (message) => {
-    var _a;
+    var _a, _b, _c;
     if (syncing || commandPending) {
         status('Working', 'Wait for the current operation to finish.');
         return;
@@ -1249,7 +1257,7 @@ figma.ui.onmessage = async (message) => {
             try {
                 setTickets((await api('sync', { documentId }, paired.token)).tickets);
             }
-            catch ( /* categories refresh on next open */_b) { /* categories refresh on next open */ }
+            catch ( /* categories refresh on next open */_d) { /* categories refresh on next open */ }
             return;
         }
         if (message.type === 'disconnect') {
@@ -1351,7 +1359,35 @@ figma.ui.onmessage = async (message) => {
             node.setSharedPluginData(NS, 'passField', message.field);
             status('Changes detected', message.field ? 'Layer now shows the attendee ' + message.field + '.' : 'Attendee field removed; the layer is static artwork again.');
         }
-        if (message.type === 'block') {
+        if (message.type === 'block' && objects.includes(message.block)) {
+            // Small objects go into whatever is selected (a section, a row, or the frame itself).
+            const target = figma.currentPage.selection[0];
+            if (!target || !('appendChild' in target) || target.type === 'INSTANCE' || target.type === 'TEXT')
+                throw Error('Select a frame, section or row to add it to.');
+            if (message.style === 'blank')
+                throw Error('Pick Minimal or Festival above so the object gets a style.');
+            const t = await theme(message.style), b = await buttons(t, message.style, ((_b = frameOfNode(target)) !== null && _b !== void 0 ? _b : target).x - 420, ((_c = frameOfNode(target)) !== null && _c !== void 0 ? _c : target).y);
+            const parent = target;
+            if (message.block === 'Ticket list') {
+                const list = box('Live tickets · from PassFlow', 'VERTICAL', { gap: 10 });
+                parent.appendChild(list);
+                bind(list, 'tickets');
+                for (const [name, price] of [['Early bird', 'IDR 150,000'], ['Regular', 'IDR 250,000']]) {
+                    const row = card(list, t, name, 320, 'HORIZONTAL');
+                    txt(row, name, { size: 17, font: t.bodyBold, color: t.ink });
+                    txt(row, price, { size: 15, font: t.body, color: t.muted });
+                }
+                figma.currentPage.selection = [list];
+            }
+            else {
+                const i = button(parent, b, message.block === 'Register button' ? 'Register' : 'Button', 'primary', 16);
+                if (message.block === 'Register button')
+                    register(i);
+                figma.currentPage.selection = [i];
+            }
+            status('Changes detected', message.block + ' added.' + (message.block === 'Button' ? ' Link it with Prototype → On click.' : ''));
+        }
+        else if (message.type === 'block') {
             if (!blocks.includes(message.block))
                 throw Error('Choose a supported block.');
             const frame = figma.currentPage.selection[0];

@@ -30,6 +30,7 @@ type Message=
 
 const bindings:Binding[]=['eventName','eventDescription','eventDate','venue','venueMap','logo','banner','tickets','register','myPass','schedule','speakers','sponsors','customLink','formSlot','passSlot'];
 const blocks=['Navbar','Hero','About','Tickets','Schedule','Speakers','Sponsors','Venue','FAQ','CTA','Footer'];
+const objects=['Button','Register button','Ticket list'];
 let session:Session|null=null;
 let tickets:{id:string;name:string}[]=[];
 function setTickets(list:unknown){tickets=Array.isArray(list)?list.filter(t=>t&&typeof t.id==='string'&&typeof t.name==='string').slice(0,50):[];figma.ui.postMessage({type:'tickets',tickets});}
@@ -203,7 +204,7 @@ function slotBox(parent:FrameNode,binding:'formSlot'|'passSlot',width:number,hei
   slot.name=binding==='formSlot'?'Form slot · PassFlow sign-up form':'Pass slot · attendee QR pass';
   slot.resize(width,height);slot.fills=[solid(t?.alt??'#f5f5f3')];slot.strokes=[solid(t?.line??'#d9d8d2')];slot.strokeWeight=1;slot.dashPattern=[8,6];slot.cornerRadius=t?.radius??20;
   slot.layoutMode='VERTICAL';slot.primaryAxisSizingMode='FIXED';slot.counterAxisSizingMode='FIXED';slot.primaryAxisAlignItems='CENTER';slot.counterAxisAlignItems='CENTER';
-  if(parent.layoutMode!=='NONE'){slot.layoutSizingHorizontal='FILL';slot.layoutSizingVertical='FIXED';}
+  if(parent.layoutMode!=='NONE'){slot.layoutSizingHorizontal='FIXED';slot.layoutSizingVertical='FIXED';}
   if(t)txt(slot,binding==='formSlot'?'PassFlow sign-up form appears here':'Attendee QR pass appears here',{size:15,font:t.bodyMedium,color:t.muted,align:'CENTER'});
   bind(slot,binding);
   return slot;
@@ -243,7 +244,8 @@ async function block(parent:FrameNode,name:string,style:TemplateStyle,b?:Buttons
   }
   if(name==='Form slot'||name==='Pass slot'){
     sec.setSharedPluginData(NS,'enter','');
-    slotBox(sec,name==='Form slot'?'formSlot':'passSlot',cw,mobile?560:640,t);
+    sec.counterAxisAlignItems='CENTER';
+    slotBox(sec,name==='Form slot'?'formSlot':'passSlot',Math.min(cw,560),mobile?560:640,t);
     return;
   }
   if(name==='Hero'){
@@ -424,6 +426,12 @@ async function pageTemplate(style:TemplateStyle,slug:string){
   figma.currentPage.selection=created;
   figma.viewport.scrollAndZoomIntoView(created);
   linkBreakpoints();
+  // The Pass page and the digital pass card belong together: the card is what PassFlow places in the Pass slot.
+  if(slug==='pass'&&!eventFrames().some(f=>f.getSharedPluginData(NS,'pass')==='digital'&&!f.getSharedPluginData(NS,'ticketType'))){
+    await passTemplate(style,'digital');
+    status('Changes detected','Pass page added with its Digital pass card. Design the card; PassFlow places it, with the attendee name and QR, in the Pass slot.');
+    return;
+  }
   status('Changes detected',slug==='ticket'?'Ticket page added. The sign-up form appears in its Form slot.':slug==='pass'?'Pass page added. The attendee QR pass appears in its Pass slot.':'"'+slug+'" page added at /e/your-event/'+slug+'. Link to it with Prototype → Navigate to.');
   selectionState();
 }
@@ -952,7 +960,25 @@ figma.ui.onmessage=async(message:Message)=>{
       node.setSharedPluginData(NS,'passField',message.field);
       status('Changes detected',message.field?'Layer now shows the attendee '+message.field+'.':'Attendee field removed; the layer is static artwork again.');
     }
-    if(message.type==='block'){
+    if(message.type==='block'&&objects.includes(message.block)){
+      // Small objects go into whatever is selected (a section, a row, or the frame itself).
+      const target=figma.currentPage.selection[0];
+      if(!target||!('appendChild' in target)||target.type==='INSTANCE'||target.type==='TEXT')throw Error('Select a frame, section or row to add it to.');
+      if(message.style==='blank')throw Error('Pick Minimal or Festival above so the object gets a style.');
+      const t=await theme(message.style),b=await buttons(t,message.style,(frameOfNode(target)??target as FrameNode).x-420,(frameOfNode(target)??target as FrameNode).y);
+      const parent=target as FrameNode;
+      if(message.block==='Ticket list'){
+        const list=box('Live tickets · from PassFlow','VERTICAL',{gap:10});parent.appendChild(list);bind(list,'tickets');
+        for(const [name,price] of [['Early bird','IDR 150,000'],['Regular','IDR 250,000']]){const row=card(list,t,name,320,'HORIZONTAL');txt(row,name,{size:17,font:t.bodyBold,color:t.ink});txt(row,price,{size:15,font:t.body,color:t.muted});}
+        figma.currentPage.selection=[list];
+      }else{
+        const i=button(parent,b,message.block==='Register button'?'Register':'Button','primary',16);
+        if(message.block==='Register button')register(i);
+        figma.currentPage.selection=[i];
+      }
+      status('Changes detected',message.block+' added.'+(message.block==='Button'?' Link it with Prototype → On click.':''));
+    }
+    else if(message.type==='block'){
       if(!blocks.includes(message.block))throw Error('Choose a supported block.');
       const frame=figma.currentPage.selection[0];
       if(frame?.type!=='FRAME')throw Error('Select a website frame first.');

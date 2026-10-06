@@ -204,18 +204,19 @@ test('standard plugin templates serialize into valid desktop/mobile HTML documen
     await edit(d,'Winter Festival');
     assert.deepEqual([t.characters,m.characters],['Summer Fest','Summer Fest'],'tablet override survives desktop edits');
   }
-  {
-    await context.testApi.pageTemplate('minimal','pass');
-    const pass=context.testApi.findFrames().pages.find(p=>p.slug==='pass');
-    assert.ok(pass&&pass.desktop.findAll(n=>n.getSharedPluginData('passflow','binding')==='passSlot').length===1,'pass page has a Pass slot');
-    const ticket=context.testApi.findFrames().pages.find(p=>p.slug==='ticket');
-    if(ticket)assert.ok(ticket.mobile.findAll(n=>n.getSharedPluginData('passflow','binding')==='formSlot').length===1,'ticket page has a Form slot');
-  }
   await assert.rejects(()=>context.testApi.passTemplate('minimal','id_card'),/already has/);
   await context.testApi.passTemplate('minimal','digital','',100,150);
   const custom=readStudioDocument(await context.testApi.exportPass(context.testApi.findFrames().passes.find(p=>p.kind==='digital').frame,'digital',[]));
   assert.deepEqual([custom.width,custom.height],[100,150],'custom pass size is kept');
   assert.deepEqual(validateStudio(custom,'digital'),[],'custom size passes print validation');
+  {
+    await context.testApi.pageTemplate('minimal','pass');
+    const pass=context.testApi.findFrames().pages.find(p=>p.slug==='pass');
+    assert.ok(pass&&pass.desktop.findAll(n=>n.getSharedPluginData('passflow','binding')==='passSlot').length===1,'pass page has a Pass slot');
+    assert.equal(context.testApi.findFrames().passes.filter(p=>p.kind==='digital').length,1,'the Pass page reuses the existing digital card');
+    const ticket=context.testApi.findFrames().pages.find(p=>p.slug==='ticket');
+    if(ticket)assert.ok(ticket.mobile.findAll(n=>n.getSharedPluginData('passflow','binding')==='formSlot').length===1,'ticket page has a Form slot');
+  }
   context.testApi.setTickets([{id:'11111111-1111-4111-8111-111111111111',name:'VIP'}]);
   await context.testApi.passTemplate('minimal','id_card','11111111-1111-4111-8111-111111111111');
   assert.ok(context.testApi.findFrames().passes.some(p=>p.kind==='id_card'&&p.ticketTypeId==='11111111-1111-4111-8111-111111111111'),'per-category ID card');
