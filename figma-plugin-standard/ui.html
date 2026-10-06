@@ -21,6 +21,9 @@ h1{font-size:26px;line-height:1;margin:0;letter-spacing:-.04em;font-weight:700}
 .step-title{display:flex;align-items:center;gap:10px;font-weight:600;font-size:14px;letter-spacing:-.01em}
 .num{width:22px;height:22px;border-radius:999px;background:var(--ink);color:var(--paper);display:grid;place-items:center;font-size:11px;font-weight:700;flex:none}
 .hint{margin:0;color:var(--muted);font-size:12px}
+.issues{list-style:none;margin:10px 0 0;padding:0;display:grid;gap:6px;max-height:180px;overflow:auto}
+.issue{width:100%;text-align:left;font-size:12px;line-height:1.45;padding:8px 10px;border-radius:10px;border:1px solid var(--line);background:var(--bg,#fff);color:inherit;font-weight:500}
+.issue.is-error{border-color:#e5484d;color:#c62a2f}
 label.field{display:grid;gap:6px;font-size:12px;color:var(--muted)}
 input,select{font:inherit;font-size:13px;color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:10px 12px;width:100%;outline:none}
 input:focus,select:focus{border-color:var(--ink)}
@@ -82,6 +85,7 @@ footer{position:sticky;bottom:0;background:var(--paper);padding:12px 18px 14px;b
     <div class="status-line"><span id="dot" class="dot"></span><span id="status">Disconnected</span></div>
     <div id="event" class="event" hidden></div>
     <p id="message"></p>
+    <ul id="issues" class="issues" hidden></ul>
     <button id="confirm" class="primary" style="margin-top:10px;width:100%" hidden>Yes, sync this page to the event</button>
   </section>
 
@@ -196,13 +200,13 @@ footer{position:sticky;bottom:0;background:var(--paper);padding:12px 18px 14px;b
 </div>
 
 <footer>
-  <div class="row"><button id="sync" class="primary">Sync now</button><button id="preview" disabled>Preview</button></div>
+  <div class="row"><button id="sync" class="primary">Sync to website</button></div>
   <div class="foot-note">
-    <span>Auto-syncs to a private draft. Publish in PassFlow.</span>
+    <span>Sync publishes this file to your live event site and passes.</span>
     <button id="open" class="link" disabled>Open PassFlow ↗</button>
   </div>
   <div class="foot-note">
-    <button id="resume" class="link">Refresh draft revision</button>
+    <button id="resume" class="link">Reconnect</button>
     <button id="disconnect" class="link">Disconnect device</button>
   </div>
 </footer>
@@ -220,9 +224,9 @@ function updateStatus(m){
   eventId=m.eventId||'';draftId=m.draftId||'';
   connected=!!m.eventName&&!offline.includes(state);
   $('pairing').hidden=connected;
-  $('preview').disabled=!eventId||!draftId;$('open').disabled=!eventId;
+  $('open').disabled=!eventId;$('resume').hidden=state!=='Sync failed';
   $('confirm').hidden=state!=='Confirm event';
-  $('dot').className='dot '+(state==='Connected'||state==='Synced'?'on':/paused|Confirm|Changes|Syncing|Working/.test(state)?'warn':/failed|expired|unavailable/.test(state)?'bad':'');
+  $('dot').className='dot '+(state==='Connected'||state==='Live'?'on':/Confirm|Changes|Syncing|Working/.test(state)?'warn':/failed|expired|unavailable|Not published/.test(state)?'bad':'');
 }
 $('pair').onclick=()=>send({type:'pair',code:$('code').value});
 $('code').onkeydown=e=>{if(e.key==='Enter')send({type:'pair',code:$('code').value})};
@@ -246,13 +250,16 @@ $('pageKind').onchange=()=>{$('pageNameWrap').hidden=$('pageKind').value!=='cust
 $('addPage').onclick=()=>send({type:'page',style:style(),page:$('pageKind').value==='ticket'?'ticket':$('pageName').value});
 $('sync').onclick=()=>send({type:'sync'});
 $('disconnect').onclick=()=>{if(confirm('Remove this device\'s connection? The file stays paired in PassFlow until you revoke it there.'))send({type:'disconnect'})};
-$('resume').onclick=()=>{if(confirm('Refresh the current draft revision before retrying sync?'))send({type:'reload'})};
+$('resume').onclick=()=>send({type:'reload'});
 $('confirm').onclick=()=>send({type:'confirm'});
-$('preview').onclick=()=>{if(eventId&&draftId)openUrl('https://passflow.my.id/admin/events/'+encodeURIComponent(eventId)+'/design/preview/'+encodeURIComponent(draftId))};
-$('open').onclick=()=>{if(eventId)openUrl('https://passflow.my.id/admin/events/'+encodeURIComponent(eventId)+'/design')};
+$('open').onclick=()=>{if(eventId)openUrl('https://passflow.my.id/organizer/events/'+encodeURIComponent(eventId)+'/design')};
 window.onmessage=e=>{
   const m=e.data.pluginMessage;if(!m)return;
   if(m.type==='status')updateStatus(m);
+  if(m.type==='issues'){
+    // Each issue is a button: clicking selects the layer in Figma.
+    const list=$('issues');list.replaceChildren(...m.issues.map(issue=>{const li=document.createElement('li'),b=document.createElement('button');b.className='issue'+(issue.blocking?' is-error':'');b.textContent=(issue.blocking?'Fix: ':'Note: ')+(issue.frame?issue.frame+' · ':'')+issue.message;b.onclick=()=>send({type:'focus',issue});li.append(b);return li;}));list.hidden=!m.issues.length;
+  }
   if(m.type==='tickets'){const sel=$('passTicket'),keep=sel.value;sel.replaceChildren(new Option('All attendees',''),...m.tickets.map(t=>new Option(t.name,t.id)));sel.value=m.tickets.some(t=>t.id===keep)?keep:'';}
   if(m.type==='selection'){
     $('selected').textContent=m.name||'Nothing selected';

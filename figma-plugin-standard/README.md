@@ -10,10 +10,9 @@ PassFlow uses a standard Figma Design plugin for the connected event workflow.
 - offers Minimal, Editorial and Festival starter styles;
 - inserts Hero, About, Tickets, Schedule, Speaker Grid, Sponsor Grid, Venue, Venue Map, FAQ, CTA and Footer blocks;
 - supports Simple Mode and Advanced Mode;
-- auto-syncs changes to a private PassFlow Draft;
-- never publishes automatically;
-- opens Draft Preview and the event Design workspace in PassFlow;
-- detects draft revision conflicts and requires an explicit refresh before overwriting newer work.
+- publishes to the live event site and passes when you press Sync (edits alone never publish);
+- shows blocking problems and warnings in the plugin, selecting the Figma layer each one points at;
+- opens the event Design workspace in PassFlow.
 
 ## Security model
 
@@ -26,7 +25,7 @@ Pairing flow:
     → plugin exchanges code
     → event-scoped opaque plugin token
     → token stored in Figma clientStorage
-    → draft sync API
+    → sync API (validates, then publishes)
 
 The Figma document only remembers non-secret event metadata and bindings. Revoking the paired file in PassFlow invalidates the server-side connection.
 
@@ -58,9 +57,9 @@ In Figma:
     → Pair event
     → Insert Desktop + Mobile starter
     → edit freely
-    → Draft auto-sync
+    → Sync
     → Preview
-    → Publish from PassFlow
+    → Live on the event site
 
 Pairing codes expire after ten minutes. Copied files should be paired again before they can sync to another event.
 
@@ -106,7 +105,7 @@ Optional:
 - Venue Map
 - FAQ
 
-The plugin blocks Draft sync when a required binding is missing and reports recommendations as warnings.
+Sync is refused, and the layer selected, when a required binding is missing or a QR would not scan. Everything else goes live and is listed as a warning.
 
 ## Current boundaries
 
@@ -115,4 +114,4 @@ The plugin blocks Draft sync when a required binding is missing and reports reco
 - Complex masks, effects, rotations and container image fills still require Preview review.
 - Leaf vector/shape/image artwork can be rasterized instead of turning the entire website into one screenshot.
 - Auto layout is captured at the current responsive frame size; Desktop and Mobile remain the source of responsive truth.
-- Publishing stays explicit in PassFlow.
+- Publishing happens only on Sync.

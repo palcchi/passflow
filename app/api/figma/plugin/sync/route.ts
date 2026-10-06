@@ -1,12 +1,31 @@
 import {documentIdValid,pluginBody,pluginHeaders,pluginResponse,pluginServer,secretHash} from '@/lib/figma-plugin-server';
-import {readFigmaWebsite} from '@/lib/figma-website';
-import {readStudioDocument} from '@/lib/studio/model';
+import {revalidatePath} from 'next/cache';
+import {figmaWebsiteIssues,readFigmaWebsite,type DesignIssue} from '@/lib/figma-website';
+import {readStudioDocument,studioIssues,type StudioKind} from '@/lib/studio/model';
 import {hoistFigmaImages} from '@/lib/figma-assets';
 import type {Json} from '@/lib/supabase/database.types';
 
 const passKinds=['digital','id_card','wristband'] as const;
 const passNames:Record<string,string>={digital:'Digital pass',id_card:'ID card',wristband:'Wristband'};
 const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+type Server=ReturnType<typeof pluginServer>;
+
+// Sync is publish: the synced row becomes the live design for its kind and ticket category, and every older
+// draft or archived row for that slot is deleted so the Design page only lists what is live.
+// ponytail: not one transaction; the unique published index rejects a racing second sync, which the plugin retries.
+async function goLive(server:Server,eventId:string,id:string){
+  const {data:doc,error}=await server.from('event_studio_documents').select('kind,ticket_type_id,status').eq('id',id).eq('event_id',eventId).single();
+  if(error||!doc)throw Error('sync_unavailable');
+  const slot=<T extends {eq:(c:string,v:string)=>T;is:(c:string,v:null)=>T}>(q:T)=>{const k=q.eq('event_id',eventId).eq('kind',doc.kind);return doc.ticket_type_id?k.eq('ticket_type_id',doc.ticket_type_id):k.is('ticket_type_id',null);};
+  if(doc.status!=='published'){
+    const {data:last}=await slot(server.from('event_studio_documents').select('publication_number')).not('publication_number','is',null).order('publication_number',{ascending:false}).limit(1).maybeSingle();
+    const now=new Date().toISOString();
+    const archived=await slot(server.from('event_studio_documents').update({status:'archived',updated_at:now})).eq('status','published');
+    const live=await server.from('event_studio_documents').update({status:'published',publication_number:(last?.publication_number??0)+1,published_at:now,updated_at:now}).eq('id',id);
+    if(archived.error||live.error)throw Error('sync_unavailable');
+  }
+  await slot(server.from('event_studio_documents').delete()).neq('status','published');
+}
 
 export function OPTIONS(){return new Response(null,{status:204,headers:pluginHeaders});}
 export async function POST(request:Request){
@@ -39,14 +58,24 @@ export async function POST(request:Request){
       if(!passKinds.includes(p.kind as typeof passKinds[number])||!doc||(p.ticketTypeId&&!ticketTypeId)||passes.some(x=>x.kind===p.kind&&x.ticketTypeId===ticketTypeId)||JSON.stringify(doc).length>750000)return pluginResponse({error:'invalid_pass'},400);
       passes.push({kind:p.kind as string,ticketTypeId,document:doc});
     }
+    const issues:DesignIssue[]=[...(document?figmaWebsiteIssues(document):[]),...passes.flatMap(p=>studioIssues(p.document,p.kind as StudioKind).map(i=>({...i,frame:passNames[p.kind]})))];
+    if(issues.some(i=>i.blocking))return pluginResponse({error:'design_issues',issues},422);
+    const warnings=issues.filter(i=>!i.blocking);
     let result=state;
     if(document){
       const {data,error}=await server.rpc('figma_plugin_draft',{p_token_hash:tokenHash,p_document_id:body.documentId,p_revision:Number(body.revision??0),p_document:document as unknown as Json,p_payload_hash:secretHash(JSON.stringify(document))});
       if(error)return pluginResponse({error:'sync_unavailable'},503);
       result=data as Record<string,unknown>;
       if(result.error)return pluginResponse(result,result.error==='revision_conflict'?409:401);
+      await goLive(server,eventId,result.draftId as string);
     }
-    if(!passes.length)return pluginResponse(result);
+    const done=async(extra:Record<string,unknown>={})=>{
+      const {data:event}=await server.from('events').select('slug').eq('id',eventId).single();
+      if(event)revalidatePath('/e/'+event.slug,'layout');
+      revalidatePath('/organizer/events/'+eventId,'layout');
+      return pluginResponse({...result,...extra,live:true,warnings});
+    };
+    if(!passes.length)return done();
     const {data:link}=await server.from('figma_plugin_links').select('created_by').eq('token_hash',tokenHash).eq('document_id',body.documentId).is('revoked_at',null).single();
     if(!link)return pluginResponse({error:'connection_expired'},401);
     const ticketIds=[...new Set(passes.flatMap(p=>p.ticketTypeId?[p.ticketTypeId]:[]))];
@@ -64,7 +93,8 @@ export async function POST(request:Request){
         :await server.from('event_studio_documents').insert({event_id:eventId,kind:p.kind,ticket_type_id:p.ticketTypeId,name:('Figma · '+passNames[p.kind]+(ticketName?' · '+ticketName:'')).slice(0,100),document:stored,created_by:link.created_by}).select('id').single();
       if(write.error||!write.data)return pluginResponse({error:'sync_unavailable'},503);
       passDrafts[p.kind+(p.ticketTypeId?':'+p.ticketTypeId:'')]=write.data.id;
+      await goLive(server,eventId,write.data.id);
     }
-    return pluginResponse({...result,passDrafts});
-  }catch(error){return pluginResponse({error:error instanceof Error&&error.message==='plugin_server_not_configured'?'plugin_server_not_configured':'invalid_request'},400);}
+    return done({passDrafts});
+  }catch(error){const code=error instanceof Error?error.message:'';return pluginResponse({error:['plugin_server_not_configured','sync_unavailable'].includes(code)?code:'invalid_request'},code==='sync_unavailable'?503:400);}
 }

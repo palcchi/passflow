@@ -9,8 +9,7 @@ const blocks = ['Navbar', 'Hero', 'About', 'Tickets', 'Schedule', 'Speakers', 'S
 let session = null;
 let tickets = [];
 function setTickets(list) { tickets = Array.isArray(list) ? list.filter(t => t && typeof t.id === 'string' && typeof t.name === 'string').slice(0, 50) : []; figma.ui.postMessage({ type: 'tickets', tickets }); }
-let mutating = false, syncing = false, dirty = false, blocked = false, confirmed = false, commandPending = false;
-let timer = null;
+let mutating = false, syncing = false, blocked = false, confirmed = false, commandPending = false;
 let documentId = figma.root.getSharedPluginData(NS, 'documentId');
 if (!documentId) {
     documentId = 'doc_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2);
@@ -469,7 +468,6 @@ async function template(style) {
     }
     figma.currentPage.selection = created;
     figma.viewport.scrollAndZoomIntoView(created);
-    dirty = true;
     status('Changes detected', style === 'blank' ? 'Blank Desktop and Mobile frames are ready. Design freely, then mark a Register button.' : 'Starter ' + style + ' website inserted. Edit any text; links and hovers come from Figma prototype interactions.');
     selectionState();
 }
@@ -526,7 +524,6 @@ async function pageTemplate(style, slug) {
     }
     figma.currentPage.selection = created;
     figma.viewport.scrollAndZoomIntoView(created);
-    dirty = true;
     status('Changes detected', slug === 'ticket' ? 'Ticket page added. It shows above the PassFlow sign-up form.' : '"' + slug + '" page added at /e/your-event/' + slug + '. Link to it with Prototype → Navigate to.');
     selectionState();
 }
@@ -639,7 +636,6 @@ async function passTemplate(style, kind, ticketTypeId = '', w, h) {
     }
     figma.currentPage.selection = [frame];
     figma.viewport.scrollAndZoomIntoView([frame]);
-    dirty = true;
     status('Changes detected', size.label + ' added. Design freely; keep the QR square, at least 15 mm and clear of other layers.');
     selectionState();
 }
@@ -741,7 +737,7 @@ function contractWarnings(frame, label) {
     for (const child of frame.children)
         visit(child);
     const warnings = [];
-    // Drafts may be unfinished; PassFlow enforces this only when publishing.
+    // PassFlow checks this again on Sync and refuses to publish a broken design.
     if (!found.has('register') && !found.has('tickets'))
         warnings.push(label + ': mark a Register button (or add live Tickets) before publishing.');
     return warnings;
@@ -973,11 +969,37 @@ async function api(path, body, token) {
         result = await response.json();
     }
     catch (_a) { }
-    if (!response.ok || result.error)
-        throw Error(result.error || 'Request failed');
+    if (!response.ok || result.error) {
+        const failure = Error(result.error || 'Request failed');
+        failure.issues = result.issues;
+        throw failure;
+    }
     return result;
 }
+// Select the layer an issue points at (falling back to its frame), switching page if needed.
+async function focusIssue(issue) {
+    var _a, _b, _c, _d, _e;
+    let node = issue.nodeId ? await figma.getNodeByIdAsync(issue.nodeId) : null;
+    if (!node && issue.nodeId)
+        node = figma.currentPage.findOne(n => n.getSharedPluginData(NS, 'id') === issue.nodeId);
+    if (!node && issue.frame) {
+        const f = findFrames(), label = issue.frame, page = /^(.+) page \((Desktop|Tablet|Mobile)\)$/.exec(label);
+        const role = (page ? page[2] : label).toLowerCase();
+        node = page ? (_b = (_a = f.pages.find(p => p.slug === page[1])) === null || _a === void 0 ? void 0 : _a[role]) !== null && _b !== void 0 ? _b : null : (_e = (_c = f[role]) !== null && _c !== void 0 ? _c : (_d = f.passes.find(p => passSizes[p.kind].label === label)) === null || _d === void 0 ? void 0 : _d.frame) !== null && _e !== void 0 ? _e : null;
+    }
+    if (!node || !('visible' in node))
+        return;
+    let page = node;
+    while (page && page.type !== 'PAGE')
+        page = page.parent;
+    if (page && page !== figma.currentPage)
+        await figma.setCurrentPageAsync(page);
+    figma.currentPage.selection = [node];
+    figma.viewport.scrollAndZoomIntoView([node]);
+}
+function showIssues(issues) { figma.ui.postMessage({ type: 'issues', issues }); }
 async function sync() {
+    var _a, _b, _c;
     if (!session) {
         status('Disconnected', 'Pair an event first.');
         return;
@@ -986,14 +1008,11 @@ async function sync() {
         status('Confirm event', 'Confirm this file should update ' + session.eventName + '. Pair again if this is a copy for another event.');
         return;
     }
-    if (syncing || mutating) {
-        dirty = true;
+    if (syncing || mutating)
         return;
-    }
     if (blocked)
         return;
     syncing = true;
-    dirty = false;
     status('Syncing');
     try {
         const frames = findFrames(), warnings = [];
@@ -1018,28 +1037,36 @@ async function sync() {
         session.revision = result.revision;
         session.draftId = result.draftId;
         await figma.clientStorage.setAsync(storageKey, session);
-        status('Synced', 'Draft ready.' + (warnings.length ? ' ' + [...new Set(warnings)].join(' ') : ''));
+        const serverWarnings = (_a = result.warnings) !== null && _a !== void 0 ? _a : [];
+        showIssues(serverWarnings);
+        status('Live', 'Your website and passes now show this version.' + (warnings.length ? ' ' + [...new Set(warnings)].join(' ') : ''));
+        figma.notify(serverWarnings.length ? 'Live on PassFlow · ' + serverWarnings.length + ' warning' + (serverWarnings.length === 1 ? '' : 's') + ' in the plugin' : 'Live on PassFlow');
     }
     catch (error) {
-        dirty = true;
         const message = error instanceof Error ? error.message : 'Sync failed';
-        blocked = true;
-        status('Sync paused', message === 'revision_conflict' ? 'Another session changed the draft. Review the current draft, then resume.' : message + ' Your Figma changes are still intact.');
+        const issues = (_b = error.issues) !== null && _b !== void 0 ? _b : [];
+        if (message === 'design_issues' && issues.length) {
+            // Nothing was written: the live site keeps its previous version until the design is fixed.
+            showIssues(issues);
+            const first = (_c = issues.find(i => i.blocking)) !== null && _c !== void 0 ? _c : issues[0];
+            figma.notify((first.frame ? first.frame + ': ' : '') + first.message, { error: true, timeout: 10000 });
+            await focusIssue(first);
+            status('Not published', 'Fix the selected layer, then press Sync. The website still shows the previous version.');
+        }
+        else {
+            blocked = message === 'revision_conflict';
+            figma.notify('Sync failed: ' + message, { error: true });
+            status('Sync failed', message === 'revision_conflict' ? 'Another session changed this design. Reconnect, then sync again.' : message + ' Your Figma changes are still intact.');
+        }
     }
     finally {
         syncing = false;
-        if (dirty && !blocked)
-            schedule();
     }
 }
+// Edits never publish by themselves: Sync is the publish button.
 function schedule() {
-    dirty = true;
-    if (confirmed)
-        status('Changes detected');
-    if (timer)
-        clearTimeout(timer);
-    if (session && confirmed && !blocked)
-        timer = setTimeout(() => { void sync(); }, 1500);
+    if (session && confirmed)
+        status('Changes not live', 'Press Sync to publish them to the website.');
 }
 figma.showUI(__html__, { width: 390, height: 760, themeColors: true });
 figma.on('selectionchange', selectionState);
@@ -1051,8 +1078,6 @@ function watchPage() { watchedPage === null || watchedPage === void 0 ? void 0 :
 watchPage();
 figma.on('currentpagechange', () => {
     watchPage();
-    if (timer)
-        clearTimeout(timer);
     confirmed = false;
     status(session ? 'Confirm event' : 'Disconnected', 'Current page changed. Confirm the linked event before this page can sync.');
     selectionState();
@@ -1084,8 +1109,6 @@ figma.ui.onmessage = async (message) => {
             return;
         }
         if (message.type === 'disconnect') {
-            if (timer)
-                clearTimeout(timer);
             session = null;
             blocked = false;
             confirmed = false;
@@ -1110,12 +1133,16 @@ figma.ui.onmessage = async (message) => {
             setTickets(state.tickets);
             await figma.clientStorage.setAsync(storageKey, session);
             blocked = false;
-            status('Connected', 'Draft revision refreshed. Retry sync when ready.');
+            status('Connected', 'Reconnected. Press Sync to publish.');
             return;
         }
         if (message.type === 'sync') {
             blocked = false;
             await sync();
+            return;
+        }
+        if (message.type === 'focus') {
+            await focusIssue(message.issue);
             return;
         }
         mutating = true;
