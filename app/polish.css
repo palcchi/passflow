@@ -196,3 +196,75 @@ html { -webkit-tap-highlight-color: transparent; }
     .flow-workspace .event-admin-hero-actions { display: grid !important; }
   }
 }
+
+/* UI precision audit, 6 Oct 2026: readable minimums, aligned rows, nothing important off-screen on phones. */
+.profile-details-form small,
+.profile-avatar-picker small,
+.event-admin-table td small { font-size: 12px !important; line-height: 1.5; }
+.event-overview-station { display: grid !important; gap: 12px !important; }
+.event-admin-scan-row small { color: var(--muted-foreground); font-size: 12px; }
+.event-admin-scan-decision { white-space: nowrap; }
+.event-admin-scan-decision.is-granted { background: rgba(87,157,109,.11); color: #3d7d51 !important; }
+.event-admin-scan-decision.is-already_checked_in { background: rgba(196,140,46,.12); color: #94661d !important; }
+.flow-workspace .event-admin-metrics.event-experience-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+.asset-upload-card:not(.has-preview) { align-items: center !important; }
+.flow-event-progress small { white-space: nowrap; }
+.collection-search { min-width: min(100%, 260px); }
+
+@media (max-width: 1023px) {
+  .flow-workspace.event-admin-context .event-section-dock-scroll { padding-inline: 8px !important; }
+}
+
+@media (max-width: 680px) {
+  .editorial-footer-links a, .editorial-footer > span { font-size: 12px !important; }
+  /* Tap targets for inline text actions (Revoke, Delete, Remove rule). */
+  .event-admin-text-action, .event-admin-danger-link { min-height: 36px; padding-inline: 6px !important; display: inline-flex; align-items: center; }
+  .flow-event-list .class-event-card { grid-template-columns: 52px minmax(0,1fr) auto !important; gap: 12px !important; }
+  .flow-event-list .class-event-cover { width: 52px !important; height: 52px !important; }
+  .flow-event-progress { min-width: 64px; }
+
+  /* Attendee table becomes stacked rows so Manage is always visible. */
+  .people-table { min-width: 0 !important; }
+  .people-table thead { display: none; }
+  .people-table tr { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; padding: 12px; border-top: 1px solid var(--border); }
+  .people-table tbody tr:first-child { border-top: 0; }
+  .people-table td { display: block; padding: 0 !important; border: 0 !important; min-width: 0; }
+  .people-table td:nth-child(2) { order: 1; flex: 1 1 calc(100% - 120px); }
+  .people-table td:nth-child(6) { order: 2; }
+  .people-table td:nth-child(3) { display: none; }
+  .people-table td:nth-child(1) { order: 3; padding-left: 38px !important; }
+  .people-table td:nth-child(4), .people-table td:nth-child(5) { order: 4; font-size: 12px; }
+  .people-table .event-admin-state { white-space: nowrap; }
+  .people-table .people-identity strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+}
+
+/* Default public event page: one content edge for nav, hero, passes and info cards. */
+.event-public-hero.event-header-editorial { margin-inline: auto !important; width: 100% !important; max-width: 1240px !important; }
+.event-public-copy h1 + p { margin-top: 18px !important; }
+.event-ticket-list + .event-info-grid { margin-top: 28px !important; }
+
+/* QR codes table: toolbar and actions stay inside the card on phones. */
+.resource-toolbar > * { min-width: 0; }
+.resource-toolbar > input { flex: 1 1 auto; }
+.resource-toolbar > select { flex: 0 0 auto; width: auto; }
+.credential-table { width: 100%; table-layout: auto; }
+@media (max-width: 680px) {
+  .credential-table td.credential-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 0 4px; }
+  .credential-table th, .credential-table td { padding-inline: 4px !important; }
+}
+
+/* Sidebar account: the whole row opens the menu, so the chevron gives its room to the name. */
+@media (min-width: 1024px) {
+  .flow-sidebar .user-profile-trigger > svg { display: none !important; }
+  .flow-sidebar .user-profile-trigger-copy { max-width: none !important; flex: 1 1 auto; min-width: 0; }
+  .flow-sidebar .user-profile-trigger-copy strong { max-width: 100% !important; }
+}
+
+/* Auth pages: header shares the card's edges. */
+.auth-shell .auth-nav { max-width: 1000px !important; }
+.flow-workspace .event-admin-danger-zone { padding: 24px 28px !important; border-radius: 24px !important; }
+.event-admin-danger-copy p { max-width: 640px; }
+.credential-table td small { font-size: 12px; }
+.hero-corner-note { font-size: 11px !important; }
+.event-ticket-list > h2 { padding-inline: 22px; }
+@media (max-width: 680px) { .event-ticket-list > h2 { padding-inline: 22px; } }

@@ -49,7 +49,7 @@ export function ExportCard({ fileName, widthMm, heightMm, children }: { fileName
   return <figure className="pass-export-card" data-pass-export data-file-name={fileName} data-width-mm={widthMm} data-height-mm={heightMm} style={{ width: `${widthMm}mm` }}>
     <div className="pass-export-art" style={{ aspectRatio: `${widthMm}/${heightMm}` }}>{children}</div>
     <figcaption className="print:hidden">
-      <span>{state || fileName}</span>
+      <span title={fileName}>{state || fileName}</span>
       <button type="button" onClick={(e) => run(e.currentTarget.closest("figure")!, "png")}>PNG</button>
       <button type="button" onClick={(e) => run(e.currentTarget.closest("figure")!, "jpeg")}>JPG</button>
     </figcaption>

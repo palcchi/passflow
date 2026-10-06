@@ -6,6 +6,8 @@ import { NumberTicker } from "@/components/magicui/number-ticker";
 import { AnimatedList } from "@/components/magicui/animated-list";
 import { requireOrganizerMembership } from "@/lib/auth/session";
 
+const decisionLabel: Record<string, string> = { granted: "Granted", denied: "Denied", invalid: "Invalid", already_checked_in: "Already in" };
+
 type Props = { params: Promise<{ eventId: string }> };
 
 export default async function EventOverviewPage({ params }: Props) {
@@ -84,8 +86,8 @@ export default async function EventOverviewPage({ params }: Props) {
   );
 
   const metrics = [
-    { label: "Registered", value: event.attendeeCount, note: "attendee" },
-    { label: "Checked in", value: event.checkedInCount, note: "checked in" },
+    { label: "Registered", value: event.attendeeCount, note: event.attendeeCount === 1 ? "attendee" : "attendees" },
+    { label: "Checked in", value: event.checkedInCount, note: event.attendeeCount ? `${Math.round((event.checkedInCount / event.attendeeCount) * 100)}% of registered` : "no one yet" },
     {
       label: "QR active",
       value: activeQr,
@@ -149,7 +151,7 @@ export default async function EventOverviewPage({ params }: Props) {
             <div>
               <span className="section-kicker">Scanner network</span>
               <h2>{activeStations} active</h2>
-              <p>{stations.length} stations connected to this event.</p>
+              <p>{stations.length} station{stations.length === 1 ? "" : "s"} connected to this event.</p>
             </div>
           </div>
           <div className="event-admin-stack">
@@ -181,7 +183,7 @@ export default async function EventOverviewPage({ params }: Props) {
             <span className="section-kicker">Recent activity</span>
             <h2>Latest scans</h2>
             <p>
-              {activityCountResult.count ?? 0} activity logs ·{" "}
+              The last {scans.length || 8} scans across every station · {activityCountResult.count ?? 0} activity logs ·{" "}
               {benefitCountResult.count ?? 0} benefit claims
             </p>
           </div>
@@ -202,14 +204,13 @@ export default async function EventOverviewPage({ params }: Props) {
                   : "Unknown pass"}
               </span>
               <span>
-                {scan.scanner_station_id
-                  ? stationName.get(scan.scanner_station_id) ?? "Station"
-                  : "Station"}
+                {(scan.scanner_station_id && stationName.get(scan.scanner_station_id)) || "Manual check-in"}
+                {scan.scanned_at && <small> · {new Date(scan.scanned_at).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Jakarta" })}</small>}
               </span>
               <strong
                 className={`event-admin-scan-decision is-${scan.decision}`}
               >
-                {scan.decision}
+                {decisionLabel[scan.decision] ?? scan.decision.replaceAll("_", " ")}
               </strong>
             </div>
           ))}
