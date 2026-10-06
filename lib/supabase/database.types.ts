@@ -584,7 +584,8 @@ export type Database = {
           phone?: string | null
           user_id: string
         }
-        Update: { [_ in never]: never }
+        // Applicants cannot update; the service role marks revoked organizers.
+        Update: { status?: string; reviewed_at?: string | null }
         Relationships: []
       }
       qr_credentials: {
@@ -819,6 +820,7 @@ export type Database = {
       resolve_event_subdomain: {Args:{p_label:string};Returns:string|null}
       create_figma_pairing_code: {Args:{p_event_id:string;p_code_hash:string};Returns:undefined}
       exchange_figma_pairing_code: {Args:{p_code_hash:string;p_token_hash:string;p_document_id:string;p_file_name:string;p_file_key:string|null;p_bucket:string};Returns:Json}
+      review_organizer_application: { Args: { p_user_id: string; p_approve: boolean }; Returns: string | null }
       figma_plugin_draft: {Args:{p_token_hash:string;p_document_id:string;p_revision:number;p_document:Json|null;p_payload_hash:string|null};Returns:Json}
       retire_studio_document: { Args: {p_event_id:string;p_id:string;p_revision:number;p_delete:boolean}; Returns:undefined }
       publish_figma_draft: { Args: {p_event_id:string;p_id:string}; Returns:undefined }

@@ -30,7 +30,16 @@ http://localhost:3000/auth/reset
 1. Buka Authentication → Providers → Email dan aktifkan Email provider.
 2. Pastikan Confirm email aktif bila akun harus memverifikasi inbox.
 3. Isi SMTP host, port, user, password, sender name, dan sender email sesuai provider SMTP-mu.
-4. Atur template email confirmation dan reset password agar link mengarah ke origin PassFlow.
+4. Pasang template email dari `supabase/email-templates/` di Authentication → Emails → Templates. Untuk tiap template, salin subject dari komentar `<!-- Subject: … -->` di baris pertama file, lalu tempel seluruh isi HTML-nya:
+   - Confirm signup → `confirm-signup.html`
+   - Invite user → `invite.html`
+   - Magic link → `magic-link.html`
+   - Change email address → `change-email.html`
+   - Reset password → `recovery.html`
+   - Reauthentication → `reauthentication.html`
+   - Security notifications (password, email, phone, identity, MFA) → file `security-*.html` yang sesuai, lalu aktifkan notifikasinya.
+
+   Link di template memakai `{{ .SiteURL }}`, jadi Site URL harus `https://passflow.my.id`. Jangan memakai `{{ .RedirectTo }}`: untuk reset password nilainya sudah berisi `/auth/reset`, sehingga link jadi rusak.
 5. Uji `/register`, klik link verifikasi, masuk lewat `/login`, lalu uji `/reset-password`.
 
 Link verifikasi email memakai token hash dan diproses oleh `/auth/confirm`, sehingga sesi bisa dibuat dari browser yang membuka email. Login Google tetap memakai `/auth/callback`. Link reset diproses oleh `/auth/reset`.

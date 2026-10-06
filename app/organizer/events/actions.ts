@@ -4,6 +4,7 @@ import { randomBytes } from "crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireOrganizerMembership } from "@/lib/auth/session";
+import { canCreateEvent } from "@/lib/organizer-quota";
 import { defaultEventTheme } from "@/lib/events";
 import type { Json } from "@/lib/supabase/database.types";
 
@@ -162,6 +163,7 @@ function revalidateEvent(eventId: string, slug?: string | null) {
 
 export async function createEvent(formData: FormData) {
   const { supabase, membership, user } = await managedContext();
+  if (!(await canCreateEvent(supabase, user))) redirect("/organizer/events/new?error=limit");
   const name = text(formData, "name", 120);
   const slug = slugify(text(formData, "slug", 100) || name);
   if (name.length < 2 || !slug) redirect("/organizer/events/new?error=invalid");

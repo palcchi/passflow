@@ -32,7 +32,7 @@ export default async function OrganizerStartPage({ searchParams }: { searchParam
 
   if (application) {
     const rejected = application.status === "rejected";
-    return <AuthShell kicker={rejected ? "APPLICATION REVIEWED" : "APPLICATION RECEIVED"} title={rejected ? "Not approved this time." : "You're on the list."} description={rejected ? "Your organizer application was not approved. Reply to the PassFlow team if you believe this is a mistake." : "We review every organizer workspace before activation. Your dashboard updates as soon as it is approved."} backHref="/account" backLabel="Back to dashboard">
+    return <AuthShell kicker={rejected ? "ORGANIZER ACCESS" : "ALMOST THERE"} title={rejected ? "Organizer access is closed." : "Finishing your workspace."} description={rejected ? "This account can no longer run events on PassFlow. Reply to the PassFlow team if you believe this is a mistake." : "Your workspace could not open automatically. The PassFlow team will finish it shortly; this page updates when it is ready."} backHref="/account" backLabel="Back to dashboard">
       <div className="auth-notice organizer-status" role="status">
         <span className="section-kicker">{application.organization_name}</span>
         <ol className="organizer-steps">
@@ -46,7 +46,7 @@ export default async function OrganizerStartPage({ searchParams }: { searchParam
   }
 
   const message = status ? errors[status] : null;
-  return <AuthShell kicker="PASSFLOW FOR ORGANIZERS" title="Set up your organizer workspace." description="Tell us who runs your events. Once approved, your account unlocks event management, ticketing, crew access, and live check-in." backHref="/organizer" backLabel="About PassFlow for organizers">
+  return <AuthShell kicker="PASSFLOW FOR ORGANIZERS" title="Set up your organizer workspace." description="Tell us who runs your events. Your workspace opens right away, with one active event per account." backHref="/organizer" backLabel="About PassFlow for organizers">
     {message && <p role="alert" className="auth-notice">{message}</p>}
     <form action={submitOrganizerApplication} className="auth-form">
       <label className="auth-field">Organization or brand name<div className="auth-input"><Building2 size={17} aria-hidden="true"/><input required name="organizationName" minLength={2} maxLength={80} autoComplete="organization" placeholder="Kopi Kultur Collective"/></div></label>

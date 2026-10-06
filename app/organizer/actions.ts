@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth/session";
+import { serviceClient } from "@/lib/supabase/service";
 
 export async function submitOrganizerApplication(formData: FormData) {
   const field = (name: string) => String(formData.get(name) ?? "").trim().replace(/\s+/g, " ");
@@ -26,6 +27,10 @@ export async function submitOrganizerApplication(formData: FormData) {
   });
   // 23505: an application already exists; the status page shows it.
   if (error && error.code !== "23505") redirect("/organizer/start?status=error");
+  // Organizer access is self-serve: approve straight away. A revoked account stays rejected (review only accepts
+  // pending applications), and if the server cannot approve, the application waits on the admin page.
+  let approved = false;
+  try { approved = !(await serviceClient().rpc("review_organizer_application", { p_user_id: user.id, p_approve: true })).error; } catch {}
   revalidatePath("/organizer/start");
-  redirect("/organizer/start");
+  redirect(approved ? "/organizer/events" : "/organizer/start");
 }
