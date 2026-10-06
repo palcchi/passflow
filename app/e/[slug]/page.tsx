@@ -1,6 +1,7 @@
 import { WebsiteRenderer } from "@/components/studio-renderer";
 import { readStudioDocument } from "@/lib/studio/model";
 import {readFigmaWebsite} from '@/lib/figma-website';
+import {MadeWithPassFlow} from "@/components/made-with-passflow";
 import {FigmaWebsiteRenderer} from '@/components/figma-website-renderer';
 import {figmaWebsiteData} from '@/lib/figma-published';
 import {getAppOrigin} from '@/lib/supabase/config';
@@ -75,7 +76,7 @@ export default async function PublicEventPage({ params }: EventPageProps) {
   const { data: website } = supabase ? await supabase.from("event_studio_documents").select("document").eq("event_id",event.id).eq("kind","website").eq("status","published").is("ticket_type_id",null).maybeSingle() : {data:null};
   const websiteDocument = readStudioDocument(website?.document);
   const figmaWebsite=readFigmaWebsite(website?.document);
-  if(figmaWebsite&&supabase)return <main><FigmaWebsiteRenderer document={figmaWebsite} data={await figmaWebsiteData(supabase,event,ctaLabel)}/></main>;
+  if(figmaWebsite&&supabase)return <main><FigmaWebsiteRenderer document={figmaWebsite} data={await figmaWebsiteData(supabase,event,ctaLabel)}/><MadeWithPassFlow/></main>;
   if(websiteDocument) return <main><WebsiteRenderer document={websiteDocument} data={{event_name:event.name,event_date:event.dateLabel,venue:event.venue,description:event.description,banner:event.heroImageUrl??'',logo:event.logoUrl??''}} claimUrl={`/e/${event.slug}/claim`}/></main>;
 
   // The default page is the only page until a Figma design is published, so it lists the passes on sale.
@@ -143,6 +144,7 @@ export default async function PublicEventPage({ params }: EventPageProps) {
           <p>Scanners automatically validate identity, access permissions, activities, and available benefits.</p>
         </article>
       </section>
+      <MadeWithPassFlow/>
     </main>
   );
 }

@@ -1,4 +1,6 @@
-export const websiteBindings=['eventName','eventDescription','eventDate','venue','venueMap','logo','banner','tickets','register','myPass','schedule','speakers','sponsors','customLink'] as const;
+export const websiteBindings=['eventName','eventDescription','eventDate','venue','venueMap','logo','banner','tickets','register','myPass','schedule','speakers','sponsors','customLink','formSlot','passSlot'] as const;
+// A page owns its slot only when Figma marked one; otherwise PassFlow keeps its own layout around the design.
+export const pageSlot=(page:WebsitePage|undefined,binding:'formSlot'|'passSlot')=>!!page&&[page.desktop,page.tablet,page.mobile].some(f=>f?.nodes.some(n=>n.binding===binding));
 export type WebsiteBinding=typeof websiteBindings[number];
 export type WebsiteHover={fill:string;color:string;stroke:string;opacity:number;ms:number;ease:string};
 export type WebsiteGradient={type:'linear'|'radial';angle:number;stops:{color:string;pos:number}[]};
@@ -39,29 +41,49 @@ function spans(raw:unknown,length:number):WebsiteSpan[]{
  return Array.isArray(raw)?raw.slice(0,80).flatMap(s=>{const o=obj(s);return Number.isInteger(o.start)&&Number.isInteger(o.end)&&(o.start as number)>=0&&(o.end as number)>(o.start as number)&&(o.end as number)<=length?[{start:o.start as number,end:o.end as number,weight:num(o.weight,100,900)?Math.round((o.weight as number)/100)*100:400,color:color(o.color,''),size:num(o.size,4,400)?o.size as number:0,italic:o.italic===true,underline:o.underline===true}]:[];}):[];
 }
 export function websiteLink(v:unknown){if(typeof v!=='string'||v.length>=2000)return '';if(/^#[a-zA-Z][\w-]*$/.test(v))return v;if(/^page:/.test(v))return v==='page:home'||pageSlugValid(v.slice(5))?v:'';if(!/^https:\/\/[^\s\\]+$/i.test(v))return '';try{const u=new URL(v);return u.protocol==='https:'&&!!u.hostname&&!u.username&&!u.password?v:'';}catch{return '';}}
+// One odd layer (sub-pixel size, a link Figma exported oddly, an orphaned child) must not reject a whole design:
+// such nodes are repaired or dropped. Only frame-level problems reject, and they say why.
+let problem='';
 function frame(raw:unknown,schema:2|3):WebsiteFrame|null{
- const f=obj(raw);if(!num(f.width,240,2400)||!num(f.height,100,30000)||!Array.isArray(f.nodes)||f.nodes.length>500)return null;
+ const f=obj(raw);
+ if(!num(f.width,240,2400)){problem='Frame width must be between 240 and 2400 px.';return null;}
+ if(!num(f.height,100,30000)){problem='Frame height must be between 100 and 30,000 px.';return null;}
+ if(!Array.isArray(f.nodes)||f.nodes.length>500){problem='Use at most 500 exported layers per frame.';return null;}
+ const clamp=(v:number,min:number,max:number)=>Math.min(max,Math.max(min,v));
  const ids=new Set<string>(),nodes:WebsiteNode[]=[];
- for(const item of f.nodes){const n=obj(item),id=str(n.id,100);if(!id||ids.has(id)||!['text','box','image'].includes(String(n.type))||!num(n.x,-2400,2400)||!num(n.y,-30000,30000)||!num(n.width,1,4800)||!num(n.height,1,30000))return null;
-  ids.add(id);const img=n.image?image(n.image):'';if(img===null)return null;
-  const bgRaw=obj(n.bg),bgImage=bgRaw.image?image(bgRaw.image):'';if(bgImage===null)return null;
-  const binding=websiteBindings.includes(n.binding as WebsiteBinding)?n.binding as WebsiteBinding:null,href=websiteLink(n.href);if(binding==='customLink'&&!href)return null;
+ for(const [index,item] of f.nodes.entries()){const n=obj(item);let id=str(n.id,100);
+  if(!id||!['text','box','image'].includes(String(n.type))||![n.x,n.y,n.width,n.height].every(v=>typeof v==='number'&&Number.isFinite(v)))continue;
+  if(ids.has(id))id=(id.slice(0,90)+'~'+index);
+  n.x=clamp(n.x as number,-2400,2400);n.y=clamp(n.y as number,-30000,30000);n.width=clamp(n.width as number,1,4800);n.height=clamp(n.height as number,1,30000);
+  ids.add(id);const img=(n.image?image(n.image):'')??'';
+  const bgRaw=obj(n.bg),bgImage=(bgRaw.image?image(bgRaw.image):'')??'';
+  const href=websiteLink(n.href);let binding=websiteBindings.includes(n.binding as WebsiteBinding)?n.binding as WebsiteBinding:null;if(binding==='customLink'&&!href)binding=null;
   const text=str(n.text);
   nodes.push({id,parentId:schema===3?str(n.parentId,100)||null:null,type:n.type as WebsiteNode['type'],x:n.x as number,y:n.y as number,width:n.width as number,height:n.height as number,text,fill:color(n.fill,'#ffffff'),hasFill:n.hasFill!==false,color:color(n.color,'#171717'),fontSize:num(n.fontSize,4,400)?n.fontSize as number:16,fontFamily:fontFamilyValid(n.fontFamily)?n.fontFamily:'Inter',radius:num(n.radius,0,1e6)?Math.min(n.radius as number,1000):0,align:['left','center','right'].includes(String(n.align))?n.align as WebsiteNode['align']:'left',image:img,binding,href,fontWeight:num(n.fontWeight,100,900)?Math.round((n.fontWeight as number)/100)*100:400,lineHeight:num(n.lineHeight,0.7,3)?n.lineHeight as number:1.25,letterSpacing:num(n.letterSpacing,-20,40)?n.letterSpacing as number:0,opacity:num(n.opacity,0,1)?n.opacity as number:1,stroke:color(n.stroke,''),strokeWidth:num(n.strokeWidth,0,24)?n.strokeWidth as number:0,sticky:n.sticky===true&&!n.parentId,anchor:typeof n.anchor==='string'&&/^[a-zA-Z][\w-]{0,60}$/.test(n.anchor)?n.anchor:'',hover:hover(n.hover),
    italic:n.italic===true,bg:bgImage?{image:bgImage,fit:['cover','contain','fill'].includes(String(bgRaw.fit))?bgRaw.fit as 'cover'|'contain'|'fill':'cover'}:null,gradient:gradient(n.gradient),shadows:shadows(n.shadows),spans:spans(n.spans,text.length),enter:['fade','up','scale'].includes(String(n.enter))?n.enter as WebsiteEnter:''});
  }
- if(schema===3){const byId=new Map(nodes.map(n=>[n.id,n]));for(const n of nodes){const seen=new Set([n.id]);let parent=n.parentId;while(parent){if(seen.has(parent)||!byId.has(parent))return null;seen.add(parent);parent=byId.get(parent)!.parentId;}}}
+ if(schema===3){const byId=new Map(nodes.map(n=>[n.id,n]));for(const n of nodes){const seen=new Set([n.id]);let parent=n.parentId;while(parent){if(seen.has(parent)||!byId.has(parent)){n.parentId=null;break;}seen.add(parent);parent=byId.get(parent)!.parentId;}}}
  return {width:f.width as number,height:f.height as number,background:color(f.background,'#ffffff'),nodes};
 }
 const optional=(raw:unknown,schema:2|3)=>raw?frame(raw,schema)??undefined:null;
-export function readFigmaWebsite(value:unknown):FigmaWebsite|null{
- const v=obj(value);if((v.schema!==2&&v.schema!==3)||v.source!=='figma')return null;
- const desktop=frame(v.desktop,v.schema),tablet=optional(v.tablet,v.schema),mobile=optional(v.mobile,v.schema);
- if(!desktop||tablet===undefined||mobile===undefined||JSON.stringify(value).length>850000)return null;
- const rawPages=Array.isArray(v.pages)?v.pages:[];if(rawPages.length>8)return null;
+export function readFigmaWebsite(value:unknown):FigmaWebsite|null{return readFigmaWebsiteReport(value).doc;}
+// Same parse, plus which frame failed and why, so Sync can point the designer at it.
+export function readFigmaWebsiteReport(value:unknown):{doc:FigmaWebsite|null;frame?:string;message?:string}{
+ const fail=(frame:string,message=problem)=>({doc:null,frame,message:message||'This frame could not be read.'});
+ const v=obj(value);if((v.schema!==2&&v.schema!==3)||v.source!=='figma')return fail('Website','Update the PassFlow plugin and sync again.');
+ if(JSON.stringify(value).length>850000)return fail('Website','The design is too large after images. Reduce image sizes or the number of layers.');
+ problem='';const desktop=frame(v.desktop,v.schema);if(!desktop)return fail('Desktop');
+ problem='';const tablet=optional(v.tablet,v.schema);if(tablet===undefined)return fail('Tablet');
+ problem='';const mobile=optional(v.mobile,v.schema);if(mobile===undefined)return fail('Mobile');
+ const rawPages=Array.isArray(v.pages)?v.pages:[];if(rawPages.length>8)return fail('Website','Use at most 8 extra pages.');
  const pages:WebsitePage[]=[];
- for(const raw of rawPages){const p=obj(raw),d=frame(p.desktop,v.schema),t=optional(p.tablet,v.schema),m=optional(p.mobile,v.schema);if(!pageSlugValid(p.slug)||pages.some(x=>x.slug===p.slug)||!d||t===undefined||m===undefined)return null;pages.push({slug:p.slug,desktop:d,tablet:t,mobile:m});}
- return {schema:v.schema,source:'figma',desktop,tablet,mobile,pages,warnings:Array.isArray(v.warnings)?v.warnings.slice(0,30).map(w=>str(w,300)):[]};
+ for(const raw of rawPages){const p=obj(raw),slug=String(p.slug??'');
+  if(!pageSlugValid(p.slug)||pages.some(x=>x.slug===p.slug))return fail(slug+' page (Desktop)','Rename this page: lowercase letters, numbers and dashes, not a reserved name.');
+  problem='';const d=frame(p.desktop,v.schema);if(!d)return fail(slug+' page (Desktop)');
+  problem='';const t=optional(p.tablet,v.schema);if(t===undefined)return fail(slug+' page (Tablet)');
+  problem='';const m=optional(p.mobile,v.schema);if(m===undefined)return fail(slug+' page (Mobile)');
+  pages.push({slug:p.slug as string,desktop:d,tablet:t,mobile:m});}
+ return {doc:{schema:v.schema,source:'figma',desktop,tablet,mobile,pages,warnings:Array.isArray(v.warnings)?v.warnings.slice(0,30).map(w=>str(w,300)):[]}};
 }
 // Issues carry the Figma node and frame so the plugin can select the exact layer. Only blocking ones stop a sync going live;
 // the rest render fine (layers clip, broken links do nothing) and come back as warnings.
@@ -78,7 +100,12 @@ export function figmaWebsiteIssues(doc:FigmaWebsite):DesignIssue[]{const out:Des
   const byId=new Map(f.nodes.map(n=>[n.id,n])),inNav=(n:WebsiteNode)=>{let top=n;while(top.parentId&&byId.has(top.parentId))top=byId.get(top.parentId)!;return top.sticky;};
   for(const binding of ['eventName','tickets','schedule','speakers','sponsors','logo','banner']){const dup=f.nodes.filter(n=>n.binding===binding&&!(binding==='eventName'&&inNav(n)));if(dup.length>1)add(name,binding+' is assigned more than once; only the first is used.',false,dup[1].id);}
   const sticky=f.nodes.filter(n=>n.sticky);if(sticky.length>1)add(name,'Use one sticky navbar.',false,sticky[1].id);
+  for(const n of f.nodes){
+   if(n.binding==='formSlot'&&!name.startsWith('ticket page'))add(name,'A Form slot only works on the Ticket page.',false,n.id);
+   if(n.binding==='passSlot'&&!name.startsWith('pass page'))add(name,'A Pass slot only works on the Pass page.',false,n.id);
+  }
  }
+ for(const [slug,binding,label] of [['ticket','formSlot','Form slot'],['pass','passSlot','Pass slot']] as const){const page=doc.pages.find(p=>p.slug===slug);if(page&&!pageSlot(page,binding))add(slug+' page (Desktop)','Add a '+label+' (plugin → Advanced) so PassFlow knows where to place it.',false);}
  return out;
 }
 export function validateFigmaWebsite(doc:FigmaWebsite){return figmaWebsiteIssues(doc).filter(i=>i.blocking).map(i=>i.frame+': '+i.message);}

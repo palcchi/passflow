@@ -4,7 +4,7 @@ const SCHEMA = 'passflow.website.v1';
 const frameWidths = { desktop: 1440, tablet: 834, mobile: 390 };
 const frameLabel = (role) => role.charAt(0).toUpperCase() + role.slice(1) + ' ' + frameWidths[role];
 const frameOffset = { desktop: 0, tablet: 1600, mobile: 2600 };
-const bindings = ['eventName', 'eventDescription', 'eventDate', 'venue', 'venueMap', 'logo', 'banner', 'tickets', 'register', 'myPass', 'schedule', 'speakers', 'sponsors', 'customLink'];
+const bindings = ['eventName', 'eventDescription', 'eventDate', 'venue', 'venueMap', 'logo', 'banner', 'tickets', 'register', 'myPass', 'schedule', 'speakers', 'sponsors', 'customLink', 'formSlot', 'passSlot'];
 const blocks = ['Navbar', 'Hero', 'About', 'Tickets', 'Schedule', 'Speakers', 'Sponsors', 'Venue', 'FAQ', 'CTA', 'Footer'];
 let session = null;
 let tickets = [];
@@ -247,6 +247,32 @@ function chip(parent, t, label, fill, ink) {
     parent.appendChild(c);
     txt(c, label, { size: 14, font: t.bodyMedium, color: ink });
 }
+// The area where PassFlow renders its live sign-up form or attendee pass. Style around it freely; keep enough height.
+function slotBox(parent, binding, width, height, t) {
+    var _a, _b, _c;
+    const slot = figma.createFrame();
+    parent.appendChild(slot);
+    slot.name = binding === 'formSlot' ? 'Form slot · PassFlow sign-up form' : 'Pass slot · attendee QR pass';
+    slot.resize(width, height);
+    slot.fills = [solid((_a = t === null || t === void 0 ? void 0 : t.alt) !== null && _a !== void 0 ? _a : '#f5f5f3')];
+    slot.strokes = [solid((_b = t === null || t === void 0 ? void 0 : t.line) !== null && _b !== void 0 ? _b : '#d9d8d2')];
+    slot.strokeWeight = 1;
+    slot.dashPattern = [8, 6];
+    slot.cornerRadius = (_c = t === null || t === void 0 ? void 0 : t.radius) !== null && _c !== void 0 ? _c : 20;
+    slot.layoutMode = 'VERTICAL';
+    slot.primaryAxisSizingMode = 'FIXED';
+    slot.counterAxisSizingMode = 'FIXED';
+    slot.primaryAxisAlignItems = 'CENTER';
+    slot.counterAxisAlignItems = 'CENTER';
+    if (parent.layoutMode !== 'NONE') {
+        slot.layoutSizingHorizontal = 'FILL';
+        slot.layoutSizingVertical = 'FIXED';
+    }
+    if (t)
+        txt(slot, binding === 'formSlot' ? 'PassFlow sign-up form appears here' : 'Attendee QR pass appears here', { size: 15, font: t.bodyMedium, color: t.muted, align: 'CENTER' });
+    bind(slot, binding);
+    return slot;
+}
 async function block(parent, name, style, b, title = '') {
     if (style === 'blank')
         throw Error('Pick Minimal or Festival to insert ready-made sections.');
@@ -280,10 +306,15 @@ async function block(parent, name, style, b, title = '') {
     if (name !== 'Footer')
         sec.setSharedPluginData(NS, 'enter', name === 'Hero' || name === 'Page header' ? 'fade' : 'up');
     if (name === 'Page header') {
-        const ticket = pageOf(parent) === 'ticket';
-        kicker(sec, t, ticket ? 'Tickets' : 'Your event');
+        const page = pageOf(parent), ticket = page === 'ticket', pass = page === 'pass';
+        kicker(sec, t, ticket ? 'Tickets' : pass ? 'Your pass' : 'Your event');
         fillW(txt(sec, D(title), { size: mobile ? 44 : 80, font: t.display, color: t.ink, lh: .98, ls: t.tracking }), cw);
-        fillW(txt(sec, ticket ? 'Choose a pass below. Sign-up takes about a minute.' : 'Write this page in Figma. Link to it from any button with Prototype → Navigate to.', { size: mobile ? 17 : 21, font: t.body, color: t.muted, lh: 1.5 }), cw);
+        fillW(txt(sec, ticket ? 'Choose a pass below. Sign-up takes about a minute.' : pass ? 'Show this QR at the entrance. It also works offline once loaded.' : 'Write this page in Figma. Link to it from any button with Prototype → Navigate to.', { size: mobile ? 17 : 21, font: t.body, color: t.muted, lh: 1.5 }), cw);
+        return;
+    }
+    if (name === 'Form slot' || name === 'Pass slot') {
+        sec.setSharedPluginData(NS, 'enter', '');
+        slotBox(sec, name === 'Form slot' ? 'formSlot' : 'passSlot', cw, mobile ? 560 : 640, t);
         return;
     }
     if (name === 'Hero') {
@@ -468,6 +499,7 @@ async function template(style) {
     }
     figma.currentPage.selection = created;
     figma.viewport.scrollAndZoomIntoView(created);
+    linkBreakpoints();
     status('Changes detected', style === 'blank' ? 'Blank Desktop and Mobile frames are ready. Design freely, then mark a Register button.' : 'Starter ' + style + ' website inserted. Edit any text; links and hovers come from Figma prototype interactions.');
     selectionState();
 }
@@ -489,12 +521,13 @@ async function pageTemplate(style, slug) {
     const top = Math.round(Math.max(figma.viewport.center.y, ...frames.map(f => f.y + f.height)) + 200);
     const left = Math.round(frames.length ? Math.min(...frames.map(f => f.x)) : figma.viewport.center.x - 980);
     const b = t ? await buttons(t, style, left - 420, top) : undefined;
-    const title = slug === 'ticket' ? 'Get your pass' : slug.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+    const title = slug === 'ticket' ? 'Get your pass' : slug === 'pass' ? 'Your event pass' : slug.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+    const slot = slug === 'ticket' ? 'Form slot' : slug === 'pass' ? 'Pass slot' : '';
     const created = [];
     for (const role of ['desktop', 'tablet', 'mobile']) {
         const frame = figma.createFrame();
         figma.currentPage.appendChild(frame);
-        frame.name = 'PassFlow ' + (slug === 'ticket' ? 'Ticket page' : 'Page · ' + slug) + ' · ' + frameLabel(role);
+        frame.name = 'PassFlow ' + (slug === 'ticket' ? 'Ticket page' : slug === 'pass' ? 'Pass page' : 'Page · ' + slug) + ' · ' + frameLabel(role);
         frame.fills = [solid((_a = t === null || t === void 0 ? void 0 : t.bg) !== null && _a !== void 0 ? _a : '#ffffff')];
         frame.setSharedPluginData(NS, 'frame', role);
         frame.setSharedPluginData(NS, 'page', slug);
@@ -509,22 +542,30 @@ async function pageTemplate(style, slug) {
             frame.itemSpacing = 0;
             await block(frame, 'Navbar', style, b);
             await block(frame, 'Page header', style, b, title);
-            if (slug !== 'ticket')
-                await block(frame, 'Footer', style, b);
+            if (slot)
+                await block(frame, slot, style, b);
+            await block(frame, 'Footer', style, b);
             // The event name in the navbar goes back to Home, using Figma's own Navigate to.
             const home = frames.find(f => pageOf(f) === 'home' && f.getSharedPluginData(NS, 'frame') === role), brand = firstText(frame.children[0]);
             if (home && brand)
                 await brand.setReactionsAsync([{ trigger: { type: 'ON_CLICK' }, actions: [{ type: 'NODE', destinationId: home.id, navigation: 'NAVIGATE', transition: null }] }]);
         }
-        else
-            frame.resize(frameWidths[role], slug === 'ticket' ? 480 : role === 'mobile' ? 844 : 1024);
+        else {
+            frame.resize(frameWidths[role], role === 'mobile' ? 844 : 1024);
+            if (slot) {
+                const pad = role === 'mobile' ? 24 : 96, s = slotBox(frame, slot === 'Form slot' ? 'formSlot' : 'passSlot', frameWidths[role] - pad * 2, 640);
+                s.x = pad;
+                s.y = 160;
+            }
+        }
         frame.x = left + frameOffset[role];
         frame.y = top;
         created.push(frame);
     }
     figma.currentPage.selection = created;
     figma.viewport.scrollAndZoomIntoView(created);
-    status('Changes detected', slug === 'ticket' ? 'Ticket page added. It shows above the PassFlow sign-up form.' : '"' + slug + '" page added at /e/your-event/' + slug + '. Link to it with Prototype → Navigate to.');
+    linkBreakpoints();
+    status('Changes detected', slug === 'ticket' ? 'Ticket page added. The sign-up form appears in its Form slot.' : slug === 'pass' ? 'Pass page added. The attendee QR pass appears in its Pass slot.' : '"' + slug + '" page added at /e/your-event/' + slug + '. Link to it with Prototype → Navigate to.');
     selectionState();
 }
 // ---------- Passes: ID card, digital pass, wristband. Designed at 4 px per mm. ----------
@@ -1071,9 +1112,112 @@ function schedule() {
 figma.showUI(__html__, { width: 390, height: 760, themeColors: true });
 figma.on('selectionchange', selectionState);
 // dynamic-page forbids figma.on('documentchange') without loadAllPagesAsync; watch only the current page.
+// ---------- Breakpoints, like Framer: Desktop → Tablet → Mobile ----------
+// Content and style flow down one breakpoint at a time; layout (size, position, font size, spacing) stays per breakpoint.
+// Changing a property directly on Tablet or Mobile makes it an override there, so later edits above leave it alone.
+const INHERIT = ['characters', 'fills', 'strokes', 'strokeWeight', 'effects', 'visible', 'opacity', 'fontName', 'cornerRadius', 'textCase', 'textDecoration'];
+const OVERRIDE = '"override"';
+const readProp = (n, p) => { const v = n[p]; return v === undefined || v === figma.mixed ? null : JSON.stringify(v); };
+function frameOfNode(n) {
+    let c = n;
+    while (c && c.parent && c.parent.type !== 'PAGE')
+        c = c.parent;
+    return c && c.type === 'FRAME' && c.getSharedPluginData(NS, 'documentId') === documentId ? c : null;
+}
+function lowerFrame(frame) {
+    var _a;
+    const role = frame.getSharedPluginData(NS, 'frame'), siblings = eventFrames().filter(f => pageOf(f) === pageOf(frame));
+    const find = (r) => { var _a; return (_a = siblings.find(f => f.getSharedPluginData(NS, 'frame') === r)) !== null && _a !== void 0 ? _a : null; };
+    return role === 'desktop' ? (_a = find('tablet')) !== null && _a !== void 0 ? _a : find('mobile') : role === 'tablet' ? find('mobile') : null;
+}
+// Match children by name and order among same-named siblings, so a duplicated or template-built frame lines up.
+function linkTrees(a, b) {
+    try {
+        if (!a.getSharedPluginData(NS, 'link'))
+            a.setSharedPluginData(NS, 'link', a.id);
+        b.setSharedPluginData(NS, 'link', a.getSharedPluginData(NS, 'link'));
+        for (const p of INHERIT) {
+            const va = readProp(a, p), vb = readProp(b, p);
+            if (va !== null && vb !== null)
+                b.setSharedPluginData(NS, 'inh:' + p, va === vb ? vb : OVERRIDE);
+        }
+    }
+    catch (_a) {
+        return;
+    } // some locked or instance layers refuse plugin data; they simply stay per-breakpoint
+    if (!('children' in a) || !('children' in b))
+        return;
+    for (const ca of a.children) {
+        const i = a.children.filter(x => x.name === ca.name && x.type === ca.type).indexOf(ca);
+        const cb = b.children.filter(x => x.name === ca.name && x.type === ca.type)[i];
+        if (cb)
+            linkTrees(ca, cb);
+    }
+}
+function linkBreakpoints() {
+    let pairs = 0;
+    for (const f of eventFrames()) {
+        const role = f.getSharedPluginData(NS, 'frame');
+        if (role !== 'desktop' && role !== 'tablet')
+            continue;
+        const lower = lowerFrame(f);
+        if (lower) {
+            linkTrees(f, lower);
+            pairs++;
+        }
+    }
+    return pairs;
+}
+async function inherit(source, props) {
+    var _a;
+    const frame = frameOfNode(source), lower = frame && lowerFrame(frame), link = source.getSharedPluginData(NS, 'link');
+    if (!lower || !link)
+        return;
+    const target = lower.getSharedPluginData(NS, 'link') === link ? lower : lower.findOne(n => n.getSharedPluginData(NS, 'link') === link);
+    if (!target)
+        return;
+    const changed = [];
+    for (const p of props) {
+        const value = readProp(source, p), last = target.getSharedPluginData(NS, 'inh:' + p);
+        if (value === null || !(p in target) || !last || readProp(target, p) !== last)
+            continue; // not linked, or overridden here
+        if (target.type === 'TEXT' && ['characters', 'fontName', 'textCase', 'textDecoration'].includes(p)) {
+            for (const f of target.characters.length ? target.getRangeAllFontNames(0, target.characters.length) : [target.fontName])
+                await figma.loadFontAsync(f);
+            if (p === 'fontName')
+                await figma.loadFontAsync(JSON.parse(value));
+        }
+        try {
+            target[p] = JSON.parse(value);
+        }
+        catch (_b) {
+            continue;
+        }
+        target.setSharedPluginData(NS, 'inh:' + p, (_a = readProp(target, p)) !== null && _a !== void 0 ? _a : value);
+        changed.push(p);
+    }
+    if (changed.length)
+        await inherit(target, changed);
+}
+let inheriting = Promise.resolve();
+function flowDown(event) {
+    const work = [];
+    for (const c of event.nodeChanges) {
+        if (c.type !== 'PROPERTY_CHANGE' || c.origin === 'REMOTE' || c.node.removed || !('getSharedPluginData' in c.node))
+            continue;
+        const node = c.node, props = c.properties.filter((p) => INHERIT.includes(p));
+        // Our own writes come back as events; they already match what was recorded, so they are not edits.
+        if (props.length && node.getSharedPluginData(NS, 'link') && !props.every(p => node.getSharedPluginData(NS, 'inh:' + p) === readProp(node, p)))
+            work.push([node, props]);
+    }
+    if (work.length)
+        inheriting = inheriting.then(async () => { for (const [n, p] of work)
+            if (!n.removed)
+                await inherit(n, p); }).catch(() => { });
+}
 let watchedPage = null;
-const onNodeChange = () => { if (!mutating)
-    schedule(); };
+const onNodeChange = (event) => { if (mutating)
+    return; schedule(); flowDown(event); };
 function watchPage() { watchedPage === null || watchedPage === void 0 ? void 0 : watchedPage.off('nodechange', onNodeChange); watchedPage = figma.currentPage; watchedPage.on('nodechange', onNodeChange); }
 watchPage();
 figma.on('currentpagechange', () => {
@@ -1145,6 +1289,11 @@ figma.ui.onmessage = async (message) => {
             await focusIssue(message.issue);
             return;
         }
+        if (message.type === 'link') {
+            const pairs = linkBreakpoints();
+            status(pairs ? 'Breakpoints linked' : 'Nothing to link', pairs ? 'Edits on Desktop now flow to Tablet and Mobile; Tablet edits flow to Mobile. Changes made directly on a smaller frame stay as overrides.' : 'Add a Desktop frame and a Tablet or Mobile frame first.');
+            return;
+        }
         mutating = true;
         if (message.type === 'template')
             await template(message.style);
@@ -1172,7 +1321,8 @@ figma.ui.onmessage = async (message) => {
             node.setSharedPluginData(NS, 'page', page === 'home' ? '' : page);
             node.setSharedPluginData(NS, 'documentId', documentId);
             node.setSharedPluginData(NS, 'schema', SCHEMA);
-            status('Changes detected', (page === 'home' ? 'Home' : page === 'ticket' ? 'Ticket page' : '"' + page + '" page') + ' ' + message.role + ' frame assigned.');
+            linkBreakpoints();
+            status('Changes detected', (page === 'home' ? 'Home' : page === 'ticket' ? 'Ticket page' : page === 'pass' ? 'Pass page' : '"' + page + '" page') + ' ' + message.role + ' frame assigned.');
         }
         if (message.type === 'page')
             await pageTemplate(message.style, (message.page || '').trim().toLowerCase());
