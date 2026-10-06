@@ -160,7 +160,9 @@ fieldset.studio-workspace{border:0;padding:0;margin:0;min-width:0}
 /* Figma slots: PassFlow's live form or pass sits inside the designed page and may grow past the reserved box. */
 .figma-live-frame.has-slot{overflow:visible}
 .figma-slot{z-index:2;font-size:16px;letter-spacing:normal;line-height:1.5;color:var(--foreground)}
-.figma-slot .claim-card,.figma-slot>section,.figma-slot>form{width:100%;max-width:none;margin:0}
+/* The slot is the designer's area; the form or pass inside keeps a readable card width, centred in it. */
+.figma-slot>.pass-digital-shell{width:100%;max-width:560px;margin-inline:auto}
+.figma-slot .claim-card,.figma-slot .pass-digital-shell>section,.figma-slot .pass-digital-shell>form{width:100%;margin:0}
 /* Every event site fades in once on load; sections below the fold ease in as they scroll into view. */
 @media (prefers-reduced-motion:no-preference){.figma-live-website{animation:pf-site-in 420ms var(--ease-out) both}}
 @keyframes pf-site-in{from{opacity:0}}
@@ -171,3 +173,6 @@ fieldset.studio-workspace{border:0;padding:0;margin:0;min-width:0}
 @media (hover:hover) and (pointer:fine){.made-with-passflow{transition:box-shadow 160ms ease}.made-with-passflow:hover{box-shadow:0 0 0 1px rgba(0,0,0,.14),0 8px 22px rgba(0,0,0,.12)}}
 @media print{.made-with-passflow{display:none}}
 @media (prefers-reduced-motion:no-preference){.event-public-shell{animation:pf-site-in 420ms var(--ease-out) both}}
+/* The Figma pass shows at card size (its artwork is exported for ~300 dpi print, not for a full-width banner). */
+.claim-pass-art{width:100%;margin:8px auto 20px;border-radius:18px;overflow:hidden;box-shadow:0 0 0 1px color-mix(in srgb,currentColor 8%,transparent),0 18px 40px rgba(0,0,0,.12)}
+.claim-pass-art svg{display:block;width:100%;height:auto}

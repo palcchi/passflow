@@ -44,6 +44,7 @@ test('standard plugin templates serialize into valid desktop/mobile HTML documen
         return {x:p.x+this.x,y:p.y+this.y,width:this.width,height:this.height};
       },
       appendChild(child){
+        if(child.parent){const at=child.parent.children.indexOf(child);if(at>=0)child.parent.children.splice(at,1);}
         child.parent=this;
         if(this.layoutMode==='VERTICAL'){
           child.x=this.paddingLeft||0;
@@ -72,7 +73,7 @@ test('standard plugin templates serialize into valid desktop/mobile HTML documen
       findAll(fn){const out=[];const walk=n=>{for(const c of n.children){if(fn(c))out.push(c);walk(c);}};walk(this);return out;},
       findOne(fn){return this.findAll(fn)[0]??null;},
       getRangeAllFontNames(){return [this.fontName];},
-      clone(){const copy=src=>{const c=node(src.type);for(const k of ['x','y','width','height','fills','visible','fontSize','characters','textAlignHorizontal'])if(k in src)c[k]=src[k];for(const [k,v] of metadataOf(src))c.setSharedPluginData('',k,v);for(const ch of src.children)c.appendChild(copy(ch));return c;};const c=copy(this);this.parent?.appendChild(c);return c;},
+      clone(){const copy=src=>{const c=node(src.type);for(const k of ['name','x','y','width','height','fills','visible','fontSize','characters','textAlignHorizontal'])if(k in src)c[k]=src[k];for(const [k,v] of metadataOf(src))c.setSharedPluginData('',k,v);for(const ch of src.children)c.appendChild(copy(ch));return c;};const c=copy(this);this.parent?.appendChild(c);return c;},
       remove(){const i=this.parent?.children.indexOf(this)??-1;if(i>=0)this.parent.children.splice(i,1);}
     };
     registry.set(n.id,n);metadataStore.set(n,metadata);
@@ -204,23 +205,39 @@ test('standard plugin templates serialize into valid desktop/mobile HTML documen
     await edit(d,'Winter Festival');
     assert.deepEqual([t.characters,m.characters],['Summer Fest','Summer Fest'],'tablet override survives desktop edits');
   }
-  {
-    await context.testApi.pageTemplate('minimal','pass');
-    const pass=context.testApi.findFrames().pages.find(p=>p.slug==='pass');
-    assert.ok(pass&&pass.desktop.findAll(n=>n.getSharedPluginData('passflow','binding')==='passSlot').length===1,'pass page has a Pass slot');
-    const ticket=context.testApi.findFrames().pages.find(p=>p.slug==='ticket');
-    if(ticket)assert.ok(ticket.mobile.findAll(n=>n.getSharedPluginData('passflow','binding')==='formSlot').length===1,'ticket page has a Form slot');
-  }
   await assert.rejects(()=>context.testApi.passTemplate('minimal','id_card'),/already has/);
   await context.testApi.passTemplate('minimal','digital','',100,150);
   const custom=readStudioDocument(await context.testApi.exportPass(context.testApi.findFrames().passes.find(p=>p.kind==='digital').frame,'digital',[]));
   assert.deepEqual([custom.width,custom.height],[100,150],'custom pass size is kept');
   assert.deepEqual(validateStudio(custom,'digital'),[],'custom size passes print validation');
+  {
+    await context.testApi.pageTemplate('minimal','pass');
+    const pass=context.testApi.findFrames().pages.find(p=>p.slug==='pass');
+    assert.ok(pass&&pass.desktop.findAll(n=>n.getSharedPluginData('passflow','binding')==='passSlot').length===1,'pass page has a Pass slot');
+    assert.equal(context.testApi.findFrames().passes.filter(p=>p.kind==='digital').length,1,'the Pass page reuses the existing digital card');
+    const ticket=context.testApi.findFrames().pages.find(p=>p.slug==='ticket');
+    if(ticket)assert.ok(ticket.mobile.findAll(n=>n.getSharedPluginData('passflow','binding')==='formSlot').length===1,'ticket page has a Form slot');
+  }
   context.testApi.setTickets([{id:'11111111-1111-4111-8111-111111111111',name:'VIP'}]);
   await context.testApi.passTemplate('minimal','id_card','11111111-1111-4111-8111-111111111111');
   assert.ok(context.testApi.findFrames().passes.some(p=>p.kind==='id_card'&&p.ticketTypeId==='11111111-1111-4111-8111-111111111111'),'per-category ID card');
   await assert.rejects(()=>context.testApi.passTemplate('minimal','id_card','11111111-1111-4111-8111-111111111111'),/for VIP/);
   await assert.rejects(()=>context.testApi.passTemplate('minimal','digital','22222222-2222-4222-8222-222222222222'),/not available/);
+  // Blank starts behave the same: a layer drawn on Desktop appears on Tablet and Mobile, scaled and linked.
+  {
+    page.children.length=0;
+    await context.testApi.template('blank');
+    const f=context.testApi.findFrames(),rect=figma.createRectangle();
+    f.desktop.appendChild(rect);rect.x=720;rect.width=400;rect.name='Banner';
+    context.testApi.flowDown({nodeChanges:[{type:'CREATE',origin:'LOCAL',node:rect}]});await context.testApi.settle();
+    const t=f.tablet.children.find(n=>n.name==='Banner'),m=f.mobile.children.find(n=>n.name==='Banner');
+    assert.ok(t&&m,'new desktop layer copied to tablet and mobile');
+    assert.equal(t.getSharedPluginData('passflow','link'),rect.getSharedPluginData('passflow','link'));
+    assert.equal(Math.round(m.x),Math.round(720*390/834*834/1440),'x scaled to the smaller frame');
+    rect.fills=[{type:'SOLID',color:{r:1,g:0,b:0}}];
+    context.testApi.flowDown({nodeChanges:[{type:'PROPERTY_CHANGE',origin:'LOCAL',node:rect,properties:['fills']}]});await context.testApi.settle();
+    assert.deepEqual(JSON.parse(JSON.stringify(m.fills)),[{type:'SOLID',color:{r:1,g:0,b:0}}],'later edits flow down too');
+  }
   for(const style of ['festival']){
     page.children.length=0;
     await context.testApi.template(style);

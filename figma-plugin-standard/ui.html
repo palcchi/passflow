@@ -21,6 +21,24 @@ h1{font-size:26px;line-height:1;margin:0;letter-spacing:-.04em;font-weight:700}
 .step-title{display:flex;align-items:center;gap:10px;font-weight:600;font-size:14px;letter-spacing:-.01em}
 .num{width:22px;height:22px;border-radius:999px;background:var(--ink);color:var(--paper);display:grid;place-items:center;font-size:11px;font-weight:700;flex:none}
 .hint{margin:0;color:var(--muted);font-size:12px}
+.objects{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:6px 0 12px}
+.obj{display:grid;gap:6px;padding:6px;border:1px solid var(--line);border-radius:12px;background:var(--bg,#fff);font-size:11px;font-weight:600;color:inherit;text-align:center}
+.obj:disabled{opacity:.45}
+.obj:not(:disabled):hover{border-color:currentColor}
+.thumb{position:relative;display:flex;flex-direction:column;justify-content:center;gap:4px;height:48px;padding:6px;border-radius:8px;background:var(--soft,#f5f5f3);overflow:hidden}
+.thumb i{display:block;border-radius:3px;background:#c9c8c1}
+.t-bar{height:6px;width:100%;position:absolute;top:6px;left:0;background:#242421!important;border-radius:0!important}
+.t-dots{height:4px;width:40%;margin-left:auto;margin-top:-26px}
+.t-h1{height:7px;width:80%}.t-h1.s{width:55%}.t-pill{height:7px;width:30%;border-radius:9px!important;background:#242421!important}
+.thumb:has(.t-col){flex-direction:row;align-items:center}.t-col{height:26px;flex:1;background:repeating-linear-gradient(#c9c8c1 0 3px,transparent 3px 7px)!important}
+.t-row{height:7px;width:100%;background:#fff!important;border:1px solid #d9d8d2}.t-row.t{border-left:6px solid #242421}.t-row.q::after{content:"+";float:right;font-size:7px;line-height:5px;margin-right:2px}
+.thumb:has(.t-dot){flex-direction:row;justify-content:center;align-items:center}.t-dot{width:12px;height:12px;border-radius:50%!important;background:#ff6b4a!important}.t-dot:nth-child(2){background:#4f7cff!important}.t-dot:nth-child(3){background:#ffc93c!important}
+.thumb:has(.t-logo){flex-direction:row;align-items:center}.t-logo{flex:1;height:14px}
+.t-map{height:26px;flex:1;background:#d9e7d4!important}
+.t-cta{height:30px;width:100%;background:#242421!important;border-radius:6px!important}
+.t-foot{height:8px;width:100%;margin-top:auto;background:#d9d8d2!important}
+.thumb.small{height:34px;align-items:center}.t-btn{height:12px;width:48px;border-radius:9px!important;border:1.5px solid #242421;background:transparent!important}.t-btn.dark{background:#242421!important}
+
 .issues{list-style:none;margin:10px 0 0;padding:0;display:grid;gap:6px;max-height:180px;overflow:auto}
 .issue{width:100%;text-align:left;font-size:12px;line-height:1.45;padding:8px 10px;border-radius:10px;border:1px solid var(--line);background:var(--bg,#fff);color:inherit;font-weight:500}
 .issue.is-error{border-color:#e5484d;color:#c62a2f}
@@ -118,15 +136,12 @@ footer{position:sticky;bottom:0;background:var(--paper);padding:12px 18px 14px;b
   <section class="step" id="panel-website" role="tabpanel" aria-labelledby="tab-website">
     <button id="template" class="primary">Insert website</button>
     <hr>
-    <div class="step-title">Add a section</div>
-    <label class="field">Section
-      <select id="block">
-        <option>Navbar</option><option>Hero</option><option>About</option><option>Tickets</option><option>Schedule</option>
-        <option>Speakers</option><option>Sponsors</option><option>Venue</option><option>FAQ</option><option>CTA</option><option>Footer</option>
-      </select>
-    </label>
-    <button id="insert" disabled>Add to selected frame</button>
-    <p class="hint" id="insertHint">Select the Desktop or Mobile frame first.</p>
+    <div class="step-title">Sections</div>
+    <div class="objects"><button type="button" class="obj" data-block="Navbar" title="Add Navbar"><span class="thumb sec"><i class="t-bar"></i><i class="t-dots"></i></span><span>Navbar</span></button><button type="button" class="obj" data-block="Hero" title="Add Hero"><span class="thumb sec"><i class="t-h1"></i><i class="t-h1 s"></i><i class="t-pill"></i></span><span>Hero</span></button><button type="button" class="obj" data-block="About" title="Add About"><span class="thumb sec"><i class="t-col"></i><i class="t-col r"></i></span><span>About</span></button><button type="button" class="obj" data-block="Tickets" title="Add Tickets"><span class="thumb sec"><i class="t-row"></i><i class="t-row"></i><i class="t-row"></i></span><span>Tickets</span></button><button type="button" class="obj" data-block="Schedule" title="Add Schedule"><span class="thumb sec"><i class="t-row t"></i><i class="t-row t"></i><i class="t-row t"></i></span><span>Schedule</span></button><button type="button" class="obj" data-block="Speakers" title="Add Speakers"><span class="thumb sec"><i class="t-dot"></i><i class="t-dot"></i><i class="t-dot"></i></span><span>Speakers</span></button><button type="button" class="obj" data-block="Sponsors" title="Add Sponsors"><span class="thumb sec"><i class="t-logo"></i><i class="t-logo"></i><i class="t-logo"></i><i class="t-logo"></i></span><span>Sponsors</span></button><button type="button" class="obj" data-block="Venue" title="Add Venue"><span class="thumb sec"><i class="t-col"></i><i class="t-map"></i></span><span>Venue</span></button><button type="button" class="obj" data-block="FAQ" title="Add FAQ"><span class="thumb sec"><i class="t-row q"></i><i class="t-row q"></i><i class="t-row q"></i></span><span>FAQ</span></button><button type="button" class="obj" data-block="CTA" title="Add CTA"><span class="thumb sec"><i class="t-cta"></i></span><span>CTA</span></button><button type="button" class="obj" data-block="Footer" title="Add Footer"><span class="thumb sec"><i class="t-foot"></i></span><span>Footer</span></button></div>
+    <div class="step-title">Objects</div>
+    <div class="objects"><button type="button" class="obj" data-block="Button" title="Add Button"><span class="thumb small"><i class="t-btn"></i></span><span>Button</span></button><button type="button" class="obj" data-block="Register button" title="Add Register button"><span class="thumb small"><i class="t-btn dark"></i></span><span>Register button</span></button><button type="button" class="obj" data-block="Ticket list" title="Add Ticket list"><span class="thumb small"><i class="t-row"></i><i class="t-row"></i></span><span>Ticket list</span></button></div>
+    <p class="hint">Sections go into the selected Desktop, Tablet or Mobile frame. Objects go into the selected frame, section or row.</p>
+    <p class="hint" id="insertHint">Select a frame first.</p>
   </section>
 
   <section class="step" id="panel-pages" role="tabpanel" aria-labelledby="tab-pages" hidden>
@@ -141,8 +156,9 @@ footer{position:sticky;bottom:0;background:var(--paper);padding:12px 18px 14px;b
   </section>
 
   <section class="step" id="panel-passes" role="tabpanel" aria-labelledby="tab-passes" hidden>
-    <label class="field">Format
-      <select id="passKind"><option value="id_card">ID card</option><option value="digital">Digital pass</option><option value="wristband">Wristband</option></select>
+    <p class="hint">Printed passes. The digital pass card is added with the Pass page (Pages tab), because it shows inside that page.</p>
+    <label class="field">Print format
+      <select id="passKind"><option value="id_card">ID card</option><option value="wristband">Wristband</option><option value="digital">Digital pass card (if you deleted it)</option></select>
     </label>
     <div class="row">
       <label class="field">Width (mm)<input id="passW" type="number" min="10" max="2000" step="0.1" value="54"></label>
@@ -176,7 +192,7 @@ footer{position:sticky;bottom:0;background:var(--paper);padding:12px 18px 14px;b
     </div>
     <button id="frame">Use selected frame</button>
     <button id="linkBreakpoints">Link breakpoints</button>
-    <p class="hint">Like Framer: Desktop edits flow to Tablet and Mobile, Tablet edits flow to Mobile. Text, colors, images, fonts and visibility follow; size, position and font size stay per breakpoint. Use this after duplicating a frame.</p>
+    <p class="hint">Like Framer, for templates and Blank alike: layers you add on Desktop appear on Tablet and Mobile, and edits to text, colors, images, fonts and visibility flow down. Size, position and font size stay per breakpoint; anything changed on a smaller frame stays as an override. Use this after duplicating a frame yourself.</p>
     <label class="field">Connect selected layer to
       <select id="binding">
         <option value="register">Register button → PassFlow sign-up</option>
@@ -237,7 +253,7 @@ $('code').onkeydown=e=>{if(e.key==='Enter')send({type:'pair',code:$('code').valu
 $('template').onclick=()=>send({type:'template',style:style()});
 const styleHints={blank:'Empty Desktop 1440, Tablet 834 and Mobile 390 frames. Draw anything, then mark your Register button.',minimal:'Clean white layout in Desktop, Tablet and Mobile, with a sticky navbar, hover buttons and scroll animations. Every word is yours to edit.',festival:'Bold dark layout with loud type and color, a sticky navbar, hover buttons and scroll animations. Every word is yours to edit.'};
 for(const r of document.querySelectorAll('input[name=style]'))r.onchange=()=>{$('styleHint').textContent=styleHints[style()];};
-$('insert').onclick=()=>send({type:'block',block:$('block').value,style:style()});
+for(const b of document.querySelectorAll('.obj'))b.onclick=()=>send({type:'block',block:b.dataset.block,style:style()});
 // Tabs: arrow keys move focus between tabs, as in a native segmented control.
 const tabs=[...document.querySelectorAll('[role=tab]')];
 function selectTab(tab){for(const t of tabs){const on=t===tab;t.setAttribute('aria-selected',on);t.tabIndex=on?0:-1;$(t.getAttribute('aria-controls')).hidden=!on;}}
@@ -269,7 +285,7 @@ window.onmessage=e=>{
   if(m.type==='selection'){
     $('selected').textContent=m.name||'Nothing selected';
     $('selectedBinding').textContent=m.binding?'Connected to: '+m.binding:(m.frameRole?'Frame: '+m.frameRole:'No PassFlow binding');
-    $('insert').disabled=!m.frame;$('insertHint').hidden=!!m.frame;
+    for(const b of document.querySelectorAll('.obj'))b.disabled=b.closest('.objects')===document.querySelector('.objects')?!m.frame:!m.single;$('insertHint').hidden=!!m.single;
   }
 };
 </script>
