@@ -120,7 +120,8 @@ function Frame({frame,data,preview,prefix,slot}:{frame:WebsiteFrame;data:Website
     // Slots are where PassFlow renders its live registration form or attendee pass inside a Figma page.
     // They grow with their content; the designer reserves the space in Figma.
     if(n.binding==='formSlot'||n.binding==='passSlot'){
-      return <div key={n.id} id={id} className="figma-slot" style={{...style,height:'auto',minHeight:style.height,overflow:'visible',whiteSpace:'normal',textAlign:'left'}}>{slot??nested}</div>;
+      // The slot box in Figma is a placement guide; on the web only PassFlow's content shows there (put a shape behind it for a card).
+      return <div key={n.id} id={id} className="figma-slot" style={{...style,height:'auto',minHeight:style.height,overflow:'visible',whiteSpace:'normal',textAlign:'left',...(slot?{backgroundColor:undefined,backgroundImage:undefined,border:undefined,boxShadow:undefined}:{})}}>{slot??nested}</div>;
     }
 
     if(n.binding==='tickets'){

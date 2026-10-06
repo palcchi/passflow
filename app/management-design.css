@@ -176,3 +176,12 @@ fieldset.studio-workspace{border:0;padding:0;margin:0;min-width:0}
 /* The Figma pass shows at card size (its artwork is exported for ~300 dpi print, not for a full-width banner). */
 .claim-pass-art{width:100%;margin:8px auto 20px;border-radius:18px;overflow:hidden;box-shadow:0 0 0 1px color-mix(in srgb,currentColor 8%,transparent),0 18px 40px rgba(0,0,0,.12)}
 .claim-pass-art svg{display:block;width:100%;height:auto}
+/* A custom Figma pass stands alone: no stock card, heading or credential box around it. */
+.claim-pass-only{display:grid;place-items:center;padding:12px 0 24px}
+.claim-pass-only .claim-pass-art{margin:0 auto}
+.center-page:has(.claim-pass-only) .center-page-inner{display:grid;place-items:center;min-height:70vh}
+/* In a Figma Form slot the sign-up form drops PassFlow's card chrome and duplicate heading. */
+.figma-slot .claim-card{background:transparent!important;border:0!important;box-shadow:none!important;padding:0!important}
+.figma-slot .claim-card>h2{display:none}
+.figma-slot>.pass-digital-shell:has(.claim-pass-only){max-width:none}
+.figma-slot>.pass-digital-shell{background:transparent!important;min-height:0!important;padding:0!important}
