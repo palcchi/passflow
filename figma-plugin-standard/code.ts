@@ -857,9 +857,36 @@ async function inherit(source:SceneNode,props:InheritProp[]){
   }
   if(changed.length)await inherit(target,changed);
 }
+// New layers drawn on a larger breakpoint appear on the smaller ones too (scaled to their width) and stay linked,
+// so a Blank start works like a template. Layers we create here are linked at once, so their own events are ignored.
+function counterpartIn(frame:FrameNode,node:BaseNode):BaseNode|null{
+  if(node.type==='FRAME'&&node.parent?.type==='PAGE')return frame;
+  const link='getSharedPluginData' in node?node.getSharedPluginData(NS,'link'):'';
+  return link?frame.findOne(n=>n.getSharedPluginData(NS,'link')===link):null;
+}
+function copyDown(node:SceneNode){
+  const frame=frameOfNode(node),lower=frame&&lowerFrame(frame),parent=node.parent;
+  if(!frame||!lower||!parent||node===frame)return;
+  const target=counterpartIn(lower,parent);
+  if(!target||!('appendChild' in target)||target.type==='INSTANCE')return;
+  const copy=node.clone();
+  const index=(parent as ChildrenMixin).children.indexOf(node);
+  (target as FrameNode).insertChild(Math.min(index,(target as FrameNode).children.length),copy);
+  if(!('layoutMode' in target)||(target as FrameNode).layoutMode==='NONE'||copy.layoutPositioning==='ABSOLUTE'){
+    const ratio=(target as FrameNode).width/(parent as FrameNode).width;
+    copy.x=Math.round(node.x*ratio);
+    if('resize' in copy&&ratio<1&&copy.width*ratio>=1)(copy as FrameNode).resize(Math.max(1,copy.width*ratio),copy.height);
+  }
+  linkTrees(node,copy);
+  copyDown(copy);
+}
 let inheriting=Promise.resolve();
 function flowDown(event:NodeChangeEvent){
   const work:[SceneNode,InheritProp[]][]=[];
+  const created=event.nodeChanges.filter(c=>c.type==='CREATE'&&c.origin!=='REMOTE'&&!c.node.removed).map(c=>c.node as SceneNode);
+  // Only the top of a pasted or drawn group is copied; its children come along with the clone.
+  const roots=created.filter(n=>'getSharedPluginData' in n&&!n.getSharedPluginData(NS,'link')&&!created.includes(n.parent as SceneNode));
+  if(roots.length)inheriting=inheriting.then(()=>{for(const n of roots)if(!n.removed&&!n.getSharedPluginData(NS,'link'))copyDown(n);}).catch(()=>{});
   for(const c of event.nodeChanges){
     if(c.type!=='PROPERTY_CHANGE'||c.origin==='REMOTE'||c.node.removed||!('getSharedPluginData' in c.node))continue;
     const node=c.node as SceneNode,props=c.properties.filter((p):p is InheritProp=>(INHERIT as readonly string[]).includes(p));

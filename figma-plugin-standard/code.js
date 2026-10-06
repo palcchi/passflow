@@ -1207,9 +1207,44 @@ async function inherit(source, props) {
     if (changed.length)
         await inherit(target, changed);
 }
+// New layers drawn on a larger breakpoint appear on the smaller ones too (scaled to their width) and stay linked,
+// so a Blank start works like a template. Layers we create here are linked at once, so their own events are ignored.
+function counterpartIn(frame, node) {
+    var _a;
+    if (node.type === 'FRAME' && ((_a = node.parent) === null || _a === void 0 ? void 0 : _a.type) === 'PAGE')
+        return frame;
+    const link = 'getSharedPluginData' in node ? node.getSharedPluginData(NS, 'link') : '';
+    return link ? frame.findOne(n => n.getSharedPluginData(NS, 'link') === link) : null;
+}
+function copyDown(node) {
+    const frame = frameOfNode(node), lower = frame && lowerFrame(frame), parent = node.parent;
+    if (!frame || !lower || !parent || node === frame)
+        return;
+    const target = counterpartIn(lower, parent);
+    if (!target || !('appendChild' in target) || target.type === 'INSTANCE')
+        return;
+    const copy = node.clone();
+    const index = parent.children.indexOf(node);
+    target.insertChild(Math.min(index, target.children.length), copy);
+    if (!('layoutMode' in target) || target.layoutMode === 'NONE' || copy.layoutPositioning === 'ABSOLUTE') {
+        const ratio = target.width / parent.width;
+        copy.x = Math.round(node.x * ratio);
+        if ('resize' in copy && ratio < 1 && copy.width * ratio >= 1)
+            copy.resize(Math.max(1, copy.width * ratio), copy.height);
+    }
+    linkTrees(node, copy);
+    copyDown(copy);
+}
 let inheriting = Promise.resolve();
 function flowDown(event) {
     const work = [];
+    const created = event.nodeChanges.filter(c => c.type === 'CREATE' && c.origin !== 'REMOTE' && !c.node.removed).map(c => c.node);
+    // Only the top of a pasted or drawn group is copied; its children come along with the clone.
+    const roots = created.filter(n => 'getSharedPluginData' in n && !n.getSharedPluginData(NS, 'link') && !created.includes(n.parent));
+    if (roots.length)
+        inheriting = inheriting.then(() => { for (const n of roots)
+            if (!n.removed && !n.getSharedPluginData(NS, 'link'))
+                copyDown(n); }).catch(() => { });
     for (const c of event.nodeChanges) {
         if (c.type !== 'PROPERTY_CHANGE' || c.origin === 'REMOTE' || c.node.removed || !('getSharedPluginData' in c.node))
             continue;
