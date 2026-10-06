@@ -29,7 +29,7 @@ const steps = ["Create a PassFlow account", "Submit your organizer details", "Ge
 export default async function OrganizerLandingPage() {
   const session = await getAuthContext();
   const organizer = session ? (await getMemberships()).memberships.some((m) => canManage(m.role)) : false;
-  const cta = organizer ? "/admin" : session ? "/organizer/start" : "/register?next=" + encodeURIComponent("/organizer/start");
+  const cta = organizer ? "/organizer/events" : session ? "/organizer/start" : "/register?next=" + encodeURIComponent("/organizer/start");
   const ctaLabel = organizer ? "Open organizer workspace" : "Apply as an organizer";
 
   return <main className="editorial-landing">

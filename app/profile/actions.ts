@@ -8,7 +8,7 @@ import { requireUser } from "@/lib/auth/session";
 function refreshProfile() {
   revalidatePath("/account");
   revalidatePath("/profile");
-  revalidatePath("/admin");
+  revalidatePath("/organizer/events");
 }
 
 export async function saveProfile(formData: FormData) {

@@ -66,7 +66,7 @@ export const config = {
     "/",
     "/e/:slug",
     "/api/scan",
-    "/admin/:path*",
+    "/organizer/events/:path*",
     "/account/:path*",
     "/profile",
     "/api/figma/:path*",

@@ -42,7 +42,7 @@ html { -webkit-tap-highlight-color: transparent; }
     min-height: 52px;
     border-radius: 18px;
     color: var(--muted-foreground);
-    font-size: 10.5px;
+    font-size: 12px;
     font-weight: 500;
     letter-spacing: 0;
     text-decoration: none;

@@ -3,7 +3,7 @@ import { useState, useTransition } from "react";
 import { Dialog } from "radix-ui";
 import { X } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { managePersonRecord } from "@/app/admin/people-actions";
+import { managePersonRecord } from "@/app/organizer/events/people-actions";
 import { FormattedNumberInput, SmartSelect } from "@/components/form-fields";
 
 type RecordData = { id: string; name: string; email?: string | null; phone?: string | null; ticket_type_id?: string | null; description?: string | null; price?: number; capacity?: number | null };

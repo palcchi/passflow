@@ -10,7 +10,7 @@ import { AvatarCircles } from "@/components/magicui/avatar-circles";
 export function EventClassCard({ event, joined = false, manage = false }: {
   event: PassFlowEvent; joined?: boolean; manage?: boolean;
 }) {
-  const href = manage ? `/admin/events/${event.id}` : joined ? `/e/${event.slug}/claim` : `/e/${event.slug}`;
+  const href = manage ? `/organizer/events/${event.id}` : joined ? `/e/${event.slug}/claim` : `/e/${event.slug}`;
   return <Link href={href} className="class-event-card" style={{ "--card-brand": event.theme.primary, "--card-brand-ink": eventInk(event.theme.primary), "--card-secondary": event.theme.secondary } as CSSProperties}>
     <div className="class-event-cover">
       {event.heroImageUrl || event.posterUrl ? <Image src={(event.heroImageUrl || event.posterUrl)!} fill unoptimized sizes="(max-width: 680px) 90vw, (max-width: 1100px) 45vw, 360px" alt="" className="class-event-image"/> : <EventArtwork event={event}/>}

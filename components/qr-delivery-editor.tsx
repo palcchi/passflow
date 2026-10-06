@@ -3,7 +3,7 @@
 import { useState, useTransition, type ReactNode } from "react";
 import { Check, QrCode } from "lucide-react";
 import type { PassFlowEvent, QrDeliveryMode } from "@/lib/events";
-import { saveEventQrConfig } from "@/app/admin/actions";
+import { saveEventQrConfig } from "@/app/organizer/events/actions";
 
 const modes: Array<{
   value: QrDeliveryMode;
@@ -66,7 +66,7 @@ export function QrDeliveryEditor({ event, children }: { event: PassFlowEvent; ch
           <p>Pick the format and how attendees receive their QR. Size, layout and artwork come from your Figma pass design.</p>
         </div>
         <div className="qr-editor-header-actions">
-          <a className="button button-ghost" href={`/admin/events/${event.id}/design`}>
+          <a className="button button-ghost" href={`/organizer/events/${event.id}/design`}>
             Design in Figma
           </a>
         </div>

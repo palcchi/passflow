@@ -32,20 +32,21 @@ export const getMemberships = cache(async () => {
   return { memberships: error ? [] : (data ?? []), unavailable: !!error };
 });
 
-export async function requireOrganizer(next = "/admin") {
+export async function requireOrganizer(next = "/organizer/events") {
   const context = await requireUser(next);
   const { memberships, unavailable } = await getMemberships();
-  if (unavailable || !memberships.some((membership) => canManage(membership.role))) {
-    redirect("/unauthorized");
-  }
+  if (unavailable) redirect("/unauthorized");
+  // Attendees who open the workspace are offered the organizer application instead of a dead end.
+  if (!memberships.some((membership) => canManage(membership.role))) redirect("/organizer/start");
   return context;
 }
 
-export async function requireOrganizerMembership(next = "/admin") {
+export async function requireOrganizerMembership(next = "/organizer/events") {
   const context = await requireUser(next);
   const { memberships, unavailable } = await getMemberships();
   const membership = memberships.find((item) => canManage(item.role));
-  if (unavailable || !membership) redirect("/unauthorized");
+  if (unavailable) redirect("/unauthorized");
+  if (!membership) redirect("/organizer/start");
   return { ...context, membership };
 }
 
