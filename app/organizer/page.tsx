@@ -11,7 +11,7 @@ import { canManage } from "@/lib/auth/redirect";
 
 export const metadata: Metadata = {
   title: { absolute: "PassFlow for Organizers — Event registration, QR tickets & check-in" },
-  description: "Run registration, QR tickets, digital passes, crew access, and live check-in from one organizer workspace. Apply for a PassFlow organizer account.",
+  description: "Run registration, QR tickets, digital passes, crew access, and live check-in from one organizer workspace. Create a free organizer workspace in a minute.",
   alternates: { canonical: "/organizer" },
   openGraph: { title: "PassFlow for Organizers", description: "Registration, QR tickets, crew access, and live check-in in one workspace.", url: "/organizer" },
 };
@@ -24,19 +24,19 @@ const features = [
   { kind: "check" as const, title: "QR passes & live check-in", body: "Every attendee gets a personal QR pass. Your crew scans it at the door with any phone camera." },
 ];
 
-const steps = ["Create a PassFlow account", "Submit your organizer details", "Get approved, then publish your first event"];
+const steps = ["Create a PassFlow account", "Name your organization", "Start your first event right away"];
 
 export default async function OrganizerLandingPage() {
   const session = await getAuthContext();
   const organizer = session ? (await getMemberships()).memberships.some((m) => canManage(m.role)) : false;
   const cta = organizer ? "/organizer/events" : session ? "/organizer/start" : "/register?next=" + encodeURIComponent("/organizer/start");
-  const ctaLabel = organizer ? "Open organizer workspace" : "Apply as an organizer";
+  const ctaLabel = organizer ? "Open organizer workspace" : "Become an organizer";
 
   return <main className="editorial-landing">
     <nav className="editorial-nav" aria-label="Main navigation">
       <Link href="/" className="brand-lockup"><FlowMark/>PassFlow</Link>
       <div className="editorial-nav-links"><Link href="/#events">Discover</Link><a href="#how-it-works">How it works</a></div>
-      <div className="editorial-nav-actions"><ThemeToggle compact/>{!session && <Link href={"/login?next=" + encodeURIComponent("/organizer/start")}>Sign in</Link>}<Link href={cta} className="button button-dark">{organizer ? "Workspace" : "Apply"}<ArrowUpRight size={15}/></Link></div>
+      <div className="editorial-nav-actions"><ThemeToggle compact/>{!session && <Link href={"/login?next=" + encodeURIComponent("/organizer/start")}>Sign in</Link>}<Link href={cta} className="button button-dark">{organizer ? "Workspace" : "Get started"}<ArrowUpRight size={15}/></Link></div>
     </nav>
     <section className="editorial-canvas">
       <span className="editorial-eyebrow"><span/> PASSFLOW FOR ORGANIZERS</span>
@@ -56,7 +56,7 @@ export default async function OrganizerLandingPage() {
       <ol className="organizer-steps organizer-steps-large">
         {steps.map((step) => <li key={step}>{step}</li>)}
       </ol>
-      <p className="organizer-note">We review each organizer application before activation to keep attendee data and check-in tools in trusted hands.</p>
+      <p className="organizer-note">Each account runs one event at a time. PassFlow can close workspaces that misuse attendee data or check-in tools.</p>
     </section>
     <footer className="editorial-footer"><Link href="/" className="brand-lockup">PassFlow<span className="brand-dot"/></Link><span>Event registration, QR tickets & check-in. © PassFlow</span><Link href={cta}>{ctaLabel} ↗</Link></footer>
   </main>;

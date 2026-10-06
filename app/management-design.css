@@ -185,3 +185,15 @@ fieldset.studio-workspace{border:0;padding:0;margin:0;min-width:0}
 .figma-slot .claim-card>h2{display:none}
 .figma-slot>.pass-digital-shell:has(.claim-pass-only){max-width:none}
 .figma-slot>.pass-digital-shell{background:transparent!important;min-height:0!important;padding:0!important}
+/* Platform admin: organizer application review. */
+.platform-shell{max-width:960px;margin:0 auto;padding:48px 20px 80px;display:flex;flex-direction:column;gap:20px}
+.platform-head h1{font-size:clamp(32px,4vw,48px);letter-spacing:-.04em;margin:6px 0 8px}
+.platform-head p{margin:0;color:var(--muted-foreground);font-size:14px;max-width:640px}
+.platform-application{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:16px 18px;border:1px solid var(--border);border-radius:16px;background:var(--card)}
+.platform-application>div{display:grid;gap:3px;min-width:0}
+.platform-application strong{font-size:16px}
+.platform-application span{font-size:14px}
+.platform-application small{font-size:12px;color:var(--muted-foreground)}
+.platform-actions{display:flex;gap:8px}
+.platform-actions .button{min-height:38px;padding:8px 16px}
+.event-limit-card{display:grid;gap:10px;justify-items:start;margin-top:24px;max-width:640px}.event-limit-card h2{margin:0}.event-limit-card p{margin:0 0 6px;color:var(--muted-foreground);font-size:14px;line-height:1.6}

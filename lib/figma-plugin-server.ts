@@ -1,12 +1,9 @@
 import 'server-only';
 import {createHash,randomBytes} from 'crypto';
-import {createClient} from '@supabase/supabase-js';
-import type {Database} from '@/lib/supabase/database.types';
+import {serviceClient} from '@/lib/supabase/service';
 export const secretHash=(value:string)=>createHash('sha256').update(value).digest('hex');
 export function pluginServer(){
-  const url=process.env.NEXT_PUBLIC_SUPABASE_URL,key=process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if(!url||!key)throw new Error('plugin_server_not_configured');
-  return createClient<Database>(url,key,{auth:{persistSession:false,autoRefreshToken:false}});
+  try{return serviceClient();}catch{throw new Error('plugin_server_not_configured');}
 }
 export function newPairingCode(){const alphabet='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';const bytes=randomBytes(10);return 'PF-'+Array.from(bytes,b=>alphabet[b%32]).join('');}
 export function normalizePairingCode(value:unknown){return typeof value==='string'?value.trim().toUpperCase().replace(/[^A-Z0-9]/g,''):'';}

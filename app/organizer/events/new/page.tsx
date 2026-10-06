@@ -4,6 +4,7 @@ import { ArrowLeft } from "lucide-react";
 import { createEvent } from "@/app/organizer/events/actions";
 import { DateTimeField, FormattedNumberInput } from "@/components/form-fields";
 import { requireOrganizer } from "@/lib/auth/session";
+import { canCreateEvent, EVENTS_PER_ORGANIZER } from "@/lib/organizer-quota";
 import { UserNavbar } from "@/components/user-navbar";
 import { eventAdminProfile } from "@/components/event-admin-chrome";
 import { FolderArtwork, Sticker } from "@/components/flow-brand-art";
@@ -15,7 +16,8 @@ export default async function NewEventPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const params = await searchParams;
-  const { user } = await requireOrganizer();
+  const { supabase, user } = await requireOrganizer();
+  const allowed = await canCreateEvent(supabase, user);
   return (
     <div className="app-surface flow-workspace min-h-screen">
       <UserNavbar {...eventAdminProfile(user)} organizer/>
@@ -23,7 +25,14 @@ export default async function NewEventPage({
         <Link href="/organizer/events" className="auth-back"><ArrowLeft size={16} /> Back to organizer</Link>
         <header className="studio-page-hero"><div><span className="section-kicker">SOMETHING GOOD STARTS HERE</span><h1 className="studio-page-title">Turn an idea into an event.</h1><p className="studio-page-subtitle">Start with the essentials. Your event remains a draft until you are ready to publish.</p></div><div className="workspace-art"><FolderArtwork color="orange" label="A fresh start"/><Sticker kind="check"/></div></header>
 
-        {params.error && <p className="mt-6 rounded-md border border-destructive/30 p-3 text-sm text-destructive">The event could not be created. Review the event name and URL slug, then try again.</p>}
+        {params.error && params.error !== "limit" && <p className="mt-6 rounded-md border border-destructive/30 p-3 text-sm text-destructive">The event could not be created. Review the event name and URL slug, then try again.</p>}
+
+        {!allowed ? <section className="event-admin-section event-limit-card">
+          <span className="section-kicker">One event at a time</span>
+          <h2>You already have an active event.</h2>
+          <p>Each organizer account runs {EVENTS_PER_ORGANIZER} event at a time. When it is over, archive it in its Settings and you can create the next one.</p>
+          <Link className="button button-dark" href="/organizer/events">Back to your event</Link>
+        </section> : <>
 
         <form action={createEvent} className="create-event-form grid gap-5 sm:grid-cols-2">
           <label className="block text-sm font-medium sm:col-span-2">Event name
@@ -46,6 +55,7 @@ export default async function NewEventPage({
           </label>
           <div className="sm:col-span-2"><AuthSubmit>Create draft event ↗</AuthSubmit></div>
         </form>
+        </>}
       </main>
     </div>
   );

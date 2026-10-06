@@ -2,8 +2,10 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 import Link from "next/link";
-import { ArrowUpRight, FolderOpen, Plus } from "lucide-react";
+import { ArrowUpRight, FolderOpen, Plus, Sparkles } from "lucide-react";
 import { accountProfile, requireOrganizer } from "@/lib/auth/session";
+import { isPlatformAdmin } from "@/lib/auth/platform";
+import { serviceClient } from "@/lib/supabase/service";
 import { UserNavbar } from "@/components/user-navbar";
 import { getManagedEvents } from "@/lib/events";
 import { HeroCardFan } from "@/components/hero-card-fan";
@@ -49,6 +51,13 @@ export default async function AdminDashboardPage() {
     (station) => station.is_active,
   ).length;
 
+  // PassFlow admins reach the organizer list from their own dashboard.
+  const platformAdmin = isPlatformAdmin(user);
+  let organizerCount = 0;
+  if (platformAdmin) {
+    try { organizerCount = (await serviceClient().from("organizer_applications").select("user_id", { count: "exact", head: true }).eq("status", "approved")).count ?? 0; } catch {}
+  }
+
   const stats = [
     ["Events", events.length, "managed"],
     ["Registered", totalRegistered, "attendees"],
@@ -81,6 +90,7 @@ export default async function AdminDashboardPage() {
           <div className="workspace-fan"><HeroCardFan events={events} compact/></div>
         </header>
 
+        {platformAdmin && <Link className="recent-project" href="/platform/organizers"><span className="recent-project-icon"><Sparkles size={21}/></span><span className="recent-project-copy"><span>PASSFLOW ADMIN</span><strong>Organizers · {organizerCount} active</strong></span><ArrowUpRight size={19}/></Link>}
         {events[0] && <Link className="recent-project" href={`/organizer/events/${events[0].id}`}><span className="recent-project-icon"><FolderOpen size={21}/></span><span className="recent-project-copy"><span>LATEST EVENT · CONTINUE MANAGING</span><strong>{events[0].name}</strong></span><ArrowUpRight size={19}/></Link>}
 
         <section className="studio-metric-strip" aria-label="Organizer metrics">

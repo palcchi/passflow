@@ -2,7 +2,7 @@
 export function safeNext(value: unknown): string {
   if (typeof value !== "string" || value.length > 250) return "/account";
   if (/^\/crew\/join\?token=[A-Za-z0-9_-]{32}$/.test(value)) return value;
-  return /^(?:\/account|\/profile|\/events|\/organizer\/start|\/reset-password|\/organizer\/events(?:\/[a-zA-Z0-9_-]+)*|\/e\/[a-z0-9-]+\/claim|\/scan\/[a-zA-Z0-9_-]+)$/.test(value)
+  return /^(?:\/account|\/profile|\/events|\/organizer\/start|\/platform\/organizers|\/reset-password|\/organizer\/events(?:\/[a-zA-Z0-9_-]+)*|\/e\/[a-z0-9-]+\/claim|\/scan\/[a-zA-Z0-9_-]+)$/.test(value)
     ? value
     : "/account";
 }
