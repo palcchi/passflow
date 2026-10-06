@@ -158,11 +158,11 @@ export default async function EventPeoplePage({ params, searchParams }: Props) {
 
         <form className="event-admin-search" method="get">
           <Search size={15} />
-          <input name="q" defaultValue={search} placeholder="Search by name, email or phone" aria-label="Search attendees" />
+          <input name="q" defaultValue={search} placeholder="Search attendees" aria-label="Search attendees" />
           <button type="submit">Search</button>
         </form>
         <div className="event-admin-table-shell">
-          <table className="event-admin-table">
+          <table className="event-admin-table people-table">
             <thead>
               <tr>
                 <th>Code</th>

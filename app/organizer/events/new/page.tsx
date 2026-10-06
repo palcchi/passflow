@@ -51,7 +51,7 @@ export default async function NewEventPage({
             <FormattedNumberInput name="capacity" min={0} className="mt-2 min-h-12 w-full rounded-md border border-input bg-background px-3" placeholder="500" />
           </label>
           <label className="block text-sm font-medium sm:col-span-2">About the event
-            <textarea name="description" maxLength={1200} rows={5} className="mt-2 w-full rounded-md border border-input bg-background p-3" placeholder="Add a concise description of the event experience, audience, and key details." />
+            <textarea name="description" maxLength={1200} rows={5} className="mt-2 w-full rounded-md border border-input bg-background p-3" placeholder="Who it is for and what to expect" />
           </label>
           <div className="sm:col-span-2"><AuthSubmit>Create draft event ↗</AuthSubmit></div>
         </form>

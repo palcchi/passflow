@@ -156,7 +156,7 @@ export function UserNavbar({
             >
               {!avatarUrl && initial}
             </span>
-            <span className="user-profile-trigger-copy">
+            <span className="user-profile-trigger-copy" title={name}>
               <strong>{name}</strong>
               <small>{organizer ? "Organizer" : "Attendee"}</small>
             </span>

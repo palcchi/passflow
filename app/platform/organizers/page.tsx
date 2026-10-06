@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/auth/session";
 import { isPlatformAdmin } from "@/lib/auth/platform";
@@ -34,6 +36,7 @@ export default async function OrganizersPage({ searchParams }: { searchParams: P
 
   return <main className="app-surface min-h-screen"><div className="platform-shell">
     <header className="platform-head">
+      <Link href="/organizer/events" className="back-link"><ArrowLeft size={16}/> Back to organizer</Link>
       <span className="section-kicker">PassFlow admin</span>
       <h1>Organizers</h1>
       <p>Anyone who applies at /organizer/start becomes an organizer straight away, with {EVENTS_PER_ORGANIZER} active event per account. Revoke an account to close its workspace.</p>
