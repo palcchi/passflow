@@ -21,7 +21,7 @@ export default async function AdminDashboardPage() {
     ? await Promise.all([
         supabase.from("qr_credentials").select("id", { count: "exact", head: true }).in("event_id", eventIds).eq("status", "active"),
         supabase.from("scanner_stations").select("id,name,is_active,event_id").in("event_id", eventIds).order("name"),
-        supabase.from("attendees").select("event_id").in("event_id", eventIds).eq("approval_status", "pending"),
+        supabase.from("attendees").select("event_id").in("event_id", eventIds).is("deleted_at", null).eq("approval_status", "pending"),
       ])
     : [{ count: 0 }, { data: [] }, { data: [] }];
 

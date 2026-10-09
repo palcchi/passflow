@@ -49,6 +49,7 @@ export default async function PublicEventPage({ params }: EventPageProps) {
         .select("id")
         .eq("user_id", context.user.id)
         .eq("event_id", event.id)
+        .is("deleted_at", null)
         .limit(1)
         .maybeSingle()
     : { data: null };

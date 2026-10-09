@@ -21,7 +21,7 @@ export default async function EventSettingsPage({ params, searchParams }: Props)
   const { supabase } = await requireOrganizerMembership(`/organizer/events/${eventId}/settings`);
   const [{ data: versions }, attendees, credentials, scans, activities, benefits] = await Promise.all([
     supabase.from("event_publications").select("version,published_at").eq("event_id", eventId).order("version", { ascending: false }).limit(10),
-    supabase.from("attendees").select("id", { count: "exact", head: true }).eq("event_id", eventId),
+    supabase.from("attendees").select("id", { count: "exact", head: true }).eq("event_id", eventId).is("deleted_at", null),
     supabase.from("qr_credentials").select("id", { count: "exact", head: true }).eq("event_id", eventId),
     supabase.from("scan_logs").select("id", { count: "exact", head: true }).eq("event_id", eventId),
     supabase.from("activity_logs").select("id", { count: "exact", head: true }).eq("event_id", eventId),

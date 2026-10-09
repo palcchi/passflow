@@ -57,7 +57,7 @@ export default async function EventOverviewPage({ params }: Props) {
       .eq("event_id", eventId),
     supabase.from("figma_plugin_links").select("id", { count: "exact", head: true }).eq("event_id", eventId).is("revoked_at", null),
     supabase.from("event_studio_documents").select("kind").eq("event_id", eventId).eq("status", "published"),
-    supabase.from("attendees").select("id", { count: "exact", head: true }).eq("event_id", eventId).eq("approval_status", "pending"),
+    supabase.from("attendees").select("id", { count: "exact", head: true }).eq("event_id", eventId).is("deleted_at", null).eq("approval_status", "pending"),
   ]);
 
   const credentials = credentialsResult.data ?? [];
@@ -106,7 +106,7 @@ export default async function EventOverviewPage({ params }: Props) {
     { done: (figmaLinkResult.count ?? 0) > 0, title: "Pair a Figma file", href: `${base}/design`, required: false },
     { done: liveKinds.has("website"), title: "Publish your Figma website", href: `${base}/design`, required: false },
     { done: ["digital", "id_card", "wristband"].some((kind) => liveKinds.has(kind)), title: "Publish a pass design", href: `${base}/design`, required: false },
-    { done: activeStations > 0, title: "Set up a scanner station", href: `${base}/access`, required: false },
+    { done: activeStations > 0, title: "Set up a scanner station", href: `${base}/operations`, required: false },
     { done: event.status === "published", title: "Publish the event", href: `${base}/settings`, required: true },
   ];
   const remaining = checklist.filter((item) => !item.done).length;
@@ -152,7 +152,7 @@ export default async function EventOverviewPage({ params }: Props) {
         <section aria-labelledby="stations-title">
           <div className="ui-sectionhead">
             <div><h2 id="stations-title" className="ui-h2">Scanner stations</h2><p>{activeStations} of {stations.length} active</p></div>
-            <Link href={`${base}/access`} className="ui-link">Manage <ArrowUpRight size={14} /></Link>
+            <Link href={`${base}/operations`} className="ui-link">Manage <ArrowUpRight size={14} /></Link>
           </div>
           {stations.length ? (
             <ul className="ui-list">
@@ -166,7 +166,7 @@ export default async function EventOverviewPage({ params }: Props) {
               ))}
             </ul>
           ) : (
-            <div className="ui-empty"><strong>No stations yet</strong><p>Add a check-in station in Access, then open it on any phone.</p><Link href={`${base}/access`} className="ui-btn ui-btn-secondary ui-btn-sm">Add a station</Link></div>
+            <div className="ui-empty"><strong>No stations yet</strong><p>Add a check-in station in Operations, then open it on any phone.</p><Link href={`${base}/operations`} className="ui-btn ui-btn-secondary ui-btn-sm">Add a station</Link></div>
           )}
         </section>
       </div>

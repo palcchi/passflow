@@ -7,8 +7,7 @@ import { useEffect, useRef } from "react";
 const items = [
   { key: "overview", label: "Overview", suffix: "" },
   { key: "people", label: "People", suffix: "/people" },
-  { key: "access", label: "Access", suffix: "/access" },
-  { key: "experience", label: "Experience", suffix: "/experience" },
+  { key: "operations", label: "Operations", suffix: "/operations" },
   { key: "design", label: "Design", suffix: "/design" },
   { key: "settings", label: "Settings", suffix: "/settings" },
 ] as const;

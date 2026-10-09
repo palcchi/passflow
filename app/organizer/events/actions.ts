@@ -589,6 +589,7 @@ export async function saveClaimMode(formData: FormData) {
         .from("attendees")
         .select("id,attendee_code")
         .eq("event_id", eventId)
+        .is("deleted_at", null)
         .order("created_at")
         .range(from, from + 499);
       const page = data ?? [];

@@ -29,7 +29,7 @@ export function PeopleRecordEditor({ eventId, kind, record, tickets = [] }: {
     <Dialog.Trigger className="record-edit-button">Manage</Dialog.Trigger>
     <Dialog.Portal><Dialog.Overlay className="record-overlay"/><Dialog.Content className="record-dialog">
       <Dialog.Title>{deleting ? "Delete this record?" : kind === "attendee" ? "Edit attendee" : "Edit pass category"}</Dialog.Title>
-      <Dialog.Description>{deleting ? kind === "attendee" ? "The attendee, related activity data, and benefit claims will be deleted. Their QR credential will be revoked. This action cannot be undone." : "A category can only be deleted when it is not used by attendees, access rules, or designs." : record.name}</Dialog.Description>
+      <Dialog.Description>{deleting ? kind === "attendee" ? "Their QR pass will be revoked immediately. All attendee data will be permanently deleted after 7 days." : "A category can only be deleted when it is not used by attendees, access rules, or designs." : record.name}</Dialog.Description>
       <Dialog.Close className="record-close" disabled={pending} aria-label="Close"><X size={20}/></Dialog.Close>
       <form action={submit}>
         <input type="hidden" name="eventId" value={eventId}/><input type="hidden" name="id" value={record.id}/>

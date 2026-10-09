@@ -27,7 +27,7 @@ export default async function ClaimPage({ params, searchParams }: ClaimPageProps
   const event = await getPublishedEvent(slug);
   if (!event) notFound();
   const { supabase, user } = await requireUser(`/e/${slug}/claim`);
-  const { data: attendee } = await supabase.from("attendees").select("id,name,email,phone,attendee_code,ticket_type_id,approval_status,ticket_types(name,code)").eq("event_id", event.id).eq("user_id", user.id).maybeSingle();
+  const { data: attendee } = await supabase.from("attendees").select("id,name,email,phone,attendee_code,ticket_type_id,approval_status,ticket_types(name,code)").eq("event_id", event.id).eq("user_id", user.id).is("deleted_at", null).maybeSingle();
   const [ticketsResult, credentialsResult, profileResult] = await Promise.all([
     supabase.from("ticket_types").select("code,name,price,currency").eq("event_id", event.id).order("created_at"),
     attendee ? supabase.from("qr_credentials").select("code,display_code,status").eq("event_id", event.id).eq("attendee_id", attendee.id).eq("status", "active").maybeSingle() : Promise.resolve({ data: null, error: null }),

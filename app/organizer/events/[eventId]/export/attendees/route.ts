@@ -6,7 +6,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ eve
   const { supabase } = await requireOrganizerMembership(`/organizer/events/${eventId}`);
   const { data, error } = await supabase.from("attendees")
     .select("attendee_code,name,email,phone,ticket_type_id,checked_in_at,created_at")
-    .eq("event_id", eventId).order("created_at", { ascending: false });
+    .eq("event_id", eventId).is("deleted_at", null).order("created_at", { ascending: false });
   if (error) return NextResponse.json({ error: "Export is temporarily unavailable." }, { status: 500 });
   const ticketIds = [...new Set((data ?? []).map(row => row.ticket_type_id).filter((id): id is string => Boolean(id)))];
   const { data: tickets } = ticketIds.length ? await supabase.from("ticket_types").select("id,name").eq("event_id", eventId).in("id", ticketIds) : { data: [] };

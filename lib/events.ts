@@ -143,6 +143,7 @@ async function loadPublishedParticipantPreview(
     .from("attendees")
     .select("id,name", { count: "exact" })
     .eq("event_id", eventId)
+    .is("deleted_at", null)
     .order("created_at", { ascending: false })
     .limit(3);
 
@@ -269,11 +270,13 @@ export const getManagedEvent = cache(
       supabase
         .from("attendees")
         .select("id", { count: "exact", head: true })
-        .eq("event_id", id),
+        .eq("event_id", id)
+        .is("deleted_at", null),
       supabase
         .from("attendees")
         .select("id", { count: "exact", head: true })
         .eq("event_id", id)
+        .is("deleted_at", null)
         .not("checked_in_at", "is", null),
       supabase.from("event_config_drafts").select("config").eq("event_id", id).maybeSingle(),
     ]);

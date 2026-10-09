@@ -18,7 +18,13 @@ export async function managePersonRecord(form: FormData): Promise<{ error?: stri
   if (operation === "delete") {
     if (form.get("confirmation") !== "yes") return { error: "Confirm deletion before continuing." };
     const { error } = await supabase.rpc("delete_event_person_record", { p_event_id: eventId, p_id: id, p_kind: kind });
-    if (error) return { error: error.message.includes("record_in_use") ? "This record has attendees, access rules, designs, or scan history. Preserve the record and revoke its credential or remove unused references first." : "The record could not be deleted. Refresh the page and try again." };
+    if (error) return {
+      error: error.message.includes("record_in_use")
+        ? "This record has attendees, access rules, or designs attached. Remove those references first."
+        : "The record could not be deleted. Refresh the page and try again.",
+    };
+    // For attendees: soft-deleted, QR revoked immediately. Data is permanently removed after 7 days.
+    // For tickets: hard-deleted immediately (config only, no history).
   } else {
     const name = String(form.get("name") ?? "").trim();
     if (!name || name.length > 100) return { error: "Name is required and must be 100 characters or fewer." };
@@ -41,7 +47,7 @@ export async function managePersonRecord(form: FormData): Promise<{ error?: stri
       if (!/^(?:\d+|\d{1,3}(?:,\d{3})+)(?:\.\d{1,2})?$/.test(priceRaw)) return { error: "Use a valid price format, for example 150,000 or 12.50." };
       const price = Number(priceRaw.replace(/,/g, ""));
       if ((capacity !== null && (!Number.isSafeInteger(capacity) || capacity < 0)) || !Number.isFinite(price) || price < 0) return { error: "Capacity and price must be zero or positive numbers." };
-      const { count, error: countError } = await supabase.from("attendees").select("id", { count: "exact", head: true }).eq("event_id", eventId).eq("ticket_type_id", id);
+      const { count, error: countError } = await supabase.from("attendees").select("id", { count: "exact", head: true }).eq("event_id", eventId).is("deleted_at", null).eq("ticket_type_id", id);
       if (countError) return { error: "The attendee count could not be verified." };
       if (capacity !== null && capacity < (count ?? 0)) return { error: "Capacity cannot be lower than the number of registered attendees." };
       const { data, error } = await supabase.from("ticket_types").update({ name, description: String(form.get("description") ?? "").trim().slice(0, 500) || null, capacity, price }).eq("event_id", eventId).eq("id", id).select("id").maybeSingle();

@@ -49,7 +49,7 @@ export default async function PassExportPage({ params, searchParams }: { params:
 
   return <main className="qr-export-page">
     <header className="qr-export-toolbar print:hidden">
-      <Link href={`/organizer/events/${eventId}/access`} className="ui-back"><ArrowLeft size={14}/> Back to Access</Link>
+      <Link href={`/organizer/events/${eventId}/operations`} className="ui-back"><ArrowLeft size={14}/> Back to Operations</Link>
       <div className="qr-export-actions"><DownloadAll/><PrintButton/></div>
     </header>
     <div className="qr-export-heading print:hidden">

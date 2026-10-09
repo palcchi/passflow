@@ -27,7 +27,7 @@ export default async function EventDesignPage({params}:{params:Promise<{eventId:
       <div className="ui-sectionhead"><div><h2 id="now-title" className="ui-h2">What attendees see now</h2></div></div>
       <div className="ui-grid ui-grid-3">
         <div className="ui-stat ui-stat-text"><span>Event website</span><strong>{figmaSite?'Figma design':'PassFlow default'}</strong><small>{figmaSite?liveSite!.name:'Event details, banner and Register until a Figma design is published.'}</small></div>
-        <div className="ui-stat ui-stat-text"><span>Pass format</span><strong>{modeLabel[event.qrConfig.mode]??event.qrConfig.mode}</strong><small>Change it in <Link className="ui-link" href={`/organizer/events/${eventId}/access`}>Access</Link>. Banner and logo live in <Link className="ui-link" href={`/organizer/events/${eventId}/settings`}>Settings</Link>.</small></div>
+        <div className="ui-stat ui-stat-text"><span>Pass format</span><strong>{modeLabel[event.qrConfig.mode]??event.qrConfig.mode}</strong><small>Change it in <Link className="ui-link" href={`/organizer/events/${eventId}/operations`}>Operations</Link>. Banner and logo live in <Link className="ui-link" href={`/organizer/events/${eventId}/settings`}>Settings</Link>.</small></div>
         <div className="ui-stat ui-stat-text"><span>Pass designs</span><strong>{livePasses.length?`${livePasses.length} live`:'Standard pass'}</strong><small>{livePasses.length?livePasses.map(p=>passLabel[p.kind]+' for '+ticketName(p.ticket_type_id)).join(', '):'A clean QR pass until you publish one from Figma.'}</small></div>
       </div>
     </section>

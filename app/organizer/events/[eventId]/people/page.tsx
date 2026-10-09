@@ -32,6 +32,7 @@ export default async function EventPeoplePage({ params, searchParams }: Props) {
     .from("attendees")
     .select("id, attendee_code, name, email, phone, checked_in_at, ticket_type_id, user_id, approval_status")
     .eq("event_id", eventId)
+    .is("deleted_at", null)
     .neq("approval_status", "pending")
     .order("created_at", { ascending: false })
     .limit(100);
@@ -58,6 +59,7 @@ export default async function EventPeoplePage({ params, searchParams }: Props) {
       .from("attendees")
       .select("id, name, email, phone, ticket_type_id, created_at")
       .eq("event_id", eventId)
+      .is("deleted_at", null)
       .eq("approval_status", "pending")
       .order("created_at")
       .limit(200),
