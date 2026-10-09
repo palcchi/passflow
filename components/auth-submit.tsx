@@ -16,7 +16,7 @@ export function AuthSubmit({
 
   return (
     <button
-      className={`button ${variant === "outline" ? "button-ghost" : "button-dark"} auth-submit w-full`}
+      className={`ui-btn ${variant === "outline" ? "ui-btn-secondary" : "ui-btn-primary"} ui-btn-lg ui-btn-block`}
       type="submit"
       disabled={disabled || pending}
       aria-busy={pending}

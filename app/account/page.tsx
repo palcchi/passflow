@@ -1,103 +1,69 @@
 import Link from "next/link";
-import { ArrowUpRight, Plus } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { accountProfile, requireUser, getMemberships } from "@/lib/auth/session";
 import { canManage } from "@/lib/auth/redirect";
-import { getPublishedEvents } from "@/lib/events";
-import { UserNavbar } from "@/components/user-navbar";
-import { KineticText } from "@/components/magicui/kinetic-text";
-import { TextAnimate } from "@/components/magicui/text-animate";
+import { getMyRegistrations, getPublishedEvents } from "@/lib/events";
+import { AppShell } from "@/components/app-shell";
 import { EventClassCard } from "@/components/event-class-card";
-import { HeroCardFan } from "@/components/hero-card-fan";
-import { FolderArtwork } from "@/components/flow-brand-art";
 
-export const metadata = { title: "Dashboard | PassFlow" };
+export const metadata = { title: "Home" };
 export const dynamic = "force-dynamic";
 
 export default async function AccountPage() {
   const { user, supabase } = await requireUser();
   const { name: accountName, avatarUrl } = accountProfile(user);
-  const name = accountName || "Attendee";
+  const name = accountName || "there";
+  const [{ memberships, unavailable }, registrations] = await Promise.all([getMemberships(), getMyRegistrations(supabase, user.id)]);
+  const publishedEvents = await getPublishedEvents(Object.keys(registrations)).catch(() => []);
+  const organizer = memberships.some((membership) => canManage(membership.role));
 
-  const [
-    { memberships, unavailable },
-    registrationsResult,
-    publishedEvents,
-  ] = await Promise.all([
-    getMemberships(),
-    supabase.from("attendees").select("event_id").eq("user_id", user.id),
-    getPublishedEvents().catch(() => []),
-  ]);
-
-  const organizer = memberships.some((membership) =>
-    canManage(membership.role),
-  );
-  const registeredIds = new Set(
-    (registrationsResult.data ?? []).map((item) => item.event_id),
-  );
-  const myEvents = publishedEvents.filter((event) =>
-    registeredIds.has(event.id),
-  );
+  const myEvents = publishedEvents.filter((event) => registrations[event.id]);
+  const suggestions = publishedEvents.filter((event) => !registrations[event.id]).slice(0, 3);
+  const pending = myEvents.filter((event) => registrations[event.id] === "pending").length;
 
   return (
-    <div className="app-surface flow-workspace studio-backdrop min-h-screen">
-      <UserNavbar
-        name={name}
-        email={user.email}
-        avatarUrl={avatarUrl}
-        organizer={organizer}
-      />
-
-      <main className="studio-page-shell">
-        <header className="studio-page-hero workspace-welcome">
-          <div className="workspace-welcome-copy">
-            <span className="editorial-eyebrow"><span/> YOUR EVENTS & PASSES</span>
-            <KineticText text={`Welcome, ${name}.`} className="studio-page-title" />
-            <TextAnimate className="studio-page-subtitle" delay={0.05}>
-              Your events and digital passes are organized here, ready when you need them.
-            </TextAnimate>
-          <Link href="/events" className="magic-shiny-button">
-            <span>
-            <Plus size={17} />
-            Explore events
-            </span>
-          </Link>
-          </div>
-          <div className="workspace-fan"><HeroCardFan events={myEvents.length ? myEvents : publishedEvents} compact/></div>
-        </header>
-
-        {unavailable && (
-          <p role="alert" className="studio-status is-error">
-            We could not load your account permissions.
+    <AppShell name={accountName || "Attendee"} email={user.email} avatarUrl={avatarUrl} organizer={organizer}>
+      <header className="ui-pagehead ui-rise">
+        <div>
+          <h1 className="ui-h1">Hi, {name.split(" ")[0]}.</h1>
+          <p className="ui-lead">
+            {myEvents.length
+              ? `You have ${myEvents.length} ${myEvents.length === 1 ? "event" : "events"} in your account${pending ? `, ${pending} waiting for approval` : ""}.`
+              : "Your passes live here once you register for an event."}
           </p>
-        )}
+        </div>
+        <div className="ui-row">
+          {organizer && <Link href="/organizer/events" className="ui-btn ui-btn-secondary">Organizer workspace</Link>}
+          <Link href="/events" className="ui-btn ui-btn-primary">Discover events</Link>
+        </div>
+      </header>
 
-        <section className="studio-section" aria-labelledby="my-events">
-          <div className="studio-section-heading">
-            <div>
-              <p className="section-kicker">My events</p>
-              <h2 id="my-events">Your events</h2>
-            </div>
+      {unavailable && <p role="alert" className="ui-notice ui-notice-danger">We could not load your organizer access. Refresh to try again.</p>}
+
+      <section className="ui-section ui-rise ui-rise-2" aria-labelledby="my-events">
+        <div className="ui-sectionhead"><h2 id="my-events" className="ui-h2">Your passes</h2></div>
+        {myEvents.length === 1 ? (
+          <EventClassCard event={myEvents[0]} registration={registrations[myEvents[0].id]} featured />
+        ) : myEvents.length ? (
+          <div className="ui-eventgrid">{myEvents.map((event) => <EventClassCard key={event.id} event={event} registration={registrations[event.id]} />)}</div>
+        ) : (
+          <div className="ui-empty">
+            <strong>No passes yet</strong>
+            <p>Find an event you like and register. Your QR pass appears here right away, or after the organizer approves you.</p>
+            <Link href="/events" className="ui-btn ui-btn-primary ui-btn-sm">Discover events</Link>
           </div>
+        )}
+      </section>
 
-          {myEvents.length > 0 ? (
-            <div className="class-event-grid">
-              {myEvents.map((event) => (
-                <EventClassCard event={event} joined key={event.id} />
-              ))}
-            </div>
-          ) : (
-            <div className="studio-empty-state">
-              <FolderArtwork color="lavender" label="Room for more"/>
-              <h3>Your first pass starts with an event.</h3>
-              <p>Register for an event and your digital pass will be saved here automatically.</p>
-              <Link href="/events" className="button button-dark">
-                Explore events
-              </Link>
-            </div>
-          )}
+      {suggestions.length > 0 && (
+        <section className="ui-section ui-rise ui-rise-3" aria-labelledby="suggested">
+          <div className="ui-sectionhead">
+            <h2 id="suggested" className="ui-h2">Happening on PassFlow</h2>
+            <Link href="/events" className="ui-link">See all <ArrowRight size={15} /></Link>
+          </div>
+          <div className="ui-eventgrid">{suggestions.map((event) => <EventClassCard key={event.id} event={event} />)}</div>
         </section>
-        {publishedEvents.some((event) => !registeredIds.has(event.id)) && <section className="studio-section" aria-labelledby="discover-events"><div className="studio-section-heading"><div><p className="section-kicker">A LITTLE DISCOVERY</p><h2 id="discover-events">For your next event.</h2></div><Link href="/events" className="studio-text-link">Explore <ArrowUpRight size={14}/></Link></div><div className="class-event-grid">{publishedEvents.filter(event => !registeredIds.has(event.id)).slice(0, 3).map(event => <EventClassCard event={event} key={event.id}/>)}</div></section>}
-      </main>
-    </div>
+      )}
+    </AppShell>
   );
 }

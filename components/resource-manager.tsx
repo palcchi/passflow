@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { FormDialog } from "@/components/form-dialog";
 import Link from "next/link";
+import { X } from "lucide-react";
 import { manageEventResource } from "@/app/organizer/events/resource-actions";
 
 type Resource = { id: string; name: string; code?: string; description?: string | null; is_active?: boolean; mode?: string; zone_id?: string | null; config?: unknown };
@@ -14,14 +15,14 @@ export function ResourceManager({ eventId, kind, records, zones = [] }: Props) {
   const filtered = records.filter(r => `${r.name} ${r.code ?? ""} ${r.mode ?? ""}`.toLowerCase().includes(query.toLowerCase()) && (status === "all" || (status === "active") === r.is_active));
   const pages = Math.max(1, Math.ceil(filtered.length / 10));
   const current = Math.min(page, pages - 1);
-  return <div className="resource-manager">
-    {records.length > 5 && <div className="resource-toolbar">
-      <input className="event-admin-input" aria-label={`Search ${kind}s`} placeholder={`Search ${kind === "station" ? "gates" : `${kind}s`}…`} value={query} onChange={e => { setQuery(e.target.value); setPage(0); }} />
-      {records.some(r => r.is_active !== undefined) && <select className="event-admin-input" aria-label="Filter status" value={status} onChange={e => { setStatus(e.target.value); setPage(0); }}><option value="all">All statuses</option><option value="active">Active</option><option value="inactive">Inactive</option></select>}
+  return <div className="ui-resources">
+    {records.length > 5 && <div className="ui-resource-tools">
+      <input className="ui-input" aria-label={`Search ${kind}s`} placeholder={`Search ${kind === "station" ? "gates" : `${kind}s`}…`} value={query} onChange={e => { setQuery(e.target.value); setPage(0); }} />
+      {records.some(r => r.is_active !== undefined) && <select className="ui-select" aria-label="Filter status" value={status} onChange={e => { setStatus(e.target.value); setPage(0); }}><option value="all">All statuses</option><option value="active">Active</option><option value="inactive">Inactive</option></select>}
     </div>}
     {filtered.slice(current * 10, (current + 1) * 10).map(r => <ResourceEditor key={r.id} eventId={eventId} kind={kind} record={r} zones={zones} />)}
-    {!filtered.length && <p className="event-admin-table-empty">{records.length ? "No matching records." : "Nothing here yet."}</p>}
-    {pages > 1 && <div className="resource-toolbar"><button className="button button-ghost" disabled={!current} onClick={() => setPage(current - 1)}>Previous</button><span>{current + 1} / {pages} · {filtered.length} records</span><button className="button button-ghost" disabled={current === pages - 1} onClick={() => setPage(current + 1)}>Next</button></div>}
+    {!filtered.length && <p className="ui-small ui-panel-empty">{records.length ? "No matching records." : "Nothing here yet."}</p>}
+    {pages > 1 && <div className="ui-pager"><button className="ui-btn ui-btn-ghost ui-btn-sm" disabled={!current} onClick={() => setPage(current - 1)}>Previous</button><span>{current + 1} / {pages} · {filtered.length} records</span><button className="ui-btn ui-btn-ghost ui-btn-sm" disabled={current === pages - 1} onClick={() => setPage(current + 1)}>Next</button></div>}
   </div>;
 }
 function ResourceEditor({ eventId, kind, record: r, zones }: Omit<Props, "records"> & { record: Resource }) {
@@ -33,9 +34,9 @@ function ResourceEditor({ eventId, kind, record: r, zones }: Omit<Props, "record
     }
     return manageEventResource(form);
   }
-  return <div className="resource-record">
-    <span><strong>{r.name}</strong><small>{r.code ?? r.mode?.replaceAll("_", " ")}{r.is_active !== undefined ? ` · ${r.is_active ? "Active" : "Inactive"}` : ""}</small>
-      {kind === "station" && <Link className="resource-record-link" href={`/scan/${r.id}`}>Open scanner ↗</Link>}</span>
+  return <div className="ui-resource">
+    <span className="ui-listrow-main"><strong>{r.name}</strong><small>{kind === "station" ? <Link className="ui-link ui-link-sm" href={`/scan/${r.id}`}>Open scanner</Link> : <span className="ui-mono">{r.code}</span>}</small></span>
+    {r.is_active !== undefined && <span className={r.is_active ? "ui-badge ui-badge-success" : "ui-badge"}>{r.is_active ? "Active" : "Paused"}</span>}
     <FormDialog trigger="Manage" triggerClassName="record-edit-button" title={`Manage ${r.name}`} description={r.code ? `Code ${r.code} stays fixed to keep station links and history.` : undefined} action={action} submitLabel="Save changes"
       secondary={<>
         <button formNoValidate className="record-danger" name="operation" value="delete">Delete</button>
@@ -56,9 +57,9 @@ function ResourceEditor({ eventId, kind, record: r, zones }: Omit<Props, "record
 
 export function DeleteAccessRule({eventId,id}:{eventId:string;id:string}) {
   const [pending,startTransition]=useTransition();const [error,setError]=useState('');
-  return <div><button type="button" className="event-admin-danger-link" disabled={pending} onClick={()=>{
+  return <div><button type="button" className="ui-iconbtn ui-iconbtn-sm" aria-label="Remove rule" title="Remove rule" disabled={pending} onClick={()=>{
     if(!window.confirm('Remove this access rule? Without an allow rule, zone access is denied.'))return;
     const form=new FormData();Object.entries({eventId,id,kind:'rule',operation:'delete',confirmation:'yes'}).forEach(([key,value])=>form.set(key,value));
     startTransition(async()=>{try{const result=await manageEventResource(form);setError(result.error??'');}catch{setError('The rule could not be removed. Try again.');}});
-  }}>{pending?'Removing…':'Remove rule'}</button>{error&&<p role="alert">{error}</p>}</div>;
+  }}><X size={14}/></button>{error&&<p role="alert">{error}</p>}</div>;
 }

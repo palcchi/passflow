@@ -43,38 +43,38 @@ export function CredentialManager({ eventId, credentials }: { eventId: string; c
     });
   }
 
-  if (!credentials.length) return <div className="event-admin-empty-card"><strong>No QR codes yet</strong><span>Generate a batch for printed wristbands or cards. In automatic mode PassFlow creates one per registration.</span></div>;
+  if (!credentials.length) return <div className="ui-empty"><strong>No QR codes yet</strong><p>Generate a batch for printed wristbands or cards. In automatic mode PassFlow creates one per registration.</p></div>;
   return <div className="credential-manager">
-    <div className="resource-toolbar">
-      <input className="event-admin-input" aria-label="Search QR codes" placeholder="Search code or attendee…" value={query} onChange={e => { setQuery(e.target.value); setPage(0); }}/>
-      <select className="event-admin-input" aria-label="Filter by status" value={status} onChange={e => { setStatus(e.target.value); setPage(0); }}>
+    <div className="ui-resource-tools ui-mb">
+      <input className="ui-input" aria-label="Search QR codes" placeholder="Search code or attendee…" value={query} onChange={e => { setQuery(e.target.value); setPage(0); }}/>
+      <select className="ui-select ui-select-auto" aria-label="Filter by status" value={status} onChange={e => { setStatus(e.target.value); setPage(0); }}>
         <option value="all">All statuses</option><option value="unclaimed">Unclaimed</option><option value="active">Active</option><option value="revoked">Revoked</option><option value="replaced">Replaced</option>
       </select>
     </div>
-    {chosen.length > 0 && <div className="credential-bulk" role="toolbar" aria-label="Selected QR codes">
+    {chosen.length > 0 && <div className="ui-bulk" role="toolbar" aria-label="Selected QR codes">
       <strong>{chosen.length} selected</strong>
-      <button type="button" className="button button-ghost" disabled={pending || !revocable.length} onClick={() => run("revoke", revocable)}>Revoke{revocable.length !== chosen.length && revocable.length ? ` ${revocable.length}` : ""}</button>
-      <button type="button" className="button button-ghost record-danger" disabled={pending || !deletable.length} onClick={() => run("delete", deletable)}>Delete{deletable.length !== chosen.length && deletable.length ? ` ${deletable.length}` : ""}</button>
-      <button type="button" className="event-admin-text-action" onClick={() => setSelected(new Set())}>Clear</button>
+      <button type="button" className="ui-btn ui-btn-secondary ui-btn-sm" disabled={pending || !revocable.length} onClick={() => run("revoke", revocable)}>Revoke{revocable.length !== chosen.length && revocable.length ? ` ${revocable.length}` : ""}</button>
+      <button type="button" className="ui-btn ui-btn-danger ui-btn-sm" disabled={pending || !deletable.length} onClick={() => run("delete", deletable)}>Delete{deletable.length !== chosen.length && deletable.length ? ` ${deletable.length}` : ""}</button>
+      <button type="button" className="ui-btn ui-btn-ghost ui-btn-sm" onClick={() => setSelected(new Set())}>Clear</button>
     </div>}
-    {message && <p role={message.error ? "alert" : "status"} className="studio-notice">{message.text}</p>}
-    <table className="credential-table">
+    {message && <p role={message.error ? "alert" : "status"} className="ui-notice ui-mb">{message.text}</p>}
+    <div className="ui-tablewrap"><table className="ui-table credential-table">
       <thead><tr>
         <th><input type="checkbox" aria-label="Select all on this page" checked={allOnPage} onChange={e => toggle(rows.map(c => c.id), e.target.checked)}/></th>
-        <th>Code</th><th>Status</th><th>Attendee</th><th><span className="sr-only">Actions</span></th>
+        <th>Code</th><th>Status</th><th>Attendee</th><th className="ui-end"><span className="sr-only">Actions</span></th>
       </tr></thead>
       <tbody>{rows.map(c => <tr key={c.id} data-selected={selected.has(c.id)}>
         <td><input type="checkbox" aria-label={`Select ${c.display_code ?? "QR"}`} checked={selected.has(c.id)} onChange={e => toggle([c.id], e.target.checked)}/></td>
         <td><strong>{c.display_code ?? "QR"}</strong></td>
-        <td><span className={`event-admin-state ${c.status === "active" ? "is-success" : ""}`}>{c.status}</span></td>
-        <td>{c.owner ?? <small>Not claimed</small>}</td>
-        <td className="credential-actions">
-          {(c.status === "active" || c.status === "unclaimed") && <button type="button" className="event-admin-text-action" disabled={pending} onClick={() => run("revoke", [c])}>Revoke</button>}
-          {c.status === "unclaimed" && <button type="button" className="event-admin-text-action record-danger" disabled={pending} onClick={() => run("delete", [c])}>Delete</button>}
+        <td><span className={c.status === "active" ? "ui-badge ui-badge-success" : c.status === "revoked" ? "ui-badge ui-badge-danger" : "ui-badge"}>{c.status.charAt(0).toUpperCase() + c.status.slice(1)}</span></td>
+        <td>{c.owner ?? <span className="ui-muted">Not claimed</span>}</td>
+        <td className="credential-actions ui-end">
+          {(c.status === "active" || c.status === "unclaimed") && <button type="button" className="ui-btn ui-btn-ghost ui-btn-sm" disabled={pending} onClick={() => run("revoke", [c])}>Revoke</button>}
+          {c.status === "unclaimed" && <button type="button" className="ui-btn ui-btn-ghost ui-btn-sm ui-text-danger" disabled={pending} onClick={() => run("delete", [c])}>Delete</button>}
         </td>
       </tr>)}</tbody>
-    </table>
-    {!rows.length && <p className="event-admin-table-empty">No matching QR codes.</p>}
-    {pages > 1 && <div className="resource-toolbar resource-pager"><button type="button" className="button button-ghost" disabled={!current} onClick={() => setPage(current - 1)}>Previous</button><span>{current + 1} / {pages} · {filtered.length} codes</span><button type="button" className="button button-ghost" disabled={current === pages - 1} onClick={() => setPage(current + 1)}>Next</button></div>}
+    </table></div>
+    {!rows.length && <p className="ui-small ui-panel-empty">No matching QR codes.</p>}
+    {pages > 1 && <div className="ui-pager"><button type="button" className="ui-btn ui-btn-ghost ui-btn-sm" disabled={!current} onClick={() => setPage(current - 1)}>Previous</button><span>{current + 1} / {pages} · {filtered.length} codes</span><button type="button" className="ui-btn ui-btn-ghost ui-btn-sm" disabled={current === pages - 1} onClick={() => setPage(current + 1)}>Next</button></div>}
   </div>;
 }

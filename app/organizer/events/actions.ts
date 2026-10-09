@@ -332,7 +332,7 @@ export async function generateQrBatch(input: QrBatchInput) {
     return {
       ok: false as const,
       conflict: true as const,
-      message: `The selected range is already in use. The next available range is ${resolved.firstCode} – ${resolved.lastCode}.`,
+      message: `The selected range is already in use. The next available range is ${resolved.firstCode} to ${resolved.lastCode}.`,
       firstCode: resolved.firstCode,
       lastCode: resolved.lastCode,
       start: resolved.start,
@@ -355,7 +355,7 @@ export async function generateQrBatch(input: QrBatchInput) {
       conflict: true as const,
       message:
         retry.ok
-          ? `The range changed during generation. Try ${retry.firstCode} – ${retry.lastCode}.`
+          ? `The range changed during generation. Try ${retry.firstCode} to ${retry.lastCode}.`
           : "The QR batch could not be created. Check availability again.",
     };
   }

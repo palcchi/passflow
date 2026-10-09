@@ -58,46 +58,30 @@ export function QrDeliveryEditor({ event, children }: { event: PassFlowEvent; ch
   }
 
   return (
-    <section className="qr-editor-section liquid-panel">
-      <div className="qr-editor-header">
+    <section aria-labelledby="format-title">
+      <div className="ui-sectionhead">
         <div>
-          <span className="section-kicker">Credential</span>
-          <h2>One QR per attendee, in the format you choose.</h2>
-          <p>Pick the format and how attendees receive their QR. Size, layout and artwork come from your Figma pass design.</p>
+          <h2 id="format-title" className="ui-h2">Pass format</h2>
+          <p>One QR per attendee. Size, layout and artwork come from your Figma pass design.</p>
         </div>
-        <div className="qr-editor-header-actions">
-          <a className="button button-ghost" href={`/organizer/events/${event.id}/design`}>
-            Design in Figma
-          </a>
-        </div>
+        <a className="ui-btn ui-btn-secondary ui-btn-sm" href={`/organizer/events/${event.id}/design`}>Design in Figma</a>
       </div>
-
-      <h3 className="credential-step"><span>1</span>Format</h3>
-      <div className="qr-mode-grid">
+      <div className="ui-options ui-options-4" role="group" aria-label="Pass format">
         {modes.map((item) => (
-          <button
-            type="button"
-            key={item.value}
-            className="qr-mode-card"
-            data-active={item.value === mode}
-            aria-pressed={item.value === mode}
-            disabled={pending}
-            onClick={() => changeMode(item.value)}
-          >
-            <span className="qr-mode-stage" aria-hidden="true"><span className={`qr-mode-preview qr-mode-${item.value}`} style={{ aspectRatio: item.ratio }}><QrCode size={23}/><i/><i/></span></span>
-            <span className="qr-mode-copy">
-              <strong>{item.label}</strong>
-              <small>{item.description}</small>
-            </span>
-            {item.value === mode && <span className="qr-mode-check" aria-hidden="true"><Check size={12}/></span>}
+          <button type="button" key={item.value} className="ui-option" aria-pressed={item.value === mode} disabled={pending} onClick={() => changeMode(item.value)}>
+            <span className="ui-option-art" aria-hidden="true"><span className={`ui-format ui-format-${item.value}`} style={{ aspectRatio: item.ratio }}><QrCode size={18} /></span></span>
+            <strong>{item.label}</strong>
+            <small>{item.description}</small>
+            {item.value === mode && <span className="ui-option-check" aria-hidden="true"><Check size={12} strokeWidth={3} /></span>}
           </button>
         ))}
       </div>
-
-      {children && <><h3 className="credential-step"><span>2</span>How attendees receive it</h3>
-        {mode === "wristband" && event.qrConfig.claimMode !== "claim" && <p className="event-admin-note">Wristbands are usually printed before anyone owns them. Choose “Claim after registration” so attendees link theirs by scanning it.</p>}
-        {children}</>}
-      {message && <p role={message.ok ? "status" : "alert"} className={`customize-feedback ${message.ok ? "is-success" : "is-error"}`}>{message.text}</p>}
+      {message && <p role={message.ok ? "status" : "alert"} className={message.ok ? "ui-notice ui-notice-success ui-mt" : "ui-notice ui-notice-danger ui-mt"}>{message.text}</p>}
+      {children && <div className="ui-mt-lg">
+        <h3 className="ui-h3 ui-mb">How attendees get their QR</h3>
+        {mode === "wristband" && event.qrConfig.claimMode !== "claim" && <p className="ui-notice ui-notice-warning ui-mb">Wristbands are usually printed before anyone owns them. Choose Claim after registration so attendees link theirs by scanning it.</p>}
+        {children}
+      </div>}
     </section>
   );
 }

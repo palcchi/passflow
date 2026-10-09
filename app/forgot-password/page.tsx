@@ -13,7 +13,7 @@ export default async function ForgotPasswordPage({ searchParams }: { searchParam
   return <AuthShell title="Forgot your password?" description="Enter your account email and we will send you a secure password reset link." backHref="/login" backLabel="Back to sign in" kicker="LET’S GET YOU BACK IN">
     {params.notice === "sent" ? <p role="status" className="auth-notice">If the email is registered, a reset link has been sent. Check your inbox and spam folder.</p> : <>
       {message && <p role="alert" className="auth-notice">{message}</p>}
-      <form action={requestPasswordReset} className="auth-form"><label className="auth-field">Email<div className="auth-input"><Mail size={17} aria-hidden="true"/><input type="email" name="email" autoComplete="email" inputMode="email" required maxLength={254} placeholder="you@company.com"/></div></label><AuthSubmit disabled={!ready}>Send reset link ↗</AuthSubmit></form>
+      <form action={requestPasswordReset} className="auth-form"><label className="auth-field">Email<div className="auth-input"><Mail size={17} aria-hidden="true"/><input type="email" name="email" autoComplete="email" inputMode="email" required maxLength={254} placeholder="you@company.com"/></div></label><AuthSubmit disabled={!ready}>Send reset link</AuthSubmit></form>
     </>}
   </AuthShell>;
 }

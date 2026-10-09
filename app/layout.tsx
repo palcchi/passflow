@@ -8,6 +8,7 @@ import "./unified-ui.css";
 import "./transitions.css";
 import "./management-design.css";
 import "./polish.css";
+import "./ui.css";
 import { RouteTransition } from "@/components/route-transition";
 import { AppNavigationController } from "@/components/app-navigation-controller";
 import { getAppOrigin } from "@/lib/supabase/config";
@@ -43,7 +44,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(getAppOrigin() ?? "https://passflow.my.id"),
   applicationName: "PassFlow",
   title: {
-    default: "PassFlow — Event registration, QR tickets & digital passes",
+    default: "PassFlow: event registration, QR tickets and digital passes",
     template: "%s | PassFlow",
   },
   description,

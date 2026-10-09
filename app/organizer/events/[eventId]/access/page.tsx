@@ -77,79 +77,48 @@ export default async function EventAccessPage({ params, searchParams }: Props) {
   return (
     <>
       <QrDeliveryEditor event={event}>
-        {error === "claim_mode_locked" && <p role="alert" className="camera-feedback">Claim mode cannot change after attendees have registered. Existing passes stay valid.</p>}
-        <form action={saveClaimMode} className="claim-mode-options">
+        {error === "claim_mode_locked" && <p role="alert" className="ui-notice ui-notice-danger ui-mb">Claim mode cannot change after attendees have registered. Existing passes stay valid.</p>}
+        <form action={saveClaimMode} className="ui-options ui-options-2">
           <input type="hidden" name="eventId" value={eventId} />
-          <button
-            className="claim-mode-option"
-            data-active={claimMode === "automatic"}
-            type="submit"
-            name="claimMode"
-            value="automatic"
-          >
+          <button className="ui-option" aria-pressed={claimMode === "automatic"} type="submit" name="claimMode" value="automatic">
             <strong>Automatic on registration</strong>
-            <span>
-              Attendees receive a QR credential immediately. Ideal for digital
-              passes and ID cards that already display attendee names.
-            </span>
+            <small>Every attendee gets a QR the moment they register (or are approved). Best for digital passes and printed ID cards.</small>
           </button>
-          <button
-            className="claim-mode-option"
-            data-active={claimMode === "claim"}
-            type="submit"
-            name="claimMode"
-            value="claim"
-          >
+          <button className="ui-option" aria-pressed={claimMode === "claim"} type="submit" name="claimMode" value="claim">
             <strong>Claim after registration</strong>
-            <span>
-              Attendees register first, then scan a physical QR code to link
-              wristbands or credentials that have already been printed.
-            </span>
+            <small>Attendees register, then scan a printed wristband or card to link it to their account.</small>
           </button>
         </form>
       </QrDeliveryEditor>
 
-      <section className="event-admin-section">
-        <div className="event-admin-section-head event-admin-section-head-wrap">
+      <section className="ui-section" aria-labelledby="codes-title">
+        <div className="ui-sectionhead">
           <div>
-            <span className="section-kicker">QR credentials</span>
-            <h2>Codes</h2>
-            <p>
-              {claimMode === "claim"
-                ? "Generate a batch for wristbands or physical credentials that attendees will claim."
-                : "Batches remain optional. When available, new registrations can use a batch code; otherwise, PassFlow creates credentials automatically."}
-            </p>
+            <h2 id="codes-title" className="ui-h2">QR codes</h2>
+            <p>{unclaimed.toLocaleString("en-US")} unclaimed, {active.toLocaleString("en-US")} active, {revoked.toLocaleString("en-US")} revoked</p>
           </div>
-          <div className="event-admin-head-actions">
-            <span className="event-admin-section-count">{unclaimed} unclaimed</span>
-            <span className="event-admin-section-count">{active} active</span>
-            <span className="event-admin-section-count">{revoked} revoked</span>
-            <PopupPanel trigger="Generate codes" title="Generate QR codes" description="Create a numbered batch for wristbands or cards you print before anyone owns them.">
+          <div className="ui-row">
+            <PopupPanel trigger="Generate codes" triggerClassName="ui-btn ui-btn-secondary ui-btn-sm" title="Generate QR codes" description="Create a numbered batch for wristbands or cards you print before anyone owns them.">
               <QrCodeGenerator eventId={eventId} />
             </PopupPanel>
-            <Link className="button button-dark" href={`/organizer/events/${eventId}/wristbands/print`}>
-              Preview & export
-            </Link>
+            <Link className="ui-btn ui-btn-primary ui-btn-sm" href={`/organizer/events/${eventId}/wristbands/print`}>Print and export</Link>
           </div>
         </div>
-
         <CredentialManager eventId={eventId} credentials={credentials.map(({ attendees, ...c }) => ({ ...c, owner: (Array.isArray(attendees) ? attendees[0] : attendees)?.name ?? null }))} />
       </section>
 
-      <section className="event-admin-section">
-        <div className="event-admin-section-head">
+      <section className="ui-section" aria-labelledby="control-title">
+        <div className="ui-sectionhead">
           <div>
-            <span className="section-kicker">Access control</span>
-            <h2>Zones, rules & scanner stations</h2>
-            <p>Zones are the places you guard, rules decide which pass category may enter, and stations are the phones that scan.</p>
+            <h2 id="control-title" className="ui-h2">Zones, rules and stations</h2>
+            <p>Zones are places you guard, rules decide which pass category gets in, stations are the phones that scan.</p>
           </div>
         </div>
-
-        <div className="event-admin-access-grid">
-          <div className="event-admin-subpanel">
-            <div className="event-admin-subpanel-head">
-              <div><strong>Zones</strong><small>{zones.length} {zones.length === 1 ? "zone" : "zones"}</small></div>
-              <FormDialog trigger="Add zone" title="Add zone" description="A place with its own entry, like a VIP lounge or backstage." action={createZone} submitLabel="Add zone">
+        <div className="ui-grid ui-grid-3 ui-align-start">
+          <div className="ui-card ui-panel">
+            <div className="ui-panelhead">
+              <div><h3 className="ui-h3">Zones</h3><small>{zones.length} {zones.length === 1 ? "zone" : "zones"}</small></div>
+              <FormDialog trigger="Add" triggerClassName="ui-btn ui-btn-secondary ui-btn-sm" title="Add zone" description="A place with its own entry, like a VIP lounge or backstage." action={createZone} submitLabel="Add zone">
                 <input type="hidden" name="eventId" value={eventId} />
                 <label>Name<input name="name" placeholder="VIP Lounge" required maxLength={100} /></label>
                 <label>Code <small>Optional, made from the name</small><input name="code" placeholder="VIP_LOUNGE" maxLength={40} /></label>
@@ -158,34 +127,32 @@ export default async function EventAccessPage({ params, searchParams }: Props) {
             <ResourceManager eventId={eventId} kind="zone" records={zones} />
           </div>
 
-          <div className="event-admin-subpanel">
-            <div className="event-admin-subpanel-head">
-              <div><strong>Access rules</strong><small>{rules.length} {rules.length === 1 ? "rule" : "rules"}</small></div>
-              <FormDialog trigger="Add rule" title="Add access rule" description="Choose which pass category may enter a zone. Without an allow rule, entry is denied." action={createAccessRule} submitLabel="Save rule">
+          <div className="ui-card ui-panel">
+            <div className="ui-panelhead">
+              <div><h3 className="ui-h3">Access rules</h3><small>{rules.length} {rules.length === 1 ? "rule" : "rules"}</small></div>
+              <FormDialog trigger="Add" triggerClassName="ui-btn ui-btn-secondary ui-btn-sm" title="Add access rule" description="Choose which pass category may enter a zone. Without an allow rule, entry is denied." action={createAccessRule} submitLabel="Save rule">
                 <input type="hidden" name="eventId" value={eventId} />
                 <label>Zone<SmartSelect name="zoneId" value="" options={[{ value: "", label: "Choose a zone" }, ...zones.map((zone) => ({ value: zone.id, label: zone.name }))]} /></label>
                 <label>Pass category<SmartSelect name="ticketTypeId" value="" options={[{ value: "", label: "Choose a category" }, ...tickets.map((ticket) => ({ value: ticket.id, label: ticket.name }))]} /></label>
                 <label>Access<SmartSelect name="allowed" value="true" options={[{ value: "true", label: "Allow" }, { value: "false", label: "Deny" }]} /></label>
               </FormDialog>
             </div>
-            <div className="resource-manager">
+            <ul className="ui-plain ui-resources">
               {rules.map((rule) => (
-                <div className="resource-record" key={rule.id}>
-                  <span>
-                    <strong>{zones.find((zone) => zone.id === rule.zone_id)?.name ?? "Zone"}</strong>
-                    <small>{ticketName.get(rule.ticket_type_id) ?? "Pass"} · {rule.allowed ? "Allow" : "Deny"}</small>
-                  </span>
-                  <DeleteAccessRule eventId={eventId} id={rule.id}/>
-                </div>
+                <li className="ui-resource" key={rule.id}>
+                  <span className="ui-listrow-main"><strong>{zones.find((zone) => zone.id === rule.zone_id)?.name ?? "Zone"}</strong><small>{ticketName.get(rule.ticket_type_id) ?? "Pass"}</small></span>
+                  <span className={rule.allowed ? "ui-badge ui-badge-success" : "ui-badge ui-badge-danger"}>{rule.allowed ? "Allow" : "Deny"}</span>
+                  <DeleteAccessRule eventId={eventId} id={rule.id} />
+                </li>
               ))}
-              {!rules.length && <p className="event-admin-table-empty">No rules yet. Zones deny everyone until you add one.</p>}
-            </div>
+            </ul>
+            {!rules.length && <p className="ui-small ui-panel-empty">No rules yet. Zones deny everyone until you add one.</p>}
           </div>
 
-          <div className="event-admin-subpanel">
-            <div className="event-admin-subpanel-head">
-              <div><strong>Stations</strong><small>{stations.length} {stations.length === 1 ? "scanner" : "scanners"}</small></div>
-              <FormDialog trigger="Add station" title="Add scanner station" description="A gate or desk where crew scan passes with a phone." action={createStation} submitLabel="Create station">
+          <div className="ui-card ui-panel">
+            <div className="ui-panelhead">
+              <div><h3 className="ui-h3">Stations</h3><small>{stations.length} {stations.length === 1 ? "scanner" : "scanners"}</small></div>
+              <FormDialog trigger="Add" triggerClassName="ui-btn ui-btn-secondary ui-btn-sm" title="Add scanner station" description="A gate or desk where crew scan passes with a phone." action={createStation} submitLabel="Create station">
                 <input type="hidden" name="eventId" value={eventId} />
                 <label>Name<input name="name" placeholder="Main Entrance" required maxLength={100} /></label>
                 <label>Link name <small>Optional</small><input name="slug" placeholder="main-entrance" maxLength={100} /></label>

@@ -62,6 +62,9 @@ export type PassFlowEvent = {
   theme: EventTheme;
   qrConfig: QrConfig;
   status?: string;
+  visibility?: "public" | "private";
+  registrationOpen?: boolean;
+  requiresApproval?: boolean;
   publishedVersion?: number | null;
   hasDraftChanges?: boolean;
   liveSlug?: string;
@@ -221,6 +224,9 @@ function mapEvent(
     description: row.description ?? "",
     venue: row.venue ?? "",
     status: row.status,
+    visibility: row.visibility === "private" ? "private" : "public",
+    registrationOpen: row.registration_open !== false,
+    requiresApproval: row.requires_approval === true,
     publishedVersion: row.published_version,
     capacity: row.capacity ?? undefined,
     startsAt: row.starts_at,
@@ -341,7 +347,8 @@ export async function getManagedEvents(): Promise<PassFlowEvent[]> {
   );
 }
 
-export async function getPublishedEvents(): Promise<PassFlowEvent[]> {
+/** Public events, plus private ones the viewer is registered for (`include`). */
+export async function getPublishedEvents(include: Iterable<string> = []): Promise<PassFlowEvent[]> {
   if (!getSupabaseConfig()) return demoEvents;
   const supabase = await createServerSupabaseClient();
   const { data, error } = await supabase
@@ -350,8 +357,9 @@ export async function getPublishedEvents(): Promise<PassFlowEvent[]> {
     .eq("status", "published")
     .order("starts_at");
   if (error) throw new Error("Events are temporarily unavailable.");
+  const allowed = new Set(include);
   return Promise.all(
-    (data ?? []).map(async (row) => {
+    (data ?? []).filter((row) => row.visibility !== "private" || allowed.has(row.id)).map(async (row) => {
       const preview = await loadPublishedParticipantPreview(supabase, row.id);
       return mapEvent(row, preview.count, 0, preview.people);
     }),
@@ -366,6 +374,7 @@ export async function getRecentPublishedEvents(): Promise<PassFlowEvent[]> {
     .from("events")
     .select("*")
     .eq("status", "published")
+    .eq("visibility", "public")
     .order("created_at", { ascending: false })
     .order("id", { ascending: false })
     .limit(3);
@@ -391,4 +400,10 @@ export async function getPublishedEvent(
     .maybeSingle();
   if (error) throw new Error("Event is temporarily unavailable.");
   return data ? mapEvent(data) : undefined;
+}
+
+/** The signed-in user's registration state per event id. */
+export async function getMyRegistrations(supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>, userId: string) {
+  const { data } = await supabase.from("attendees").select("event_id,approval_status").eq("user_id", userId);
+  return Object.fromEntries((data ?? []).map((row) => [row.event_id, row.approval_status])) as Record<string, "approved" | "pending" | "rejected">;
 }

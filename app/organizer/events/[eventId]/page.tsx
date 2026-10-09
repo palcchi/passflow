@@ -1,9 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowUpRight } from "lucide-react";
+import { ArrowUpRight, Check } from "lucide-react";
 import { getManagedEvent } from "@/lib/events";
-import { NumberTicker } from "@/components/magicui/number-ticker";
-import { AnimatedList } from "@/components/magicui/animated-list";
 import { requireOrganizerMembership } from "@/lib/auth/session";
 
 const decisionLabel: Record<string, string> = { granted: "Granted", denied: "Denied", invalid: "Invalid", already_checked_in: "Already in" };
@@ -28,6 +26,7 @@ export default async function EventOverviewPage({ params }: Props) {
     ticketCountResult,
     figmaLinkResult,
     liveDesignResult,
+    pendingResult,
   ] = await Promise.all([
     supabase
       .from("qr_credentials")
@@ -58,6 +57,7 @@ export default async function EventOverviewPage({ params }: Props) {
       .eq("event_id", eventId),
     supabase.from("figma_plugin_links").select("id", { count: "exact", head: true }).eq("event_id", eventId).is("revoked_at", null),
     supabase.from("event_studio_documents").select("kind").eq("event_id", eventId).eq("status", "published"),
+    supabase.from("attendees").select("id", { count: "exact", head: true }).eq("event_id", eventId).eq("approval_status", "pending"),
   ]);
 
   const credentials = credentialsResult.data ?? [];
@@ -113,111 +113,86 @@ export default async function EventOverviewPage({ params }: Props) {
 
   return (
     <>
-      <section className="event-admin-metrics" aria-label="Event overview">
+      {(pendingResult.count ?? 0) > 0 && (
+        <Link href={`${base}/people`} className="ui-callout">
+          <span className="ui-badge ui-badge-warning">{pendingResult.count}</span>
+          <span><strong>{pendingResult.count === 1 ? "1 registration is" : `${pendingResult.count} registrations are`} waiting for approval</strong><small>Review them in People</small></span>
+          <ArrowUpRight size={18} />
+        </Link>
+      )}
+
+      <section className="ui-grid ui-grid-4" aria-label="Event overview">
         {metrics.map(({ label, value, note }) => (
-          <div className="event-admin-metric" key={label}>
-            <span>{label}</span>
-            <strong><NumberTicker value={Number(value)} /></strong>
-            <small>{note}</small>
-          </div>
+          <div className="ui-stat" key={label}><span>{label}</span><strong>{Number(value).toLocaleString("en-US")}</strong><small>{note}</small></div>
         ))}
       </section>
 
-      <div className="event-overview-grid">
-        <section className="event-admin-section">
-          <div className="event-admin-section-head">
+      <div className="ui-split ui-section">
+        <section className="ui-card" aria-labelledby="checklist-title">
+          <div className="ui-sectionhead">
             <div>
-              <span className="section-kicker">Launch checklist</span>
-              <h2>{remaining ? `${remaining} step${remaining > 1 ? "s" : ""} to go` : "Ready for the day"}</h2>
-              <p>Required steps unlock publishing; recommended ones make check-in smooth.</p>
+              <h2 id="checklist-title" className="ui-h2">{remaining ? `${remaining} ${remaining > 1 ? "steps" : "step"} left` : "Ready for the day"}</h2>
+              <p>Required steps unlock publishing. The rest make check-in smoother.</p>
             </div>
           </div>
-          <ol className="launch-checklist">
+          <ol className="ui-checklist">
             {checklist.map(({ done, title, href, required }) => (
               <li key={title} data-done={done || undefined}>
                 <Link href={href}>
-                  <span className="launch-check" aria-hidden="true">{done ? "✓" : ""}</span>
-                  <strong>{title}</strong>
-                  <small>{done ? "Done" : required ? "Required" : "Recommended"}</small>
-                  <ArrowUpRight size={14} />
+                  <span className="ui-check" aria-hidden="true">{done && <Check size={13} strokeWidth={3} />}</span>
+                  <span className="ui-checklist-title">{title}</span>
+                  {!done && <span className={required ? "ui-badge ui-badge-warning" : "ui-badge"}>{required ? "Required" : "Optional"}</span>}
+                  <ArrowUpRight size={15} className="ui-checklist-arrow" />
                 </Link>
               </li>
             ))}
           </ol>
         </section>
 
-        <section className="event-admin-section">
-          <div className="event-admin-section-head">
-            <div>
-              <span className="section-kicker">Scanner network</span>
-              <h2>{activeStations} active</h2>
-              <p>{stations.length} station{stations.length === 1 ? "" : "s"} connected to this event.</p>
-            </div>
+        <section aria-labelledby="stations-title">
+          <div className="ui-sectionhead">
+            <div><h2 id="stations-title" className="ui-h2">Scanner stations</h2><p>{activeStations} of {stations.length} active</p></div>
+            <Link href={`${base}/access`} className="ui-link">Manage <ArrowUpRight size={14} /></Link>
           </div>
-          <div className="event-admin-stack">
-            {stations.slice(0, 5).map((station) => (
-              <Link
-                href={`/scan/${station.id}`}
-                className="event-admin-row-card event-overview-station"
-                key={station.id}
-              >
-                <span
-                  className={`organizer-station-dot ${station.is_active ? "is-active" : ""}`}
-                />
-                <strong>{station.name}</strong>
-                <small>{station.is_active ? "Active" : "Standby"}</small>
-              </Link>
-            ))}
-            {!stations.length && (
-              <div className="event-admin-table-empty">
-                No scanner stations have been configured yet.
-              </div>
-            )}
-          </div>
+          {stations.length ? (
+            <ul className="ui-list">
+              {stations.slice(0, 5).map((station) => (
+                <li key={station.id}>
+                  <Link href={`/scan/${station.id}`} className="ui-listrow">
+                    <span className="ui-listrow-main"><strong>{station.name}</strong><small>Open on a phone to scan</small></span>
+                    <span className="ui-listrow-end"><span className={station.is_active ? "ui-badge ui-badge-success" : "ui-badge"}>{station.is_active ? "Active" : "Paused"}</span></span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <div className="ui-empty"><strong>No stations yet</strong><p>Add a check-in station in Access, then open it on any phone.</p><Link href={`${base}/access`} className="ui-btn ui-btn-secondary ui-btn-sm">Add a station</Link></div>
+          )}
         </section>
       </div>
 
-      <section className="event-admin-section">
-        <div className="event-admin-section-head">
+      <section className="ui-section" aria-labelledby="scans-title">
+        <div className="ui-sectionhead">
           <div>
-            <span className="section-kicker">Recent activity</span>
-            <h2>Latest scans</h2>
-            <p>
-              The last {scans.length || 8} scans across every station · {activityCountResult.count ?? 0} activity logs ·{" "}
-              {benefitCountResult.count ?? 0} benefit claims
-            </p>
+            <h2 id="scans-title" className="ui-h2">Latest scans</h2>
+            <p>{activityCountResult.count ?? 0} activity logs and {benefitCountResult.count ?? 0} benefit claims so far.</p>
           </div>
-          <Link
-            className="organizer-text-link"
-            href={`/organizer/events/${eventId}/access`}
-          >
-            Open access <ArrowUpRight size={14} />
-          </Link>
         </div>
-
-        <AnimatedList className="event-admin-scan-list">
-          {scans.map((scan) => (
-            <div className="event-admin-scan-row" key={scan.id}>
-              <span>
-                {scan.attendee_id
-                  ? attendeeName.get(scan.attendee_id) ?? "Attendee"
-                  : "Unknown pass"}
-              </span>
-              <span>
-                {(scan.scanner_station_id && stationName.get(scan.scanner_station_id)) || "Manual check-in"}
-                {scan.scanned_at && <small> · {new Date(scan.scanned_at).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Jakarta" })}</small>}
-              </span>
-              <strong
-                className={`event-admin-scan-decision is-${scan.decision}`}
-              >
-                {decisionLabel[scan.decision] ?? scan.decision.replaceAll("_", " ")}
-              </strong>
-            </div>
-          ))}
-          {!scans.length && (
-            <div className="event-admin-table-empty">No scan activity has been recorded yet.</div>
-          )}
-        </AnimatedList>
+        {scans.length ? (
+          <ul className="ui-list">
+            {scans.map((scan) => (
+              <li key={scan.id} className="ui-listrow">
+                <span className="ui-listrow-main">
+                  <strong>{scan.attendee_id ? attendeeName.get(scan.attendee_id) ?? "Attendee" : "Unknown pass"}</strong>
+                  <small>{(scan.scanner_station_id && stationName.get(scan.scanner_station_id)) || "Manual check-in"}{scan.scanned_at ? `, ${new Date(scan.scanned_at).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Jakarta" })}` : ""}</small>
+                </span>
+                <span className={scan.decision === "granted" ? "ui-badge ui-badge-success" : scan.decision === "already_checked_in" ? "ui-badge ui-badge-warning" : "ui-badge ui-badge-danger"}>{decisionLabel[scan.decision] ?? scan.decision.replaceAll("_", " ")}</span>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <div className="ui-empty"><strong>No scans yet</strong><p>Scans from every station show up here as guests arrive.</p></div>
+        )}
       </section>
     </>
   );

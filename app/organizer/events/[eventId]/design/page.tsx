@@ -22,15 +22,15 @@ export default async function EventDesignPage({params}:{params:Promise<{eventId:
   const figmaSite=!!liveSite&&(liveSite.document as {source?:string}|null)?.source==='figma';
   const livePasses=(live.data??[]).filter(d=>d.kind!=='website');
   const ticketName=(id:string|null)=>id?(tickets.data??[]).find(t=>t.id===id)?.name??'One category':'All attendees';
-  return <div className="event-admin-editor-page">
-    <section className="event-admin-section">
-      <span className="section-kicker">What attendees see now</span>
-      <div className="design-live-grid">
-        <div className="design-live-card"><small>Event website</small><strong>{figmaSite?'Figma design':'PassFlow default page'}</strong><span>{figmaSite?liveSite!.name:'Event details, banner and Register, until a Figma design is published.'}</span></div>
-        <div className="design-live-card"><small>Credential</small><strong>{modeLabel[event.qrConfig.mode]??event.qrConfig.mode}</strong><span>Change in <Link href={`/organizer/events/${eventId}/access`}>Access</Link>. Banner, logo and accent are in <Link href={`/organizer/events/${eventId}/settings`}>Settings</Link>.</span></div>
-        <div className="design-live-card"><small>Pass designs</small><strong>{livePasses.length?livePasses.length+' live':'Default layout'}</strong><span>{livePasses.length?livePasses.map(p=>passLabel[p.kind]+' · '+ticketName(p.ticket_type_id)).join(', '):'Standard QR pass until you publish one from Figma.'}</span></div>
+  return <>
+    <section aria-labelledby="now-title">
+      <div className="ui-sectionhead"><div><h2 id="now-title" className="ui-h2">What attendees see now</h2></div></div>
+      <div className="ui-grid ui-grid-3">
+        <div className="ui-stat ui-stat-text"><span>Event website</span><strong>{figmaSite?'Figma design':'PassFlow default'}</strong><small>{figmaSite?liveSite!.name:'Event details, banner and Register until a Figma design is published.'}</small></div>
+        <div className="ui-stat ui-stat-text"><span>Pass format</span><strong>{modeLabel[event.qrConfig.mode]??event.qrConfig.mode}</strong><small>Change it in <Link className="ui-link" href={`/organizer/events/${eventId}/access`}>Access</Link>. Banner and logo live in <Link className="ui-link" href={`/organizer/events/${eventId}/settings`}>Settings</Link>.</small></div>
+        <div className="ui-stat ui-stat-text"><span>Pass designs</span><strong>{livePasses.length?`${livePasses.length} live`:'Standard pass'}</strong><small>{livePasses.length?livePasses.map(p=>passLabel[p.kind]+' for '+ticketName(p.ticket_type_id)).join(', '):'A clean QR pass until you publish one from Figma.'}</small></div>
       </div>
     </section>
     <FigmaPairingPanel now={now} eventId={eventId} connections={links.data??[]} versions={versions.data??[]} ready={!links.error&&!versions.error&&!!process.env.SUPABASE_SERVICE_ROLE_KEY}/>
-  </div>;
+  </>;
 }

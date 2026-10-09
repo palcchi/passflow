@@ -20,7 +20,6 @@ import {
 import { getPublishedEvent } from "@/lib/events";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { getSupabaseConfig } from "@/lib/supabase/config";
-import { Sticker } from "@/components/flow-brand-art";
 import { KineticText } from "@/components/magicui/kinetic-text";
 import { FlowMark } from "@/components/flow-art";
 import { eventInk } from "@/lib/event-colors";
@@ -53,11 +52,15 @@ export default async function PublicEventPage({ params }: EventPageProps) {
         .limit(1)
         .maybeSingle()
     : { data: null };
-  const ctaLabel = !context
-    ? "Sign in to register"
-    : registration
-      ? "View my pass"
-      : event.theme.ctaLabel || "Register now";
+  const ctaLabel = registration
+    ? "View my pass"
+    : event.registrationOpen === false
+      ? "Registration opens soon"
+      : !context
+        ? "Sign in to register"
+        : event.requiresApproval
+          ? "Request to join"
+          : event.theme.ctaLabel || "Register now";
 
   const themeStyle = {
     "--foreground": event.theme.foreground,
@@ -81,70 +84,48 @@ export default async function PublicEventPage({ params }: EventPageProps) {
 
   // The default page is the only page until a Figma design is published, so it lists the passes on sale.
   const { data: tickets } = supabase ? await supabase.from("ticket_types").select("id,name,price,currency").eq("event_id", event.id).order("price") : { data: [] };
+  const helper = event.registrationOpen === false ? "Registration opens soon" : event.requiresApproval ? "The organizer approves each registration" : event.qrConfig.mode === "digital" ? "Your QR pass appears in your account right away" : "Your QR pass works on your phone and on printed credentials";
   return (
-    <main className="event-public-shell flow-public-event" style={themeStyle}>
-      <nav className="event-public-nav">
-        <Link href="/" className="event-wordmark">
-          <FlowMark/> PassFlow
-        </Link>
-        <Link href={`/e/${event.slug}/claim`} className="event-nav-link">
-          My pass
-        </Link>
+    <main className="ui-app ui-ev" style={themeStyle}>
+      <nav className="ui-ev-nav" aria-label="Event">
+        <Link href="/" className="ui-brand" aria-label="PassFlow"><FlowMark /><span>PassFlow</span></Link>
+        <Link href={`/e/${event.slug}/claim`} className="ui-btn ui-btn-ghost ui-btn-sm">My pass</Link>
       </nav>
 
-      <section className={`event-public-hero event-header-${event.theme.headerStyle ?? "editorial"}`}>
-        <div className="event-public-copy">
-          {event.logoUrl && <Image src={event.logoUrl} alt={event.name} width={120} height={80} unoptimized className="mb-5 object-contain" />}
-          {event.eyebrow && <span className="event-kicker">{event.eyebrow}</span>}
-          <KineticText text={event.name}/>
-          {event.description && <p>{event.description}</p>}
-          <div className="event-meta-row">
-            <span>
-              <CalendarDays size={17} /> {event.dateLabel}
-              {event.startsAt && event.endsAt && <a className="event-calendar-link" href={`/e/${event.slug}/calendar`} download>Add to calendar</a>}
-            </span>
-            {event.venue && <span>
-              <MapPin size={17} /> {event.venue}
-            </span>}
-          </div>
-          <div className="event-cta-row">
-            <Link href={`/e/${event.slug}/claim`} className="event-primary-button">
-              {ctaLabel}
-              <ArrowRight size={17} />
-            </Link>
-            <span className="event-helper">
-              <ShieldCheck size={16} />
-              QR access enabled
-            </span>
+      <section className="ui-ev-hero">
+        <div className="ui-ev-copy ui-rise">
+          {event.logoUrl && <Image src={event.logoUrl} alt={event.name} width={120} height={64} unoptimized className="ui-ev-logo" />}
+          {event.eyebrow && <span className="ui-ev-tagline">{event.eyebrow}</span>}
+          <KineticText text={event.name} className="ui-ev-title" />
+          <ul className="ui-ev-meta">
+            <li><CalendarDays size={17} /><span>{event.dateLabel}</span>{event.startsAt && event.endsAt && <a href={`/e/${event.slug}/calendar`} download>Add to calendar</a>}</li>
+            {event.venue && <li><MapPin size={17} /><span>{event.venue}</span></li>}
+          </ul>
+          {event.description && <p className="ui-ev-desc">{event.description}</p>}
+          <div className="ui-ev-cta">
+            <Link href={`/e/${event.slug}/claim`} className="ui-ev-button" aria-disabled={event.registrationOpen === false && !registration ? true : undefined}>{ctaLabel}<ArrowRight size={17} /></Link>
+            <span><ShieldCheck size={15} />{helper}</span>
           </div>
         </div>
-
-        {event.heroImageUrl || event.posterUrl ? <Image src={(event.heroImageUrl || event.posterUrl)!} alt={event.name} width={1600} height={900} unoptimized className="event-public-cover" /> : <div className="event-public-cover event-public-artwork"><EventArtwork event={event}/></div>}
+        <div className="ui-ev-cover">
+          {event.heroImageUrl || event.posterUrl ? <Image src={(event.heroImageUrl || event.posterUrl)!} alt={event.name} fill unoptimized sizes="(max-width: 900px) 100vw, 560px" priority /> : <EventArtwork event={event} />}
+        </div>
       </section>
 
-      {!!tickets?.length && <section className="event-ticket-list" aria-labelledby="event-tickets-title">
+      {!!tickets?.length && <section className="ui-ev-section" aria-labelledby="event-tickets-title">
         <h2 id="event-tickets-title">Passes</h2>
-        <ul>{tickets.map((t) => <li key={t.id}><Link href={`/e/${event.slug}/claim`}><strong>{t.name}</strong><span>{t.price > 0 ? `${t.currency} ${Number(t.price).toLocaleString("en-US")}` : "Free"}</span><ArrowRight size={16} /></Link></li>)}</ul>
+        <ul className="ui-ev-passes">{tickets.map((t) => <li key={t.id}><Link href={`/e/${event.slug}/claim`}><strong>{t.name}</strong><span>{t.price > 0 ? `${t.currency} ${Number(t.price).toLocaleString("en-US")}` : "Free"}</span><ArrowRight size={16} /></Link></li>)}</ul>
       </section>}
 
-      <section className="event-info-grid">
-        <article>
-          <Sticker kind="arrow"/>
-          <h2>{event.qrConfig.mode === "digital" ? "Get your digital pass" : "Claim your event pass"}</h2>
-          <p>{event.qrConfig.mode === "digital" ? "After registration, your digital QR pass is available in your account automatically." : "Use the QR code on the ID card or wristband provided by the organizer."}</p>
-        </article>
-        <article>
-          <Sticker kind="check"/>
-          <h2>Use either format</h2>
-          <p>{event.qrConfig.mode === "digital" ? "Your digital QR can be displayed directly on your phone and used across authorized access points." : "The same QR credential works in physical format and in the Digital Event Pass on your phone."}</p>
-        </article>
-        <article>
-          <Sticker kind="smile"/>
-          <h2>Move through the event</h2>
-          <p>Scanners automatically validate identity, access permissions, activities, and available benefits.</p>
-        </article>
+      <section className="ui-ev-section" aria-labelledby="entry-title">
+        <h2 id="entry-title">How entry works</h2>
+        <ol className="ui-ev-steps">
+          <li><strong>{event.requiresApproval ? "Request a pass" : "Register"}</strong><span>{event.requiresApproval ? "The organizer reviews your request and you get an email when you are in." : "Sign in with your PassFlow account and choose a pass."}</span></li>
+          <li><strong>{event.qrConfig.mode === "digital" ? "Keep your QR" : "Get your credential"}</strong><span>{event.qrConfig.mode === "digital" ? "Your pass lives in your account and works offline once loaded." : "The same QR works on your phone and on the card or wristband from the organizer."}</span></li>
+          <li><strong>Scan in</strong><span>Crew scan your QR at the door, zones and activities.</span></li>
+        </ol>
       </section>
-      <MadeWithPassFlow/>
+      <MadeWithPassFlow />
     </main>
   );
 }

@@ -20,7 +20,7 @@ export async function registerForEvent(formData: FormData) {
   revalidatePath("/account");
   revalidatePath("/events");
   revalidatePath(`/e/${slug}`, "layout");
-  redirect(`/e/${encodeURIComponent(slug)}/claim?registered=1`);
+  redirect(`/e/${encodeURIComponent(slug)}/claim?${(rpcResult(data) as { pending?: boolean } | null)?.pending ? "requested" : "registered"}=1`);
 }
 export async function claimQr(formData: FormData) {
   const slug=String(formData.get("event_slug")??"").trim(); const code=String(formData.get("code")??"").trim();
@@ -37,3 +37,10 @@ export async function replaceQr(formData: FormData) {
   redirect(`/e/${encodeURIComponent(slug)}/claim?replaced=1`);
 }
 
+
+export async function markNotificationsRead() {
+  const { supabase, user } = await requireUser("/notifications");
+  await supabase.from("notifications").update({ read_at: new Date().toISOString() }).eq("user_id", user.id).is("read_at", null);
+  revalidatePath("/notifications");
+  revalidatePath("/", "layout");
+}
