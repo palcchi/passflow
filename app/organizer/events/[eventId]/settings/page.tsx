@@ -5,11 +5,12 @@ import { DateTimeField, FormattedNumberInput } from "@/components/form-fields";
 import { deleteEvent, setEventStatus, updateEvent } from "@/app/organizer/events/actions";
 import { EventSubdomainPanel } from "@/components/event-subdomain-panel";
 import { EventBranding } from "@/components/event-branding";
+import { saveEventAccess } from "@/app/organizer/events/people-actions";
 
 type Props = { params: Promise<{ eventId: string }>; searchParams: Promise<{ error?: string }> };
 
 function inputClass() {
-  return "event-admin-input";
+  return "ui-input";
 }
 
 export default async function EventSettingsPage({ params, searchParams }: Props) {
@@ -41,109 +42,93 @@ export default async function EventSettingsPage({ params, searchParams }: Props)
     transition: "The status could not be changed. Review the configuration and try again.",
   };
 
+  const statusLabel = event.status === "published" ? "Live" : event.status === "archived" ? "Archived" : "Draft";
+
   return (
-    <>
-      <section className="event-admin-section liquid-panel">
-        <div className="event-admin-section-head">
-          <div>
-            <span className="section-kicker">Settings</span>
-            <h2>Basics & lifecycle</h2>
-            <p>Core event information, schedule, capacity, and publication status.</p>
-          </div>
-        </div>
-        {error && <p role="alert" className="camera-feedback">{errors[error] ?? errors.transition}</p>}
-        <p role="status" className="settings-status"><strong>{event.status === "published" ? "Live" : event.status === "archived" ? "Archived" : "Draft"}</strong>
-          {event.publishedVersion ? ` · published version ${event.publishedVersion}` : " · never published"}
-          {event.hasDraftChanges ? " · unpublished changes saved" : ""}</p>
-        <p className="event-admin-note">Basics and branding changes are saved as a draft while live. Public pages, registration and passes use the published settings until you publish. Tickets, gates and access rules are operational changes and apply immediately.</p>
+    <div className="ui-settings">
+      {error && <p role="alert" className="ui-notice ui-notice-danger">{errors[error] ?? errors.transition}</p>}
 
-        <form action={updateEvent} className="event-admin-form-grid">
+      <section className="ui-card ui-settings-card" aria-labelledby="details-title">
+        <div className="ui-settings-side">
+          <h2 id="details-title" className="ui-h3">Event details</h2>
+          <p>While the event is live, these are saved as a draft. Guests see them after you publish a new version.</p>
+        </div>
+        <form action={updateEvent} className="ui-formgrid">
           <input type="hidden" name="eventId" value={event.id} />
-          <label className="event-admin-field is-wide">
-            <span>Name</span>
-            <input className={inputClass()} name="name" defaultValue={event.name} required />
-          </label>
-          <label className="event-admin-field">
-            <span>Slug</span>
-            <input className={inputClass()} name="slug" defaultValue={event.slug} required />
-          </label>
-          <label className="event-admin-field">
-            <span>Capacity</span>
-            <FormattedNumberInput
-              name="capacity"
-              defaultValue={event.capacity ?? ""}
-              min={0}
-              className={inputClass()}
-            />
-          </label>
-          <label className="event-admin-field is-wide">
-            <span>Venue</span>
-            <input className={inputClass()} name="venue" defaultValue={event.venue} />
-          </label>
-          <DateTimeField name="startsAt" defaultValue={event.startsAt} label="Starts at" />
-          <DateTimeField name="endsAt" defaultValue={event.endsAt} label="Ends at" />
-          <label className="event-admin-field is-wide">
-            <span>Description</span>
-            <textarea
-              className="event-admin-input event-admin-textarea"
-              rows={4}
-              name="description"
-              defaultValue={event.description}
-            />
-          </label>
-          <div className="event-admin-form-actions is-wide">
-            <button className="button button-dark" type="submit" disabled={event.status === "archived"}>Save draft</button>
-          </div>
+          <label className="ui-field ui-span-2"><span>Name</span><input className={inputClass()} name="name" defaultValue={event.name} required /></label>
+          <label className="ui-field"><span>Link name</span><input className={inputClass()} name="slug" defaultValue={event.slug} required /><small>passflow.my.id/e/{event.slug}</small></label>
+          <label className="ui-field"><span>Capacity</span><FormattedNumberInput name="capacity" defaultValue={event.capacity ?? ""} min={0} className={inputClass()} placeholder="Unlimited" /></label>
+          <label className="ui-field ui-span-2"><span>Venue</span><input className={inputClass()} name="venue" defaultValue={event.venue} /></label>
+          <div className="ui-span-2 ui-dates"><DateTimeField name="startsAt" defaultValue={event.startsAt} label="Starts" /><DateTimeField name="endsAt" defaultValue={event.endsAt} label="Ends" /></div>
+          <label className="ui-field ui-span-2"><span>Description</span><textarea className="ui-textarea" rows={4} name="description" defaultValue={event.description} /></label>
+          <div className="ui-span-2 ui-formactions"><button className="ui-btn ui-btn-primary" type="submit" disabled={event.status === "archived"}>Save changes</button></div>
         </form>
+      </section>
 
-        <div className="event-admin-status-row">
-          <div>
-            <strong>Event status</strong>
-            <span>Manage the event lifecycle across Draft, Published, and Archived states.</span>
-          </div>
-          <div className="event-admin-status-actions">
-            {event.status !== "archived" && <form action={setEventStatus}>
-              <input type="hidden" name="eventId" value={event.id}/><input type="hidden" name="action" value="publish"/>
-              <button className="event-admin-status-button is-active" type="submit">{event.status === "published" ? "Publish new version" : "Publish event"}</button>
-            </form>}
-            {event.status !== "archived" && <form action={setEventStatus}>
-              <input type="hidden" name="eventId" value={event.id}/><input type="hidden" name="action" value="archive"/>
-              <button className="event-admin-status-button" type="submit">Archive event</button>
-            </form>}
-            {event.status === "archived" && <form action={setEventStatus}>
-              <input type="hidden" name="eventId" value={event.id}/><input type="hidden" name="action" value="reopen"/>
-              <button className="event-admin-status-button" type="submit">Reopen as draft</button>
-            </form>}
-          </div>
+      <section className="ui-card ui-settings-card" aria-labelledby="publish-title">
+        <div className="ui-settings-side">
+          <h2 id="publish-title" className="ui-h3">Publishing</h2>
+          <p>Publishing makes your saved details public. Tickets, gates and access rules apply immediately and never need publishing.</p>
         </div>
-        {!!versions?.length && <div className="event-admin-status-row"><div><strong>Published versions</strong><span>Restore a snapshot into the draft, review it, then publish a new version.</span></div><div className="event-admin-status-actions">{versions.map(version => <form action={setEventStatus} key={version.version}>
-          <input type="hidden" name="eventId" value={event.id}/><input type="hidden" name="action" value="restore"/><input type="hidden" name="version" value={version.version}/>
-          <button className="event-admin-status-button" disabled={event.status === "archived"} type="submit">Restore v{version.version}</button>
-        </form>)}</div></div>}
+        <div className="ui-stack">
+          <div className="ui-tile ui-publish">
+            <div>
+              <span className={event.status === "published" ? "ui-badge ui-badge-success" : "ui-badge"}>{statusLabel}</span>
+              <p>{event.publishedVersion ? `Version ${event.publishedVersion} is public.` : "Not published yet."}{event.hasDraftChanges ? " You have unpublished changes." : ""}</p>
+            </div>
+            <div className="ui-row">
+              {event.status !== "archived" && <form action={setEventStatus}><input type="hidden" name="eventId" value={event.id} /><input type="hidden" name="action" value="archive" /><button className="ui-btn ui-btn-ghost ui-btn-sm" type="submit">Archive</button></form>}
+              {event.status !== "archived" && <form action={setEventStatus}><input type="hidden" name="eventId" value={event.id} /><input type="hidden" name="action" value="publish" /><button className="ui-btn ui-btn-primary ui-btn-sm" type="submit">{event.status === "published" ? "Publish changes" : "Publish event"}</button></form>}
+              {event.status === "archived" && <form action={setEventStatus}><input type="hidden" name="eventId" value={event.id} /><input type="hidden" name="action" value="reopen" /><button className="ui-btn ui-btn-secondary ui-btn-sm" type="submit">Reopen as draft</button></form>}
+            </div>
+          </div>
+          {!!versions?.length && <div className="ui-versions"><span className="ui-label">Earlier versions</span><div className="ui-row">{versions.map((version) => <form action={setEventStatus} key={version.version}>
+            <input type="hidden" name="eventId" value={event.id} /><input type="hidden" name="action" value="restore" /><input type="hidden" name="version" value={version.version} />
+            <button className="ui-btn ui-btn-secondary ui-btn-sm" disabled={event.status === "archived"} type="submit" title="Restore into the draft">Restore v{version.version}</button>
+          </form>)}</div></div>}
+        </div>
+      </section>
+
+      <section className="ui-card ui-settings-card" aria-labelledby="access-title">
+        <div className="ui-settings-side">
+          <h2 id="access-title" className="ui-h3">Who can find and join</h2>
+          <p>These apply right away, without publishing a new version.</p>
+        </div>
+        <form action={saveEventAccess} className="access-form">
+          <input type="hidden" name="eventId" value={event.id} />
+          <fieldset className="ui-fieldset">
+            <legend className="ui-legend">Visibility</legend>
+            <div className="ui-options ui-options-2">
+              <label className="ui-option-radio"><input type="radio" name="visibility" value="public" defaultChecked={event.visibility !== "private"} /><span><strong>Public</strong><small>Listed in Discover and on the PassFlow homepage.</small></span></label>
+              <label className="ui-option-radio"><input type="radio" name="visibility" value="private" defaultChecked={event.visibility === "private"} /><span><strong>Private</strong><small>Hidden from Discover. Only people with the link can open it.</small></span></label>
+            </div>
+          </fieldset>
+          <fieldset className="ui-fieldset">
+            <legend className="ui-legend">Registration</legend>
+            <div className="ui-options ui-options-2">
+              <label className="ui-option-radio"><input type="radio" name="registration" value="open" defaultChecked={event.registrationOpen !== false} /><span><strong>Open</strong><small>People can register now.</small></span></label>
+              <label className="ui-option-radio"><input type="radio" name="registration" value="soon" defaultChecked={event.registrationOpen === false} /><span><strong>Coming soon</strong><small>The page is live but registration is closed. Guests you add still get passes.</small></span></label>
+            </div>
+          </fieldset>
+          <label className="ui-switch-row"><input type="checkbox" name="approval" defaultChecked={event.requiresApproval === true} /><span><strong>Approve each registration</strong><small>New registrations wait in People. Guests get their pass and an email when you approve.</small></span></label>
+          <div className="ui-formactions"><button type="submit" className="ui-btn ui-btn-primary">Save access</button></div>
+        </form>
       </section>
 
       <EventBranding event={event} />
       <EventSubdomainPanel eventId={eventId} current={address?.label ?? ""} suggestion={event.slug} enabled={process.env.PASSFLOW_EVENT_SUBDOMAINS_ENABLED === "true"} />
-      <section className="event-admin-danger-zone">
-        <div className="event-admin-danger-copy">
-          <div>
-            <strong>Delete event</strong>
-            <p>
-              {canDelete ? <>Type the slug <code>{event.slug}</code> to delete this unused draft.</> :
-                <>Permanent deletion is locked because this event is live, archived, or has operational history.
-                {` ${attendees.count ?? 0} attendees · ${credentials.count ?? 0} credentials · ${scans.count ?? 0} scans · ${activities.count ?? 0} activities · ${benefits.count ?? 0} benefit claims. `}
-                Archive the event to keep its audit records.</>}
-            </p>
-          </div>
+
+      <section className="ui-card ui-settings-card ui-danger" aria-labelledby="delete-title">
+        <div className="ui-settings-side">
+          <h2 id="delete-title" className="ui-h3">Delete event</h2>
+          <p>{canDelete ? "Only unused drafts can be deleted. This cannot be undone." : "Locked because this event is live, archived or has history. Archive it to keep its records."}</p>
         </div>
-        {canDelete ? <form action={deleteEvent}>
+        {canDelete ? <form action={deleteEvent} className="ui-row ui-delete">
           <input type="hidden" name="eventId" value={event.id} />
-          <input className={inputClass()} name="confirmation" placeholder={event.slug} aria-label="Type the slug to confirm" />
-          <button className="button button-ghost event-admin-delete-button" type="submit">
-            Delete event
-          </button>
-        </form> : <span className="event-admin-section-count">Locked</span>}
+          <label className="ui-field"><span>Type <code className="ui-mono">{event.slug}</code> to confirm</span><input className={inputClass()} name="confirmation" placeholder={event.slug} /></label>
+          <button className="ui-btn ui-btn-danger" type="submit">Delete event</button>
+        </form> : <p className="ui-small">{`${attendees.count ?? 0} attendees, ${credentials.count ?? 0} QR codes, ${scans.count ?? 0} scans, ${activities.count ?? 0} activity logs and ${benefits.count ?? 0} benefit claims are on record.`}</p>}
       </section>
-    </>
+    </div>
   );
 }

@@ -25,56 +25,60 @@ export function FigmaPairingPanel({eventId,connections,versions,ready,now}:{even
   const live=versions.filter(v=>v.status==='published');
   const linkState=(c:Connection)=>c.revoked_at?['Revoked','muted']:Date.parse(c.expires_at)<now?['Expired','muted']:c.external_change_at?['Changed outside plugin','warn']:c.last_synced_at?['Synced','on']:['Waiting for first sync','warn'];
 
-  return <div className="event-admin-stack figma-panel-stack">
-    <section className="event-admin-section">
-      <div className="event-admin-section-head"><div>
-        <span className="section-kicker">Website from Figma</span>
-        <h2>Design your event website in Figma.</h2>
-        <p>Figma is your website: every word, color and hover effect. PassFlow runs sign-up, live tickets and QR passes. Press Sync in the plugin and the website and passes update right away.</p>
+  const tone=(t:string)=>t==='on'?'ui-badge ui-badge-success':t==='warn'?'ui-badge ui-badge-warning':'ui-badge';
+
+  return <>
+    <section className="ui-section" aria-labelledby="figma-title">
+      <div className="ui-sectionhead"><div>
+        <h2 id="figma-title" className="ui-h2">Design in Figma</h2>
+        <p>Figma owns every word, colour and hover effect. PassFlow runs sign-up, tickets and QR passes. Sync publishes right away.</p>
       </div></div>
-      <ol className="figma-steps">
+      <ol className="ui-steps">
         <li>
-          <strong>Open the PassFlow plugin in Figma</strong>
-          <span>In any Figma Design file: Actions → Plugins → search “PassFlow”, then run it.</span>
+          <strong>Open the PassFlow plugin</strong>
+          <span>In any Figma Design file: Actions, Plugins, search PassFlow, then run it.</span>
         </li>
         <li>
           <strong>Pair this event</strong>
           <span>Paste the code into the plugin. It works once and expires after 10 minutes.</span>
           {code
-            ? <div className="figma-code"><output aria-label="Pairing code">{code}</output><button className="button button-dark" onClick={copy}>{copied?'Copied':'Copy'}</button><button className="button button-ghost" disabled={pending} onClick={()=>run(()=>createPairingCode(eventId))}>New code</button></div>
-            : <button className="button button-dark" disabled={pending||!ready} onClick={()=>run(()=>createPairingCode(eventId))}>{pending?'Creating…':'Get pairing code'}</button>}
-          {!ready&&<span role="status">Pairing is not available on this server yet. Ask the PassFlow admin to finish the server setup.</span>}
+            ? <div className="ui-paircode"><output aria-label="Pairing code" className="ui-mono">{code}</output><button className="ui-btn ui-btn-primary ui-btn-sm" onClick={copy}>{copied?'Copied':'Copy'}</button><button className="ui-btn ui-btn-ghost ui-btn-sm" disabled={pending} onClick={()=>run(()=>createPairingCode(eventId))}>New code</button></div>
+            : <div><button className="ui-btn ui-btn-primary ui-btn-sm" disabled={pending||!ready} onClick={()=>run(()=>createPairingCode(eventId))}>{pending?'Creating…':'Get pairing code'}</button></div>}
+          {!ready&&<span role="status" className="ui-notice ui-notice-warning">Pairing is not available on this server yet. Ask the PassFlow admin to finish the server setup.</span>}
         </li>
         <li>
-          <strong>Design everything in Figma</strong>
-          <span>Start Blank, Minimal or Festival. Type your own text; links and hover effects come from Figma prototype interactions. Mark your Register button in the plugin.</span>
+          <strong>Design your pages and passes</strong>
+          <span>Start from Blank, Minimal or Festival. Links and hover effects come from Figma prototype interactions. Mark your Register button in the plugin.</span>
         </li>
         <li>
           <strong>Press Sync</strong>
-          <span>Sync publishes straight to your live site and passes. If something would break, the plugin selects the layer to fix and nothing changes here. Tickets and QR codes are never touched.</span>
+          <span>Your live site and passes update instantly. If something would break, the plugin selects the layer to fix and nothing changes here.</span>
         </li>
       </ol>
     </section>
 
-    {message&&<p role="status" className="studio-notice">{message}</p>}
+    {message&&<p role="status" className="ui-notice ui-mt">{message}</p>}
 
-    <section className="event-admin-section">
-      <div className="event-admin-section-head"><div><span className="section-kicker">Live from Figma</span><h2>What Sync published</h2>
-        {!live.length&&<p>Nothing synced yet. Press Sync in the plugin to publish your first design.</p>}</div></div>
-      {live.map(v=><div key={v.id} className="resource-record">
-        <span><strong>{kindLabel[v.kind]??v.kind}</strong><small>{v.name} · synced {when(v.published_at??v.updated_at)}</small></span>
-        <a className="event-admin-text-action" href={`/organizer/events/${eventId}/design/preview/${v.id}`}>Preview</a>
-        <button className="event-admin-danger-link" disabled={pending} onClick={()=>{if(confirm(v.kind==='website'?'Take the Figma website offline? The event shows the PassFlow default page until you sync again.':'Remove this pass design? Passes fall back to the standard layout until you sync again.'))run(()=>retireStudio(eventId,v.id,v.revision,false),'Removed.');}}>Remove</button>
-      </div>)}
+    <section className="ui-section" aria-labelledby="live-title">
+      <div className="ui-sectionhead"><div><h2 id="live-title" className="ui-h2">Live from Figma</h2>
+        <p>{live.length?'What your last Sync published.':'Nothing synced yet. Press Sync in the plugin to publish your first design.'}</p></div></div>
+      {live.length>0&&<ul className="ui-list">{live.map(v=><li key={v.id} className="ui-listrow">
+        <span className="ui-listrow-main"><strong>{kindLabel[v.kind]??v.kind}</strong><small>{v.name}, synced {when(v.published_at??v.updated_at)}</small></span>
+        <span className="ui-listrow-end">
+          <a className="ui-btn ui-btn-secondary ui-btn-sm" href={`/organizer/events/${eventId}/design/preview/${v.id}`}>Preview</a>
+          <button className="ui-btn ui-btn-ghost ui-btn-sm ui-text-danger" disabled={pending} onClick={()=>{if(confirm(v.kind==='website'?'Take the Figma website offline? The event shows the PassFlow default page until you sync again.':'Remove this pass design? Passes fall back to the standard layout until you sync again.'))run(()=>retireStudio(eventId,v.id,v.revision,false),'Removed.');}}>Remove</button>
+        </span>
+      </li>)}</ul>}
     </section>
 
-    {connections.length>0&&<section className="event-admin-section">
-      <div className="event-admin-section-head"><div><span className="section-kicker">Files</span><h2>Connected Figma files</h2></div></div>
-      {connections.map(c=>{const [label,tone]=linkState(c);return <div key={c.id} className="resource-record">
-        <div className="figma-version-head"><strong>{c.file_name}</strong><span className={'figma-badge figma-badge-'+tone}>{label}</span></div>
-        {c.last_synced_at&&<p>Last sync {when(c.last_synced_at)}</p>}
-        {!c.revoked_at&&<button className="button button-ghost" disabled={pending} onClick={()=>{if(confirm('Disconnect this Figma file? Published designs stay live.'))run(()=>revokePluginLink(eventId,c.id),'Disconnected.');}}>Disconnect</button>}
-      </div>;})}
+    {connections.length>0&&<section className="ui-section" aria-labelledby="files-title">
+      <div className="ui-sectionhead"><div><h2 id="files-title" className="ui-h2">Connected files</h2></div></div>
+      <ul className="ui-list">{connections.map(c=>{const [label,t]=linkState(c);return <li key={c.id} className="ui-listrow">
+        <span className="ui-listrow-main"><strong>{c.file_name}</strong><small>{c.last_synced_at?`Last sync ${when(c.last_synced_at)}`:'Not synced yet'}</small></span>
+        <span className="ui-listrow-end"><span className={tone(t)}>{label}</span>
+          {!c.revoked_at&&<button className="ui-btn ui-btn-ghost ui-btn-sm" disabled={pending} onClick={()=>{if(confirm('Disconnect this Figma file? Published designs stay live.'))run(()=>revokePluginLink(eventId,c.id),'Disconnected.');}}>Disconnect</button>}
+        </span>
+      </li>;})}</ul>
     </section>}
-  </div>;
+  </>;
 }

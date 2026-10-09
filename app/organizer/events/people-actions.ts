@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { requireOrganizer } from "@/lib/auth/session";
+import { registrationDecisionEmail, sendEmail } from "@/lib/email";
 
 export async function managePersonRecord(form: FormData): Promise<{ error?: string; success?: boolean }> {
   const eventId = String(form.get("eventId") ?? "");
@@ -53,4 +54,39 @@ export async function managePersonRecord(form: FormData): Promise<{ error?: stri
   const { data: event } = await supabase.from("events").select("slug").eq("id", eventId).maybeSingle();
   if (event) revalidatePath(`/e/${event.slug}`, "layout");
   return { success: true };
+}
+
+// Approve or decline a pending registration; the attendee gets a notification (in the RPC) and an email.
+export async function reviewRegistration(form: FormData) {
+  const eventId = String(form.get("eventId") ?? "");
+  const attendeeId = String(form.get("attendeeId") ?? "");
+  const approve = form.get("decision") === "approve";
+  if (!/^[0-9a-f-]{36}$/i.test(eventId) || !/^[0-9a-f-]{36}$/i.test(attendeeId)) return;
+  const { supabase } = await requireOrganizer();
+  const { data, error } = await supabase.rpc("review_attendee", { p_attendee_id: attendeeId, p_approve: approve });
+  if (!error && data && typeof data === "object" && !Array.isArray(data)) {
+    const result = data as { email?: string | null; name?: string; event_name?: string; event_slug?: string };
+    if (result.email && result.event_slug) {
+      const mail = registrationDecisionEmail({ approved: approve, name: result.name ?? "there", eventName: result.event_name ?? "the event", eventSlug: result.event_slug });
+      await sendEmail(result.email, mail.subject, mail.html);
+    }
+  }
+  revalidatePath(`/organizer/events/${eventId}/people`);
+  revalidatePath(`/organizer/events/${eventId}`);
+}
+
+export async function saveEventAccess(form: FormData) {
+  const eventId = String(form.get("eventId") ?? "");
+  if (!/^[0-9a-f-]{36}$/i.test(eventId)) return;
+  const visibility = form.get("visibility") === "private" ? "private" : "public";
+  const { supabase } = await requireOrganizer();
+  await supabase.rpc("set_event_access", {
+    p_event_id: eventId,
+    p_visibility: visibility,
+    p_registration_open: form.get("registration") !== "soon",
+    p_requires_approval: form.get("approval") === "on",
+  });
+  revalidatePath(`/organizer/events/${eventId}`, "layout");
+  revalidatePath("/events");
+  revalidatePath("/");
 }

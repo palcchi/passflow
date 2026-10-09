@@ -5,10 +5,10 @@ import { createEvent } from "@/app/organizer/events/actions";
 import { DateTimeField, FormattedNumberInput } from "@/components/form-fields";
 import { requireOrganizer } from "@/lib/auth/session";
 import { canCreateEvent, EVENTS_PER_ORGANIZER } from "@/lib/organizer-quota";
-import { UserNavbar } from "@/components/user-navbar";
+import { AppShell } from "@/components/app-shell";
 import { eventAdminProfile } from "@/components/event-admin-chrome";
-import { FolderArtwork, Sticker } from "@/components/flow-brand-art";
-import { AuthSubmit } from "@/components/auth-submit";
+
+export const metadata = { title: "New event" };
 
 export default async function NewEventPage({
   searchParams,
@@ -19,44 +19,34 @@ export default async function NewEventPage({
   const { supabase, user } = await requireOrganizer();
   const allowed = await canCreateEvent(supabase, user);
   return (
-    <div className="app-surface flow-workspace min-h-screen">
-      <UserNavbar {...eventAdminProfile(user)} organizer/>
-      <main className="create-event-layout">
-        <Link href="/organizer/events" className="auth-back"><ArrowLeft size={16} /> Back to organizer</Link>
-        <header className="studio-page-hero"><div><span className="section-kicker">SOMETHING GOOD STARTS HERE</span><h1 className="studio-page-title">Turn an idea into an event.</h1><p className="studio-page-subtitle">Start with the essentials. Your event remains a draft until you are ready to publish.</p></div><div className="workspace-art"><FolderArtwork color="orange" label="A fresh start"/><Sticker kind="check"/></div></header>
+    <AppShell {...eventAdminProfile(user)} organizer narrow>
+      <Link href="/organizer/events" className="ui-back"><ArrowLeft size={14} />All events</Link>
+      <header className="ui-pagehead ui-mt">
+        <div>
+          <h1 className="ui-h1">New event</h1>
+          <p className="ui-lead">Start with the essentials. It stays a draft until you publish, and you can change everything later.</p>
+        </div>
+      </header>
 
-        {params.error && params.error !== "limit" && <p className="mt-6 rounded-md border border-destructive/30 p-3 text-sm text-destructive">The event could not be created. Review the event name and URL slug, then try again.</p>}
+      {params.error && params.error !== "limit" && <p role="alert" className="ui-notice ui-notice-danger ui-mb">The event could not be created. Check the name and link name, then try again.</p>}
 
-        {!allowed ? <section className="event-admin-section event-limit-card">
-          <span className="section-kicker">One event at a time</span>
-          <h2>You already have an active event.</h2>
-          <p>Each organizer account runs {EVENTS_PER_ORGANIZER} event at a time. When it is over, archive it in its Settings and you can create the next one.</p>
-          <Link className="button button-dark" href="/organizer/events">Back to your event</Link>
-        </section> : <>
-
-        <form action={createEvent} className="create-event-form grid gap-5 sm:grid-cols-2">
-          <label className="block text-sm font-medium sm:col-span-2">Event name
-            <input name="name" required maxLength={120} className="mt-2 min-h-12 w-full rounded-md border border-input bg-background px-3" placeholder="PassFlow Summit 2026" />
-          </label>
-          <label className="block text-sm font-medium">Slug
-            <input name="slug" maxLength={100} className="mt-2 min-h-12 w-full rounded-md border border-input bg-background px-3" placeholder="passflow-summit-2026" />
-            <small className="mt-2 block text-xs font-normal text-muted-foreground">Public event URL. Leave blank to generate it automatically.</small>
-          </label>
-          <label className="block text-sm font-medium">Venue
-            <input name="venue" maxLength={160} className="mt-2 min-h-12 w-full rounded-md border border-input bg-background px-3" placeholder="Jakarta Convention Center" />
-          </label>
-          <DateTimeField name="startsAt" label="Start date & time" />
-          <DateTimeField name="endsAt" label="End date & time" />
-          <label className="block text-sm font-medium">Attendee capacity
-            <FormattedNumberInput name="capacity" min={0} className="mt-2 min-h-12 w-full rounded-md border border-input bg-background px-3" placeholder="500" />
-          </label>
-          <label className="block text-sm font-medium sm:col-span-2">About the event
-            <textarea name="description" maxLength={1200} rows={5} className="mt-2 w-full rounded-md border border-input bg-background p-3" placeholder="Who it is for and what to expect" />
-          </label>
-          <div className="sm:col-span-2"><AuthSubmit>Create draft event ↗</AuthSubmit></div>
+      {!allowed ? (
+        <section className="ui-empty">
+          <strong>You already have an active event</strong>
+          <p>Each organizer account runs {EVENTS_PER_ORGANIZER} event at a time. When it is over, archive it in Settings and you can create the next one.</p>
+          <Link className="ui-btn ui-btn-primary ui-btn-sm" href="/organizer/events">Back to your event</Link>
+        </section>
+      ) : (
+        <form action={createEvent} className="ui-card ui-formgrid ui-newevent">
+          <label className="ui-field ui-span-2"><span>Event name</span><input className="ui-input" name="name" required maxLength={120} placeholder="Jakarta Design Week 2026" /></label>
+          <label className="ui-field"><span>Link name</span><input className="ui-input" name="slug" maxLength={100} placeholder="jakarta-design-week" /><small>Leave blank to make one from the name.</small></label>
+          <label className="ui-field"><span>Capacity</span><FormattedNumberInput name="capacity" min={0} className="ui-input" placeholder="Unlimited" /></label>
+          <label className="ui-field ui-span-2"><span>Venue</span><input className="ui-input" name="venue" maxLength={160} placeholder="Jakarta Convention Center" /></label>
+          <div className="ui-span-2 ui-dates"><DateTimeField name="startsAt" label="Starts" /><DateTimeField name="endsAt" label="Ends" /></div>
+          <label className="ui-field ui-span-2"><span>About the event</span><textarea className="ui-textarea" name="description" maxLength={1200} rows={4} placeholder="Who it is for and what to expect" /></label>
+          <div className="ui-span-2 ui-formactions"><Link href="/organizer/events" className="ui-btn ui-btn-ghost">Cancel</Link><button type="submit" className="ui-btn ui-btn-primary">Create draft</button></div>
         </form>
-        </>}
-      </main>
-    </div>
+      )}
+    </AppShell>
   );
 }

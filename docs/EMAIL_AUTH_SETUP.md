@@ -93,3 +93,14 @@ Role disimpan di `organization_members`, bukan di metadata user. Visitor tidak m
 - Minta reset password dan simpan password baru dari link email.
 - Logout lalu pastikan `/account`, `/admin`, `/scan/*`, dan halaman claim mengarah ke login.
 - Pastikan domain custom production dipakai untuk `NEXT_PUBLIC_APP_URL`.
+
+## Email notifikasi pendaftaran (Resend)
+
+Email approve/decline registrasi dikirim dari server lewat Resend, terpisah dari email auth Supabase.
+
+1. Di Resend, tambahkan dan verifikasi domain `passflow.my.id` (record DNS SPF/DKIM dari Resend).
+2. Buat API key dengan akses *Sending*.
+3. Tambahkan env var di Vercel (Production):
+   - `RESEND_API_KEY` = API key tadi
+   - `EMAIL_FROM` = `PassFlow <noreply@passflow.my.id>` (opsional, ini default-nya)
+4. Redeploy. Tanpa `RESEND_API_KEY`, approval tetap jalan dan notifikasi di web tetap muncul; hanya email yang dilewati.

@@ -23,6 +23,7 @@ jobs:
       - run: node scripts/management-lifecycle.test.mjs
       - run: node scripts/phase1-credential.test.mjs
       - run: node scripts/delete-credentials.test.mjs
+      - run: node scripts/event-approval.test.mjs
       - run: node scripts/event-lifecycle.test.mjs
       - run: node scripts/figma-plugin.test.mjs
       - run: node scripts/figma-website.test.mjs

@@ -32,29 +32,53 @@ export default async function OrganizerStartPage({ searchParams }: { searchParam
 
   if (application) {
     const rejected = application.status === "rejected";
-    return <AuthShell kicker={rejected ? "ORGANIZER ACCESS" : "ALMOST THERE"} title={rejected ? "Organizer access is closed." : "Finishing your workspace."} description={rejected ? "This account can no longer run events on PassFlow. Reply to the PassFlow team if you believe this is a mistake." : "Your workspace could not open automatically. The PassFlow team will finish it shortly; this page updates when it is ready."} backHref="/account" backLabel="Back to dashboard">
-      <div className="auth-notice organizer-status" role="status">
-        <span className="section-kicker">{application.organization_name}</span>
-        <ol className="organizer-steps">
-          <li data-done="true">Application submitted · {new Intl.DateTimeFormat("en", { dateStyle: "medium" }).format(new Date(application.created_at))}</li>
-          <li data-done={rejected}>{rejected ? "Reviewed" : "Under review"}</li>
-          <li>Organizer workspace unlocked</li>
-        </ol>
-      </div>
-      <Link href="/account" className="button button-dark w-full">Continue to your dashboard ↗</Link>
-    </AuthShell>;
+    return (
+      <AuthShell
+        title={rejected ? "Organizer access is closed." : "Finishing your workspace."}
+        description={
+          rejected
+            ? "This account can no longer run events on PassFlow. Reply to the PassFlow team if you believe this is a mistake."
+            : "Your workspace could not open automatically. The PassFlow team will finish it shortly; this page updates when it is ready."
+        }
+        backHref="/account"
+        backLabel="Back to dashboard"
+      >
+        <div className="ui-notice" role="status">
+          <strong>{application.organization_name}</strong>
+          <ol className="ui-steps ui-mt" style={{ marginTop: 12 }}>
+            <li data-done="true" style={{ "--step-done": "1" } as React.CSSProperties}>
+              <strong>Application submitted</strong>
+              <span>{new Intl.DateTimeFormat("en", { dateStyle: "medium" }).format(new Date(application.created_at))}</span>
+            </li>
+            <li>
+              <strong>{rejected ? "Reviewed" : "Under review"}</strong>
+              {rejected && <span>Access was not approved.</span>}
+            </li>
+            <li><strong>Organizer workspace unlocked</strong></li>
+          </ol>
+        </div>
+        <Link href="/account" className="ui-btn ui-btn-primary ui-btn-lg ui-btn-block">Continue to your dashboard</Link>
+      </AuthShell>
+    );
   }
 
   const message = status ? errors[status] : null;
-  return <AuthShell kicker="PASSFLOW FOR ORGANIZERS" title="Set up your organizer workspace." description="Tell us who runs your events. Your workspace opens right away, with one active event per account." backHref="/organizer" backLabel="About PassFlow for organizers">
-    {message && <p role="alert" className="auth-notice">{message}</p>}
-    <form action={submitOrganizerApplication} className="auth-form">
-      <label className="auth-field">Organization or brand name<div className="auth-input"><Building2 size={17} aria-hidden="true"/><input required name="organizationName" minLength={2} maxLength={80} autoComplete="organization" placeholder="Kopi Kultur Collective"/></div></label>
-      <label className="auth-field">Phone / WhatsApp <small>Optional, used only to reach you about this application.</small><div className="auth-input"><Phone size={17} aria-hidden="true"/><input name="phone" type="tel" maxLength={24} autoComplete="tel" placeholder="+62 812 3456 7890"/></div></label>
-      <label className="auth-field">City<div className="auth-input"><MapPin size={17} aria-hidden="true"/><input name="city" maxLength={60} autoComplete="address-level2" placeholder="Jakarta"/></div></label>
-      <label className="auth-field">Typical event size<div className="auth-input"><select name="eventScale" defaultValue=""><option value="">Select a range</option><option value="small">Under 200 attendees</option><option value="medium">200 – 2,000 attendees</option><option value="large">More than 2,000 attendees</option></select></div></label>
-      <AuthSubmit>Submit application ↗</AuthSubmit>
-    </form>
-    <p className="auth-switch">Signed in as {user.email}. Your attendee passes stay on the same account.</p>
-  </AuthShell>;
+  return (
+    <AuthShell
+      title="Set up your organizer workspace."
+      description="Tell us who runs your events. Your workspace opens right away, with one active event per account."
+      backHref="/organizer"
+      backLabel="About PassFlow for organizers"
+    >
+      {message && <p role="alert" className="ui-notice ui-notice-danger">{message}</p>}
+      <form action={submitOrganizerApplication} className="auth-form">
+        <label className="auth-field">Organization or brand name<div className="auth-input"><Building2 size={17} aria-hidden="true"/><input required name="organizationName" minLength={2} maxLength={80} autoComplete="organization" placeholder="Kopi Kultur Collective"/></div></label>
+        <label className="auth-field">Phone / WhatsApp <small>Optional, used only to reach you about this application.</small><div className="auth-input"><Phone size={17} aria-hidden="true"/><input name="phone" type="tel" maxLength={24} autoComplete="tel" placeholder="+62 812 3456 7890"/></div></label>
+        <label className="auth-field">City<div className="auth-input"><MapPin size={17} aria-hidden="true"/><input name="city" maxLength={60} autoComplete="address-level2" placeholder="Jakarta"/></div></label>
+        <label className="auth-field">Typical event size<div className="auth-input"><select name="eventScale" defaultValue=""><option value="">Select a range</option><option value="small">Under 200 attendees</option><option value="medium">200 to 2,000 attendees</option><option value="large">More than 2,000 attendees</option></select></div></label>
+        <AuthSubmit>Submit application</AuthSubmit>
+      </form>
+      <p className="auth-switch">Signed in as {user.email}. Your attendee passes stay on the same account.</p>
+    </AuthShell>
+  );
 }

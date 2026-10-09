@@ -41,62 +41,39 @@ export default async function EventExperiencePage({ params }: Props) {
   const benefits = benefitsResult.data ?? [];
 
   return (
-    <>
-      <section
-        className="event-admin-metrics event-experience-metrics"
-        aria-label="Experience metrics"
-      >
-        <div className="event-admin-metric">
-          <span>Activity logs</span>
-          <strong>{activityCountResult.count ?? 0}</strong>
-          <small>{activities.length} {activities.length === 1 ? "checkpoint" : "checkpoints"}</small>
-        </div>
-        <div className="event-admin-metric">
-          <span>Benefit claims</span>
-          <strong>{benefitCountResult.count ?? 0}</strong>
-          <small>{benefits.length} {benefits.length === 1 ? "benefit" : "benefits"}</small>
-        </div>
-      </section>
-
-      <section className="event-admin-dual-grid">
-        <div className="event-admin-section">
-          <div className="event-admin-section-head">
-            <div>
-              <span className="section-kicker">Activities</span>
-              <h2>Checkpoints</h2>
-              <p>Track attendee participation across activities within the event.</p>
-            </div>
-            <FormDialog trigger="Add activity" title="Add activity" description="A session or booth where crew scan attendees to record participation." action={createActivity} submitLabel="Add activity">
-              <input type="hidden" name="eventId" value={eventId} />
-              <label>Name<input name="name" placeholder="Workshop A" required maxLength={100} /></label>
-              <label>Code <small>Optional, made from the name</small><input name="code" placeholder="WORKSHOP_A" maxLength={40} /></label>
-              <label>Description <small>Optional</small><textarea name="description" maxLength={500} /></label>
-            </FormDialog>
+    <div className="ui-grid ui-grid-2 ui-align-start">
+      <section className="ui-card ui-panel" aria-labelledby="activities-title">
+        <div className="ui-panelhead">
+          <div>
+            <h2 id="activities-title" className="ui-h3">Activities</h2>
+            <small>{activities.length} {activities.length === 1 ? "checkpoint" : "checkpoints"}, {(activityCountResult.count ?? 0).toLocaleString("en-US")} scans</small>
           </div>
-
-          <ResourceManager eventId={eventId} kind="activity" records={activities} />
-
+          <FormDialog trigger="Add" triggerClassName="ui-btn ui-btn-secondary ui-btn-sm" title="Add activity" description="A session or booth where crew scan attendees to record participation." action={createActivity} submitLabel="Add activity">
+            <input type="hidden" name="eventId" value={eventId} />
+            <label>Name<input name="name" placeholder="Workshop A" required maxLength={100} /></label>
+            <label>Code <small>Optional, made from the name</small><input name="code" placeholder="WORKSHOP_A" maxLength={40} /></label>
+            <label>Description <small>Optional</small><textarea name="description" maxLength={500} /></label>
+          </FormDialog>
         </div>
-
-        <div className="event-admin-section">
-          <div className="event-admin-section-head">
-            <div>
-              <span className="section-kicker">Benefits</span>
-              <h2>One-time claims</h2>
-              <p>Manage benefits that can only be claimed once per attendee.</p>
-            </div>
-            <FormDialog trigger="Add benefit" title="Add benefit" description="Something each attendee can claim once, like merch or a drink." action={createBenefit} submitLabel="Add benefit">
-              <input type="hidden" name="eventId" value={eventId} />
-              <label>Name<input name="name" placeholder="Merchandise Pack" required maxLength={100} /></label>
-              <label>Code <small>Optional, made from the name</small><input name="code" placeholder="MERCH_PACK" maxLength={40} /></label>
-              <label>Description <small>Optional</small><textarea name="description" maxLength={500} /></label>
-            </FormDialog>
-          </div>
-
-          <ResourceManager eventId={eventId} kind="benefit" records={benefits} />
-
-        </div>
+        <p className="ui-small ui-mb">Sessions or booths where crew scan passes to record who joined.</p>
+        <ResourceManager eventId={eventId} kind="activity" records={activities} />
       </section>
-    </>
+      <section className="ui-card ui-panel" aria-labelledby="benefits-title">
+        <div className="ui-panelhead">
+          <div>
+            <h2 id="benefits-title" className="ui-h3">Benefits</h2>
+            <small>{benefits.length} {benefits.length === 1 ? "benefit" : "benefits"}, {(benefitCountResult.count ?? 0).toLocaleString("en-US")} claimed</small>
+          </div>
+          <FormDialog trigger="Add" triggerClassName="ui-btn ui-btn-secondary ui-btn-sm" title="Add benefit" description="Something each attendee can claim once, like merch or a drink." action={createBenefit} submitLabel="Add benefit">
+            <input type="hidden" name="eventId" value={eventId} />
+            <label>Name<input name="name" placeholder="Merchandise Pack" required maxLength={100} /></label>
+            <label>Code <small>Optional, made from the name</small><input name="code" placeholder="MERCH_PACK" maxLength={40} /></label>
+            <label>Description <small>Optional</small><textarea name="description" maxLength={500} /></label>
+          </FormDialog>
+        </div>
+        <p className="ui-small ui-mb">Things each guest can claim once, like a welcome kit or a drink.</p>
+        <ResourceManager eventId={eventId} kind="benefit" records={benefits} />
+      </section>
+    </div>
   );
 }

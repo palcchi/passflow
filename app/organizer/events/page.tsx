@@ -2,56 +2,37 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 import Link from "next/link";
-import { ArrowUpRight, FolderOpen, Plus, Sparkles } from "lucide-react";
+import { ArrowUpRight, Plus } from "lucide-react";
 import { accountProfile, requireOrganizer } from "@/lib/auth/session";
 import { isPlatformAdmin } from "@/lib/auth/platform";
 import { serviceClient } from "@/lib/supabase/service";
-import { UserNavbar } from "@/components/user-navbar";
 import { getManagedEvents } from "@/lib/events";
-import { HeroCardFan } from "@/components/hero-card-fan";
-import { KineticText } from "@/components/magicui/kinetic-text";
-import { TextAnimate } from "@/components/magicui/text-animate";
-import { NumberTicker } from "@/components/magicui/number-ticker";
-import { ShinyButton } from "@/components/magicui/shiny-button";
-import { AnimatedList } from "@/components/magicui/animated-list";
+import { AppShell } from "@/components/app-shell";
 import { EventCollection } from "@/components/event-collection";
+
+export const metadata = { title: "Organizer" };
 
 export default async function AdminDashboardPage() {
   const { supabase, user } = await requireOrganizer();
   const events = await getManagedEvents();
   const eventIds = events.map((event) => event.id);
 
-  const [qrResult, stationResult] = eventIds.length
+  const [qrResult, stationResult, pendingResult] = eventIds.length
     ? await Promise.all([
-        supabase
-          .from("qr_credentials")
-          .select("id", { count: "exact", head: true })
-          .in("event_id", eventIds)
-          .eq("status", "active"),
-        supabase
-          .from("scanner_stations")
-          .select("id,name,is_active,event_id")
-          .in("event_id", eventIds)
-          .order("name"),
+        supabase.from("qr_credentials").select("id", { count: "exact", head: true }).in("event_id", eventIds).eq("status", "active"),
+        supabase.from("scanner_stations").select("id,name,is_active,event_id").in("event_id", eventIds).order("name"),
+        supabase.from("attendees").select("event_id").in("event_id", eventIds).eq("approval_status", "pending"),
       ])
-    : [{ count: 0 }, { data: [] }];
+    : [{ count: 0 }, { data: [] }, { data: [] }];
 
   const { name: accountName, avatarUrl } = accountProfile(user);
   const name = accountName || "Organizer";
+  const totalRegistered = events.reduce((total, event) => total + event.attendeeCount, 0);
+  const totalCheckedIn = events.reduce((total, event) => total + event.checkedInCount, 0);
+  const stations = stationResult.data ?? [];
+  const pending = pendingResult.data ?? [];
+  const pendingEvent = pending[0] ? events.find((event) => event.id === pending[0].event_id) : undefined;
 
-  const totalRegistered = events.reduce(
-    (total, event) => total + event.attendeeCount,
-    0,
-  );
-  const totalCheckedIn = events.reduce(
-    (total, event) => total + event.checkedInCount,
-    0,
-  );
-  const activeStations = (stationResult.data ?? []).filter(
-    (station) => station.is_active,
-  ).length;
-
-  // PassFlow admins reach the organizer list from their own dashboard.
   const platformAdmin = isPlatformAdmin(user);
   let organizerCount = 0;
   if (platformAdmin) {
@@ -59,86 +40,61 @@ export default async function AdminDashboardPage() {
   }
 
   const stats = [
-    ["Events", events.length, "managed"],
-    ["Registered", totalRegistered, "attendees"],
-    ["Checked in", totalCheckedIn, "entries"],
-    ["QR active", qrResult.count ?? 0, "credentials"],
+    ["Registered", totalRegistered, `across ${events.length} ${events.length === 1 ? "event" : "events"}`],
+    ["Checked in", totalCheckedIn, totalRegistered ? `${Math.round((totalCheckedIn / totalRegistered) * 100)}% of registered` : "no check-ins yet"],
+    ["Active passes", qrResult.count ?? 0, "QR credentials in use"],
+    ["Scanners", stations.filter((station) => station.is_active).length, `${stations.length} configured`],
   ] as const;
 
   return (
-    <div className="app-surface flow-workspace studio-backdrop min-h-screen">
-      <UserNavbar
-        name={name}
-        email={user.email}
-        avatarUrl={avatarUrl}
-        organizer
-      />
+    <AppShell name={name} email={user.email} avatarUrl={avatarUrl} organizer>
+      <header className="ui-pagehead ui-rise">
+        <div>
+          <h1 className="ui-h1">Organizer</h1>
+          <p className="ui-lead">Registrations, passes and check-in for every event you run.</p>
+        </div>
+        <div className="ui-row">
+          {platformAdmin && <Link href="/platform/organizers" className="ui-btn ui-btn-secondary">Organizers <span className="ui-badge">{organizerCount}</span></Link>}
+          <Link href="/organizer/events/new" className="ui-btn ui-btn-primary"><Plus size={16} />New event</Link>
+        </div>
+      </header>
 
-      <main className="studio-page-shell">
-        <header className="studio-page-hero workspace-welcome">
-          <div className="workspace-welcome-copy">
-            <span className="editorial-eyebrow"><span/> ORGANIZER WORKSPACE</span>
-            <KineticText
-              text={`Welcome, ${name}.`}
-              className="studio-page-title"
-            />
-            <TextAnimate className="studio-page-subtitle" delay={0.05}>
-              Everything happening across your events, in one workspace.
-            </TextAnimate>
-          <ShinyButton href="/organizer/events/new"><Plus size={15}/>Create event</ShinyButton>
+      {pending.length > 0 && pendingEvent && (
+        <Link href={`/organizer/events/${pendingEvent.id}/people`} className="ui-callout ui-rise">
+          <span className="ui-badge ui-badge-warning">{pending.length}</span>
+          <span><strong>{pending.length === 1 ? "1 registration is" : `${pending.length} registrations are`} waiting for your approval</strong><small>{pendingEvent.name}</small></span>
+          <ArrowUpRight size={18} />
+        </Link>
+      )}
+
+      <section className="ui-grid ui-grid-4 ui-rise ui-rise-2" aria-label="Totals">
+        {stats.map(([label, value, note]) => (
+          <div className="ui-stat" key={label}><span>{label}</span><strong>{Number(value).toLocaleString("en-US")}</strong><small>{note}</small></div>
+        ))}
+      </section>
+
+      <section className="ui-section ui-rise ui-rise-3" aria-labelledby="managed-events">
+        <div className="ui-sectionhead"><h2 id="managed-events" className="ui-h2">Events</h2></div>
+        <EventCollection events={events} manage />
+      </section>
+
+      {stations.length > 0 && (
+        <section className="ui-section" aria-labelledby="scanner-stations">
+          <div className="ui-sectionhead">
+            <div><h2 id="scanner-stations" className="ui-h2">Scanner stations</h2><p>Open a station on a phone to scan passes at the door.</p></div>
           </div>
-          <div className="workspace-fan"><HeroCardFan events={events} compact/></div>
-        </header>
-
-        {platformAdmin && <Link className="recent-project" href="/platform/organizers"><span className="recent-project-icon"><Sparkles size={21}/></span><span className="recent-project-copy"><span>PASSFLOW ADMIN</span><strong>Organizers · {organizerCount} active</strong></span><ArrowUpRight size={19}/></Link>}
-        {events[0] && <Link className="recent-project" href={`/organizer/events/${events[0].id}`}><span className="recent-project-icon"><FolderOpen size={21}/></span><span className="recent-project-copy"><span>LATEST EVENT · CONTINUE MANAGING</span><strong>{events[0].name}</strong></span><ArrowUpRight size={19}/></Link>}
-
-        <section className="studio-metric-strip" aria-label="Organizer metrics">
-          {stats.map(([label, value, note]) => (
-            <div className="studio-metric" key={label}>
-              <span>{label}</span>
-              <strong><NumberTicker value={Number(value)} /></strong>
-              <small>{note}</small>
-            </div>
-          ))}
-        </section>
-
-        <section className="studio-section" aria-labelledby="managed-events">
-          <div className="studio-section-heading">
-            <div>
-              <p className="section-kicker">Managed events</p>
-              <h2 id="managed-events">Your events</h2>
-            </div>
-          </div>
-
-          <EventCollection events={events} manage/>
-        </section>
-
-        <section className="studio-section" aria-labelledby="scanner-stations">
-          <div className="studio-section-heading">
-            <div>
-              <p className="section-kicker">Scanner network</p>
-              <h2 id="scanner-stations">Event entry points.</h2>
-            </div>
-            <span className="studio-soft-label">{activeStations} active</span>
-          </div>
-
-          <AnimatedList className="studio-station-list">
-            {(stationResult.data ?? []).map((station) => (
-              <Link href={`/scan/${station.id}`} className="studio-station-row" key={station.id}>
-                <span className={`studio-status-dot ${station.is_active ? "is-active" : ""}`} />
-                <strong>{station.name}</strong>
-                <small>{station.is_active ? "Active" : "Standby"}</small>
-                <ArrowUpRight size={14} />
-              </Link>
+          <ul className="ui-list">
+            {stations.map((station) => (
+              <li key={station.id}>
+                <Link href={`/scan/${station.id}`} className="ui-listrow">
+                  <span className="ui-listrow-main"><strong>{station.name}</strong><small>{events.find((event) => event.id === station.event_id)?.name}</small></span>
+                  <span className="ui-listrow-end"><span className={station.is_active ? "ui-badge ui-badge-success" : "ui-badge"}>{station.is_active ? "Active" : "Paused"}</span><ArrowUpRight size={16} /></span>
+                </Link>
+              </li>
             ))}
-          </AnimatedList>
-
-          {!(stationResult.data ?? []).length && (
-            <div className="studio-empty-line">No scanner stations have been configured yet.</div>
-          )}
+          </ul>
         </section>
-      </main>
-    </div>
+      )}
+    </AppShell>
   );
 }

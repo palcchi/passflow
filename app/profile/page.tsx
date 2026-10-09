@@ -1,12 +1,9 @@
 import { accountProfile, requireUser, getMemberships } from "@/lib/auth/session";
 import { canManage } from "@/lib/auth/redirect";
-import { UserNavbar } from "@/components/user-navbar";
+import { AppShell } from "@/components/app-shell";
 import { ProfileEditor } from "@/components/profile-editor";
-import { KineticText } from "@/components/magicui/kinetic-text";
-import { TextAnimate } from "@/components/magicui/text-animate";
-import { Sticker } from "@/components/brand-art";
 
-export const metadata = { title: "Profile | PassFlow" };
+export const metadata = { title: "Profile" };
 export const dynamic = "force-dynamic";
 
 export default async function ProfilePage({
@@ -35,7 +32,7 @@ export default async function ProfilePage({
     "avatar-removed": { tone: "neutral", text: "Profile photo removed." },
     "invalid-username": {
       tone: "error",
-      text: "Username must be 3–24 characters and contain only letters, numbers, or underscores.",
+      text: "Username must be 3 to 24 characters and contain only letters, numbers, or underscores.",
     },
     "invalid-name": { tone: "error", text: "Display name must be between 2 and 60 characters." },
     "avatar-missing": { tone: "error", text: "Choose a photo before saving." },
@@ -49,44 +46,17 @@ export default async function ProfilePage({
   const profileStatus = statusMessages[status];
 
   return (
-    <div className="app-surface flow-workspace studio-backdrop min-h-screen">
-      <UserNavbar
-        name={fullName}
-        email={user.email}
-        avatarUrl={avatarUrl}
-        organizer={organizer}
-      />
-
-      <main className="relative z-10 mx-auto max-w-6xl px-5 pb-20 pt-8 sm:px-8 sm:pt-12">
-        <header className="profile-page-heading studio-page-hero">
-          <div>
-            <span className="section-kicker">Account settings</span>
-            <KineticText text="Your profile." className="studio-page-title" />
-            <TextAnimate className="studio-page-subtitle">
-              Manage your identity and profile photo in one place.
-            </TextAnimate>
-          </div>
-          <Sticker kind="smile"/>
-        </header>
-
-        {profileStatus && (
-          <div
-            role={profileStatus.tone === "error" ? "alert" : "status"}
-            className={`profile-status-message is-${profileStatus.tone}`}
-          >
-            {profileStatus.text}
-          </div>
-        )}
-
-        <ProfileEditor
-            fullName={fullName}
-            username={username}
-            email={user.email ?? ""}
-            avatarUrl={avatarUrl}
-            organizer={organizer}
-          />
-
-      </main>
-    </div>
+    <AppShell name={fullName} email={user.email} avatarUrl={avatarUrl} organizer={organizer}>
+      <header className="ui-pagehead">
+        <div>
+          <h1 className="ui-h1">Profile</h1>
+          <p className="ui-lead">How you appear on passes and to event organizers.</p>
+        </div>
+      </header>
+      {profileStatus && (
+        <p role={profileStatus.tone === "error" ? "alert" : "status"} className={profileStatus.tone === "error" ? "ui-notice ui-notice-danger ui-mb" : profileStatus.tone === "success" ? "ui-notice ui-notice-success ui-mb" : "ui-notice ui-mb"}>{profileStatus.text}</p>
+      )}
+      <ProfileEditor fullName={fullName} username={username} email={user.email ?? ""} avatarUrl={avatarUrl} organizer={organizer} />
+    </AppShell>
   );
 }

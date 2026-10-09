@@ -31,130 +31,6 @@ html.theme-switching::view-transition-new(root) {
   min-height: 100dvh;
 }
 
-.user-nav-link,
-.event-dock-item {
-  isolation: isolate;
-  overflow: hidden;
-}
-
-.user-nav-link::after {
-  display: none !important;
-}
-
-.user-nav-link-content,
-.event-dock-label {
-  position: relative;
-  z-index: 2;
-}
-
-.user-nav-link-content {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.user-nav-active-pill,
-.event-nav-active-pill {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  border-radius: inherit;
-}
-
-.user-nav-active-pill {
-  background: color-mix(in srgb, var(--flow-violet) 12%, var(--card));
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--flow-violet) 10%, transparent);
-}
-
-.flow-sidebar .user-nav-link[data-active="true"],
-.user-nav-link[data-active="true"] {
-  background: transparent !important;
-  color: var(--foreground) !important;
-}
-
-.flow-sidebar .user-nav-link[data-active="true"] {
-  color: var(--flow-violet) !important;
-}
-
-.flow-workspace.event-admin-context .event-section-dock {
-  position: sticky !important;
-  top: 16px !important;
-  z-index: 38 !important;
-  width: max-content !important;
-  max-width: 100% !important;
-  margin: 16px auto 24px !important;
-  padding: 7px !important;
-  border: 1px solid color-mix(in srgb, var(--event-admin-accent) 20%, var(--border)) !important;
-  border-radius: 999px !important;
-  background: color-mix(in srgb, var(--card) 90%, transparent) !important;
-  box-shadow: 0 18px 50px rgba(20, 20, 20, 0.10) !important;
-  backdrop-filter: blur(18px) saturate(135%) !important;
-  -webkit-backdrop-filter: blur(18px) saturate(135%) !important;
-}
-
-.flow-workspace.event-admin-context .event-section-dock-scroll {
-  gap: 2px !important;
-  padding: 0 !important;
-  scrollbar-width: none;
-}
-
-.flow-workspace.event-admin-context .event-section-dock-scroll::-webkit-scrollbar {
-  display: none;
-}
-
-.flow-workspace.event-admin-context .event-dock-item {
-  position: relative;
-  padding: 10px 16px !important;
-  border: 0 !important;
-  border-radius: 999px !important;
-  background: transparent !important;
-  color: var(--muted-foreground) !important;
-  transition: color 180ms ease !important;
-}
-
-.flow-workspace.event-admin-context .event-dock-item:hover {
-  background: transparent !important;
-  color: var(--foreground) !important;
-}
-
-.flow-workspace.event-admin-context .event-dock-item[data-active="true"] {
-  border: 0 !important;
-  background: transparent !important;
-  color: var(--event-admin-accent-text) !important;
-  box-shadow: none !important;
-}
-
-.event-nav-active-pill {
-  background: var(--event-admin-accent);
-  box-shadow: 0 7px 18px color-mix(in srgb, var(--event-admin-accent) 22%, transparent);
-}
-
-@media (max-width: 1023px) {
-  .flow-workspace.event-admin-context .event-section-dock {
-    top: 72px !important;
-    width: 100% !important;
-    margin: 12px 0 20px !important;
-    border-radius: 18px !important;
-  }
-
-  .flow-workspace.event-admin-context .event-section-dock-scroll {
-    overflow-x: auto;
-  }
-}
-
-@media (max-width: 680px) {
-  .flow-workspace.event-admin-context .event-section-dock {
-    top: 74px !important;
-    padding: 5px !important;
-    border-radius: 16px !important;
-  }
-
-  .flow-workspace.event-admin-context .event-dock-item {
-    padding: 9px 12px !important;
-  }
-}
-
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto !important;
@@ -169,17 +45,8 @@ html.theme-switching::view-transition-new(root) {
 /* Native view transitions keep shared chrome visually stable while the
    server-rendered route tree swaps underneath it. */
 @supports (view-transition-name: passflow-route-content) {
-  .pf-route-stage > .flow-workspace > main,
   .pf-route-stage > main {
     view-transition-name: passflow-route-content;
-  }
-
-  .user-nav-shell {
-    view-transition-name: passflow-workspace-nav;
-  }
-
-  .flow-workspace.event-admin-context .event-section-dock {
-    view-transition-name: passflow-event-nav;
   }
 
   ::view-transition-group(passflow-workspace-nav),
@@ -226,37 +93,8 @@ html.theme-switching::view-transition-new(root) {
    properties so they compose with any layout `transform` already on an element. */
 @media (prefers-reduced-motion: no-preference) {
   /* The card fan has its own entrance; rising its wrapper too made it move twice. */
-  .editorial-canvas > :not(.hero-fan) {
-    animation: pf-rise 720ms var(--ease-out) both;
-  }
 
   /* Forms are UI, not marketing: short, so inputs are usable almost at once. */
-  .auth-heading,
-  .auth-form-panel > form,
-  .utility-card {
-    animation: pf-rise 260ms var(--ease-out) both;
-  }
-
-  .editorial-canvas > :nth-child(2) { animation-delay: 70ms; }
-  .editorial-canvas > :nth-child(3) { animation-delay: 140ms; }
-  .editorial-canvas > :nth-child(4) { animation-delay: 210ms; }
-  .editorial-canvas > :nth-child(n + 5) { animation-delay: 300ms; }
-  .auth-form-panel > form { animation-delay: 40ms; }
-
-  .editorial-canvas h1 em::after {
-    animation: pf-draw 700ms cubic-bezier(0.65, 0, 0.35, 1) 520ms both;
-    transform-origin: left center;
-  }
-
-  @supports (animation-timeline: view()) {
-    .editorial-landing .class-event-grid > *,
-    .editorial-landing .invitation-list > div,
-    .editorial-landing .organizer-steps > li {
-      animation: pf-reveal linear both;
-      animation-timeline: view();
-      animation-range: entry 0% entry 100%;
-    }
-  }
 }
 
 @keyframes pf-rise {
@@ -313,35 +151,6 @@ html.theme-switching::view-transition-new(root) {
   color: var(--background);
 }
 
-.organizer-steps-large {
-  gap: 14px;
-  margin: 32px 0 0;
-}
-
-.organizer-steps-large > li {
-  padding: 22px;
-  border: 1px solid var(--border);
-  border-radius: 22px;
-  background: var(--card);
-  color: var(--foreground);
-  font-size: clamp(17px, 2vw, 22px);
-  letter-spacing: -0.02em;
-}
-
-.organizer-steps-large > li::before {
-  flex-basis: 40px;
-  height: 40px;
-  font-size: 15px;
-}
-
-.organizer-note {
-  margin-top: 20px;
-  max-width: 60ch;
-  font-size: 13px;
-  line-height: 1.7;
-  color: var(--muted-foreground);
-}
-
 .auth-input select {
   width: 100%;
   min-width: 0;
@@ -354,16 +163,13 @@ html.theme-switching::view-transition-new(root) {
 
 /* Hover motion only for fine pointers (touch fires false hovers on tap). */
 @media not ((hover: hover) and (pointer: fine)) {
-  .class-event-card:hover, .design-card:hover, .asset-upload-card:hover, .class-event-card:hover .class-event-image, .hero-fan-card:hover, .theme-flip:hover, .event-ticket-list a:hover, .event-overview-action:hover, .organizer-text-link:hover, .kinetic-letter:hover { transform: none; translate: none; scale: none; rotate: none; }
+  .asset-upload-card:hover, .hero-fan-card:hover, .theme-flip:hover, .kinetic-letter:hover { transform: none; translate: none; scale: none; rotate: none; }
 }
 
 /* Dropdowns grow from their trigger, which sits above them. */
 .smart-select-menu { transform-origin: top center; }
 
 /* First activation of a pass is a rare moment: allow a short entrance. */
-@media (prefers-reduced-motion: no-preference) {
-  .claim-card[data-celebrate] { animation: pf-pass-in 500ms var(--ease-out) both; }
-}
 @keyframes pf-pass-in { from { opacity: 0; scale: 0.96; translate: 0 12px; } }
 
 /* Client-side save/pair notices appear after an action: a short fade-up so they don't teleport in. */

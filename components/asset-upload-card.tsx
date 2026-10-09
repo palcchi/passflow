@@ -129,14 +129,14 @@ export function AssetUploadCard({
           {preview ? <ImagePlus size={18} /> : <UploadCloud size={19} />}
         </span>
         <span className="asset-upload-copy">
-          <strong>{fileName || (preview ? `Ganti ${label.toLowerCase()}` : label)}</strong>
+          <strong>{fileName || (preview ? `Replace ${label.toLowerCase()}` : label)}</strong>
           <small>{fileName || hint}</small>
         </span>
       </label>
 
-      <div className="asset-upload-actions">
+      {(hasFile || pending) && <div className="asset-upload-actions">
         <button
-          className="button button-dark"
+          className="ui-btn ui-btn-primary ui-btn-sm"
           type="submit"
           disabled={pending || !hasFile}
         >
@@ -144,11 +144,11 @@ export function AssetUploadCard({
           {pending ? "Uploading..." : "Upload"}
         </button>
         {fileName && (
-          <button className="button button-ghost" type="button" disabled={pending} onClick={clearSelection}>
+          <button className="ui-btn ui-btn-ghost ui-btn-sm" type="button" disabled={pending} onClick={clearSelection}>
             <X size={15} /> Cancel
           </button>
         )}
-      </div>
+      </div>}
 
       {message && (
         <p role={success ? "status" : "alert"} className={success ? "asset-upload-status is-success" : "asset-upload-status is-error"}>

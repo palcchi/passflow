@@ -22,7 +22,7 @@ export function RouteTransition({ children }: { children: ReactNode }) {
 
     const stage = stageRef.current;
     const target =
-      stage?.querySelector<HTMLElement>(".event-admin-page-content") ??
+      stage?.querySelector<HTMLElement>(".ui-workspace-body") ??
       stage?.querySelector<HTMLElement>("main");
 
     target?.animate(

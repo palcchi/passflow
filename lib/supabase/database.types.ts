@@ -229,8 +229,11 @@ export type Database = {
           phone: string | null
           ticket_type_id: string | null
           user_id: string | null
+          approval_status: "pending" | "approved" | "rejected"
+          reviewed_at: string | null
         }
         Insert: {
+          approval_status?: "pending" | "approved" | "rejected"
           attendee_code: string
           checked_in_at?: string | null
           created_at?: string
@@ -448,8 +451,14 @@ export type Database = {
           theme: Json
           updated_at: string
           venue: string | null
+          visibility: "public" | "private"
+          registration_open: boolean
+          requires_approval: boolean
         }
         Insert: {
+          visibility?: "public" | "private"
+          registration_open?: boolean
+          requires_approval?: boolean
           published_version?: number | null
           published_at?: string | null
           capacity?: number | null
@@ -502,6 +511,12 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      notifications: {
+        Row: { id: string; user_id: string; kind: string; title: string; body: string | null; href: string | null; read_at: string | null; created_at: string }
+        Insert: { id?: string; user_id: string; kind: string; title: string; body?: string | null; href?: string | null; read_at?: string | null; created_at?: string }
+        Update: { read_at?: string | null }
+        Relationships: []
       }
       event_website_content: {
         Row: {event_id:string;content:Json;updated_at:string}
@@ -811,6 +826,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      review_attendee: {
+        Args: { p_attendee_id: string; p_approve: boolean }
+        Returns: Json
+      }
+      set_event_access: {
+        Args: { p_event_id: string; p_visibility: string; p_registration_open: boolean; p_requires_approval: boolean }
+        Returns: undefined
+      }
       delete_unclaimed_credentials: { Args: { p_event_id: string; p_ids: string[] }; Returns: number }
       stage_event_config: { Args: { p_event_id: string; p_patch: Json }; Returns: Json }
       transition_event: { Args: { p_event_id: string; p_action: string; p_version?: number | null }; Returns: Json }

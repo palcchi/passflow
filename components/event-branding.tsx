@@ -19,23 +19,24 @@ export function EventBranding({ event }: { event: PassFlowEvent }) {
       catch { setMessage("The accent color could not be saved. Please try again."); }
     });
   }
-  return <section className="event-admin-section">
-    <div className="event-admin-section-head"><div>
-      <span className="section-kicker">Branding</span>
-      <h2>Banner, logo and accent</h2>
-      <p>Shown outside your Figma website: event cards, link previews, the attendee pass page and passes that have no Figma design yet.</p>
-    </div></div>
-    <div className="branding-grid">
-      <AssetUploadCard eventId={event.id} assetType="hero" label="Event banner" hint="1600 × 900 · max 5 MB" currentUrl={event.heroImageUrl} compact />
-      <AssetUploadCard eventId={event.id} assetType="logo" label="Event logo" currentUrl={event.logoUrl} compact />
-      <AssetUploadCard eventId={event.id} assetType="poster" label="Event poster" currentUrl={event.posterUrl} compact />
+  return <section className="ui-card ui-settings-card" aria-labelledby="branding-title">
+    <div className="ui-settings-side">
+      <h2 id="branding-title" className="ui-h3">Branding</h2>
+      <p>Used outside your Figma website: event cards, link previews, the pass page and passes without a Figma design.</p>
     </div>
-    <div className="branding-accent">
-      <label htmlFor="branding-accent">Accent color</label>
-      <input id="branding-accent" type="color" value={primary} onChange={(e) => { setPrimary(e.target.value); setMessage(""); }} />
-      <code>{primary}</code>
-      <button type="button" className="button button-dark" disabled={pending || primary === saved} onClick={save}>{pending ? "Saving…" : "Save accent"}</button>
+    <div className="ui-stack">
+      <div className="ui-grid ui-grid-3 ui-uploads">
+        <AssetUploadCard eventId={event.id} assetType="hero" label="Banner" hint="1600 × 900, max 5 MB" currentUrl={event.heroImageUrl} compact />
+        <AssetUploadCard eventId={event.id} assetType="logo" label="Logo" hint="Square, max 5 MB" currentUrl={event.logoUrl} compact />
+        <AssetUploadCard eventId={event.id} assetType="poster" label="Poster" hint="Portrait, max 5 MB" currentUrl={event.posterUrl} compact />
+      </div>
+      <div className="ui-accent">
+        <label htmlFor="branding-accent" className="ui-label">Accent colour</label>
+        <input id="branding-accent" type="color" value={primary} onChange={(e) => { setPrimary(e.target.value); setMessage(""); }} />
+        <code className="ui-mono">{primary}</code>
+        <button type="button" className="ui-btn ui-btn-secondary ui-btn-sm" disabled={pending || primary === saved} onClick={save}>{pending ? "Saving…" : "Save colour"}</button>
+      </div>
+      {message && <p role="status" className="ui-notice">{message}</p>}
     </div>
-    {message && <p role="status">{message}</p>}
   </section>;
 }
