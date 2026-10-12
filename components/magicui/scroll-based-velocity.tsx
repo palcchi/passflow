@@ -38,8 +38,8 @@ export function VelocityScroll({
   const velocityFactor = useTransform(smoothVelocity, [-1000, 0, 1000], [-2, 0, 2], {
     clamp: false,
   });
-  const x = useTransform(baseX, (value) => `${wrap(-25, 0, value)}%`);
   const reduceMotion = useReducedMotion();
+  const x = useTransform(baseX, (value) => `${wrap(-25, 0, value)}%`);
 
   useAnimationFrame((_, delta) => {
     if (reduceMotion) return;
@@ -50,6 +50,16 @@ export function VelocityScroll({
     moveBy += direction.current * moveBy * Math.abs(factor);
     baseX.set(baseX.get() + moveBy);
   });
+
+  if (reduceMotion) {
+    return (
+      <div className={cn("velocity-scroll", className)}>
+        <div className="velocity-scroll-track">
+          <span>{children}</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={cn("velocity-scroll", className)}>

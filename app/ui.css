@@ -663,7 +663,7 @@ a.ui-eventrow:hover { background: var(--ui-sunken); }
 .ui-mk-footer small { color: var(--ui-faint); font-size: 13px; }
 @media (max-width: 680px) { .ui-mk-footer nav { margin-left: 0; width: 100%; } }
 .ui-mk-hero { min-height: min(620px, calc(100dvh - 64px)); }
-@media (max-width: 900px) { .ui-mk-hero-art { overflow: hidden; } .ui-mk-hero-art .hero-fan { zoom: 0.8; } }
+@media (max-width: 900px) { .ui-mk-hero-art { overflow: hidden; } .ui-mk-hero-art .hero-fan { transform: scale(0.8); transform-origin: center top; } }
 .ui-mb-lg { margin-bottom: 32px; }
 .ui-mk-features { display: grid; grid-template-columns: 1.3fr 1fr 1fr; gap: 14px; }
 .ui-mk-feature { display: grid; align-content: end; gap: 8px; min-height: 280px; padding: 26px; border-radius: 26px; color: #1a1a17; }
