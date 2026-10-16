@@ -6,7 +6,15 @@ export async function POST(request:Request){
     const body=await pluginBody(request),code=normalizePairingCode(body.code);
     if(!/^PF[A-Z2-9]{10}$/.test(code)||!documentIdValid(body.documentId)||typeof body.fileName!=='string'||!body.fileName.trim()||body.fileName.length>150)return pluginResponse({error:'invalid_pairing_request'},400);
     const token=randomBytes(32).toString('base64url');
-    const ip=process.env.VERCEL?request.headers.get('x-vercel-forwarded-for')?.split(',')[0]?.trim()??'unknown':'local-development';
+    // Heroku appends the address that connected to its router to the right of X-Forwarded-For.
+    // Use that rightmost value for the rate-limit bucket rather than sharing "local-development".
+    // If a trusted CDN such as Cloudflare sits in front, validate its IP-forwarding strategy separately.
+    const forwardedFor=request.headers.get('x-forwarded-for');
+    const ip=process.env.VERCEL
+      ? request.headers.get('x-vercel-forwarded-for')?.split(',')[0]?.trim()??'unknown'
+      : process.env.DYNO
+        ? forwardedFor?.split(',').at(-1)?.trim()??'unknown'
+        : 'local-development';
     const {data,error}=await pluginServer().rpc('exchange_figma_pairing_code',{p_code_hash:secretHash(code),p_token_hash:secretHash(token),p_document_id:body.documentId,p_file_name:body.fileName,p_file_key:typeof body.fileKey==='string'&&/^[a-zA-Z0-9]{10,100}$/.test(body.fileKey)?body.fileKey:null,p_bucket:secretHash(ip)});
     if(error)return pluginResponse({error:'pairing_unavailable'},503);
     const result=data as Record<string,unknown>;
