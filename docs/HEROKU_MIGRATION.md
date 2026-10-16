@@ -43,9 +43,11 @@ Do not copy secrets into GitHub, issue comments, logs, or this runbook. SMTP and
 8. Verify login/logout, Google OAuth, email verification/recovery, organizer authorization, event creation, attendee registration/claim, QR scanner, CSV export, and Figma pairing/sync.
 9. Inspect logs and memory usage under realistic traffic. A Basic dyno has limited memory, so verify before committing to the production configuration.
 
-## Known Vercel-specific behavior to resolve
+## Vercel-specific behavior
 
-`app/api/figma/plugin/pair/route.ts` currently derives its rate-limit bucket from `x-vercel-forwarded-for` only when `process.env.VERCEL` exists; all other environments use the constant `local-development`. This is not suitable for Heroku. Before production, implement and test a platform-aware client-IP strategy using Heroku's documented proxy behavior, with a safe fallback. Do not trust arbitrary forwarded headers without verifying the platform's header semantics.
+`app/api/figma/plugin/pair/route.ts` previously used the constant `local-development` as the rate-limit bucket on every non-Vercel host. The migration branch now selects the rightmost `X-Forwarded-For` entry when `DYNO` is set, matching Heroku's router behavior for the immediate peer address. This needs an end-to-end test on Heroku.
+
+Important: if Cloudflare proxying is enabled in front of Heroku, the immediate peer may be a Cloudflare edge address rather than the end user. Before production, decide and test the trusted-proxy strategy for that topology. Do not treat arbitrary forwarded headers as trustworthy client identity. Rate-limit correctness should be verified with multiple clients and a spoofed-header test.
 
 Audit the rest of the source for Vercel-specific environment variables, request headers, image optimization, filesystem assumptions, and deployment-only integrations before cutover.
 
