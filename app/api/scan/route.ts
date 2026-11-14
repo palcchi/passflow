@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAuthContext } from "@/lib/auth/session";
+import { notifyPassflowAdmins } from "@/lib/notifications";
 
 export async function POST(request: Request) {
   const requestId = crypto.randomUUID();
@@ -15,11 +16,13 @@ export async function POST(request: Request) {
   if (!body || Array.isArray(body) || typeof body.station !== "string") return reply({ ok: false, reason: "invalid_request" }, 400);
   const station = body.station.trim();
   if (!station || station.length > 100) return reply({ ok: false, reason: "invalid_request" }, 400);
-  let query = context.supabase.from("scanner_stations").select("id").eq("is_active", true);
+  let query = context.supabase.from("scanner_stations").select("id,event_id,mode").eq("is_active", true);
   query = /^[0-9a-f]{8}-[0-9a-f-]{27}$/i.test(station) ? query.eq("id", station) : query.eq("slug", station);
   const { data: rows, error: lookupError } = await query.limit(2);
   if (lookupError || rows?.length !== 1) return reply({ ok: false, reason: "station_not_found" }, 404);
   const stationId = rows[0].id;
+  const stationEventId = rows[0].event_id;
+  const stationMode = rows[0].mode;
   let operation: "validate_scan" | "lookup_station_attendees" | "manual_station_check_in";
   let args: { p_station_id: string; p_code: string } |
     { p_station_id: string; p_query: string } |
@@ -51,7 +54,21 @@ export async function POST(request: Request) {
     console.error("scan_rpc_failed", { requestId, operation, stationId, errorCode: error.code });
     return reply({ ok: false, reason: "validation_failed", requestId }, 503);
   }
-  const result = data as { ok?: boolean; reason?: string } | null;
+  const result = data as { ok?: boolean; reason?: string; decision?: string; message?: string } | null;
+  if (operation !== "lookup_station_attendees" && stationMode === "check_in" && result?.ok === true && result.decision === "granted") {
+    // Only confirmed first-time check-ins trigger an alert; invalid scans and duplicate scans do not.
+    const { data: event } = await context.supabase.from("events").select("name").eq("id", stationEventId).maybeSingle();
+    if (event?.name) {
+      void notifyPassflowAdmins({
+        type: "successful_check_in",
+        subject: `PassFlow: successful check-in — ${event.name}`,
+        title: "Successful event check-in",
+        body: `A check-in was recorded successfully for “${event.name}”. No attendee personal information or QR credential is included in this alert.`,
+        href: "/organizer/events",
+        whatsappText: `PassFlow admin alert: a successful check-in was recorded for “${event.name}”.`,
+      }).catch(() => undefined);
+    }
+  }
   const status = result?.reason === "rate_limited" ? 429 : result?.reason === "forbidden" ? 403 : 200;
   return reply(data, status);
 }

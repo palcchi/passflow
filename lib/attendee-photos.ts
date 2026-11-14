@@ -1,4 +1,5 @@
 import type { createServerSupabaseClient } from "@/lib/supabase/server";
+import { getAppOrigin } from "@/lib/supabase/config";
 
 type Client = Awaited<ReturnType<typeof createServerSupabaseClient>>;
 type ProfileRow = { attendee_id: string; photo_storage_path: string | null; avatar_url: string | null };
@@ -10,7 +11,9 @@ export function safeAvatarUrl(value: unknown): string | null {
   if (typeof value !== "string") return null;
   let bucket: string | null = null;
   try { bucket = new URL(process.env.NEXT_PUBLIC_SUPABASE_URL ?? "").origin + "/storage/v1/object/public/profile-avatars/"; } catch {}
-  return (bucket && value.startsWith(bucket)) || value.startsWith("https://lh3.googleusercontent.com/") ? value : null;
+  const origin = getAppOrigin();
+  const localAvatar = origin ? value.startsWith(`${origin}/api/local-files/profile-avatars/`) : false;
+  return localAvatar || (bucket && value.startsWith(bucket)) || value.startsWith("https://lh3.googleusercontent.com/") ? value : null;
 }
 
 /** attendee_id → displayable photo: account avatar first, then a legacy per-event pass photo. */
@@ -22,7 +25,7 @@ export async function attendeePhotoUrls(supabase: Client, profiles: ProfileRow[]
     if (avatar) urls.set(profile.attendee_id, avatar);
     else if (profile.photo_storage_path) legacy.set(profile.photo_storage_path, profile.attendee_id);
   }
-  if (legacy.size) {
+  if (legacy.size && process.env.PASSFLOW_LOCAL_DATABASE !== "true") {
     const { data } = await supabase.storage.from("attendee-photos").createSignedUrls([...legacy.keys()], ttl);
     for (const item of data ?? []) {
       const attendeeId = item.path ? legacy.get(item.path) : undefined;

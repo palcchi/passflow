@@ -46,8 +46,9 @@ export default async function ClaimPage({ params, searchParams }: ClaimPageProps
   const credential = credentialsResult.data;
   const profile = profileResult.data;
   const account = accountProfile(user);
+  const accountPhone = typeof user.user_metadata.phone === "string" ? user.user_metadata.phone : "";
   // The pass shows the account photo; older per-event pass photos remain as a fallback.
-  const { data: legacyPhoto } = !account.avatarUrl && profile?.photo_storage_path ? await supabase.storage.from("attendee-photos").createSignedUrl(profile.photo_storage_path, 300) : { data: null };
+  const { data: legacyPhoto } = !account.avatarUrl && profile?.photo_storage_path && process.env.PASSFLOW_LOCAL_DATABASE !== "true" ? await supabase.storage.from("attendee-photos").createSignedUrl(profile.photo_storage_path, 300) : { data: null };
   const photoSrc = account.avatarUrl ?? legacyPhoto?.signedUrl ?? "";
   const qrData = credential ? qrSvgDataUri(`PF1:${credential.code}`, 260, 260, "#151515", "#ffffff", "square") : null;
   const error = typeof query.error === "string" ? reasonText[query.error] ?? "The request could not be processed." : null;
@@ -89,7 +90,7 @@ export default async function ClaimPage({ params, searchParams }: ClaimPageProps
         ) : (
           <label className="ui-field"><span>Full name</span><input className="ui-input" required minLength={2} maxLength={100} name="name" autoComplete="name" placeholder="Your full name" /><small>Saved to your profile and printed on your pass.</small></label>
         )}
-        <label className="ui-field"><span>WhatsApp number <span className="ui-muted">(optional)</span></span><input className="ui-input" name="phone" type="tel" inputMode="tel" autoComplete="tel" placeholder="+62 812 3456 7890" /></label>
+        <label className="ui-field"><span>WhatsApp number</span><input className="ui-input" type="tel" autoComplete="tel" value={accountPhone} readOnly /><small>Your verified WhatsApp number is linked to this account.</small></label>
         <div className="ui-field"><span>Pass</span><SmartSelect name="ticket_code" value={tickets[0]?.code ?? ""} options={ticketOptions} /></div>
         {event.requiresApproval && <p className="ui-notice">The organizer approves each registration. Your pass is issued once you are approved.</p>}
         <button className="ui-btn ui-btn-primary ui-btn-lg ui-btn-block" type="submit" disabled={!tickets.length}>{event.requiresApproval ? "Request to join" : "Register"}</button>

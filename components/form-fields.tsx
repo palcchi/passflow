@@ -189,13 +189,17 @@ export function DateTimeField({
           minute: "2-digit",
           hour12: false,
         }).format(initial)
-      : "10:00";
+      : "";
 
   const [date, setDate] = useState(initialDate);
   const [time, setTime] = useState(initialTime);
+  const [hour, setHour] = useState(initialTime.split(":")[0] || "10");
+  const [minute, setMinute] = useState(initialTime.split(":")[1] || "00");
+  const [timeOpen, setTimeOpen] = useState(false);
   const [open, setOpen] = useState(false);
   const reduceMotion = useReducedMotion();
   const { id, rootRef } = useExclusivePopover(open, setOpen);
+  const { id: timeId, rootRef: timeRootRef } = useExclusivePopover(timeOpen, setTimeOpen);
   const [month, setMonth] = useState(() => {
     const source = initial && !Number.isNaN(initial.getTime()) ? initial : new Date();
     return new Date(source.getFullYear(), source.getMonth(), 1);
@@ -217,13 +221,9 @@ export function DateTimeField({
         day: "2-digit",
         month: "short",
         year: "numeric",
+        timeZone: "UTC",
       }).format(new Date(`${date}T00:00:00`))
-    : "Select a date";
-  const timeOptions = Array.from({ length: 48 }, (_, index) => {
-    const hours = String(Math.floor(index / 2)).padStart(2, "0");
-    return `${hours}:${index % 2 ? "30" : "00"}`;
-  });
-
+    : "Choose date";
   function chooseDay(day: number) {
     const next = `${year}-${String(monthIndex + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
     setDate(next);
@@ -312,17 +312,29 @@ export function DateTimeField({
             )}
           </AnimatePresence>
         </div>
-        <div className="time-picker-wrap">
+        <div className="time-picker-wrap" ref={timeRootRef}>
           <span>Time</span>
-          <SmartSelect
-            name={`${name}_time`}
-            value={time}
-            options={timeOptions.map((item) => ({ value: item, label: item }))}
-            onValueChange={setTime}
-          />
+          <button type="button" className="date-picker-trigger time-picker-trigger" aria-label={label + " time"} aria-expanded={timeOpen} aria-controls={timeId + "-menu"} onClick={() => setTimeOpen(!timeOpen)}>
+            <span className="time-picker-value">{time ? hour + ":" + minute : "Choose time"}</span>
+            <ChevronDown size={15} className={"smart-select-chevron " + (timeOpen ? "is-open" : "")} />
+          </button>
+          <AnimatePresence>
+            {timeOpen && (
+              <motion.div id={timeId + "-menu"} className="time-picker-popover liquid-popover" initial={reduceMotion ? false : { opacity: 0, y: -6, scale: 0.985 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={reduceMotion ? { opacity: 0 } : { opacity: 0, y: -4, scale: 0.99 }} transition={{ duration: reduceMotion ? 0 : 0.16, ease: [0.2, 0.8, 0.2, 1] }}>
+                <div className="time-picker-column"><span>Hour</span><div className="time-picker-options" aria-label="Choose hour">
+                  {Array.from({ length: 24 }, (_, value) => String(value).padStart(2, "0")).map((value) => <button type="button" key={value} className={hour === value ? "is-selected" : ""} aria-pressed={hour === value} onClick={() => { setHour(value); setTime(value + ":" + minute); }}>{value}</button>)}
+                </div></div>
+                <div className="time-picker-column"><span>Minute</span><div className="time-picker-options" aria-label="Choose minute">
+                  {Array.from({ length: 60 }, (_, value) => String(value).padStart(2, "0")).map((value) => <button type="button" key={value} className={minute === value ? "is-selected" : ""} aria-pressed={minute === value} onClick={() => { setMinute(value); setTime(hour + ":" + value); }}>{value}</button>)}
+                </div></div>
+                <div className="time-picker-footer"><span>WIB · UTC+7</span><button type="button" className="ui-btn ui-btn-primary ui-btn-sm" onClick={() => setTimeOpen(false)}>Done</button></div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
-      <input type="hidden" name={name} value={date ? `${date}T${time || "00:00"}` : ""} />
+      <p className="date-time-hint">Choose the date and time in Western Indonesia Time (WIB).</p>
+      <input type="hidden" name={name} value={date && time ? date + "T" + time + ":00+07:00" : ""} />
     </div>
   );
 }

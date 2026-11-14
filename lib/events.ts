@@ -1,5 +1,6 @@
 import { cache } from "react";
 import { getSupabaseConfig } from "@/lib/supabase/config";
+import { postgresQuery } from "@/lib/db/postgres";
 import { attendeePhotoColumns, attendeePhotoUrls } from "@/lib/attendee-photos";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
@@ -68,6 +69,7 @@ export type PassFlowEvent = {
   publishedVersion?: number | null;
   hasDraftChanges?: boolean;
   liveSlug?: string;
+  subdomainLabel?: string | null;
   capacity?: number;
   startsAt?: string | null;
   endsAt?: string | null;
@@ -76,59 +78,6 @@ export type PassFlowEvent = {
   posterUrl: string | null;
   participantPreview?: ParticipantPreview[];
 };
-
-export const demoEvents: PassFlowEvent[] = [
-  {
-    id: "evt_adorne_exhibition",
-    name: "Adorne Nails Exhibition",
-    slug: "adorne-nails-exhibition",
-    eyebrow: "Beauty Exhibition",
-    description:
-      "A multi-zone beauty experience with workshops, exhibitions, product showcases, and QR-based access.",
-    venue: "Adorne Studio",
-    dateLabel: "12 October 2026",
-    attendeeCount: 428,
-    checkedInCount: 286,
-    theme: {
-      primary: "#7b1734",
-      secondary: "#f0b8c6",
-      background: "#fff8f9",
-      foreground: "#211216",
-      surface: "#ffffff",
-    },
-    qrConfig: defaultQrConfig,
-    heroImageUrl: null,
-    logoUrl: null,
-    posterUrl: null,
-  },
-  {
-    id: "evt_adorne_workshop",
-    name: "Adorne Nails Workshop",
-    slug: "adorne-nails-workshop",
-    eyebrow: "Beauty Workshop",
-    description:
-      "A hands-on nail workshop with creator rooms, product showcases, and live visitor tracking.",
-    venue: "Adorne Studio",
-    dateLabel: "24 October 2026",
-    attendeeCount: 260,
-    checkedInCount: 112,
-    theme: {
-      primary: "#5b5df0",
-      secondary: "#b8b9ff",
-      background: "#0f1014",
-      foreground: "#f7f7fa",
-      surface: "#191a20",
-    },
-    qrConfig: defaultQrConfig,
-    heroImageUrl: null,
-    logoUrl: null,
-    posterUrl: null,
-  },
-];
-
-export function getEventBySlug(slug: string) {
-  return demoEvents.find((event) => event.slug === slug);
-}
 
 type EventRow =
   import("@/lib/supabase/database.types").Database["public"]["Tables"]["events"]["Row"];
@@ -258,11 +207,80 @@ function mapEvent(
 export const getManagedEvent = cache(
   async (id: string): Promise<PassFlowEvent | undefined> => {
     const { requireOrganizer } = await import("@/lib/auth/session");
-    const { supabase } = await requireOrganizer(`/organizer/events/${id}`);
-    const { data: allowed } = await supabase.rpc("is_event_manager", {
-      p_event_id: id,
-    });
-    if (!allowed) return undefined;
+    const { supabase, user } = await requireOrganizer(`/organizer/events/${id}`);
+
+    // During the self-host cutover, authorize against the same local PostgreSQL
+    // membership source used by requireOrganizer/getManagedEvents. Calling the
+    // PostgREST RPC here can incorrectly return false when local JWT claims are
+    // not propagated as expected, making an existing event look like a 404.
+    if (process.env.PASSFLOW_LOCAL_MEMBERSHIPS === "true" && process.env.PASSFLOW_LOCAL_DATABASE === "true") {
+      const access = await postgresQuery<{ allowed: boolean }>(
+        `SELECT EXISTS (
+           SELECT 1
+           FROM public.events e
+           JOIN public.organization_members m ON m.organization_id = e.organization_id
+           WHERE e.id = $1::uuid
+             AND m.user_id = $2::uuid
+             AND (
+               m.role = 'owner'
+               OR (m.role = 'admin' AND (
+                 e.created_by = $2::uuid
+                 OR NOT EXISTS (
+                   SELECT 1 FROM public.events e2
+                   WHERE e2.organization_id = e.organization_id
+                     AND e2.created_by = $2::uuid
+                 )
+               ))
+             )
+         ) AS allowed`,
+        [id, user.id],
+      );
+      if (!access.rows[0]?.allowed) return undefined;
+    } else {
+      const { data: allowed, error: accessError } = await supabase.rpc("is_event_manager", {
+        p_event_id: id,
+      });
+      if (accessError || !allowed) return undefined;
+    }
+
+    if (process.env.PASSFLOW_LOCAL_DATABASE === "true") {
+      const [eventResult, registered, checked, draft, address] = await Promise.all([
+        postgresQuery<EventRow>(
+          "SELECT * FROM public.events WHERE id = $1::uuid LIMIT 1",
+          [id],
+        ),
+        postgresQuery<{ count: number }>(
+          "SELECT count(*)::int AS count FROM public.attendees WHERE event_id = $1::uuid",
+          [id],
+        ),
+        postgresQuery<{ count: number }>(
+          "SELECT count(*)::int AS count FROM public.attendees WHERE event_id = $1::uuid AND checked_in_at IS NOT NULL",
+          [id],
+        ),
+        postgresQuery<{ config: unknown }>(
+          "SELECT config FROM public.event_config_drafts WHERE event_id = $1::uuid LIMIT 1",
+          [id],
+        ),
+        postgresQuery<{ label: string }>(
+          "SELECT label FROM public.event_subdomains WHERE event_id = $1::uuid LIMIT 1",
+          [id],
+        ),
+      ]);
+      const data = eventResult.rows[0];
+      if (!data) return undefined;
+      const draftConfig = draft.rows[0]?.config;
+      const row = draftConfig && typeof draftConfig === "object" && !Array.isArray(draftConfig)
+        ? { ...data, ...draftConfig } as EventRow
+        : data;
+      return {
+        ...mapEvent(row, registered.rows[0]?.count ?? 0, checked.rows[0]?.count ?? 0),
+        status: data.status,
+        publishedVersion: data.published_version,
+        hasDraftChanges: Boolean(draft.rows[0]),
+        liveSlug: data.slug,
+        subdomainLabel: address.rows[0]?.label ?? null,
+      };
+    }
 
     const [{ data, error }, registered, checked, draft] = await Promise.all([
       supabase.from("events").select("*").eq("id", id).maybeSingle(),
@@ -295,12 +313,74 @@ export async function getManagedEvents(): Promise<PassFlowEvent[]> {
     .filter((membership) => membership.role === "owner" || membership.role === "admin")
     .map((membership) => membership.organization_id);
 
+  if (process.env.PASSFLOW_LOCAL_DATABASE === "true") {
+    if (ids.length === 0) return [];
+    try {
+      const local = await postgresQuery<EventRow>(
+        "SELECT * FROM public.events WHERE organization_id = ANY($1::uuid[]) ORDER BY created_at DESC",
+        [ids],
+      );
+      return Promise.all(local.rows.map(async (row) => {
+        const [registered, checked, people] = await Promise.all([
+          postgresQuery<{ count: number }>(
+            "SELECT count(*)::int AS count FROM public.attendees WHERE event_id = $1",
+            [row.id],
+          ),
+          postgresQuery<{ count: number }>(
+            "SELECT count(*)::int AS count FROM public.attendees WHERE event_id = $1 AND checked_in_at IS NOT NULL",
+            [row.id],
+          ),
+          postgresQuery<{ name: string }>(
+            "SELECT name FROM public.attendees WHERE event_id = $1 ORDER BY created_at DESC LIMIT 3",
+            [row.id],
+          ),
+        ]);
+        return mapEvent(
+          row,
+          registered.rows[0]?.count ?? 0,
+          checked.rows[0]?.count ?? 0,
+          people.rows.map((person) => ({ name: person.name })),
+        );
+      }));
+    } catch {
+      throw new Error("Events could not be loaded from the local database.");
+    }
+  }
+
   const { data, error } = await supabase
     .from("events")
     .select("*")
     .in("organization_id", ids)
     .order("created_at", { ascending: false });
   if (error) throw new Error("Events could not be loaded.");
+
+  // Opt-in, read-only event shadow comparison during self-host migration.
+  // Supabase remains the source of truth; this block never changes the response.
+  if (process.env.PASSFLOW_DUAL_READ_MEMBERSHIPS === "true" && ids.length > 0) {
+    try {
+      const local = await postgresQuery<{
+        id: string; organization_id: string; name: string; slug: string; status: string;
+      }>(
+        "SELECT id, organization_id, name, slug, status FROM public.events WHERE organization_id = ANY($1::uuid[])",
+        [ids],
+      );
+      const normalize = (rows: Array<{ id: string; organization_id: string; name: string; slug: string; status: string }>) =>
+        rows.map((row) => [row.id, row.organization_id, row.name, row.slug, row.status].join("|")).sort();
+      const primary = normalize((data ?? []).map((row) => ({
+        id: row.id, organization_id: row.organization_id, name: row.name, slug: row.slug, status: row.status,
+      })));
+      const shadow = normalize(local.rows);
+      if (JSON.stringify(primary) !== JSON.stringify(shadow)) {
+        console.warn("[migration-shadow] managed events mismatch", {
+          primaryCount: primary.length,
+          shadowCount: shadow.length,
+        });
+      }
+    } catch {
+      // Local shadow-read failure must not change organizer dashboard behavior.
+      console.warn("[migration-shadow] managed events local read unavailable");
+    }
+  }
 
   return Promise.all(
     (data ?? []).map(async (row) => {
@@ -321,6 +401,35 @@ export async function getManagedEvents(): Promise<PassFlowEvent[]> {
           .order("created_at", { ascending: false })
           .limit(3),
       ]);
+
+      // Compare local registration/check-in counts without changing the
+      // Supabase-backed response. Only aggregate counts are logged.
+      if (process.env.PASSFLOW_DUAL_READ_MEMBERSHIPS === "true") {
+        try {
+          const local = await postgresQuery<{
+            attendee_count: number; checked_in_count: number;
+          }>(
+            `SELECT
+               (SELECT count(*)::int FROM public.attendees WHERE event_id = $1) AS attendee_count,
+               (SELECT count(*)::int FROM public.attendees WHERE event_id = $1 AND checked_in_at IS NOT NULL) AS checked_in_count`,
+            [row.id],
+          );
+          const counts = local.rows[0];
+          if (counts && (
+            counts.attendee_count !== (attendees.count ?? 0) ||
+            counts.checked_in_count !== (checked.count ?? 0)
+          )) {
+            console.warn("[migration-shadow] attendee aggregates mismatch", {
+              sourceAttendees: attendees.count ?? 0,
+              localAttendees: counts.attendee_count,
+              sourceCheckedIn: checked.count ?? 0,
+              localCheckedIn: counts.checked_in_count,
+            });
+          }
+        } catch {
+          console.warn("[migration-shadow] attendee aggregates local read unavailable");
+        }
+      }
 
       const previewAttendees = previewResult.data ?? [];
       const previewIds = previewAttendees.map((attendee) => attendee.id);
@@ -349,7 +458,39 @@ export async function getManagedEvents(): Promise<PassFlowEvent[]> {
 
 /** Public events, plus private ones the viewer is registered for (`include`). */
 export async function getPublishedEvents(include: Iterable<string> = []): Promise<PassFlowEvent[]> {
-  if (!getSupabaseConfig()) return demoEvents;
+  if (process.env.PASSFLOW_LOCAL_DATABASE === "true" || process.env.PASSFLOW_LOCAL_PUBLISHED_EVENTS === "true") {
+    try {
+      const allowedIds = Array.from(include);
+      const local = await postgresQuery<EventRow>(
+        `SELECT * FROM public.events
+         WHERE status = 'published'
+           AND (COALESCE(visibility, 'public') <> 'private' OR id::text = ANY($1::text[]))
+         ORDER BY starts_at ASC`,
+        [allowedIds],
+      );
+      return Promise.all(local.rows.map(async (row) => {
+        const [countResult, peopleResult] = await Promise.all([
+          postgresQuery<{ count: number }>(
+            "SELECT count(*)::int AS count FROM public.attendees WHERE event_id = $1",
+            [row.id],
+          ),
+          postgresQuery<{ name: string }>(
+            "SELECT name FROM public.attendees WHERE event_id = $1 ORDER BY created_at DESC LIMIT 3",
+            [row.id],
+          ),
+        ]);
+        return mapEvent(
+          row,
+          countResult.rows[0]?.count ?? 0,
+          0,
+          peopleResult.rows.map((person) => ({ name: person.name })),
+        );
+      }));
+    } catch {
+      throw new Error("Events are temporarily unavailable.");
+    }
+  }
+  if (!getSupabaseConfig()) return [];
   const supabase = await createServerSupabaseClient();
   const { data, error } = await supabase
     .from("events")
@@ -368,6 +509,39 @@ export async function getPublishedEvents(include: Iterable<string> = []): Promis
 
 /** Only real, published events appear in the public homepage collection. */
 export async function getRecentPublishedEvents(): Promise<PassFlowEvent[]> {
+  // Explicit opt-in for the first local read path. Keep disabled until the
+  // operator verifies parity; this path does not call Supabase for event data.
+  if (process.env.PASSFLOW_LOCAL_DATABASE === "true" || process.env.PASSFLOW_LOCAL_PUBLIC_EVENTS === "true") {
+    try {
+      const local = await postgresQuery<EventRow>(
+        `SELECT * FROM public.events
+         WHERE status = 'published' AND COALESCE(visibility, 'public') = 'public'
+         ORDER BY created_at DESC, id DESC
+         LIMIT 3`,
+      );
+      return Promise.all(local.rows.map(async (row) => {
+        const [countResult, peopleResult] = await Promise.all([
+          postgresQuery<{ count: number }>(
+            "SELECT count(*)::int AS count FROM public.attendees WHERE event_id = $1",
+            [row.id],
+          ),
+          postgresQuery<{ name: string }>(
+            "SELECT name FROM public.attendees WHERE event_id = $1 ORDER BY created_at DESC LIMIT 3",
+            [row.id],
+          ),
+        ]);
+        return mapEvent(
+          row,
+          countResult.rows[0]?.count ?? 0,
+          0,
+          peopleResult.rows.map((person) => ({ name: person.name })),
+        );
+      }));
+    } catch {
+      // Fail closed rather than silently showing demo data or changing source.
+      throw new Error("Recent events are temporarily unavailable.");
+    }
+  }
   if (!getSupabaseConfig()) return [];
   const supabase = await createServerSupabaseClient();
   const { data, error } = await supabase
@@ -379,6 +553,38 @@ export async function getRecentPublishedEvents(): Promise<PassFlowEvent[]> {
     .order("id", { ascending: false })
     .limit(3);
   if (error) throw new Error("Recent events are temporarily unavailable.");
+
+  // Read-only comparison for the public homepage feed. Supabase remains the
+  // source of truth until the local result has been verified in production-like use.
+  if (process.env.PASSFLOW_DUAL_READ_MEMBERSHIPS === "true") {
+    try {
+      const local = await postgresQuery<{
+        id: string; organization_id: string; name: string; slug: string; status: string;
+        visibility: string | null; created_at: string | null;
+      }>(
+        `SELECT id, organization_id, name, slug, status, visibility, created_at
+         FROM public.events
+         WHERE status = 'published' AND COALESCE(visibility, 'public') = 'public'
+         ORDER BY created_at DESC, id DESC
+         LIMIT 3`,
+      );
+      const normalize = (rows: Array<{ id: string; organization_id: string; name: string; slug: string; status: string }>) =>
+        rows.map((row) => [row.id, row.organization_id, row.name, row.slug, row.status].join("|")).sort();
+      const primary = normalize((data ?? []).map((row) => ({
+        id: row.id, organization_id: row.organization_id, name: row.name, slug: row.slug, status: row.status,
+      })));
+      const shadow = normalize(local.rows);
+      if (JSON.stringify(primary) !== JSON.stringify(shadow)) {
+        console.warn("[migration-shadow] public homepage events mismatch", {
+          sourceCount: primary.length,
+          localCount: shadow.length,
+        });
+      }
+    } catch {
+      console.warn("[migration-shadow] public homepage events local read unavailable");
+    }
+  }
+
   return Promise.all(
     (data ?? []).map(async (row) => {
       const preview = await loadPublishedParticipantPreview(supabase, row.id);
@@ -390,7 +596,20 @@ export async function getRecentPublishedEvents(): Promise<PassFlowEvent[]> {
 export async function getPublishedEvent(
   slug: string,
 ): Promise<PassFlowEvent | undefined> {
-  if (!getSupabaseConfig()) return getEventBySlug(slug);
+  // Opt-in local PostgreSQL path for public event detail pages. Keep separate
+  // from the homepage flag so each read surface can be validated independently.
+  if (process.env.PASSFLOW_LOCAL_DATABASE === "true" || process.env.PASSFLOW_LOCAL_PUBLIC_EVENT_DETAIL === "true") {
+    try {
+      const local = await postgresQuery<EventRow>(
+        `SELECT * FROM public.events WHERE slug = $1 AND status = 'published' LIMIT 1`,
+        [slug],
+      );
+      return local.rows[0] ? mapEvent(local.rows[0]) : undefined;
+    } catch {
+      throw new Error("Event is temporarily unavailable.");
+    }
+  }
+  if (!getSupabaseConfig()) return undefined;
   const supabase = await createServerSupabaseClient();
   const { data, error } = await supabase
     .from("events")
@@ -399,6 +618,32 @@ export async function getPublishedEvent(
     .eq("status", "published")
     .maybeSingle();
   if (error) throw new Error("Event is temporarily unavailable.");
+
+  // Shadow-compare the same published event without changing the response source.
+  if (process.env.PASSFLOW_DUAL_READ_MEMBERSHIPS === "true" && data) {
+    try {
+      const local = await postgresQuery<{
+        id: string; organization_id: string; name: string; slug: string; status: string;
+      }>(
+        `SELECT id, organization_id, name, slug, status
+         FROM public.events WHERE slug = $1 AND status = 'published' LIMIT 1`,
+        [slug],
+      );
+      const source = [data.id, data.organization_id, data.name, data.slug, data.status].join("|");
+      const shadow = local.rows[0]
+        ? [local.rows[0].id, local.rows[0].organization_id, local.rows[0].name, local.rows[0].slug, local.rows[0].status].join("|")
+        : null;
+      if (source !== shadow) {
+        console.warn("[migration-shadow] public event detail mismatch", {
+          sourceFound: true,
+          localFound: Boolean(local.rows[0]),
+        });
+      }
+    } catch {
+      console.warn("[migration-shadow] public event detail local read unavailable");
+    }
+  }
+
   return data ? mapEvent(data) : undefined;
 }
 

@@ -64,7 +64,8 @@ button, input, textarea { font-family: inherit; }
 .record-actions button:disabled { opacity:.5; }
 .camera-live { position:fixed; inset:0; height:100dvh; overflow:hidden; overscroll-behavior:none; background:#08090b; color:white; z-index:200; }
 .camera-live-reader { position:absolute!important; inset:0; height:100%; border:0!important; }
-.camera-live-reader video { width:100%!important; height:100%!important; object-fit:cover; }
+.camera-live-reader video { width:100%!important; height:100%!important; object-fit:cover; transform:none!important; -webkit-transform:none!important; }
+.camera-live-reader[data-camera-facing="front"] video { transform:scaleX(-1)!important; -webkit-transform:scaleX(-1)!important; }
 .camera-live-header { position:absolute; top:0; left:0; right:0; z-index:3; display:flex; align-items:flex-start; gap:16px; padding:calc(24px + env(safe-area-inset-top)) max(20px,env(safe-area-inset-right)) 70px; background:linear-gradient(#000b,transparent); }
 .camera-live-header > div { min-width:0; flex:1; }
 .camera-live-header button { width:46px; height:46px; display:grid; place-items:center; border-radius:50%; background:#ffffff24; color:white; border:1px solid #ffffff30; backdrop-filter:blur(20px); }

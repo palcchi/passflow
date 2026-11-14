@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { requireOrganizer } from "@/lib/auth/session";
 import { registrationDecisionEmail, sendEmail } from "@/lib/email";
+import { sendTicketQrWhatsApp, sendWhatsAppNotification } from "@/lib/whatsapp/zapo";
+import { notifyPassflowAdmins } from "@/lib/notifications";
 
 export async function managePersonRecord(form: FormData): Promise<{ error?: string; success?: boolean }> {
   const eventId = String(form.get("eventId") ?? "");
@@ -66,10 +68,31 @@ export async function reviewRegistration(form: FormData) {
   const { data, error } = await supabase.rpc("review_attendee", { p_attendee_id: attendeeId, p_approve: approve });
   if (!error && data && typeof data === "object" && !Array.isArray(data)) {
     const result = data as { email?: string | null; name?: string; event_name?: string; event_slug?: string };
+    const eventName = result.event_name ?? "the event";
     if (result.email && result.event_slug) {
-      const mail = registrationDecisionEmail({ approved: approve, name: result.name ?? "there", eventName: result.event_name ?? "the event", eventSlug: result.event_slug });
-      await sendEmail(result.email, mail.subject, mail.html);
+      const mail = registrationDecisionEmail({ approved: approve, name: result.name ?? "there", eventName, eventSlug: result.event_slug });
+      const delivered = await sendEmail(result.email, mail.subject, mail.html, "tickets");
+      if (!delivered.sent) console.warn("registration_decision_email_failed", approve ? "approved" : "rejected", delivered.reason || "unknown");
     }
+    const { data: attendee } = await supabase.from("attendees").select("phone").eq("id", attendeeId).maybeSingle();
+    if (attendee?.phone) {
+      if (approve && result.event_slug && process.env.WHATSAPP_TICKET_DELIVERY_ENABLED === "true") {
+        const { data: credential } = await supabase.from("qr_credentials").select("code").eq("event_id", eventId).eq("attendee_id", attendeeId).eq("status", "active").maybeSingle();
+        const delivery = await sendTicketQrWhatsApp({ phone: attendee.phone, eventName, eventSlug: result.event_slug, credentialCode: credential?.code ?? null });
+        if (!delivery.ok) console.warn("whatsapp_ticket_delivery_failed", delivery.reason ?? "unknown");
+      } else if (!approve) {
+        const delivery = await sendWhatsAppNotification(attendee.phone, `*Registration update*\n\nYour registration for *${eventName}* was not approved. You can review the event page for details.`);
+        if (!delivery.ok) console.warn("registration_decision_whatsapp_failed", delivery.reason ?? "unknown");
+      }
+    }
+    await notifyPassflowAdmins({
+      type: approve ? "registration_approved" : "registration_rejected",
+      subject: `Registration ${approve ? "approved" : "rejected"} — ${eventName}`,
+      title: `Registration ${approve ? "approved" : "rejected"}`,
+      body: `An organizer ${approve ? "approved" : "rejected"} a registration for ${eventName}. This is an activity notice; no authentication codes or ticket QR secrets are included.`,
+      href: result.event_slug ? `/e/${encodeURIComponent(result.event_slug)}` : "/organizer/events",
+      whatsappText: `A registration was ${approve ? "approved" : "rejected"} for ${eventName}.`,
+    });
   }
   revalidatePath(`/organizer/events/${eventId}/people`);
   revalidatePath(`/organizer/events/${eventId}`);

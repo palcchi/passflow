@@ -8,6 +8,8 @@ type PasswordFieldProps = {
   autoComplete?: string;
   placeholder?: string;
   minLength?: number;
+  pattern?: string;
+  title?: string;
 };
 
 export function PasswordField({
@@ -15,6 +17,8 @@ export function PasswordField({
   autoComplete = "current-password",
   placeholder = "Password",
   minLength = 8,
+  pattern,
+  title,
 }: PasswordFieldProps) {
   const id = useId();
   const [visible, setVisible] = useState(false);
@@ -29,6 +33,8 @@ export function PasswordField({
         name={name}
         type={visible ? "text" : "password"}
         minLength={minLength}
+        pattern={pattern}
+        title={title}
         autoComplete={autoComplete}
         placeholder={placeholder}
         className="min-w-0 flex-1 bg-transparent text-sm outline-none"

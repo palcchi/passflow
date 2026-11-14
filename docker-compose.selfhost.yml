@@ -1,0 +1,22 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: passflow-postgres
+    restart: unless-stopped
+    env_file:
+      - .env.selfhost-db
+    environment:
+      POSTGRES_USER: passflow
+      POSTGRES_DB: passflow
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - passflow_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U passflow -d passflow"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+volumes:
+  passflow_pgdata:

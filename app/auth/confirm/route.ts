@@ -1,8 +1,10 @@
-import { type EmailOtpType } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
 import { safeNext } from "@/lib/auth/redirect";
 import { getSupabaseConfig } from "@/lib/supabase/config";
-import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { createServerAuthClient } from "@/lib/supabase/server";
+import { verifyLocalEmailToken } from "@/lib/auth/local-tokens";
+
+type EmailOtpType = "email" | "signup" | "recovery" | "invite" | "email_change";
 
 function go(path: string) {
   return new NextResponse(null, {
@@ -27,17 +29,23 @@ export async function GET(request: NextRequest) {
   const rawType = request.nextUrl.searchParams.get("type");
   const next = safeNext(request.nextUrl.searchParams.get("next"));
 
-  if (
-    !tokenHash ||
-    !rawType ||
-    !allowedTypes.has(rawType as EmailOtpType) ||
-    !getSupabaseConfig()
-  ) {
+  if (!tokenHash || !rawType || !allowedTypes.has(rawType as EmailOtpType)) {
     return go("/login?error=callback");
   }
 
+  if (process.env.PASSFLOW_LOCAL_AUTH === "true") {
+    if (rawType !== "signup" && rawType !== "email") return go("/login?error=callback");
+    try {
+      const verified = await verifyLocalEmailToken(tokenHash);
+      if (verified) return go(`/login?notice=verified&next=${encodeURIComponent(next)}`);
+    } catch {}
+    return go("/login?error=callback");
+  }
+
+  if (!getSupabaseConfig()) return go("/login?error=callback");
+
   try {
-    const supabase = await createServerSupabaseClient();
+    const supabase = await createServerAuthClient();
     const { error } = await supabase.auth.verifyOtp({
       token_hash: tokenHash,
       type: rawType as EmailOtpType,

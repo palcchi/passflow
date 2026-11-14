@@ -193,3 +193,62 @@ button, a { -webkit-tap-highlight-color:transparent; }
 @media (max-width:900px) { .hero-fan.is-compact { --step:26px; --w:80px; --h:106px; height:146px; } }
 
 /* ---------- Event overview: launch checklist ---------- */
+
+/* Single international phone control shared by registration and phone verification. */
+.international-phone-field {
+  min-height: 46px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--card);
+  color: var(--foreground);
+}
+.international-phone-field:focus-within {
+  border-color: var(--ring);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ring) 10%, transparent);
+}
+.international-phone-field .PhoneInput {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  min-width: 0;
+}
+.international-phone-field .PhoneInputCountry {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex: 0 0 auto;
+  margin: 0;
+}
+.international-phone-field .PhoneInputCountrySelect {
+  max-width: 115px;
+  min-height: 34px;
+  border: 0;
+  padding: 0 22px 0 0;
+  background-color: transparent;
+  font-size: 13px;
+}
+.international-phone-field .PhoneInputCountryIcon {
+  width: 21px;
+  height: 16px;
+  box-shadow: none;
+}
+.international-phone-field .PhoneInputInput {
+  width: 100%;
+  min-width: 0;
+  flex: 1;
+  min-height: 44px;
+  border: 0 !important;
+  border-radius: 0;
+  padding: 10px 0;
+  outline: none !important;
+  background: transparent !important;
+  color: var(--foreground);
+  box-shadow: none !important;
+  font-size: 14px;
+}

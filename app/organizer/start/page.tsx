@@ -21,6 +21,7 @@ const errors: Record<string, string> = {
 export default async function OrganizerStartPage({ searchParams }: { searchParams: Promise<{ status?: string }> }) {
   const { status } = await searchParams;
   const { supabase, user } = await requireUser("/organizer/start");
+  const accountPhone = typeof user.user_metadata.phone === "string" ? user.user_metadata.phone : "";
   const { memberships } = await getMemberships();
   if (memberships.some((membership) => canManage(membership.role))) redirect("/organizer/events");
 
@@ -73,7 +74,7 @@ export default async function OrganizerStartPage({ searchParams }: { searchParam
       {message && <p role="alert" className="ui-notice ui-notice-danger">{message}</p>}
       <form action={submitOrganizerApplication} className="auth-form">
         <label className="auth-field">Organization or brand name<div className="auth-input"><Building2 size={17} aria-hidden="true"/><input required name="organizationName" minLength={2} maxLength={80} autoComplete="organization" placeholder="Kopi Kultur Collective"/></div></label>
-        <label className="auth-field">Phone / WhatsApp <small>Optional, used only to reach you about this application.</small><div className="auth-input"><Phone size={17} aria-hidden="true"/><input name="phone" type="tel" maxLength={24} autoComplete="tel" placeholder="+62 812 3456 7890"/></div></label>
+        <label className="auth-field">Phone / WhatsApp <small>Required. This is the number saved to your PassFlow account.</small><div className="auth-input"><Phone size={17} aria-hidden="true"/><input name="phone" type="tel" required readOnly value={accountPhone} autoComplete="tel" /></div></label>
         <label className="auth-field">City<div className="auth-input"><MapPin size={17} aria-hidden="true"/><input name="city" maxLength={60} autoComplete="address-level2" placeholder="Jakarta"/></div></label>
         <label className="auth-field">Typical event size<div className="auth-input"><select name="eventScale" defaultValue=""><option value="">Select a range</option><option value="small">Under 200 attendees</option><option value="medium">200 to 2,000 attendees</option><option value="large">More than 2,000 attendees</option></select></div></label>
         <AuthSubmit>Submit application</AuthSubmit>

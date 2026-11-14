@@ -12,7 +12,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ slu
   return new NextResponse(body, {
     headers: {
       "Content-Type": "text/calendar; charset=utf-8",
-      "Content-Disposition": `attachment; filename="${event.slug.replace(/[^a-z0-9-]/gi, "")}.ics"`,
+      "Content-Disposition": `inline; filename="${event.slug.replace(/[^a-z0-9-]/gi, "")}.ics"`,
       "Cache-Control": "public, max-age=300",
     },
   });

@@ -21,9 +21,12 @@ import { getPublishedEvent } from "@/lib/events";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { getSupabaseConfig } from "@/lib/supabase/config";
 import { KineticText } from "@/components/magicui/kinetic-text";
+import { PublicEventActions } from "@/components/public-event-actions";
 import { FlowMark } from "@/components/flow-art";
 import { eventInk } from "@/lib/event-colors";
 import type {Metadata} from 'next';
+import { headers } from "next/headers";
+import { eventHostLabel } from "@/lib/event-host";
 
 type EventPageProps = {
   params: Promise<{ slug: string }>;
@@ -33,7 +36,10 @@ type EventPageProps = {
 export async function generateMetadata({params}:EventPageProps):Promise<Metadata>{
   const {slug}=await params,event=await getPublishedEvent(slug);
   if(!event)return {title:'Event unavailable',robots:{index:false,follow:false}};
-  const origin=getAppOrigin()??'https://passflow.my.id',url=origin+'/e/'+encodeURIComponent(event.slug),image=event.heroImageUrl??event.posterUrl??url+'/opengraph-image';
+  const requestHeaders=await headers(),host=requestHeaders.get("host")??"",eventSubdomain=eventHostLabel(host)!==null;
+  const origin=eventSubdomain?`https://${host}`:(getAppOrigin()??'https://passflow.my.id');
+  const url=eventSubdomain?origin:origin+'/e/'+encodeURIComponent(event.slug);
+  const image=event.heroImageUrl??event.posterUrl??`https://passflow.my.id/e/${encodeURIComponent(event.slug)}/opengraph-image`;
   return {title:event.name,description:event.description.slice(0,160),alternates:{canonical:url},robots:{index:true,follow:true},openGraph:{title:event.name,description:event.description,url,images:[{url:image}]},twitter:{card:'summary_large_image',title:event.name,description:event.description,images:[image]},icons:event.logoUrl?{icon:event.logoUrl}:undefined};
 }
 
@@ -42,6 +48,12 @@ export default async function PublicEventPage({ params }: EventPageProps) {
   const event = await getPublishedEvent(slug);
 
   if (!event) notFound();
+  const requestHeaders = await headers();
+  const eventSubdomain = eventHostLabel(requestHeaders.get("host") ?? "") !== null;
+  const registerHref = eventSubdomain ? "/register" : `/e/${event.slug}/claim`;
+  const calendarHref = eventSubdomain ? "/calendar" : `/e/${event.slug}/calendar`;
+  const mapsUrl = event.venue.trim() ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.venue.trim())}` : null;
+  const locationHref = eventSubdomain ? "/location" : mapsUrl;
   const context = await getAuthContext();
   const { data: registration } = context
     ? await context.supabase
@@ -52,6 +64,7 @@ export default async function PublicEventPage({ params }: EventPageProps) {
         .limit(1)
         .maybeSingle()
     : { data: null };
+  const venueLabel = event.venue.split(",")[0]?.trim() || event.venue.trim();
   const ctaLabel = registration
     ? "View my pass"
     : event.registrationOpen === false
@@ -75,12 +88,13 @@ export default async function PublicEventPage({ params }: EventPageProps) {
     "--event-radius": event.theme.corners === "sharp" ? "4px" : event.theme.corners === "soft" ? "14px" : "999px",
   } as CSSProperties;
 
-  const supabase = getSupabaseConfig() ? await createServerSupabaseClient() : null;
+  const dataSourceAvailable = process.env.PASSFLOW_LOCAL_DATABASE === "true" || !!getSupabaseConfig();
+  const supabase = dataSourceAvailable ? await createServerSupabaseClient() : null;
   const { data: website } = supabase ? await supabase.from("event_studio_documents").select("document").eq("event_id",event.id).eq("kind","website").eq("status","published").is("ticket_type_id",null).maybeSingle() : {data:null};
   const websiteDocument = readStudioDocument(website?.document);
   const figmaWebsite=readFigmaWebsite(website?.document);
-  if(figmaWebsite&&supabase)return <main><FigmaWebsiteRenderer document={figmaWebsite} data={await figmaWebsiteData(supabase,event,ctaLabel)}/><MadeWithPassFlow/></main>;
-  if(websiteDocument) return <main><WebsiteRenderer document={websiteDocument} data={{event_name:event.name,event_date:event.dateLabel,venue:event.venue,description:event.description,banner:event.heroImageUrl??'',logo:event.logoUrl??''}} claimUrl={`/e/${event.slug}/claim`}/></main>;
+  if(figmaWebsite&&supabase)return <main><FigmaWebsiteRenderer document={figmaWebsite} data={await figmaWebsiteData(supabase,event,ctaLabel)}/><PublicEventActions slug={event.slug} venue={event.venue} eventSubdomain={eventSubdomain}/><MadeWithPassFlow/></main>;
+  if(websiteDocument) return <main><WebsiteRenderer document={websiteDocument} data={{event_name:event.name,event_date:event.dateLabel,venue:event.venue,description:event.description,banner:event.heroImageUrl??'',logo:event.logoUrl??''}} claimUrl={registerHref}/><PublicEventActions slug={event.slug} venue={event.venue} eventSubdomain={eventSubdomain}/></main>;
 
   // The default page is the only page until a Figma design is published, so it lists the passes on sale.
   const { data: tickets } = supabase ? await supabase.from("ticket_types").select("id,name,price,currency").eq("event_id", event.id).order("price") : { data: [] };
@@ -89,7 +103,7 @@ export default async function PublicEventPage({ params }: EventPageProps) {
     <main className="ui-app ui-ev" style={themeStyle}>
       <nav className="ui-ev-nav" aria-label="Event">
         <Link href="/" className="ui-brand" aria-label="PassFlow"><FlowMark /><span>PassFlow</span></Link>
-        <Link href={`/e/${event.slug}/claim`} className="ui-btn ui-btn-ghost ui-btn-sm">My pass</Link>
+        <Link href={eventSubdomain ? "/ticket" : `/e/${event.slug}/claim`} className="ui-btn ui-btn-ghost ui-btn-sm">My pass</Link>
       </nav>
 
       <section className="ui-ev-hero">
@@ -98,12 +112,12 @@ export default async function PublicEventPage({ params }: EventPageProps) {
           {event.eyebrow && <span className="ui-ev-tagline">{event.eyebrow}</span>}
           <KineticText text={event.name} className="ui-ev-title" />
           <ul className="ui-ev-meta">
-            <li><CalendarDays size={17} /><span>{event.dateLabel}</span>{event.startsAt && event.endsAt && <a href={`/e/${event.slug}/calendar`} download>Add to calendar</a>}</li>
-            {event.venue && <li><MapPin size={17} /><span>{event.venue}</span></li>}
+            <li><CalendarDays size={17} /><span>{event.dateLabel}</span>{event.startsAt && event.endsAt && <a href={calendarHref} className="ui-ev-calendar-link"><CalendarDays size={14} />Add to calendar <span aria-hidden="true">↗</span></a>}</li>
+            {event.venue && <li><MapPin size={17} /><a href={locationHref ?? "#"} target={eventSubdomain ? undefined : "_blank"} rel={eventSubdomain ? undefined : "noreferrer"} aria-label={`Open ${event.venue} in Google Maps`} title={event.venue}>{venueLabel}</a></li>}
           </ul>
           {event.description && <p className="ui-ev-desc">{event.description}</p>}
           <div className="ui-ev-cta">
-            <Link href={`/e/${event.slug}/claim`} className="ui-ev-button" aria-disabled={event.registrationOpen === false && !registration ? true : undefined}>{ctaLabel}<ArrowRight size={17} /></Link>
+            <Link href={registerHref} className="ui-ev-button" aria-disabled={event.registrationOpen === false && !registration ? true : undefined}>{ctaLabel}<ArrowRight size={17} /></Link>
             <span><ShieldCheck size={15} />{helper}</span>
           </div>
         </div>
@@ -114,7 +128,7 @@ export default async function PublicEventPage({ params }: EventPageProps) {
 
       {!!tickets?.length && <section className="ui-ev-section" aria-labelledby="event-tickets-title">
         <h2 id="event-tickets-title">Passes</h2>
-        <ul className="ui-ev-passes">{tickets.map((t) => <li key={t.id}><Link href={`/e/${event.slug}/claim`}><strong>{t.name}</strong><span>{t.price > 0 ? `${t.currency} ${Number(t.price).toLocaleString("en-US")}` : "Free"}</span><ArrowRight size={16} /></Link></li>)}</ul>
+        <ul className="ui-ev-passes">{tickets.map((t) => <li key={t.id}><Link href={registerHref}><strong>{t.name}</strong><span>{t.price > 0 ? `${t.currency} ${Number(t.price).toLocaleString("en-US")}` : "Free"}</span><ArrowRight size={16} /></Link></li>)}</ul>
       </section>}
 
       <section className="ui-ev-section" aria-labelledby="entry-title">

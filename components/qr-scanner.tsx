@@ -22,6 +22,8 @@ export function QrScanner({ stationId, stationName, eventName, venue, mode }: {
   const [validating, setValidating] = useState(false);
   const [decodeHint, setDecodeHint] = useState(false);
   const [cameraEpoch, setCameraEpoch] = useState(0);
+  const [cameraFacing, setCameraFacing] = useState<"front" | "rear" | "unknown">("unknown");
+  const activeCameraLabel = devices.find(device => device.id === active)?.label ?? "";
   const [error, setError] = useState("");
   const [result, setResult] = useState<Result | null>(null);
   const cameraCleanup = useRef<Promise<void>>(Promise.resolve());
@@ -120,6 +122,10 @@ export function QrScanner({ stationId, stationName, eventName, venue, mode }: {
           hintTimer = setTimeout(() => { if (!disposed && !locked) setDecodeHint(true); }, 12000);
           const video = document.getElementById(readerId)?.querySelector("video");
           videoTrack = (video?.srcObject as MediaStream | null)?.getVideoTracks()[0];
+          const facingMode = videoTrack?.getSettings().facingMode;
+          const frontCamera = facingMode === "user" || /front|facetime|depan/i.test(activeCameraLabel);
+          const rearCamera = facingMode === "environment" || /back|rear|belakang/i.test(activeCameraLabel);
+          setCameraFacing(frontCamera ? "front" : rearCamera ? "rear" : "unknown");
           videoTrack?.addEventListener("ended", recover);
           document.addEventListener("visibilitychange", checkCamera);
         }
@@ -156,7 +162,7 @@ export function QrScanner({ stationId, stationName, eventName, venue, mode }: {
         if (!disposed && (videoTrack?.readyState === "ended" || video?.paused)) recover();
       }, 800);
     }
-  }, [active, cameraEpoch, readerId, stationId]);
+  }, [active, activeCameraLabel, cameraEpoch, readerId, stationId]);
 
   const success = result?.status === "granted";
   const titles: Record<string, string> = { granted: "Access granted.", denied: "Access denied.", already_checked_in: "Already checked in.", already_claimed: "Already claimed.", invalid: "Invalid pass.", network_error: "Unable to validate.", session_expired: "Session expired." };
@@ -182,15 +188,15 @@ export function QrScanner({ stationId, stationName, eventName, venue, mode }: {
       </fieldset>}
       {error && <p role="alert" className="camera-feedback">{error}</p>}
       {!online && <p role="alert" className="camera-feedback">Device is offline. Reconnect before scanning passes.</p>}
-      <button className="camera-start" disabled={!selected || discovering} onClick={() => { recoveryAttempts.current = 0; setError(""); setReady(false); setResult(null); setValidating(false); setDecodeHint(false); setActive(selected); }}>Start scanning <ArrowLeft className="rotate-180" size={18}/></button>
+      <button className="camera-start" disabled={!selected || discovering} onClick={() => { recoveryAttempts.current = 0; setError(""); setReady(false); setCameraFacing("unknown"); setResult(null); setValidating(false); setDecodeHint(false); setActive(selected); }}>Start scanning <ArrowLeft className="rotate-180" size={18}/></button>
       {mode === "check_in" && <ManualCheckIn stationId={stationId} open={manualOpen} onOpenChange={setManualOpen}/>}
     </section>
   </main>;
 
   return <main className="camera-live">
-    <div id={readerId} className="camera-live-reader"/>
+    <div id={readerId} className="camera-live-reader" data-camera-facing={cameraFacing}/>
     <header className="camera-live-header">
-      <button onClick={() => { setActive(""); setResult(null); setReady(false); setValidating(false); setError(""); }} aria-label="Return to camera selection"><SwitchCamera size={20}/></button>
+      <button onClick={() => { setActive(""); setCameraFacing("unknown"); setResult(null); setReady(false); setValidating(false); setError(""); }} aria-label="Return to camera selection"><SwitchCamera size={20}/></button>
       <div><span>PassFlow · {stationName}</span><h1>{eventName}</h1><p>{venue || stationName}</p></div>
       <span className="camera-live-status">{!online ? "OFFLINE" : validating ? "CHECKING" : ready && !error ? "LIVE" : "…"}</span>
     </header>

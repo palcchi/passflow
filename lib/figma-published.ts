@@ -2,6 +2,8 @@ import 'server-only';
 import {readFigmaWebsite} from '@/lib/figma-website';
 import {readWebsiteContent} from '@/lib/event-website-content';
 import {getAppOrigin} from '@/lib/supabase/config';
+import {headers} from 'next/headers';
+import {eventHostLabel} from '@/lib/event-host';
 import type {createServerSupabaseClient} from '@/lib/supabase/server';
 import type {PassFlowEvent} from '@/lib/events';
 import type {WebsiteData} from '@/components/figma-website-renderer';
@@ -15,5 +17,7 @@ export async function publishedFigmaWebsite(supabase:Client,eventId:string){
 
 export async function figmaWebsiteData(supabase:Client,event:PassFlowEvent,ctaLabel:string):Promise<WebsiteData>{
   const [tickets,content]=await Promise.all([supabase.from('ticket_types').select('id,name,price,currency').eq('event_id',event.id),supabase.from('event_website_content').select('content').eq('event_id',event.id).maybeSingle()]);
-  return {name:event.name,description:event.description,date:event.dateLabel,venue:event.venue,logo:event.logoUrl??undefined,banner:event.heroImageUrl??event.posterUrl??undefined,claimUrl:`${getAppOrigin()??''}/e/${event.slug}/claim`,ctaLabel,tickets:tickets.data??[],...readWebsiteContent(content.data?.content)};
+  const requestHeaders=await headers();const host=requestHeaders.get('host')??'';const eventSubdomain=eventHostLabel(host)!==null;
+  const claimUrl=eventSubdomain?`https://${host}/register`:`${getAppOrigin()??'https://passflow.my.id'}/e/${event.slug}/claim`;
+  return {name:event.name,description:event.description,date:event.dateLabel,venue:event.venue,logo:event.logoUrl??undefined,banner:event.heroImageUrl??event.posterUrl??undefined,claimUrl,ctaLabel,tickets:tickets.data??[],...readWebsiteContent(content.data?.content)};
 }

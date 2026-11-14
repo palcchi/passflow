@@ -1,6 +1,7 @@
 import 'server-only';
 import {createHash} from 'crypto';
 import type {pluginServer} from '@/lib/figma-plugin-server';
+import {localPublicUrl,saveLocalObject} from '@/lib/storage/local-files';
 
 const DATA_IMAGE=/^data:image\/(png|jpeg|webp);base64,([a-z\d+/=]+)$/i;
 const MAX_BYTES=5*1024*1024,MAX_IMAGES=150;
@@ -31,9 +32,15 @@ export async function hoistFigmaImages(server:ReturnType<typeof pluginServer>,ev
     if(!url){
       const bytes=Buffer.from(match[2],'base64');if(bytes.length>MAX_BYTES)throw Error('image_too_large');
       const ext=match[1].toLowerCase()==='jpeg'?'jpg':match[1].toLowerCase(),path=`${eventId}/figma/${createHash('sha256').update(bytes).digest('hex')}.${ext}`;
-      const bucket=server.storage.from('event-assets'),{data:exists}=await bucket.exists(path);
-      if(!exists){const {error}=await bucket.upload(path,bytes,{contentType:'image/'+match[1].toLowerCase(),upsert:true,cacheControl:'31536000'});if(error)throw Error('asset_upload_failed');}
-      url=bucket.getPublicUrl(path).data.publicUrl;done.set(value,url);
+      try {
+        const saved = await saveLocalObject('event-assets', path, bytes);
+        if (!saved.publicUrl) throw Error('asset_upload_failed');
+        url = saved.publicUrl;
+      } catch (error) {
+        if ((error as NodeJS.ErrnoException).code !== 'EEXIST') throw Error('asset_upload_failed');
+        url = localPublicUrl('event-assets', path);
+      }
+      done.set(value,url);
     }
     slot.owner[slot.key]=url;
   }

@@ -16,7 +16,7 @@ export type FigmaWebsite={schema:2|3;source:'figma';desktop:WebsiteFrame;tablet:
 const reservedPages=['home','claim','calendar','opengraph-image','admin','api','e'];
 export const pageSlugValid=(v:unknown):v is string=>typeof v==='string'&&/^[a-z0-9](?:[a-z0-9-]{0,38}[a-z0-9])?$/.test(v)&&!reservedPages.includes(v);
 // Images live in the public event-assets bucket after sync; older drafts may still carry inline data URIs.
-export const figmaAssetUrl=(v:string)=>/^https:\/\/[a-z0-9-]+\.supabase\.co\/storage\/v1\/object\/public\/event-assets\/[\w\-./]+\.(png|jpe?g|webp)$/i.test(v);
+export const figmaAssetUrl=(v:string)=>/^https:\/\/[a-z0-9-]+\.supabase\.co\/storage\/v1\/object\/public\/event-assets\/[\w\-./]+\.(png|jpe?g|webp)$/i.test(v) || /^https:\/\/[^/]+\/uploads\/event-assets\/[\w\-./]+\.(png|jpe?g|webp)$/i.test(v);
 const dataImage=(v:string)=>/^data:image\/(png|jpeg|webp);base64,[a-z\d+/=]+$/i.test(v);
 export const fontFamilyValid=(v:unknown):v is string=>typeof v==='string'&&/^[A-Za-z0-9][A-Za-z0-9 \-]{0,39}$/.test(v);
 const obj=(v:unknown):Record<string,unknown>=>v&&typeof v==='object'&&!Array.isArray(v)?v as Record<string,unknown>:{};

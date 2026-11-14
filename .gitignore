@@ -13,9 +13,16 @@
 # production
 /build
 
-# local env
+# local environment files and secrets
 .env*
 !.env.example
+
+# local data and backups
+/backups/
+/public/uploads/
+*.bak*
+*.before*
+.vercel-deploy-trigger
 
 # vercel
 .vercel
