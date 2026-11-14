@@ -1,0 +1,18 @@
+services:
+  postgrest-prod:
+    image: postgrest/postgrest:v12.2.3
+    container_name: passflow-postgrest-prod
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    env_file:
+      - .env.selfhost-db
+    environment:
+      PGRST_DB_URI: "postgresql://passflow:${POSTGRES_PASSWORD}@postgres:5432/passflow"
+      PGRST_DB_SCHEMAS: public
+      PGRST_DB_ANON_ROLE: anon
+      PGRST_JWT_SECRET: "${PASSFLOW_JWT_SECRET}"
+      PGRST_SERVER_PORT: "3000"
+    ports:
+      - "127.0.0.1:3002:3000"

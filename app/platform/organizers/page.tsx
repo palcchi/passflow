@@ -8,6 +8,7 @@ import { isPlatformAdmin } from "@/lib/auth/platform";
 import { serviceClient } from "@/lib/supabase/service";
 import { approveOrganizer, revokeOrganizer } from "@/app/platform/actions";
 import { EVENTS_PER_ORGANIZER } from "@/lib/organizer-quota";
+import { postgresQuery } from "@/lib/db/postgres";
 
 export const metadata: Metadata = { title: "Organizers", robots: { index: false, follow: false } };
 export const dynamic = "force-dynamic";
@@ -21,13 +22,23 @@ export default async function OrganizersPage({ searchParams }: { searchParams: P
   if (!isPlatformAdmin(user)) notFound();
   const { status } = await searchParams;
   const admin = serviceClient();
-  const { data: applications } = await admin.from("organizer_applications").select("user_id,organization_id,organization_name,phone,city,event_scale,status,created_at,reviewed_at").order("created_at", { ascending: false }).limit(500);
-  const rows = await Promise.all((applications ?? []).map(async (a) => {
-    const [{ data }, events] = await Promise.all([
-      admin.auth.admin.getUserById(a.user_id),
-      a.organization_id ? admin.from("events").select("id", { count: "exact", head: true }).eq("organization_id", a.organization_id).neq("status", "archived") : Promise.resolve({ count: 0 }),
-    ]);
-    return { ...a, email: data.user?.email ?? "", name: String(data.user?.user_metadata?.full_name ?? data.user?.user_metadata?.name ?? ""), events: events.count ?? 0 };
+  const applications = process.env.PASSFLOW_LOCAL_DATABASE === "true"
+    ? (await postgresQuery<{ user_id: string; organization_id: string | null; organization_name: string; phone: string | null; city: string | null; event_scale: string | null; status: string; created_at: string; reviewed_at: string | null }>(
+        "SELECT user_id, organization_id, organization_name, phone, city, event_scale, status, created_at, reviewed_at FROM public.organizer_applications ORDER BY created_at DESC LIMIT 500",
+      )).rows
+    : ((await admin.from("organizer_applications").select("user_id,organization_id,organization_name,phone,city,event_scale,status,created_at,reviewed_at").order("created_at", { ascending: false }).limit(500)).data ?? []);
+  const rows = await Promise.all(applications.map(async (a) => {
+    const identity = process.env.PASSFLOW_LOCAL_DATABASE === "true"
+      ? await postgresQuery<{ email: string | null; raw_user_meta_data: Record<string, unknown> | null }>(
+          "SELECT email, raw_user_meta_data FROM auth.users WHERE id = $1 LIMIT 1", [a.user_id],
+        ).then((result) => ({ email: result.rows[0]?.email ?? "", metadata: result.rows[0]?.raw_user_meta_data ?? {} }))
+      : await admin.auth.admin.getUserById(a.user_id).then(({ data }) => ({ email: data.user?.email ?? "", metadata: data.user?.user_metadata ?? {} }));
+    const events = a.organization_id
+      ? process.env.PASSFLOW_LOCAL_DATABASE === "true"
+        ? await postgresQuery<{ count: string }>("SELECT count(*)::text AS count FROM public.events WHERE organization_id = $1 AND status <> 'archived'", [a.organization_id]).then((result) => ({ count: Number(result.rows[0]?.count ?? 0) }))
+        : await admin.from("events").select("id", { count: "exact", head: true }).eq("organization_id", a.organization_id).neq("status", "archived").then(({ count }) => ({ count: count ?? 0 }))
+      : { count: 0 };
+    return { ...a, email: identity.email, name: String(identity.metadata.full_name ?? identity.metadata.name ?? ""), events: events.count ?? 0 };
   }));
   const groups = [
     ["Waiting", rows.filter((r) => r.status === "pending")],

@@ -50,7 +50,7 @@ export default function TermsPage() {
       <p>We may update these terms and will change the date above when we do. These terms are governed by the laws of the Republic of Indonesia.</p>
 
       <h2>Contact</h2>
-      <p>Questions about these terms: <a href="mailto:hello@passflow.my.id">hello@passflow.my.id</a>.</p>
+      <p>Questions about these terms: <a href="mailto:help@passflow.my.id">help@passflow.my.id</a>.</p>
     </LegalPage>
   );
 }

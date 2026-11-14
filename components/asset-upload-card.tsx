@@ -1,8 +1,8 @@
 "use client";
 
 import { type CSSProperties, FormEvent, useEffect, useId, useRef, useState, useTransition } from "react";
-import { CheckCircle2, ImagePlus, LoaderCircle, UploadCloud, X } from "lucide-react";
-import { uploadEventAsset } from "@/app/organizer/events/actions";
+import { CheckCircle2, ImagePlus, LoaderCircle, Trash2, UploadCloud, X } from "lucide-react";
+import { deleteEventAsset, uploadEventAsset } from "@/app/organizer/events/actions";
 
 type AssetType = "logo" | "hero" | "poster";
 
@@ -106,6 +106,27 @@ export function AssetUploadCard({
     });
   }
 
+  function removeSavedAsset() {
+    if (!preview || pending || !window.confirm(`Remove this ${label.toLowerCase()} from the event draft?`)) return;
+    setMessage(null);
+    startTransition(async () => {
+      try {
+        const result = await deleteEventAsset(eventId, assetType);
+        setMessage(result.message);
+        setSuccess(result.ok);
+        if (result.ok) {
+          savedUrlRef.current = null;
+          setPreview(null);
+          onPreview?.(null);
+          onUploaded?.("");
+        }
+      } catch {
+        setMessage("The image could not be removed. Please try again.");
+        setSuccess(false);
+      }
+    });
+  }
+
   return (
     <form className={`asset-upload-form ${compact ? "is-compact" : ""}`} onSubmit={submit}>
       <input type="hidden" name="eventId" value={eventId} />
@@ -149,6 +170,15 @@ export function AssetUploadCard({
           </button>
         )}
       </div>}
+
+      {preview && !hasFile && (
+        <div className="asset-upload-actions">
+          <button className="ui-btn ui-btn-ghost ui-btn-sm" type="button" disabled={pending} onClick={removeSavedAsset}>
+            {pending ? <LoaderCircle className="animate-spin" size={15} /> : <Trash2 size={15} />}
+            {pending ? "Removing…" : `Delete ${label.toLowerCase()}`}
+          </button>
+        </div>
+      )}
 
       {message && (
         <p role={success ? "status" : "alert"} className={success ? "asset-upload-status is-success" : "asset-upload-status is-error"}>

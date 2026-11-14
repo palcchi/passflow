@@ -14,7 +14,7 @@ export default function PrivacyPage() {
       <h2>What we collect</h2>
       <ul>
         <li><strong>Account data:</strong> your name, email address, username, password (stored only as a secure hash by our authentication provider) and an optional profile photo. If you sign in with Google we receive your name, email and profile picture from Google.</li>
-        <li><strong>Registration data:</strong> the events you register for, the pass category you choose, an optional phone number, your approval status and your QR credential.</li>
+        <li><strong>Registration data:</strong> the events you register for, the pass category you choose, your required phone number, your approval status and your QR credential. Your phone number may be used for ticket delivery and event-related WhatsApp messages when that delivery service is enabled.</li>
         <li><strong>Check-in data:</strong> when and where your pass was scanned, which gate or activity it was used at, and benefits you claimed.</li>
         <li><strong>Organizer data:</strong> organization name, event details, uploaded images, Figma designs synced through the PassFlow plugin, and crew invitations.</li>
         <li><strong>Technical data:</strong> sign-in session cookies, and basic logs (IP address, browser, time of request) kept by our hosting provider for security and troubleshooting.</li>
@@ -31,7 +31,7 @@ export default function PrivacyPage() {
       <p>We do not sell your personal data and we do not use it for third-party advertising.</p>
 
       <h2>What organizers can see</h2>
-      <p>When you register, the organizer of that event and the crew they invite can see your name, email, phone number (if you gave one), pass category, profile photo, approval status and check-in history for their event. Organizers cannot see your other registrations or your password.</p>
+      <p>When you register, the organizer of that event and the crew they invite can see your name, email, phone number, pass category, profile photo, approval status and check-in history for their event. Organizers cannot see your other registrations or your password.</p>
 
       <h2>Service providers</h2>
       <p>We use a small set of providers to run PassFlow. They only process data to provide their service to us:</p>

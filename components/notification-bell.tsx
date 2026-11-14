@@ -4,22 +4,17 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Bell } from "lucide-react";
-import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 
 export function NotificationBell() {
   const pathname = usePathname();
   const [unread, setUnread] = useState(0);
 
-  // Recount when the route changes so reading notifications clears the badge.
   useEffect(() => {
     let cancelled = false;
-    try {
-      createBrowserSupabaseClient()
-        .from("notifications")
-        .select("id", { count: "exact", head: true })
-        .is("read_at", null)
-        .then(({ count }) => { if (!cancelled) setUnread(count ?? 0); });
-    } catch { /* Supabase not configured */ }
+    fetch("/api/notifications/unread", { credentials: "same-origin", cache: "no-store" })
+      .then((response) => response.ok ? response.json() as Promise<{ count?: number }> : { count: 0 })
+      .then((data) => { if (!cancelled) setUnread(Number.isFinite(data.count) ? Math.max(0, Number(data.count)) : 0); })
+      .catch(() => { if (!cancelled) setUnread(0); });
     return () => { cancelled = true; };
   }, [pathname]);
 

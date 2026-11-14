@@ -26,13 +26,15 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
   const params = await searchParams;
   const next = safeNext(params.next);
   if (await getAuthContext()) redirect(next);
-  const ready = !!getSupabaseConfig() && !!getAppOrigin();
+  const ready = !!getAppOrigin() && (process.env.PASSFLOW_LOCAL_AUTH === "true" || !!getSupabaseConfig());
   const message = typeof params.error === "string" ? errors[params.error] : null;
   return <AuthShell title="Welcome back." description="Sign in to manage your events, passes, and account." kicker="SIGN IN">
     {message && <p role={params.error === "reset" ? "status" : "alert"} className="auth-notice">{message}</p>}
     {params.notice === "signed-out" && <p role="status" className="auth-notice">You have been signed out.</p>}
     {params.notice === "verification-sent" && <p role="status" className="auth-notice">A new verification link has been sent.</p>}
     {params.notice === "reset-sent" && <p role="status" className="auth-notice">If the email is registered, a reset link has been sent.</p>}
+    {params.notice === "verified" && <p role="status" className="auth-notice">Email verified. You can sign in now.</p>}
+    {params.notice === "mail-pending" && <p role="status" className="auth-notice">Email delivery is not configured yet. Check the Resend configuration before requesting a verification or password-reset email.</p>}
     <form action={signInWithEmail} className="auth-form">
       <input type="hidden" name="next" value={next}/>
       <label className="auth-field" htmlFor="login-email">Email<div className="auth-input"><Mail size={17} aria-hidden="true"/><input id="login-email" required name="email" type="email" autoComplete="email" inputMode="email" placeholder="you@company.com"/></div></label>

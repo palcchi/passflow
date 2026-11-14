@@ -3,9 +3,11 @@ import { getManagedEvent } from "@/lib/events";
 import { requireOrganizerMembership } from "@/lib/auth/session";
 import { DateTimeField, FormattedNumberInput } from "@/components/form-fields";
 import { deleteEvent, setEventStatus, updateEvent } from "@/app/organizer/events/actions";
-import { EventSubdomainPanel } from "@/components/event-subdomain-panel";
 import { EventBranding } from "@/components/event-branding";
+import { VenueField } from "@/components/venue-field";
+import { NewEventSubdomainField } from "@/components/new-event-subdomain-field";
 import { saveEventAccess } from "@/app/organizer/events/people-actions";
+import { postgresQuery } from "@/lib/db/postgres";
 
 type Props = { params: Promise<{ eventId: string }>; searchParams: Promise<{ error?: string }> };
 
@@ -20,14 +22,24 @@ export default async function EventSettingsPage({ params, searchParams }: Props)
 
   const { supabase } = await requireOrganizerMembership(`/organizer/events/${eventId}/settings`);
   const [{ data: versions }, attendees, credentials, scans, activities, benefits] = await Promise.all([
-    supabase.from("event_publications").select("version,published_at").eq("event_id", eventId).order("version", { ascending: false }).limit(10),
+    supabase.from("event_publications").select("version,published_at,config").eq("event_id", eventId).order("version", { ascending: false }).limit(10),
     supabase.from("attendees").select("id", { count: "exact", head: true }).eq("event_id", eventId),
     supabase.from("qr_credentials").select("id", { count: "exact", head: true }).eq("event_id", eventId),
     supabase.from("scan_logs").select("id", { count: "exact", head: true }).eq("event_id", eventId),
     supabase.from("activity_logs").select("id", { count: "exact", head: true }).eq("event_id", eventId),
     supabase.from("benefit_claims").select("id", { count: "exact", head: true }).eq("event_id", eventId),
   ]);
-  const { data: address } = await supabase.from("event_subdomains").select("label").eq("event_id", eventId).maybeSingle();
+  let addressLabel = "";
+  if (process.env.PASSFLOW_LOCAL_DATABASE === "true") {
+    const addressResult = await postgresQuery<{ label: string }>(
+      "SELECT label FROM public.event_subdomains WHERE event_id = $1::uuid LIMIT 1",
+      [eventId],
+    );
+    addressLabel = addressResult.rows[0]?.label ?? "";
+  } else {
+    const { data: address } = await supabase.from("event_subdomains").select("label").eq("event_id", eventId).maybeSingle();
+    addressLabel = address?.label ?? "";
+  }
   const canDelete = event.status === "draft" && !(versions?.length || attendees.count || credentials.count || scans.count || activities.count || benefits.count);
   const { error } = await searchParams;
   const errors: Record<string, string> = {
@@ -39,10 +51,16 @@ export default async function EventSettingsPage({ params, searchParams }: Props)
     version_not_found: "That version is unavailable.",
     delete: "This event has history or dependencies and cannot be deleted. Archive it instead.",
     save: "Changes could not be saved. Check the fields and try again.",
+    subdomain: "That subdomain is invalid or already reserved. Use a different event address.",
     transition: "The status could not be changed. Review the configuration and try again.",
   };
 
   const statusLabel = event.status === "published" ? "Live" : event.status === "archived" ? "Archived" : "Draft";
+  const latestPublishedConfig = versions?.[0]?.config;
+  const publishedVenue = latestPublishedConfig && typeof latestPublishedConfig === "object" && !Array.isArray(latestPublishedConfig) && "venue" in latestPublishedConfig
+    ? String(latestPublishedConfig.venue ?? "")
+    : "";
+  const draftVenueDiffers = event.hasDraftChanges && (event.venue ?? "") !== publishedVenue;
 
   return (
     <div className="ui-settings">
@@ -56,9 +74,9 @@ export default async function EventSettingsPage({ params, searchParams }: Props)
         <form action={updateEvent} className="ui-formgrid">
           <input type="hidden" name="eventId" value={event.id} />
           <label className="ui-field ui-span-2"><span>Name</span><input className={inputClass()} name="name" defaultValue={event.name} required /></label>
-          <label className="ui-field"><span>Link name</span><input className={inputClass()} name="slug" defaultValue={event.slug} required /><small>passflow.my.id/e/{event.slug}</small></label>
+          <NewEventSubdomainField initialValue={addressLabel} eventId={event.id} />
           <label className="ui-field"><span>Capacity</span><FormattedNumberInput name="capacity" defaultValue={event.capacity ?? ""} min={0} className={inputClass()} placeholder="Unlimited" /></label>
-          <label className="ui-field ui-span-2"><span>Venue</span><input className={inputClass()} name="venue" defaultValue={event.venue} /></label>
+          <VenueField defaultValue={event.venue} />
           <div className="ui-span-2 ui-dates"><DateTimeField name="startsAt" defaultValue={event.startsAt} label="Starts" /><DateTimeField name="endsAt" defaultValue={event.endsAt} label="Ends" /></div>
           <label className="ui-field ui-span-2"><span>Description</span><textarea className="ui-textarea" rows={4} name="description" defaultValue={event.description} /></label>
           <div className="ui-span-2 ui-formactions"><button className="ui-btn ui-btn-primary" type="submit" disabled={event.status === "archived"}>Save changes</button></div>
@@ -75,6 +93,11 @@ export default async function EventSettingsPage({ params, searchParams }: Props)
             <div>
               <span className={event.status === "published" ? "ui-badge ui-badge-success" : "ui-badge"}>{statusLabel}</span>
               <p>{event.publishedVersion ? `Version ${event.publishedVersion} is public.` : "Not published yet."}{event.hasDraftChanges ? " You have unpublished changes." : ""}</p>
+              {event.status === "published" && event.hasDraftChanges && <div className="ui-publish-location-status" role="status">
+                <p><strong>Currently public location:</strong> {publishedVenue || "No location set"}</p>
+                {draftVenueDiffers && <p><strong>Saved draft location:</strong> {event.venue || "No location set"}</p>}
+                <p>{draftVenueDiffers ? "The public event page will keep the current location until you select “Publish changes” below." : "Your saved changes are not public yet. Select “Publish changes” when you are ready."}</p>
+              </div>}
             </div>
             <div className="ui-row">
               {event.status !== "archived" && <form action={setEventStatus}><input type="hidden" name="eventId" value={event.id} /><input type="hidden" name="action" value="archive" /><button className="ui-btn ui-btn-ghost ui-btn-sm" type="submit">Archive</button></form>}
@@ -116,7 +139,6 @@ export default async function EventSettingsPage({ params, searchParams }: Props)
       </section>
 
       <EventBranding event={event} />
-      <EventSubdomainPanel eventId={eventId} current={address?.label ?? ""} suggestion={event.slug} enabled={process.env.PASSFLOW_EVENT_SUBDOMAINS_ENABLED === "true"} />
 
       <section className="ui-card ui-settings-card ui-danger" aria-labelledby="delete-title">
         <div className="ui-settings-side">

@@ -6,7 +6,11 @@ import { redirect } from "next/navigation";
 import { requireOrganizerMembership } from "@/lib/auth/session";
 import { canCreateEvent } from "@/lib/organizer-quota";
 import { defaultEventTheme } from "@/lib/events";
+import { normalizeEventLabel, validEventLabel } from "@/lib/event-host";
 import type { Json } from "@/lib/supabase/database.types";
+import { removeLocalObject, saveLocalObject } from "@/lib/storage/local-files";
+import { postgresQuery } from "@/lib/db/postgres";
+import { notifyPassflowAdmins } from "@/lib/notifications";
 
 function text(formData: FormData, key: string, max = 500) {
   const value = formData.get(key);
@@ -138,10 +142,35 @@ async function resolveQrBatch(input: QrBatchInput) {
 async function managedContext(eventId?: string) {
   const context = await requireOrganizerMembership(eventId ? `/organizer/events/${eventId}` : "/organizer/events");
   if (eventId) {
-    const { data: allowed, error } = await context.supabase.rpc("is_event_manager", {
-      p_event_id: eventId,
-    });
-    if (error || !allowed) redirect("/unauthorized");
+    if (process.env.PASSFLOW_LOCAL_MEMBERSHIPS === "true" && process.env.PASSFLOW_LOCAL_DATABASE === "true") {
+      const access = await (await import("@/lib/db/postgres")).postgresQuery<{ allowed: boolean }>(
+        `SELECT EXISTS (
+           SELECT 1
+           FROM public.events e
+           JOIN public.organization_members m ON m.organization_id = e.organization_id
+           WHERE e.id = $1::uuid
+             AND m.user_id = $2::uuid
+             AND (
+               m.role = 'owner'
+               OR (m.role = 'admin' AND (
+                 e.created_by = $2::uuid
+                 OR NOT EXISTS (
+                   SELECT 1 FROM public.events e2
+                   WHERE e2.organization_id = e.organization_id
+                     AND e2.created_by = $2::uuid
+                 )
+               ))
+             )
+         ) AS allowed`,
+        [eventId, context.user.id],
+      );
+      if (!access.rows[0]?.allowed) redirect("/unauthorized");
+    } else {
+      const { data: allowed, error } = await context.supabase.rpc("is_event_manager", {
+        p_event_id: eventId,
+      });
+      if (error || !allowed) redirect("/unauthorized");
+    }
   }
   return context;
 }
@@ -165,11 +194,56 @@ export async function createEvent(formData: FormData) {
   const { supabase, membership, user } = await managedContext();
   if (!(await canCreateEvent(supabase, user))) redirect("/organizer/events/new?error=limit");
   const name = text(formData, "name", 120);
-  const slug = slugify(text(formData, "slug", 100) || name);
+  // Keep the legacy internal slug derived from the event name; organizers choose the public wildcard subdomain directly.
+  const slug = slugify(name);
+  const subdomainLabel = normalizeEventLabel(text(formData, "subdomain", 63) || slug);
   if (name.length < 2 || !slug) redirect("/organizer/events/new?error=invalid");
+  if (!validEventLabel(subdomainLabel)) redirect("/organizer/events/new?error=subdomain");
 
   const startsAt = optionalText(formData, "startsAt", 40);
   const endsAt = optionalText(formData, "endsAt", 40);
+
+  if (process.env.PASSFLOW_LOCAL_DATABASE === "true") {
+    let createdId: string | undefined;
+    try {
+      const created = await postgresQuery<{ id: string }>(
+        `WITH created AS (
+           INSERT INTO public.events
+             (organization_id, created_by, name, slug, description, venue, starts_at, ends_at, capacity, status, theme)
+           VALUES ($1::uuid, $2::uuid, $3, $4, $5, $6, $7::timestamptz, $8::timestamptz, $9, 'draft', $10::jsonb)
+           RETURNING id
+         ), address AS (
+           INSERT INTO public.event_subdomains (event_id, label)
+           SELECT id, $11 FROM created
+           RETURNING event_id
+         )
+         SELECT id FROM created`,
+        [
+          membership.organization_id,
+          user.id,
+          name,
+          slug,
+          optionalText(formData, "description", 1200),
+          optionalText(formData, "venue", 160),
+          startsAt && !Number.isNaN(Date.parse(startsAt)) ? new Date(startsAt).toISOString() : null,
+          endsAt && !Number.isNaN(Date.parse(endsAt)) ? new Date(endsAt).toISOString() : null,
+          numberValue(formData, "capacity"),
+          JSON.stringify(defaultEventTheme),
+          subdomainLabel,
+        ],
+      );
+      createdId = created.rows[0]?.id;
+    } catch (error) {
+      const code = typeof error === "object" && error !== null && "code" in error ? String(error.code) : "";
+      const constraint = typeof error === "object" && error !== null && "constraint" in error ? String(error.constraint) : "";
+      if (code === "23505") redirect(constraint.includes("label") ? "/organizer/events/new?error=subdomain" : "/organizer/events/new?error=slug");
+      redirect("/organizer/events/new?error=create");
+    }
+    if (!createdId) redirect("/organizer/events/new?error=create");
+    revalidatePath("/organizer/events");
+    redirect(`/organizer/events/${createdId}`);
+  }
+
   const { data, error } = await supabase
     .from("events")
     .insert({
@@ -189,6 +263,8 @@ export async function createEvent(formData: FormData) {
     .single();
 
   if (error || !data) redirect("/organizer/events/new?error=create");
+  const { error: addressError } = await supabase.rpc("save_event_subdomain", { p_event_id: data.id, p_label: subdomainLabel });
+  if (addressError) redirect("/organizer/events/new?error=subdomain");
   revalidatePath("/organizer/events");
   redirect(`/organizer/events/${data.id}`);
 }
@@ -197,8 +273,10 @@ export async function updateEvent(formData: FormData) {
   const eventId = text(formData, "eventId", 60);
   const { supabase } = await managedContext(eventId);
   const name = text(formData, "name", 120);
-  const slug = slugify(text(formData, "slug", 100) || name);
+  const slug = slugify(name);
+  const subdomainLabel = normalizeEventLabel(text(formData, "subdomain", 63));
   if (!name || !slug) return;
+  if (!validEventLabel(subdomainLabel)) redirect(`/organizer/events/${eventId}/settings?error=subdomain`);
 
   const startsAt = optionalText(formData, "startsAt", 40);
   const endsAt = optionalText(formData, "endsAt", 40);
@@ -212,6 +290,29 @@ export async function updateEvent(formData: FormData) {
       capacity: numberValue(formData, "capacity"),
     } });
   if (error) redirect(`/organizer/events/${eventId}/settings?error=save`);
+
+  try {
+    if (process.env.PASSFLOW_LOCAL_DATABASE === "true") {
+      await postgresQuery(
+        `INSERT INTO public.event_subdomains (event_id, label)
+         VALUES ($1::uuid, $2)
+         ON CONFLICT (event_id) DO UPDATE SET label = EXCLUDED.label, updated_at = now()`,
+        [eventId, subdomainLabel],
+      );
+    } else {
+      const { error: addressError } = await supabase.rpc("save_event_subdomain", {
+        p_event_id: eventId,
+        p_label: subdomainLabel,
+      });
+      if (addressError) throw addressError;
+    }
+  } catch (addressError) {
+    const code = typeof addressError === "object" && addressError !== null && "code" in addressError
+      ? String(addressError.code)
+      : "";
+    redirect(`/organizer/events/${eventId}/settings?error=${code === "23505" ? "subdomain" : "save"}`);
+  }
+  revalidatePath(`/organizer/events/${eventId}/settings`);
   revalidateEvent(eventId, slug);
 }
 
@@ -220,7 +321,7 @@ export async function setEventStatus(formData: FormData) {
   const action = text(formData, "action", 20);
   if (!["publish", "archive", "reopen", "restore"].includes(action)) return;
   const { supabase } = await managedContext(eventId);
-  const { data: current } = await supabase.from("events").select("slug").eq("id", eventId).single();
+  const { data: current } = await supabase.from("events").select("slug,name").eq("id", eventId).single();
   const version = Number(text(formData, "version", 12));
   const { error } = await supabase.rpc("transition_event", {
     p_event_id: eventId, p_action: action, p_version: action === "restore" && Number.isInteger(version) && version > 0 ? version : null,
@@ -230,8 +331,18 @@ export async function setEventStatus(formData: FormData) {
     redirect(`/organizer/events/${eventId}/settings?error=${reason}`);
   }
   revalidateEvent(eventId, current?.slug);
-  const { data: updated } = await supabase.from("events").select("slug").eq("id", eventId).single();
+  const { data: updated } = await supabase.from("events").select("slug,name").eq("id", eventId).single();
   if (updated?.slug !== current?.slug) revalidateEvent(eventId, updated?.slug);
+  const labels: Record<string, string> = { publish: "published", archive: "archived", reopen: "reopened", restore: "restored" };
+  const eventName = updated?.name || current?.name || "an event";
+  await notifyPassflowAdmins({
+    type: "event_" + action,
+    subject: `PassFlow: event ${labels[action]} — ${eventName}`,
+    title: `Event ${labels[action]}`,
+    body: `The event “${eventName}” was ${labels[action]} successfully.`,
+    href: updated?.slug ? `/e/${encodeURIComponent(updated.slug)}` : "/organizer/events",
+    whatsappText: `PassFlow admin alert: event “${eventName}” was ${labels[action]} successfully.`,
+  });
 }
 
 export async function deleteEvent(formData: FormData) {
@@ -655,17 +766,14 @@ export async function uploadEventAsset(formData: FormData) {
   const path = `${eventId}/${assetType}-${Date.now()}-${randomBytes(4).toString("hex")}.${ext}`;
   const buffer = Buffer.from(await file.arrayBuffer());
 
-  const { error: uploadError } = await supabase.storage.from("event-assets").upload(path, buffer, {
-    contentType: file.type,
-    upsert: false,
-    cacheControl: "3600",
-  });
-  if (uploadError) {
-    return { ok: false, message: `Upload failed: ${uploadError.message}` };
+  let publicUrl: string;
+  try {
+    const saved = await saveLocalObject("event-assets", path, buffer);
+    if (!saved.publicUrl) throw new Error("event_asset_storage_not_public");
+    publicUrl = saved.publicUrl;
+  } catch {
+    return { ok: false, message: "The image could not be saved to local storage." };
   }
-
-  const { data: publicData } = supabase.storage.from("event-assets").getPublicUrl(path);
-  const publicUrl = publicData.publicUrl;
 
   const { error: assetError } = await supabase.from("event_assets").insert({
     event_id: eventId,
@@ -675,7 +783,7 @@ export async function uploadEventAsset(formData: FormData) {
   });
 
   if (assetError) {
-    await supabase.storage.from("event-assets").remove([path]).catch(() => undefined);
+    await removeLocalObject("event-assets", path).catch(() => undefined);
     return { ok: false, message: "The file was uploaded, but its asset metadata could not be saved." };
   }
 
@@ -701,6 +809,24 @@ export async function uploadEventAsset(formData: FormData) {
   };
 }
 
+
+export async function deleteEventAsset(eventIdRaw: string, assetTypeRaw: string) {
+  const eventId = String(eventIdRaw || "").slice(0, 60);
+  const assetType = String(assetTypeRaw || "");
+  if (!/^[0-9a-f]{8}-[0-9a-f-]{27}$/i.test(eventId) || !["logo", "hero", "poster"].includes(assetType)) {
+    return { ok: false, message: "The event image is invalid." };
+  }
+  const { supabase } = await managedContext(eventId);
+  const column = assetType === "logo" ? "logo_url" : assetType === "hero" ? "hero_image_url" : "poster_url";
+  const { error } = await supabase.rpc("stage_event_config", {
+    p_event_id: eventId,
+    p_patch: { [column]: null },
+  });
+  if (error) return { ok: false, message: "The image could not be removed. Please try again." };
+  revalidateEvent(eventId);
+  revalidatePath(`/organizer/events/${eventId}/settings`);
+  return { ok: true, message: "Image removed from the event draft. The published version changes when you publish." };
+}
 
 export async function createCrewInvitation(formData: FormData) {
   const eventId = text(formData, "eventId", 60);

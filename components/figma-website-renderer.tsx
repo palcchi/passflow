@@ -38,7 +38,6 @@ function gradientCss(g:NonNullable<WebsiteNode['gradient']>){
 function venueMapUrl(venue:string){
   return 'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(venue);
 }
-
 function Frame({frame,data,preview,prefix,slot}:{frame:WebsiteFrame;data:WebsiteData;preview:boolean;prefix:string;slot?:ReactNode}){
   const children=new Map<string|null,WebsiteNode[]>();
   for(const n of frame.nodes)children.set(n.parentId,[...(children.get(n.parentId)??[]),n]);
@@ -129,13 +128,13 @@ function Frame({frame,data,preview,prefix,slot}:{frame:WebsiteFrame;data:Website
         {data.tickets.length?data.tickets.map(t=><a key={t.id} className="figma-live-row" aria-disabled={preview} href={preview?undefined:data.claimUrl}>
           <strong>{t.name}</strong>
           <span>{t.price>0?t.currency+' '+t.price.toLocaleString('en-GB'):'Free'}</span>
-        </a>):<p className="figma-live-empty">Tickets open soon</p>}
+        </a>):<p className="figma-live-empty">Ticket details have not been published yet.</p>}
       </div>;
     }
 
     if(n.binding==='schedule'||n.binding==='speakers'||n.binding==='sponsors'){
       const rows=n.binding==='schedule'?data.schedule:n.binding==='speakers'?data.speakers:data.sponsors;
-      const empty=n.binding==='schedule'?'Schedule coming soon':n.binding==='speakers'?'Speakers to be announced':'Partners to be announced';
+      const empty=n.binding==='schedule'?'The schedule has not been published yet.':n.binding==='speakers'?'Speaker details have not been published yet.':'Partner details have not been published yet';
       return <div key={n.id} id={id} style={{...style,overflowY:'auto'}} className={n.binding==='schedule'?'figma-live-list':'figma-live-grid'}>
         {rows?.length?rows.map((row,i)=>{
           if('title' in row)return <div key={i} className="figma-live-row"><strong>{row.title}</strong><span>{row.time}</span></div>;

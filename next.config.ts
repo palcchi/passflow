@@ -2,6 +2,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  turbopack: { root: process.cwd() },
   experimental: { serverActions: { bodySizeLimit: "6mb" } },
   // The organizer workspace moved from /admin; keep old bookmarks and emailed links working.
   async redirects() {

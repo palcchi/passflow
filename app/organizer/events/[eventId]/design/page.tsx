@@ -31,6 +31,6 @@ export default async function EventDesignPage({params}:{params:Promise<{eventId:
         <div className="ui-stat ui-stat-text"><span>Pass designs</span><strong>{livePasses.length?`${livePasses.length} live`:'Standard pass'}</strong><small>{livePasses.length?livePasses.map(p=>passLabel[p.kind]+' for '+ticketName(p.ticket_type_id)).join(', '):'A clean QR pass until you publish one from Figma.'}</small></div>
       </div>
     </section>
-    <FigmaPairingPanel now={now} eventId={eventId} connections={links.data??[]} versions={versions.data??[]} ready={!links.error&&!versions.error&&!!process.env.SUPABASE_SERVICE_ROLE_KEY}/>
+    <FigmaPairingPanel now={now} eventId={eventId} connections={links.data??[]} versions={versions.data??[]} ready={!links.error&&!versions.error&&(process.env.PASSFLOW_LOCAL_DATABASE==='true'||!!process.env.SUPABASE_SERVICE_ROLE_KEY)}/>
   </>;
 }

@@ -9,6 +9,7 @@ import type { PassFlowEvent } from "@/lib/events";
 import { AppShell } from "@/components/app-shell";
 import { EventAdminNav } from "@/components/event-admin-nav";
 import { badgeClass, eventStage } from "@/lib/event-stage";
+import { eventRootDomain } from "@/lib/event-host";
 
 type Profile = { name: string; email?: string | null; avatarUrl?: string | null };
 
@@ -38,7 +39,13 @@ export function EventAdminChrome({ event, profile, children }: { event: PassFlow
             <h1>{event.name}</h1>
             <p>{event.dateLabel}{event.venue ? ` · ${event.venue}` : ""}</p>
           </div>
-          <Link href={`/e/${event.liveSlug ?? event.slug}?view=details`} className="ui-btn ui-btn-secondary" target="_blank">Event page <ArrowUpRight size={15} /></Link>
+          <Link
+            href={event.status === "published" && event.subdomainLabel
+              ? `https://${event.subdomainLabel}.${eventRootDomain}`
+              : `/e/${event.liveSlug ?? event.slug}?view=details`}
+            className="ui-btn ui-btn-secondary"
+            target="_blank"
+          >Event page <ArrowUpRight size={15} /></Link>
         </header>
         <EventAdminNav eventId={event.id} />
         <div className="ui-workspace-body">{children}</div>

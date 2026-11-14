@@ -1,4 +1,6 @@
 export function getSupabaseConfig() {
+  // Fail closed during self-hosted operation: no legacy code path may resolve cloud credentials.
+  if (process.env.PASSFLOW_LOCAL_AUTH === "true" || process.env.PASSFLOW_LOCAL_DATABASE === "true") return null;
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!url || !key) return null;

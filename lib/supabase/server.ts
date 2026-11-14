@@ -2,9 +2,14 @@ import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { getSupabaseConfig } from "./config";
 import type { Database } from "./database.types";
+import { createLocalPostgrestClient } from "./local-server";
+import { getLocalSession } from "@/lib/auth/local-session";
 
-// Request-scoped public key + user session; RLS always applies.
-export async function createServerSupabaseClient() {
+// Cloud auth client, retained only for the migration fallback and provider callbacks.
+export async function createServerAuthClient() {
+  if (process.env.PASSFLOW_LOCAL_AUTH === "true") {
+    throw new Error("Cloud auth is disabled while local authentication is enabled");
+  }
   const config = getSupabaseConfig();
   if (!config) throw new Error("Supabase is not configured");
   const cookieStore = await cookies();
@@ -20,4 +25,19 @@ export async function createServerSupabaseClient() {
       },
     },
   });
+}
+
+// Data client. Once the local DB cutover flag is enabled, all .from()/.rpc()
+// calls use the self-hosted PostgREST endpoint; auth methods are handled by
+// local-auth helpers and must not be called on this client.
+export async function createServerSupabaseClient() {
+  if (process.env.PASSFLOW_LOCAL_DATABASE === "true") {
+    // Resolve local identity once inside the request context and bind it to the
+    // PostgREST client; do not depend on cookies being readable in fetch callbacks.
+    const session = process.env.PASSFLOW_LOCAL_AUTH === "true"
+      ? await getLocalSession()
+      : null;
+    return createLocalPostgrestClient(session?.user.id);
+  }
+  return createServerAuthClient();
 }
